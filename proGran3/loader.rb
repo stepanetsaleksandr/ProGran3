@@ -5,6 +5,9 @@ module ProGran3
   extend self
 
   ASSETS_PATH = File.join(File.dirname(__FILE__), 'assets')
+  
+  # Завантажуємо новий модуль для роботи з .skp файлами
+  require_relative 'skp_preview_generator'
 
   def load_component(category, filename)
     path = File.join(ASSETS_PATH, category, filename)
