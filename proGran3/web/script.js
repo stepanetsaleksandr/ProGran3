@@ -107,54 +107,14 @@ function initializeTestCarousel(category) {
   modelLists[category].forEach(filename => {
     const item = document.createElement('div');
     item.className = 'carousel-item';
-    const img = document.createElement('img');
-    
-    // Додаємо індикатор завантаження
+    // Стан ледачого завантаження
+    item.dataset.status = 'idle';
+    item.dataset.filename = filename;
+    // Початковий індикатор
     const loadingDiv = document.createElement('div');
     loadingDiv.className = 'loading-indicator';
-    loadingDiv.textContent = 'Завантаження';
+    loadingDiv.textContent = 'Готово до завантаження';
     item.appendChild(loadingDiv);
-    
-    // Функція для створення заглушки
-    const createPlaceholder = (text) => {
-      loadingDiv.remove();
-      const placeholder = document.createElement('div');
-      placeholder.style.cssText = `
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(255, 255, 255, 0.1);
-        color: #666;
-        font-size: 12px;
-        text-align: center;
-        padding: 10px;
-        box-sizing: border-box;
-      `;
-      placeholder.textContent = text;
-      item.appendChild(placeholder);
-    };
-    
-    // Спочатку намагаємося завантажити оригінальне зображення
-    const imgPath = `../assets/${category}/${filename.replace('.skp', '.png')}`;
-    img.src = imgPath;
-    img.alt = filename;
-    
-      // Обробка успішного завантаження
-  img.onload = function() {
-    debugLog(`✅ Зображення завантажено: ${filename}`);
-    loadingDiv.remove();
-    item.appendChild(img);
-  };
-
-  // Обробка помилки завантаження - автоматично генеруємо превью
-  img.onerror = function() {
-    debugLog(`❌ Помилка завантаження зображення: ${filename}, запускаємо генерацію`);
-    loadingDiv.textContent = 'Генерація превью...';
-    autoGenerateTestPreview(category, filename, item, loadingDiv);
-  };
-    
     track.appendChild(item);
   });
   
@@ -163,7 +123,51 @@ function initializeTestCarousel(category) {
     moveTestCarousel(category, event.deltaY > 0 ? 1 : -1);
   });
 
-  setTimeout(() => showTestCarouselItem(category, 0), 100); 
+  setTimeout(() => {
+    showTestCarouselItem(category, 0);
+    // Ледаче завантаження для першого елемента
+    loadOrGenerateTestPreview(category, 0);
+  }, 100); 
+}
+
+// Ледаче завантаження превью для активного елемента тестової каруселі
+function loadOrGenerateTestPreview(category, index) {
+  const track = document.getElementById(`test-${category}-carousel-track`);
+  if (!track) return;
+  const items = track.querySelectorAll('.carousel-item');
+  const item = items[index];
+  if (!item) return;
+
+  const currentStatus = item.dataset.status;
+  if (currentStatus === 'loaded' || currentStatus === 'pending') return;
+
+  const filename = item.dataset.filename || (modelLists[category] && modelLists[category][index]);
+  if (!filename) return;
+
+  let loadingDiv = item.querySelector('.loading-indicator');
+  if (!loadingDiv) {
+    loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading-indicator';
+    item.appendChild(loadingDiv);
+  }
+  loadingDiv.textContent = 'Завантаження';
+
+  item.dataset.status = 'pending';
+
+  const img = new Image();
+  img.alt = filename;
+  img.onload = function() {
+    item.dataset.status = 'loaded';
+    if (loadingDiv && loadingDiv.parentNode) loadingDiv.parentNode.removeChild(loadingDiv);
+    item.appendChild(img);
+    debugLog(`✅ Зображення завантажено: ${filename}`);
+  };
+  img.onerror = function() {
+    debugLog(`❌ PNG відсутнє, запускаємо генерацію: ${filename}`);
+    loadingDiv.textContent = 'Генерація превью...';
+    autoGenerateTestPreview(category, filename, item, loadingDiv);
+  };
+  img.src = `../assets/${category}/${filename.replace('.skp', '.png')}`;
 }
 
 // Функція для логування в веб-інтерфейсі
@@ -248,14 +252,12 @@ function receiveWebPreview(componentPath, base64Data) {
     loadingDiv.remove();
     item.appendChild(img);
     
-    // Показуємо сповіщення
-    showNotification(`Превью згенеровано для ${filename}`, 'success');
+    // Сповіщення прибрано для кінцевого користувача
   } else {
     debugLog('❌ Невалідні base64 дані або відсутні');
     debugLog(`🔍 Перевірка: startsWith('data:image/'): ${base64Data ? base64Data.startsWith('data:image/') : false}`);
     // Якщо не вдалося згенерувати, показуємо заглушку
     createTestPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
-    showNotification(`Не вдалося згенерувати превью для ${filename}`, 'warning');
   }
   
   // Очищаємо pending
@@ -270,7 +272,6 @@ function handlePreviewError(componentPath, errorMessage) {
   
   const { item, loadingDiv, filename } = pendingData;
   createTestPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
-  showNotification(errorMessage || `Помилка генерації превью для ${filename}`, 'error');
   
   // Очищаємо pending
   delete window.pendingPreviews[componentPath];
@@ -336,6 +337,10 @@ function showTestCarouselItem(category, index) {
 
   testCarouselState[category].index = index;
   track.style.transform = `translateX(${newTransform}px)`;
+  // Ледаче завантаження для активного та сусідніх елементів
+  loadOrGenerateTestPreview(category, index);
+  if (index + 1 < items.length) loadOrGenerateTestPreview(category, index + 1);
+  if (index - 1 >= 0) loadOrGenerateTestPreview(category, index - 1);
 }
 
 // --- ФУНКЦІЇ ДЛЯ СТВОРЕННЯ ЕЛЕМЕНТІВ ---
