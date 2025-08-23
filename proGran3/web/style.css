@@ -1,0 +1,315 @@
+/* Загальні стилі для тіла документа */
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: 'Manrope', 'Comfortaa', sans-serif;
+  background: #e9eff5;
+  color: #333;
+  min-height: calc(100vh - 40px);
+}
+
+/* Основний "скляний" контейнер */
+.glass-container {
+  max-width: 400px;
+  margin: auto;
+  padding: 20px 30px;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 20px;
+  /* Тінь зроблена темнішою і виразнішою */
+  box-shadow: 0 10px 35px 0 rgba(31, 38, 135, 0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Заголовок */
+header h1 {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 30px;
+  color: #2c3e50;
+}
+
+/* Панелі для кожної секції */
+.panel {
+  margin-bottom: 15px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease-in-out;
+}
+
+.panel.collapsed {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.panel-header {
+  padding: 15px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.panel.collapsed .panel-header {
+    border-bottom-color: transparent;
+}
+
+.panel-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    padding: 0;
+    flex-shrink: 0; 
+}
+
+.header-dimensions {
+    flex-grow: 1;
+    text-align: right;
+    font-size: 14px;
+    font-weight: normal;
+    color: #555;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-left: 10px;
+}
+
+.header-placeholder {
+    flex-grow: 1;
+}
+
+.panel-content {
+  padding: 15px;
+  overflow: hidden;
+  max-height: 1000px;
+  transition: max-height 0.4s ease-in-out, padding 0.4s ease, visibility 0.4s ease, opacity 0.3s ease-in-out;
+  visibility: visible;
+  opacity: 1;
+}
+
+.panel.collapsed .panel-content {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  visibility: hidden;
+  opacity: 0;
+}
+
+.chevron {
+  border: solid #333;
+  border-width: 0 2px 2px 0;
+  display: inline-block;
+  padding: 4px;
+  transform: rotate(45deg);
+  transition: transform 0.4s ease;
+  margin: 0 10px;
+}
+
+.panel.collapsed .chevron {
+  transform: rotate(-135deg);
+}
+
+/* Рядок для групування полів вводу */
+.input-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+/* Обгортка для поля вводу та його підпису */
+.input-wrapper {
+  flex-grow: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.input-wrapper label {
+  display: block;
+  font-size: 12px;
+  color: #555;
+  margin-top: 5px;
+  text-align: center;
+}
+
+.input-wrapper label.label-left {
+    text-align: left;
+    margin-bottom: 5px;
+}
+
+/* Стилі для полів вводу та випадаючих списків */
+input[type="number"],
+select {
+  width: 100%;
+  padding: 12px;
+  box-sizing: border-box;
+  border: 1px solid rgba(204, 204, 204, 0.5);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  font-family: inherit;
+  font-size: 14px;
+  text-align: center;
+  transition: all 0.2s ease-in-out;
+}
+
+input[type="number"]:focus,
+select:focus {
+  outline: none;
+  border-color: rgba(0, 123, 255, 0.7);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* Кнопки */
+button {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  background-color: #007bff;
+  color: white;
+  margin-top: auto;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  /* Тінь кнопки зроблена темнішою */
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+}
+
+button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Кнопка перезавантаження */
+#reload-button {
+  background-color: #6c757d;
+}
+
+#reload-button:hover {
+  background-color: #5a6268;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Стилі для динамічних панелей */
+.hidden {
+  display: none !important;
+}
+
+#tiling-mode {
+  margin-bottom: 20px;
+}
+
+.tile-inputs {
+    flex-wrap: wrap;
+}
+
+#modular-controls .input-wrapper {
+    flex-grow: 1;
+    flex-basis: calc(50% - 8px);
+}
+
+/* Стилі для каруселі */
+.carousel-container {
+  position: relative;
+  width: 100%;
+  height: 270px;
+  margin-bottom: 15px;
+}
+
+.carousel-viewport {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.carousel-track {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  padding: 0 calc(50% - 90px);
+  box-sizing: content-box;
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.carousel-item {
+  position: relative;
+  flex-shrink: 0;
+  width: 180px;
+  height: 95%;
+  margin: 0 10px;
+  border-radius: 8px;
+  opacity: 0.5;
+  transform: scale(0.8);
+  transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+  /* Тінь картки зроблена темнішою */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); 
+  background: rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+}
+
+.carousel-item.active {
+  opacity: 1;
+  transform: scale(1);
+  /* Тінь активної картки зроблена темнішою і виразнішою */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.carousel-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  box-sizing: border-box;
+  padding: 10px;
+}
+
+/* Таблиця підсумку */
+.summary-card {
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.25);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    margin-top: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+.summary-card h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 15px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    padding-bottom: 10px;
+    text-align: center;
+    display: block;
+}
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.summary-table td {
+  padding: 8px 4px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+.summary-table tr:last-child td {
+  border-bottom: none;
+}
+.summary-table td:first-child {
+  font-weight: 600;
+  color: #2c3e50;
+  text-align: left;
+}
+.summary-table td:last-child {
+  text-align: right;
+  color: #333;
+}

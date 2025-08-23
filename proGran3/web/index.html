@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>proGran3 Конструктор</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="glass-container">
+    <header>
+      <h1>proGran3 Конструктор</h1>
+    </header>
+
+    <section class="panel">
+      <div class="panel-header" onclick="togglePanel(this)">
+        <h2 class="panel-title">Фундамент</h2>
+        <span class="chevron"></span>
+        <span id="foundation-dimensions-display" class="header-dimensions"></span>
+      </div>
+      <div class="panel-content">
+        <div class="input-row">
+          <div class="input-wrapper">
+            <input type="number" id="foundation-depth" value="2000" oninput="updateAllDisplays()">
+            <label>Довжина (мм)</label>
+          </div>
+          <div class="input-wrapper">
+            <input type="number" id="foundation-width" value="1000" oninput="updateAllDisplays()">
+            <label>Ширина (мм)</label>
+          </div>
+          <div class="input-wrapper">
+            <input type="number" id="foundation-height" value="150" oninput="updateAllDisplays()">
+            <label>Висота (мм)</label>
+          </div>
+        </div>
+        <button onclick="addFoundation(); advanceToNextPanel(this);">Створити фундамент</button>
+      </div>
+    </section>
+
+    <section class="panel collapsed">
+      <div class="panel-header" onclick="togglePanel(this)">
+        <h2 class="panel-title">Плитка на фундаменті</h2>
+        <span class="chevron"></span>
+        <span id="tiling-type-display" class="header-dimensions"></span>
+      </div>
+      <div class="panel-content">
+        <div class="input-wrapper">
+          <label for="tiling-mode" class="label-left">Спосіб укладання:</label>
+          <select id="tiling-mode" onchange="updateTilingControls()">
+            <option value="frame" selected>Рамка з 4 частин</option>
+            <option value="modular">Модульне замощення</option>
+          </select>
+        </div>
+        <div id="frame-controls">
+          <div class="input-row tile-inputs">
+            <div class="input-wrapper">
+              <select id="tile-thickness-frame" oninput="updateAllDisplays()">
+                <option value="20">20 мм</option>
+                <option value="30" selected>30 мм</option>
+                <option value="50">50 мм</option>
+              </select>
+              <label>Товщина</label>
+            </div>
+            <div class="input-wrapper">
+              <input type="number" id="tile-border-width" value="300" min="10" oninput="updateAllDisplays()">
+              <label>Ширина рамки</label>
+            </div>
+            <div class="input-wrapper">
+              <input type="number" id="tile-overhang" value="50" oninput="updateAllDisplays()">
+              <label>Виступ (мм)</label>
+            </div>
+          </div>
+        </div>
+        <div id="modular-controls" class="hidden">
+          <div class="input-row tile-inputs">
+            <div class="input-wrapper">
+              <label for="modular-tile-size" class="label-left">Розмір (см):</label>
+              <select id="modular-tile-size" onchange="updateAllDisplays()">
+                <option value="60x30">60 x 30</option>
+                <option value="50x30">50 x 30</option>
+                <option value="40x30">40 x 30</option>
+                <option value="60x40">60 x 40</option>
+                <option value="50x40">50 x 40</option>
+                <option value="40x40">40 x 40</option>
+              </select>
+            </div>
+            <div class="input-wrapper">
+              <label for="modular-thickness" class="label-left">Товщина:</label>
+              <input type="number" id="modular-thickness" value="30" oninput="updateAllDisplays()">
+            </div>
+             <div class="input-wrapper">
+              <label for="modular-seam" class="label-left">Шов:</label>
+              <input type="number" id="modular-seam" value="5" oninput="updateAllDisplays()">
+            </div>
+             <div class="input-wrapper">
+              <label for="modular-overhang" class="label-left">Виступ:</label>
+              <input type="number" id="modular-overhang" value="50" oninput="updateAllDisplays()">
+            </div>
+          </div>
+        </div>
+        <button onclick="addTiles(); advanceToNextPanel(this);">Додати плитку</button>
+      </div>
+    </section>
+
+    <section class="panel collapsed">
+      <div class="panel-header" onclick="togglePanel(this)">
+        <h2 class="panel-title">Бокове облицювання</h2>
+        <span class="chevron"></span>
+        <span id="cladding-dimensions-display" class="header-dimensions"></span>
+      </div>
+      <div class="panel-content">
+          <div class="input-row">
+              <div class="input-wrapper">
+                  <input type="number" id="cladding-thickness" value="20" min="10" oninput="updateAllDisplays()">
+                  <label>Товщина (мм)</label>
+              </div>
+          </div>
+          <button onclick="addSideCladding(); advanceToNextPanel(this);">Додати</button>
+      </div>
+    </section>
+
+    <section class="panel collapsed">
+      <div class="panel-header" onclick="togglePanel(this)">
+        <h2 class="panel-title">Підставка</h2>
+        <span class="chevron"></span>
+        <span id="stands-dimensions-display" class="header-dimensions"></span>
+      </div>
+      <div class="panel-content">
+        <div class="carousel-container">
+          <div class="carousel-viewport" id="stands-carousel-viewport">
+            <div class="carousel-track" id="stands-carousel-track"></div>
+          </div>
+        </div>
+        <button onclick="addModel('stands'); advanceToNextPanel(this);">Додати підставку</button>
+      </div>
+    </section>
+    
+    <section class="panel collapsed">
+      <div class="panel-header" onclick="togglePanel(this)">
+        <h2 class="panel-title">Квітник</h2>
+        <span class="chevron"></span>
+        <span id="flowerbeds-dimensions-display" class="header-dimensions"></span>
+      </div>
+      <div class="panel-content">
+        <div class="carousel-container">
+          <div class="carousel-viewport" id="flowerbeds-carousel-viewport">
+            <div class="carousel-track" id="flowerbeds-carousel-track"></div>
+          </div>
+        </div>
+        <button onclick="addModel('flowerbeds'); advanceToNextPanel(this);">Додати квітник</button>
+      </div>
+    </section>
+
+    <section class="panel collapsed">
+      <div class="panel-header" onclick="togglePanel(this)">
+        <h2 class="panel-title">Стела</h2>
+        <span class="chevron"></span>
+        <span id="steles-dimensions-display" class="header-dimensions"></span>
+      </div>
+      <div class="panel-content">
+        <div class="carousel-container">
+          <div class="carousel-viewport" id="steles-carousel-viewport">
+            <div class="carousel-track" id="steles-carousel-track"></div>
+          </div>
+        </div>
+        <button onclick="addModel('steles'); advanceToNextPanel(this);">Додати стелу</button>
+      </div>
+    </section>
+
+    <div class="summary-card">
+      <h2>Специфікація</h2>
+      <table class="summary-table">
+        <tr> <td>Фундамент:</td> <td id="summary-foundation">--</td> </tr>
+        <tr> <td>Плитка (верх):</td> <td id="summary-tiling">--</td> </tr>
+        <tr> <td>Облицювання (бік):</td> <td id="summary-cladding">--</td> </tr>
+        <tr> <td>Підставка:</td> <td id="summary-stand">--</td> </tr>
+        <tr> <td>Квітник:</td> <td id="summary-flowerbed">--</td> </tr>
+        <tr> <td>Стела:</td> <td id="summary-stele">--</td> </tr>
+      </table>
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
