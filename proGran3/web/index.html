@@ -168,6 +168,35 @@
       </div>
     </section>
 
+    <section class="panel collapsed">
+      <div class="panel-header" onclick="togglePanel(this)">
+        <h2 class="panel-title">🧪 Тестування</h2>
+        <span class="chevron"></span>
+        <span class="header-dimensions">Нові функції</span>
+      </div>
+      <div class="panel-content">
+        <div class="test-controls">
+          <div class="test-section">
+               <h3>🖼️ Тестова карусель стел</h3>
+               <div class="carousel-container">
+                 <div class="carousel-viewport" id="test-steles-carousel-viewport">
+                   <div class="carousel-track" id="test-steles-carousel-track"></div>
+                 </div>
+               </div>
+               <div class="button-group">
+                 <button onclick="addTestModel('steles');">Додати стелу</button>
+                 <button onclick="generateTestPreviews('steles');" class="test-btn">Згенерувати превью</button>
+               </div>
+               <!-- Діагностика -->
+               <div id="debug-info" style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 4px; font-size: 12px; max-height: 200px; overflow-y: auto;">
+                 <h4>🔍 Діагностика:</h4>
+                 <div id="debug-log"></div>
+               </div>
+             </div>
+        </div>
+      </div>
+    </section>
+
     <div class="summary-card">
       <h2>Специфікація</h2>
       <table class="summary-table">

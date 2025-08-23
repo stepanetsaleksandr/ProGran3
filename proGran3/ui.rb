@@ -11,6 +11,8 @@ module ProGran3
         stands: Dir.glob(File.join(ProGran3::ASSETS_PATH, "stands", "*.skp")).map { |f| File.basename(f) },
         steles: Dir.glob(File.join(ProGran3::ASSETS_PATH, "steles", "*.skp")).map { |f| File.basename(f) },
         flowerbeds: Dir.glob(File.join(ProGran3::ASSETS_PATH, "flowerbeds", "*.skp")).map { |f| File.basename(f) },
+        gravestones: Dir.glob(File.join(ProGran3::ASSETS_PATH, "gravestones", "*.skp")).map { |f| File.basename(f) },
+        pavement_tiles: Dir.glob(File.join(ProGran3::ASSETS_PATH, "pavement_tiles", "*.skp")).map { |f| File.basename(f) },
       }
 
       if @dialog && @dialog.visible?
@@ -64,6 +66,29 @@ module ProGran3
         ProGran3.reload
         ProGran3::UI.show_dialog
       end
+
+      # Callback для тестування нових функцій
+
+      @dialog.add_action_callback("generate_preview_image") do |dialog, component_path|
+        ProGran3.generate_preview_image(component_path)
+      end
+
+      @dialog.add_action_callback("generate_web_preview") do |dialog, component_path|
+        puts "🔍 generate_web_preview callback викликано для: #{component_path}"
+        base64_data = ProGran3.generate_web_preview(component_path)
+        if base64_data
+          puts "✅ Отримано base64 дані, довжина: #{base64_data.length}"
+          puts "📄 Перші 100 символів: #{base64_data[0..100]}"
+          @dialog.execute_script("receiveWebPreview('#{component_path}', '#{base64_data}');")
+        else
+          puts "❌ Не вдалося згенерувати превью"
+          @dialog.execute_script("handlePreviewError('#{component_path}', 'Помилка генерації превью');")
+        end
+      end
+
+
+
+
       
       @dialog.show
     end

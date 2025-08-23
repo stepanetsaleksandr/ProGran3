@@ -58,7 +58,9 @@ def test_file_structure
     "proGran3/ui.rb",
     "proGran3/builders/foundation_builder.rb",
     "proGran3/builders/tiling_builder.rb",
-    "proGran3/builders/cladding_builder.rb"
+    "proGran3/builders/cladding_builder.rb",
+    "proGran3/test_features.rb",
+    "proGran3/preview_generator.rb"
   ]
   
   missing_files = []
@@ -124,7 +126,7 @@ begin
   
   if syntax_ok && structure_ok
     puts "\n🎉 Плагін готовий до розгортання!"
-    puts "💡 Запустіть: .\\deploy.bat або .\\deploy_to_sketchup.ps1"
+    puts "💡 Запустіть: .\\deploy_simple.bat або .\\deploy_simple.ps1"
   else
     puts "\n❌ Виправте помилки перед розгортанням"
   end

@@ -8,17 +8,17 @@
 
 1. **Запустіть PowerShell скрипт для розгортання:**
    ```powershell
-   .\deploy_to_sketchup.ps1
+   .\deploy_simple.ps1
    ```
 
 2. **Для автоматичного спостереження за змінами:**
    ```powershell
-   .\deploy_to_sketchup.ps1 -Watch
+   .\deploy_simple.ps1 -Watch
    ```
 
 3. **Якщо у вас інша версія SketchUp:**
    ```powershell
-   .\deploy_to_sketchup.ps1 -SketchUpVersion "2022"
+   .\deploy_simple.ps1 -SketchUpVersion "2022"
    ```
 
 ### Варіант 2: Ручне копіювання
@@ -68,8 +68,8 @@ ProGran3/
 │       ├── pavement_tiles/
 │       ├── stands/
 │       └── steles/
-├── deploy_to_sketchup.ps1   # PowerShell скрипт розгортання
-├── deploy_to_sketchup.rb    # Ruby скрипт розгортання
+├── deploy_simple.ps1        # PowerShell скрипт розгортання
+├── deploy_simple.bat        # Batch файл для розгортання
 └── README.md               # Цей файл
 ```
 
@@ -80,7 +80,7 @@ ProGran3/
 1. **Редагуйте файли** в папці проекту на робочому столі
 2. **Запустіть режим спостереження:**
    ```powershell
-   .\deploy_to_sketchup.ps1 -Watch
+   .\deploy_simple.ps1 -Watch
    ```
 3. **Тестуйте зміни** в SketchUp
 4. **Перезавантажуйте плагін** в консолі Ruby: `ProGran3.reload`
@@ -105,7 +105,7 @@ $LOADED_FEATURES.grep(/progran3/)
 
 ### Зміна шляху до SketchUp:
 
-Відредагуйте файл `deploy_to_sketchup.ps1`:
+Відредагуйте файл `config.json`:
 ```powershell
 $SKETCHUP_PLUGINS_PATH = "ВАШ_ШЛЯХ_ДО_ПЛАГІНІВ"
 ```

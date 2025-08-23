@@ -1,24 +1,34 @@
-# Резервні копії
+# ========================================
+# ProGran3 SketchUp Plugin - .gitignore
+# ========================================
+
+# Резервні копії та бек-апи
 backups/
+*.backup
+*.bak
 
 # Тимчасові файли
 *.tmp
 *.temp
 *.log
+*.cache
 
 # Файли SketchUp
 *.skp
 *.skb
+*.skp.bak
 
 # Системні файли
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# IDE файли
+# IDE та редактори
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
 # Ruby файли
 *.gem
@@ -33,5 +43,33 @@ Thumbs.db
 /test/version_tmp/
 /tmp/
 
-# Windows
+# Windows специфічні
 *.lnk
+*.exe
+*.msi
+
+# Логи та діагностика
+logs/
+*.log
+debug.log
+
+# Конфігураційні файли (якщо потрібно)
+# config.json
+
+# Тестові файли
+test_output/
+*.test
+
+# Архіви
+*.zip
+*.rar
+*.7z
+
+# Документація (якщо потрібно)
+# docs/
+
+# Іконки (якщо потрібно)
+# proGran3/icons/
+
+# Превью зображення (автогенеровані)
+proGran3/previews/

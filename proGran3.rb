@@ -8,6 +8,8 @@ module ProGran3
   require_relative 'progran3/builders/tiling_builder'
   require_relative 'progran3/builders/cladding_builder'
   require_relative 'progran3/ui'
+  require_relative 'progran3/test_features'
+  require_relative 'progran3/preview_generator'
 
   # Метод для створення панелі інструментів
   def self.create_toolbar
@@ -98,5 +100,24 @@ module ProGran3
     puts "📁 Шлях до плагіна: #{File.dirname(__FILE__)}"
     puts "📦 Версія: 1.0.0"
     puts "✅ Плагін готовий до роботи!"
+  end
+
+  # Методи для тестування нових функцій
+
+  # Методи для роботи з превью
+  def self.generate_preview_image(component_path)
+    PreviewGenerator.generate_preview_image(component_path)
+  end
+
+        def self.generate_web_preview(component_path)
+        PreviewGenerator.generate_web_preview(component_path)
+      end
+
+
+
+
+
+  def self.ensure_preview_exists(component_path)
+    PreviewGenerator.ensure_preview_exists(component_path)
   end
 end

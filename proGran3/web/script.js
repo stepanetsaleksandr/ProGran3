@@ -7,6 +7,9 @@ let carouselState = {
   steles: { index: 0 },
   flowerbeds: { index: 0 }
 };
+let testCarouselState = {
+  steles: { index: 0 }
+};
 
 // --- ІНІЦІАЛІЗАЦІЯ ---
 window.onload = function () {
@@ -32,6 +35,10 @@ function loadModelLists(data) {
       initializeCarousel(category);
     }
   });
+  // Ініціалізуємо тестову карусель стел
+  if (modelLists['steles'] && document.getElementById('test-steles-carousel-track')) {
+    initializeTestCarousel('steles');
+  }
   updateAllDisplays();
 }
 
@@ -89,12 +96,203 @@ function initializeCarousel(category) {
   setTimeout(() => showCarouselItem(category, 0), 100); 
 }
 
+// Ініціалізація тестової каруселі
+function initializeTestCarousel(category) {
+  const track = document.getElementById(`test-${category}-carousel-track`);
+  const viewport = document.getElementById(`test-${category}-carousel-viewport`);
+  if (!track || !viewport || !modelLists[category] || modelLists[category].length === 0) return;
+  
+  track.innerHTML = '';
+
+  modelLists[category].forEach(filename => {
+    const item = document.createElement('div');
+    item.className = 'carousel-item';
+    const img = document.createElement('img');
+    
+    // Додаємо індикатор завантаження
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading-indicator';
+    loadingDiv.textContent = 'Завантаження';
+    item.appendChild(loadingDiv);
+    
+    // Функція для створення заглушки
+    const createPlaceholder = (text) => {
+      loadingDiv.remove();
+      const placeholder = document.createElement('div');
+      placeholder.style.cssText = `
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.1);
+        color: #666;
+        font-size: 12px;
+        text-align: center;
+        padding: 10px;
+        box-sizing: border-box;
+      `;
+      placeholder.textContent = text;
+      item.appendChild(placeholder);
+    };
+    
+    // Спочатку намагаємося завантажити оригінальне зображення
+    const imgPath = `../assets/${category}/${filename.replace('.skp', '.png')}`;
+    img.src = imgPath;
+    img.alt = filename;
+    
+      // Обробка успішного завантаження
+  img.onload = function() {
+    debugLog(`✅ Зображення завантажено: ${filename}`);
+    loadingDiv.remove();
+    item.appendChild(img);
+  };
+
+  // Обробка помилки завантаження - автоматично генеруємо превью
+  img.onerror = function() {
+    debugLog(`❌ Помилка завантаження зображення: ${filename}, запускаємо генерацію`);
+    loadingDiv.textContent = 'Генерація превью...';
+    autoGenerateTestPreview(category, filename, item, loadingDiv);
+  };
+    
+    track.appendChild(item);
+  });
+  
+  viewport.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    moveTestCarousel(category, event.deltaY > 0 ? 1 : -1);
+  });
+
+  setTimeout(() => showTestCarouselItem(category, 0), 100); 
+}
+
+// Функція для логування в веб-інтерфейсі
+function debugLog(message) {
+  const debugElement = document.getElementById('debug-log');
+  if (debugElement) {
+    const time = new Date().toLocaleTimeString();
+    debugElement.innerHTML += `<div>[${time}] ${message}</div>`;
+    debugElement.scrollTop = debugElement.scrollHeight;
+  }
+  console.log(message);
+}
+
+// Автоматична генерація превью для тестової каруселі
+function autoGenerateTestPreview(category, filename, item, loadingDiv) {
+  debugLog(`🔍 autoGenerateTestPreview викликано для: ${category}/${filename}`);
+  
+  if (!window.sketchup) {
+    debugLog('❌ window.sketchup не доступний');
+    createTestPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
+    return;
+  }
+  
+  debugLog('✅ window.sketchup доступний, викликаємо generate_web_preview');
+  
+  // Генеруємо веб-превью через SketchUp
+  window.sketchup.generate_web_preview(`${category}/${filename}`);
+  
+  // Зберігаємо посилання на елементи для callback
+  window.pendingPreviews = window.pendingPreviews || {};
+  window.pendingPreviews[`${category}/${filename}`] = { item, loadingDiv, filename };
+  
+  debugLog(`📝 Збережено pending preview для: ${category}/${filename}`);
+}
+
+// Функція для створення заглушки в тестовій каруселі
+function createTestPlaceholder(item, loadingDiv, text) {
+  loadingDiv.remove();
+  const placeholder = document.createElement('div');
+  placeholder.style.cssText = `
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    color: #666;
+    font-size: 12px;
+    text-align: center;
+    padding: 10px;
+    box-sizing: border-box;
+  `;
+  placeholder.textContent = text;
+  item.appendChild(placeholder);
+}
+
+// Функція для отримання згенерованого превью з Ruby
+function receiveWebPreview(componentPath, base64Data) {
+  debugLog(`🔍 receiveWebPreview викликано для: ${componentPath}`);
+  debugLog(`📊 base64Data довжина: ${base64Data ? base64Data.length : 0}`);
+  debugLog(`📄 Перші 100 символів: ${base64Data ? base64Data.substring(0, 100) : 'null'}`);
+  
+  const pendingData = window.pendingPreviews && window.pendingPreviews[componentPath];
+  if (!pendingData) {
+    debugLog('❌ Не знайдено pending data для: ' + componentPath);
+    return;
+  }
+  
+  debugLog('✅ Знайдено pending data');
+  
+  const { item, loadingDiv, filename } = pendingData;
+  
+  if (base64Data && base64Data.startsWith('data:image/')) {
+    debugLog('✅ Отримано валідні base64 дані, створюємо зображення');
+    
+    // Створюємо зображення з base64 даних
+    const img = document.createElement('img');
+    img.src = base64Data;
+    img.alt = filename;
+    
+    // Видаляємо індикатор завантаження та додаємо зображення
+    loadingDiv.remove();
+    item.appendChild(img);
+    
+    // Показуємо сповіщення
+    showNotification(`Превью згенеровано для ${filename}`, 'success');
+  } else {
+    debugLog('❌ Невалідні base64 дані або відсутні');
+    debugLog(`🔍 Перевірка: startsWith('data:image/'): ${base64Data ? base64Data.startsWith('data:image/') : false}`);
+    // Якщо не вдалося згенерувати, показуємо заглушку
+    createTestPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
+    showNotification(`Не вдалося згенерувати превью для ${filename}`, 'warning');
+  }
+  
+  // Очищаємо pending
+  delete window.pendingPreviews[componentPath];
+  debugLog('🧹 Очищено pending preview');
+}
+
+// Функція для обробки помилки генерації превью
+function handlePreviewError(componentPath, errorMessage) {
+  const pendingData = window.pendingPreviews && window.pendingPreviews[componentPath];
+  if (!pendingData) return;
+  
+  const { item, loadingDiv, filename } = pendingData;
+  createTestPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
+  showNotification(errorMessage || `Помилка генерації превью для ${filename}`, 'error');
+  
+  // Очищаємо pending
+  delete window.pendingPreviews[componentPath];
+}
+
+
+
 function moveCarousel(category, direction) {
   const state = carouselState[category];
   const newIndex = state.index + direction;
   
   if (newIndex >= 0 && newIndex < modelLists[category].length) {
     showCarouselItem(category, newIndex);
+  }
+}
+
+function moveTestCarousel(category, direction) {
+  const state = testCarouselState[category];
+  const newIndex = state.index + direction;
+  
+  if (newIndex >= 0 && newIndex < modelLists[category].length) {
+    showTestCarouselItem(category, newIndex);
   }
 }
 
@@ -120,6 +318,26 @@ function showCarouselItem(category, index) {
   updateAllDisplays();
 }
 
+function showTestCarouselItem(category, index) {
+  const track = document.getElementById(`test-${category}-carousel-track`);
+  const viewport = document.getElementById(`test-${category}-carousel-viewport`);
+  const items = track.querySelectorAll('.carousel-item');
+  
+  if (!track || items.length === 0 || !items[index]) return;
+
+  items.forEach((item, i) => {
+    item.classList.toggle('active', i === index);
+  });
+  
+  const viewportCenter = viewport.offsetWidth / 2;
+  const targetItem = items[index];
+  const itemCenter = targetItem.offsetLeft + targetItem.offsetWidth / 2;
+  const newTransform = viewportCenter - itemCenter;
+
+  testCarouselState[category].index = index;
+  track.style.transform = `translateX(${newTransform}px)`;
+}
+
 // --- ФУНКЦІЇ ДЛЯ СТВОРЕННЯ ЕЛЕМЕНТІВ ---
 
 function addModel(category) {
@@ -127,6 +345,15 @@ function addModel(category) {
   const filename = modelLists[category][state.index];
   if (window.sketchup && filename) {
     window.sketchup.insert_component(`${category}|${filename}`);
+  }
+}
+
+function addTestModel(category) {
+  const state = testCarouselState[category];
+  const filename = modelLists[category][state.index];
+  if (window.sketchup && filename) {
+    window.sketchup.insert_component(`${category}|${filename}`);
+    showNotification(`Тестовий компонент ${filename} додано!`, 'success');
   }
 }
 
@@ -286,4 +513,96 @@ function updateSummaryTable() {
             display.textContent = '--';
         }
     });
+}
+
+// ========================================
+// ФУНКЦІЇ ДЛЯ ТЕСТУВАННЯ НОВИХ ФІЧ
+// ========================================
+
+
+
+// Генерація превью для тестової каруселі
+function generateTestPreviews(category) {
+  if (!modelLists[category] || modelLists[category].length === 0) {
+    showNotification('Немає компонентів для генерації превью', 'warning');
+    return;
+  }
+  
+  const categoryText = getCategoryDisplayName(category);
+  showNotification(`Генерація превью для ${categoryText}...`, 'info');
+  
+  if (window.sketchup) {
+    window.sketchup.generate_category_previews(category);
+  }
+  
+  showNotification(`Превью для ${categoryText} згенеровано!`, 'success');
+  
+  // Оновлюємо карусель після генерації
+  setTimeout(() => {
+    initializeTestCarousel(category);
+  }, 2000);
+}
+
+// Отримання відображуваної назви категорії
+function getCategoryDisplayName(category) {
+    const names = {
+        'stands': 'підставок',
+        'steles': 'стел',
+        'flowerbeds': 'квітників',
+        'gravestones': 'надгробків',
+        'pavement_tiles': 'плитки'
+    };
+    return names[category] || category;
+}
+
+// Система сповіщень
+function showNotification(message, type = 'info') {
+    // Створюємо елемент сповіщення
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    // Додаємо стилі
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 1000;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+        max-width: 300px;
+        word-wrap: break-word;
+    `;
+    
+    // Кольори для різних типів
+    const colors = {
+        'info': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        'success': 'linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%)',
+        'warning': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+        'error': 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)'
+    };
+    
+    notification.style.background = colors[type] || colors.info;
+    
+    // Додаємо до сторінки
+    document.body.appendChild(notification);
+    
+    // Показуємо
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Приховуємо через 3 секунди
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
 }

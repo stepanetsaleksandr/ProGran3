@@ -57,7 +57,7 @@ if ($foundPath) {
     $response = Read-Host
     
     if ($response -eq "y" -or $response -eq "Y") {
-        & ".\deploy_to_sketchup.ps1"
+        & ".\deploy_simple.ps1"
     }
     
 } else {
