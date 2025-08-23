@@ -80,11 +80,26 @@ function initializeCarousel(category) {
   modelLists[category].forEach(filename => {
     const item = document.createElement('div');
     item.className = 'carousel-item';
-    const img = document.createElement('img');
-    const imgPath = `../assets/${category}/${filename.replace('.skp', '.png')}`;
-    img.src = imgPath;
-    img.alt = filename;
-    item.appendChild(img);
+    
+    // Для категорії steles додаємо логіку ледачого завантаження
+    if (category === 'steles') {
+      // Стан ледачого завантаження
+      item.dataset.status = 'idle';
+      item.dataset.filename = filename;
+      // Початковий індикатор
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'loading-indicator';
+      loadingDiv.textContent = 'Готово до завантаження';
+      item.appendChild(loadingDiv);
+    } else {
+      // Для інших категорій - звичайне завантаження
+      const img = document.createElement('img');
+      const imgPath = `../assets/${category}/${filename.replace('.skp', '.png')}`;
+      img.src = imgPath;
+      img.alt = filename;
+      item.appendChild(img);
+    }
+    
     track.appendChild(item);
   });
   
@@ -93,7 +108,13 @@ function initializeCarousel(category) {
     moveCarousel(category, event.deltaY > 0 ? 1 : -1);
   });
 
-  setTimeout(() => showCarouselItem(category, 0), 100); 
+  setTimeout(() => {
+    showCarouselItem(category, 0);
+    // Масове завантаження превью для стел при ініціалізації
+    if (category === 'steles') {
+      generateAllStelePreviews();
+    }
+  }, 100); 
 }
 
 // Ініціалізація тестової каруселі
@@ -170,6 +191,44 @@ function loadOrGenerateTestPreview(category, index) {
   img.src = `../assets/${category}/${filename.replace('.skp', '.png')}`;
 }
 
+// Ледаче завантаження превью для основної каруселі стел
+function loadOrGenerateStelePreview(category, index) {
+  const track = document.getElementById(`${category}-carousel-track`);
+  if (!track) return;
+  const items = track.querySelectorAll('.carousel-item');
+  const item = items[index];
+  if (!item) return;
+
+  const currentStatus = item.dataset.status;
+  if (currentStatus === 'loaded' || currentStatus === 'pending') return;
+
+  const filename = item.dataset.filename || (modelLists[category] && modelLists[category][index]);
+  if (!filename) return;
+
+  let loadingDiv = item.querySelector('.loading-indicator');
+  if (!loadingDiv) {
+    loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading-indicator';
+    item.appendChild(loadingDiv);
+  }
+  loadingDiv.textContent = 'Завантаження';
+
+  item.dataset.status = 'pending';
+
+  const img = new Image();
+  img.alt = filename;
+  img.onload = function() {
+    item.dataset.status = 'loaded';
+    if (loadingDiv && loadingDiv.parentNode) loadingDiv.parentNode.removeChild(loadingDiv);
+    item.appendChild(img);
+  };
+  img.onerror = function() {
+    loadingDiv.textContent = 'Генерація превью...';
+    autoGenerateStelePreview(category, filename, item, loadingDiv);
+  };
+  img.src = `../assets/${category}/${filename.replace('.skp', '.png')}`;
+}
+
 // Функція для логування в веб-інтерфейсі
 function debugLog(message) {
   const debugElement = document.getElementById('debug-log');
@@ -201,6 +260,34 @@ function autoGenerateTestPreview(category, filename, item, loadingDiv) {
   window.pendingPreviews[`${category}/${filename}`] = { item, loadingDiv, filename };
   
   debugLog(`📝 Збережено pending preview для: ${category}/${filename}`);
+}
+
+// Автоматична генерація превью для основної каруселі стел
+function autoGenerateStelePreview(category, filename, item, loadingDiv) {
+  if (!window.sketchup) {
+    createTestPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
+    return;
+  }
+  
+  // Генеруємо веб-превью через SketchUp
+  window.sketchup.generate_web_preview(`${category}/${filename}`);
+  
+  // Зберігаємо посилання на елементи для callback
+  window.pendingPreviews = window.pendingPreviews || {};
+  window.pendingPreviews[`${category}/${filename}`] = { item, loadingDiv, filename };
+}
+
+// Масове завантаження превью для всіх стел при ініціалізації
+function generateAllStelePreviews() {
+  if (!modelLists['steles'] || modelLists['steles'].length === 0) return;
+  
+  console.log('🔄 Початок масової генерації превью для стел...');
+  
+  modelLists['steles'].forEach((filename, index) => {
+    setTimeout(() => {
+      loadOrGenerateStelePreview('steles', index);
+    }, index * 500); // Затримка 500мс між генераціями
+  });
 }
 
 // Функція для створення заглушки в тестовій каруселі
@@ -249,15 +336,15 @@ function receiveWebPreview(componentPath, base64Data) {
     img.alt = filename;
     
     // Видаляємо індикатор завантаження та додаємо зображення
-    loadingDiv.remove();
-    item.appendChild(img);
+    if (loadingDiv && loadingDiv.parentNode) loadingDiv.parentNode.removeChild(loadingDiv);
+    if (item) item.appendChild(img);
     
-    // Сповіщення прибрано для кінцевого користувача
   } else {
     debugLog('❌ Невалідні base64 дані або відсутні');
     debugLog(`🔍 Перевірка: startsWith('data:image/'): ${base64Data ? base64Data.startsWith('data:image/') : false}`);
+    
     // Якщо не вдалося згенерувати, показуємо заглушку
-    createTestPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
+    if (item && loadingDiv) createTestPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
   }
   
   // Очищаємо pending
@@ -361,6 +448,8 @@ function addTestModel(category) {
     showNotification(`Тестовий компонент ${filename} додано!`, 'success');
   }
 }
+
+
 
 function updateTilingControls() {
     const mode = document.getElementById('tiling-mode').value;
