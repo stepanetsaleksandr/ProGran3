@@ -13,9 +13,73 @@ let testCarouselState = {
 
 // --- ІНІЦІАЛІЗАЦІЯ ---
 window.onload = function () {
-  if (window.sketchup && window.sketchup.ready) {
-    window.sketchup.ready();
+  // Запускаємо анімацію запуску
+  startStartupAnimation();
+};
+
+// Глобальна змінна для відстеження генерації превью
+let previewGenerationComplete = false;
+let previewGenerationStarted = false;
+
+// Анімація запуску
+function startStartupAnimation() {
+  const pixelsContainer = document.querySelector('.pixels-container');
+  const startupAnimation = document.getElementById('startup-animation');
+  const mainContent = document.getElementById('main-content');
+  
+  // Створюємо частинки
+  const colors = ['color1', 'color2', 'color3', 'color4', 'color5', 'color6', 'color7', 'color8'];
+  
+  // Створюємо 200 частинок
+  for (let i = 0; i < 200; i++) {
+    const pixel = document.createElement('div');
+    pixel.className = `pixel ${colors[Math.floor(Math.random() * colors.length)]}`;
+    
+    // Розподіляємо по сторонах екрану
+    const side = Math.floor(Math.random() * 8); // 8 напрямків
+    const angle = (Math.PI * 2 * side) / 8;
+    const distance = 200 + Math.random() * 200;
+    
+    pixel.style.left = `calc(50% + ${Math.cos(angle) * distance}px)`;
+    pixel.style.top = `calc(50% + ${Math.sin(angle) * distance}px)`;
+    
+    pixel.style.animationDelay = Math.random() * 3 + 's';
+    pixelsContainer.appendChild(pixel);
   }
+  
+  // Запускаємо генерацію превью під час анімації
+  setTimeout(() => {
+    if (window.sketchup && window.sketchup.ready) {
+      previewGenerationStarted = true;
+      window.sketchup.ready();
+    }
+  }, 1500);
+  
+  // Перевіряємо завершення генерації та завершуємо анімацію
+  function checkAndFinishAnimation() {
+    if (previewGenerationComplete || !previewGenerationStarted) {
+      // Завершуємо анімацію
+      startupAnimation.style.opacity = '0';
+      startupAnimation.style.transition = 'opacity 1s ease-out';
+      
+      setTimeout(() => {
+        startupAnimation.style.display = 'none';
+        mainContent.style.display = 'block';
+        initializeApp();
+      }, 1000);
+    } else {
+      // Перевіряємо ще раз через 500мс
+      setTimeout(checkAndFinishAnimation, 500);
+    }
+  }
+  
+  // Починаємо перевірку через 8 секунд (мінімальний час анімації)
+  setTimeout(checkAndFinishAnimation, 8000);
+}
+
+// Ініціалізація додатку
+function initializeApp() {
+  // Ініціалізація UI (без повторного виклику ready)
   if(document.getElementById('tiling-mode')) {
     updateTilingControls();
   }
@@ -26,7 +90,7 @@ window.onload = function () {
     }
   });
   updateAllDisplays();
-};
+}
 
 function loadModelLists(data) {
   modelLists = data;
@@ -279,14 +343,29 @@ function autoGenerateStelePreview(category, filename, item, loadingDiv) {
 
 // Масове завантаження превью для всіх стел при ініціалізації
 function generateAllStelePreviews() {
-  if (!modelLists['steles'] || modelLists['steles'].length === 0) return;
+  if (!modelLists['steles'] || modelLists['steles'].length === 0) {
+    previewGenerationComplete = true;
+    return;
+  }
   
   console.log('🔄 Початок масової генерації превью для стел...');
+  
+  let completedCount = 0;
+  const totalCount = modelLists['steles'].length;
   
   modelLists['steles'].forEach((filename, index) => {
     setTimeout(() => {
       loadOrGenerateStelePreview('steles', index);
-    }, index * 500); // Затримка 500мс між генераціями
+      completedCount++;
+      
+      // Перевіряємо чи всі превью згенеровані
+      if (completedCount >= totalCount) {
+        setTimeout(() => {
+          previewGenerationComplete = true;
+          console.log('✅ Всі превью стел згенеровані');
+        }, 1000); // Додаткова затримка для завершення обробки
+      }
+    }, index * 300); // Зменшена затримка для швидшої генерації
   });
 }
 
