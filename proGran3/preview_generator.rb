@@ -27,11 +27,10 @@ module ProGran3
       
       begin
         model = Sketchup.active_model
-        defs = model.definitions
         
         # Завантажуємо компонент
         full_path = File.join(ProGran3::ASSETS_PATH, component_path)
-        comp_def = defs.load(full_path)
+        comp_def = model.definitions.load(full_path)
         
         # Створюємо тимчасовий екземпляр
         temp_instance = model.active_entities.add_instance(comp_def, Geom::Transformation.new)
@@ -45,6 +44,25 @@ module ProGran3
         
         # Видаляємо тимчасовий екземпляр
         temp_instance.erase!
+        
+        # Спробуємо різні варіанти purge функції
+        begin
+          if model.respond_to?(:purge_unused)
+            model.purge_unused
+            puts "🧹 Модель очищена (purge_unused)"
+          elsif model.respond_to?(:purge_all)
+            model.purge_all
+            puts "🧹 Модель очищена (purge_all)"
+          elsif model.definitions.respond_to?(:purge_unused)
+            model.definitions.purge_unused
+            puts "🧹 Компоненти очищені (definitions.purge_unused)"
+          else
+            puts "🧹 Тимчасовий екземпляр видалено (purge недоступний)"
+          end
+        rescue => e
+          puts "⚠️ Не вдалося очистити модель: #{e.message}"
+          puts "🧹 Тимчасовий екземпляр видалено"
+        end
         
         if success
           puts "✅ Превью зображення створено: #{File.basename(image_path)}"
@@ -64,11 +82,10 @@ module ProGran3
     def generate_web_preview(component_path, size = 256)
       begin
         model = Sketchup.active_model
-        defs = model.definitions
         
         # Завантажуємо компонент
         full_path = File.join(ProGran3::ASSETS_PATH, component_path)
-        comp_def = defs.load(full_path)
+        comp_def = model.definitions.load(full_path)
         
         # Створюємо тимчасовий екземпляр
         temp_instance = model.active_entities.add_instance(comp_def, Geom::Transformation.new)
@@ -87,6 +104,25 @@ module ProGran3
         
         # Видаляємо тимчасовий екземпляр
         temp_instance.erase!
+        
+        # Спробуємо різні варіанти purge функції
+        begin
+          if model.respond_to?(:purge_unused)
+            model.purge_unused
+            puts "🧹 Модель очищена (purge_unused)"
+          elsif model.respond_to?(:purge_all)
+            model.purge_all
+            puts "🧹 Модель очищена (purge_all)"
+          elsif model.definitions.respond_to?(:purge_unused)
+            model.definitions.purge_unused
+            puts "🧹 Компоненти очищені (definitions.purge_unused)"
+          else
+            puts "🧹 Тимчасовий екземпляр видалено (purge недоступний)"
+          end
+        rescue => e
+          puts "⚠️ Не вдалося очистити модель: #{e.message}"
+          puts "🧹 Тимчасовий екземпляр видалено"
+        end
         
         if success && File.exist?(temp_path)
           # Перевіряємо розмір файлу
@@ -178,29 +214,21 @@ module ProGran3
              puts "📐 Камера налаштована (ізометрія: 35.264° по X, 45° по Y, 0° по Z з прозорим фоном)"
     end
 
-    # Налаштування прозорого фону
+    # Налаштування прозорого фону (спрощена версія)
     def setup_transparent_background(model, view)
       begin
         # Налаштовуємо параметри відображення для прозорості
         rendering_options = model.rendering_options
         
-        # Встановлюємо білий фон (буде прозорим при експорті)
-        rendering_options["BackgroundColor"] = Sketchup::Color.new(255, 255, 255, 0)
+        # Спробуємо тільки базові налаштування
+        rendering_options["DrawHorizon"] = false if rendering_options.keys.include?("DrawHorizon")
+        rendering_options["DrawGround"] = false if rendering_options.keys.include?("DrawGround")
+        rendering_options["DrawSky"] = false if rendering_options.keys.include?("DrawSky")
         
-        # Вимикаємо небо та землю
-        rendering_options["DrawHorizon"] = false
-        rendering_options["DrawGround"] = false
-        rendering_options["DrawSky"] = false
-        
-        # Налаштовуємо простий стиль відображення
-        rendering_options["DisplayColorByLayer"] = false
-        rendering_options["DisplayDims"] = false
-        rendering_options["DisplaySketchAxes"] = false
-        rendering_options["DisplayWatermarks"] = false
-        
-        puts "🎨 Налаштовано прозорий фон"
+        puts "🎨 Налаштовано простий фон"
       rescue => e
         puts "⚠️ Не вдалося налаштувати фон: #{e.message}"
+        puts "🔄 Продовжуємо без спеціальних налаштувань фону"
       end
     end
 
