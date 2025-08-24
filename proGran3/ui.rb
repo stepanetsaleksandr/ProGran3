@@ -108,7 +108,16 @@ module ProGran3
         
         if base64_data
           puts "✅ Отримано base64 дані, довжина: #{base64_data.length}"
-          @dialog.execute_script("receiveWebPreview('#{component_path}', '#{base64_data}');")
+          puts "🔄 Відправляємо дані в JavaScript..."
+          
+          # Екрануємо одинарні лапки в base64_data
+          escaped_base64 = base64_data.gsub("'", "\\'")
+          
+          script = "receiveWebPreview('#{component_path}', '#{escaped_base64}');"
+          puts "📝 JavaScript скрипт: #{script[0..100]}..." if script.length > 100
+          
+          @dialog.execute_script(script)
+          puts "✅ Скрипт виконано"
         else
           puts "❌ Помилка генерації превью для: #{component_path}"
           @dialog.execute_script("handlePreviewError('#{component_path}', 'Помилка генерації превью');")

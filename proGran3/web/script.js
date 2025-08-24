@@ -30,13 +30,6 @@ const CarouselManager = {
       autoLoad: true,
       design: 'default',
       maxItems: 10
-    },
-    'steles': { 
-      hasPreview: true, 
-      previewMode: 'dynamic',
-      autoLoad: true,
-      design: 'default',
-      maxItems: 10
     }
   },
 
@@ -66,11 +59,18 @@ const CarouselManager = {
 
   // Ініціалізація каруселі
   initialize(category, options = {}) {
+    debugLog(`🚀 CarouselManager.initialize викликано для ${category}`, 'info');
+    
     const config = { ...this.carousels[category], ...options };
     const track = document.getElementById(`${category}-carousel-track`);
     const viewport = document.getElementById(`${category}-carousel-viewport`);
     
-    if (!track || !viewport || !modelLists[category] || modelLists[category].length === 0) return;
+    if (!track || !viewport || !modelLists[category] || modelLists[category].length === 0) {
+      debugLog(`❌ Не вдалося ініціалізувати карусель ${category}: track=${!!track}, viewport=${!!viewport}, моделі=${!!modelLists[category]}, кількість=${modelLists[category]?.length || 0}`, 'error');
+      return;
+    }
+    
+    debugLog(`✅ Створюємо ${modelLists[category].length} елементів для ${category}`, 'success');
     
     track.innerHTML = '';
     
@@ -80,6 +80,8 @@ const CarouselManager = {
     });
     
     this.setupCarouselEvents(category, viewport);
+    
+    debugLog(`⏰ Запускаємо showCarouselItem для ${category}[0] через 100мс`, 'info');
     
     setTimeout(() => {
       this.showCarouselItem(category, 0);
@@ -121,11 +123,16 @@ const CarouselManager = {
 
   // Показ елемента каруселі
   showCarouselItem(category, index) {
+    debugLog(`🎯 CarouselManager.showCarouselItem викликано для ${category}[${index}]`, 'info');
+    
     const track = document.getElementById(`${category}-carousel-track`);
     const viewport = document.getElementById(`${category}-carousel-viewport`);
     const items = track.querySelectorAll('.carousel-item');
     
-    if (!track || items.length === 0 || !items[index]) return;
+    if (!track || items.length === 0 || !items[index]) {
+      debugLog(`❌ Не вдалося знайти елементи для ${category}[${index}]`, 'error');
+      return;
+    }
 
     items.forEach((item, i) => {
       item.classList.toggle('active', i === index);
@@ -139,6 +146,8 @@ const CarouselManager = {
     carouselState[category].index = index;
     track.style.transform = `translateX(${newTransform}px)`;
     
+    debugLog(`🔄 Запуск завантаження для ${category}[${index}] та сусідів`, 'info');
+    
     // Ледаче завантаження для активного елемента та сусідів (як у тестовій логіці)
     this.loadOrGeneratePreview(category, index);
     if (index + 1 < items.length) this.loadOrGeneratePreview(category, index + 1);
@@ -149,18 +158,44 @@ const CarouselManager = {
 
   // Ледаче завантаження превью - тепер тільки генерація
   loadOrGeneratePreview(category, index) {
+    debugLog(`🔍 CarouselManager.loadOrGeneratePreview викликано для ${category}[${index}]`, 'info');
+    
     const track = document.getElementById(`${category}-carousel-track`);
-    if (!track) return;
+    if (!track) {
+      debugLog(`❌ Не знайдено track для категорії: ${category}`, 'error');
+      return;
+    }
     
     const items = track.querySelectorAll('.carousel-item');
     const item = items[index];
-    if (!item) return;
+    if (!item) {
+      debugLog(`❌ Не знайдено item з індексом ${index} для категорії: ${category}`, 'error');
+      return;
+    }
 
     const currentStatus = item.dataset.status;
-    if (currentStatus === 'loaded' || currentStatus === 'pending') return;
+    debugLog(`📊 Статус елемента ${category}[${index}]: ${currentStatus}`, 'info');
+    
+    if (currentStatus === 'loaded' || currentStatus === 'pending') {
+      debugLog(`⏭️ Пропущено завантаження для ${category}[${index}] - статус: ${currentStatus}`, 'warning');
+      return;
+    }
 
     const filename = item.dataset.filename || (modelLists[category] && modelLists[category][index]);
-    if (!filename) return;
+    if (!filename) {
+      debugLog(`❌ Не знайдено filename для ${category}[${index}]`, 'error');
+      return;
+    }
+
+    const componentPath = `${category}/${filename}`;
+    
+    // Перевіряємо, чи вже є pending для цього шляху
+    if (window.pendingPreviews && window.pendingPreviews[componentPath]) {
+      debugLog(`⏭️ Пропущено завантаження для ${componentPath} - вже в pending`, 'warning');
+      return;
+    }
+
+    debugLog(`🔄 Завантаження превью для ${componentPath} (індекс: ${index})`, 'info');
 
     let loadingDiv = item.querySelector('.loading-indicator');
     if (!loadingDiv) {
@@ -179,14 +214,41 @@ const CarouselManager = {
   // Автоматична генерація превью
   autoGeneratePreview(category, filename, item, loadingDiv) {
     if (!window.sketchup) {
+      debugLog(`❌ window.sketchup не доступний для: ${category}/${filename}`, 'error');
       createPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
       return;
     }
     
-    window.sketchup.generate_web_preview(`${category}/${filename}`);
+    const componentPath = `${category}/${filename}`;
+    debugLog(`🚀 Запуск генерації превью для: ${componentPath}`, 'info');
+    
+    try {
+      window.sketchup.generate_web_preview(componentPath);
+      debugLog(`✅ Ruby callback викликано для: ${componentPath}`, 'success');
+    } catch (error) {
+      debugLog(`❌ Помилка виклику Ruby callback: ${error.message}`, 'error');
+      createPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
+      return;
+    }
     
     window.pendingPreviews = window.pendingPreviews || {};
-    window.pendingPreviews[`${category}/${filename}`] = { item, loadingDiv, filename };
+    window.pendingPreviews[componentPath] = { item, loadingDiv, filename, source: 'CarouselManager' };
+    
+    debugLog(`📝 Додано до pending: ${componentPath} (CarouselManager)`, 'info');
+    debugLog(`📋 Всього pending: ${Object.keys(window.pendingPreviews).length}`, 'info');
+    
+    // Таймаут для pending елементів (10 секунд)
+    setTimeout(() => {
+      if (window.pendingPreviews && window.pendingPreviews[componentPath]) {
+        debugLog(`⏰ Таймаут для: ${componentPath}`, 'warning');
+        const pendingData = window.pendingPreviews[componentPath];
+        if (pendingData.item && pendingData.loadingDiv) {
+          createPlaceholder(pendingData.item, pendingData.loadingDiv, `Таймаут генерації\n${filename}`);
+          pendingData.item.dataset.status = 'timeout';
+        }
+        delete window.pendingPreviews[componentPath];
+      }
+    }, 10000);
   },
 
 
@@ -240,10 +302,24 @@ const CarouselManager = {
 
   // Автоматична ініціалізація всіх каруселей
   initializeAllCarousels() {
+    debugLog(`🚀 initializeAllCarousels викликано`, 'info');
+    debugLog(`📋 Доступні каруселі: ${Object.keys(this.carousels).join(', ')}`, 'info');
+    
     Object.keys(this.carousels).forEach(category => {
-      if (modelLists[category] && document.getElementById(`${category}-carousel-track`)) {
+      debugLog(`🔍 Перевіряємо карусель: ${category}`, 'info');
+      
+      const trackElement = document.getElementById(`${category}-carousel-track`);
+      const viewportElement = document.getElementById(`${category}-carousel-viewport`);
+      
+      debugLog(`🔍 Перевірка каруселі ${category}: моделі=${!!modelLists[category]}, кількість=${modelLists[category]?.length || 0}, track=${!!trackElement}, viewport=${!!viewportElement}`, 'info');
+      
+      if (modelLists[category] && trackElement && viewportElement) {
+        debugLog(`✅ Умови виконані для ${category}, запускаємо initialize`, 'success');
         this.initialize(category);
-        console.log(`✅ Автоматично ініціалізовано карусель: ${category}`);
+        debugLog(`✅ Автоматично ініціалізовано карусель: ${category}`, 'success');
+      } else {
+        debugLog(`❌ Не вдалося ініціалізувати карусель: ${category}`, 'error');
+        debugLog(`❌ Деталі для ${category}: моделі=${!!modelLists[category]}, track=${!!trackElement}, viewport=${!!viewportElement}`, 'error');
       }
     });
   },
@@ -274,46 +350,108 @@ const CarouselManager = {
   }
 };
 
+// --- DEBUG ФУНКЦІЇ ---
+
+// Функція для додавання повідомлень в debug лог
+function debugLog(message, type = 'info') {
+  const debugLog = document.getElementById('debug-log');
+  if (!debugLog) return;
+  
+  const timestamp = new Date().toLocaleTimeString();
+  const color = type === 'error' ? '#ff6b6b' : type === 'success' ? '#51cf66' : type === 'warning' ? '#ffd43b' : '#339af0';
+  
+  const logEntry = document.createElement('div');
+  logEntry.style.color = color;
+  logEntry.style.marginBottom = '2px';
+  logEntry.innerHTML = `<span style="color: #868e96;">[${timestamp}]</span> ${message}`;
+  
+  debugLog.appendChild(logEntry);
+  debugLog.scrollTop = debugLog.scrollHeight;
+  
+  // Обмежуємо кількість записів
+  while (debugLog.children.length > 50) {
+    debugLog.removeChild(debugLog.firstChild);
+  }
+}
+
+// Функція для очищення debug логу
+function clearDebugLog() {
+  const debugLog = document.getElementById('debug-log');
+  if (debugLog) {
+    debugLog.innerHTML = '<div>🔍 Очікування логів...</div>';
+  }
+}
+
 // --- ІНІЦІАЛІЗАЦІЯ ---
 window.onload = function () {
+  debugLog(`🚀 window.onload викликано`, 'info');
+  
   // Ініціалізуємо додаток одразу
+  debugLog(`🔄 Викликаємо initializeApp()`, 'info');
   initializeApp();
   
   // Запускаємо готовність
   if (window.sketchup && window.sketchup.ready) {
+    debugLog(`📞 Викликаємо window.sketchup.ready()`, 'info');
     window.sketchup.ready();
+  } else {
+    debugLog(`❌ window.sketchup.ready не доступний`, 'error');
   }
 };
 
 // Ініціалізація додатку
 function initializeApp() {
+  debugLog(`🚀 initializeApp викликано`, 'info');
+  
   // Ініціалізація UI (без повторного виклику ready)
   if(document.getElementById('tiling-mode')) {
+    debugLog(`✅ Знайдено tiling-mode, оновлюємо контроли`, 'success');
     updateTilingControls();
+  } else {
+    debugLog(`❌ Не знайдено tiling-mode`, 'error');
   }
+  
   // Згортаємо всі панелі, крім першої
-  document.querySelectorAll('.panel').forEach((panel, index) => {
+  const panels = document.querySelectorAll('.panel');
+  debugLog(`📋 Знайдено ${panels.length} панелей`, 'info');
+  
+  panels.forEach((panel, index) => {
     if (index > 0) {
       panel.classList.add('collapsed');
     }
   });
+  
+  debugLog(`🔄 Викликаємо updateAllDisplays()`, 'info');
   updateAllDisplays();
+  
+  debugLog(`✅ initializeApp завершено`, 'success');
 }
 
 function loadModelLists(data) {
+  debugLog(`📥 loadModelLists викликано`, 'info');
+  debugLog(`📊 Отримано дані для категорій: ${Object.keys(data).join(', ')}`, 'info');
+  
   modelLists = data;
   
   // Використовуємо автоматичну ініціалізацію всіх каруселей
+  debugLog(`🔄 Викликаємо CarouselManager.initializeAllCarousels()`, 'info');
   CarouselManager.initializeAllCarousels();
   
   // Ініціалізуємо тестову карусель стел
   if (modelLists['steles'] && document.getElementById('test-steles-carousel-track')) {
+    debugLog(`🧪 Ініціалізуємо тестову карусель для steles`, 'info');
     initializeTestCarousel('steles');
+  }
+  
+  // Ініціалізуємо основну карусель стел (копія тестової логіки)
+  if (modelLists['steles'] && document.getElementById('steles-carousel-track')) {
+    debugLog(`🏛️ Ініціалізуємо основну карусель стел (копія тестової)`, 'info');
+    initializeMainStelesCarousel('steles');
   }
   
   // Виводимо статистику каруселей
   const stats = CarouselManager.getCarouselStats();
-  console.log(`📊 Статистика каруселей: ${stats.active}/${stats.total} активних`);
+  debugLog(`📊 Статистика каруселей: ${stats.active}/${stats.total} активних`, 'info');
   
   updateAllDisplays();
 }
@@ -382,6 +520,40 @@ function initializeTestCarousel(category) {
   }, 100); 
 }
 
+// Ініціалізація основної каруселі стел (копія тестової логіки)
+function initializeMainStelesCarousel(category) {
+  const track = document.getElementById(`${category}-carousel-track`);
+  const viewport = document.getElementById(`${category}-carousel-viewport`);
+  if (!track || !viewport || !modelLists[category] || modelLists[category].length === 0) return;
+  
+  track.innerHTML = '';
+
+  modelLists[category].forEach(filename => {
+    const item = document.createElement('div');
+    item.className = 'carousel-item';
+    // Стан ледачого завантаження
+    item.dataset.status = 'idle';
+    item.dataset.filename = filename;
+    // Початковий індикатор
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading-indicator';
+    loadingDiv.textContent = 'Готово до завантаження';
+    item.appendChild(loadingDiv);
+    track.appendChild(item);
+  });
+  
+  viewport.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    moveMainStelesCarousel(category, event.deltaY > 0 ? 1 : -1);
+  });
+
+  setTimeout(() => {
+    showMainStelesCarouselItem(category, 0);
+    // Ледаче завантаження для першого елемента
+    loadOrGenerateMainStelesPreview(category, 0);
+  }, 100); 
+}
+
 // Ледаче завантаження превью для активного елемента тестової каруселі
 function loadOrGenerateTestPreview(category, index) {
   const track = document.getElementById(`test-${category}-carousel-track`);
@@ -419,12 +591,65 @@ function autoGenerateTestPreview(category, filename, item, loadingDiv) {
     return;
   }
   
+  const componentPath = `${category}/${filename}`;
+  debugLog(`🚀 Запуск генерації превью для: ${componentPath} (Test)`, 'info');
+  
   // Генеруємо веб-превью через SketchUp
-  window.sketchup.generate_web_preview(`${category}/${filename}`);
+  window.sketchup.generate_web_preview(componentPath);
   
   // Зберігаємо посилання на елементи для callback
   window.pendingPreviews = window.pendingPreviews || {};
-  window.pendingPreviews[`${category}/${filename}`] = { item, loadingDiv, filename };
+  window.pendingPreviews[componentPath] = { item, loadingDiv, filename, source: 'TestCarousel' };
+  
+  debugLog(`📝 Додано до pending: ${componentPath} (TestCarousel)`, 'info');
+}
+
+// Ледаче завантаження превью для основної каруселі стел
+function loadOrGenerateMainStelesPreview(category, index) {
+  const track = document.getElementById(`${category}-carousel-track`);
+  if (!track) return;
+  const items = track.querySelectorAll('.carousel-item');
+  const item = items[index];
+  if (!item) return;
+
+  const currentStatus = item.dataset.status;
+  if (currentStatus === 'loaded' || currentStatus === 'pending') return;
+
+  const filename = item.dataset.filename || (modelLists[category] && modelLists[category][index]);
+  if (!filename) return;
+
+  let loadingDiv = item.querySelector('.loading-indicator');
+  if (!loadingDiv) {
+    loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading-indicator';
+    item.appendChild(loadingDiv);
+  }
+  loadingDiv.textContent = 'Генерація превью...';
+
+  item.dataset.status = 'pending';
+
+  // Відразу запускаємо генерацію превью
+  autoGenerateMainStelesPreview(category, filename, item, loadingDiv);
+}
+
+// Автоматична генерація превью для основної каруселі стел
+function autoGenerateMainStelesPreview(category, filename, item, loadingDiv) {
+  if (!window.sketchup) {
+    createPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
+    return;
+  }
+  
+  const componentPath = `${category}/${filename}`;
+  debugLog(`🚀 Запуск генерації превью для: ${componentPath} (MainSteles)`, 'info');
+  
+  // Генеруємо веб-превью через SketchUp
+  window.sketchup.generate_web_preview(componentPath);
+  
+  // Зберігаємо посилання на елементи для callback
+  window.pendingPreviews = window.pendingPreviews || {};
+  window.pendingPreviews[componentPath] = { item, loadingDiv, filename, source: 'MainSteles' };
+  
+  debugLog(`📝 Додано до pending: ${componentPath} (MainSteles)`, 'info');
 }
 
 // Універсальна функція для створення заглушки
@@ -455,30 +680,49 @@ function createTestPlaceholder(item, loadingDiv, text) {
 
 // Функція для отримання згенерованого превью з Ruby
 function receiveWebPreview(componentPath, base64Data) {
+  debugLog(`📥 Отримано превью для: ${componentPath}`, 'info');
+  debugLog(`📊 Розмір base64 даних: ${base64Data ? base64Data.length : 0} символів`, 'info');
+  debugLog(`🔍 Перші 50 символів base64: ${base64Data ? base64Data.substring(0, 50) : 'null'}`, 'info');
+  
   const pendingData = window.pendingPreviews && window.pendingPreviews[componentPath];
   if (!pendingData) {
+    debugLog(`❌ Не знайдено pending дані для: ${componentPath}`, 'error');
+    debugLog(`📋 Доступні pending: ${Object.keys(window.pendingPreviews || {}).join(', ')}`, 'error');
     return;
   }
   
-  const { item, loadingDiv, filename } = pendingData;
+  const { item, loadingDiv, filename, source } = pendingData;
+  debugLog(`✅ Знайдено pending дані для: ${filename} (${source})`, 'success');
   
   if (base64Data && base64Data.startsWith('data:image/')) {
+    debugLog(`🖼️ Створюємо зображення для: ${filename}`, 'info');
+    
     // Створюємо зображення з base64 даних
     const img = document.createElement('img');
     img.src = base64Data;
     img.alt = filename;
     
     // Видаляємо індикатор завантаження та додаємо зображення
-    if (loadingDiv && loadingDiv.parentNode) loadingDiv.parentNode.removeChild(loadingDiv);
-    if (item) item.appendChild(img);
+    if (loadingDiv && loadingDiv.parentNode) {
+      loadingDiv.parentNode.removeChild(loadingDiv);
+      debugLog(`🗑️ Видалено loading indicator для: ${filename}`, 'info');
+    }
+    
+    if (item) {
+      item.appendChild(img);
+      item.dataset.status = 'loaded';
+      debugLog(`✅ Зображення додано для: ${filename}`, 'success');
+    }
     
   } else {
+    debugLog(`❌ Помилка: base64 дані не є валідним зображенням для: ${filename}`, 'error');
     // Якщо не вдалося згенерувати, показуємо заглушку
     if (item && loadingDiv) createPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
   }
   
   // Очищаємо pending
   delete window.pendingPreviews[componentPath];
+  debugLog(`🧹 Очищено pending для: ${componentPath}`, 'info');
 }
 
 // Функція для обробки помилки генерації превью
@@ -501,6 +745,17 @@ function moveTestCarousel(category, direction) {
   
   if (newIndex >= 0 && newIndex < items.length) {
     showTestCarouselItem(category, newIndex);
+  }
+}
+
+function moveMainStelesCarousel(category, direction) {
+  const state = carouselState[category];
+  const newIndex = state.index + direction;
+  const track = document.getElementById(`${category}-carousel-track`);
+  const items = track.querySelectorAll('.carousel-item');
+  
+  if (newIndex >= 0 && newIndex < items.length) {
+    showMainStelesCarouselItem(category, newIndex);
   }
 }
 
@@ -527,6 +782,33 @@ function showTestCarouselItem(category, index) {
   loadOrGenerateTestPreview(category, index);
   if (index + 1 < items.length) loadOrGenerateTestPreview(category, index + 1);
   if (index - 1 >= 0) loadOrGenerateTestPreview(category, index - 1);
+}
+
+function showMainStelesCarouselItem(category, index) {
+  const track = document.getElementById(`${category}-carousel-track`);
+  const viewport = document.getElementById(`${category}-carousel-viewport`);
+  const items = track.querySelectorAll('.carousel-item');
+  
+  if (!track || items.length === 0 || !items[index]) return;
+
+  items.forEach((item, i) => {
+    item.classList.toggle('active', i === index);
+  });
+  
+  const viewportCenter = viewport.offsetWidth / 2;
+  const targetItem = items[index];
+  const itemCenter = targetItem.offsetLeft + targetItem.offsetWidth / 2;
+  const newTransform = viewportCenter - itemCenter;
+
+  carouselState[category].index = index;
+  track.style.transform = `translateX(${newTransform}px)`;
+  
+  // Ледаче завантаження для активного елемента та сусідів
+  loadOrGenerateMainStelesPreview(category, index);
+  if (index + 1 < items.length) loadOrGenerateMainStelesPreview(category, index + 1);
+  if (index - 1 >= 0) loadOrGenerateMainStelesPreview(category, index - 1);
+  
+  updateAllDisplays();
 }
 
 
