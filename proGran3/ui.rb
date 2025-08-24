@@ -133,6 +133,95 @@ module ProGran3
         html = @carousel_ui.get_carousel_html(carousel_id)
         dialog.execute_script("receiveCarouselHtml('#{carousel_id}', `#{html}`);")
       end
+
+      # Callback для отримання статусу моделі
+      @dialog.add_action_callback("get_model_status") do |dialog, _|
+        puts "🔍 get_model_status callback викликано"
+        
+        # Отримуємо поточну модель SketchUp
+        model = Sketchup.active_model
+        status = {
+          foundation: false,
+          tiling: false,
+          cladding: false,
+          stands: false,
+          flowerbeds: false,
+          steles: false
+        }
+        
+        if model
+          # Функція для рекурсивного пошуку елементів
+          def check_entities(entities, status)
+            entities.each do |entity|
+              if entity.is_a?(Sketchup::ComponentInstance)
+                definition = entity.definition
+                name = definition.name.downcase
+                
+                # Перевіряємо категорії на основі імені компонента
+                if name.include?('stand') || name.include?('підставка')
+                  status[:stands] = true
+                elsif name.include?('flowerbed') || name.include?('квітник')
+                  status[:flowerbeds] = true
+                elsif name.include?('stele') || name.include?('стела')
+                  status[:steles] = true
+                end
+              elsif entity.is_a?(Sketchup::Group)
+                # Рекурсивно перевіряємо групи
+                check_entities(entity.entities, status)
+              elsif entity.is_a?(Sketchup::Edge) || entity.is_a?(Sketchup::Face)
+                # Перевіряємо геометрію для фундаменту, плитки та облицювання
+                # Це спрощена логіка - можна покращити
+                if entity.layer && entity.layer.name.downcase.include?('foundation')
+                  status[:foundation] = true
+                elsif entity.layer && entity.layer.name.downcase.include?('tiles')
+                  status[:tiling] = true
+                elsif entity.layer && entity.layer.name.downcase.include?('cladding')
+                  status[:cladding] = true
+                end
+              end
+            end
+          end
+          
+          # Перевіряємо всі елементи моделі
+          check_entities(model.active_entities, status)
+          
+          # Додаткова перевірка для фундаменту, плитки та облицювання
+          # Шукаємо за розмірами або іншими характеристиками
+          model.active_entities.each do |entity|
+            if entity.is_a?(Sketchup::Group)
+              # Перевіряємо групи на основі їх розмірів або імені
+              bounds = entity.bounds
+              if bounds
+                width = bounds.width
+                height = bounds.height
+                depth = bounds.depth
+                
+                # Фундамент зазвичай має великі розміри і малу висоту
+                if width > 1000 && depth > 1000 && height < 200
+                  status[:foundation] = true
+                end
+                
+                # Плитка зазвичай тонка і широка
+                if height < 50 && width > 500 && depth > 500
+                  status[:tiling] = true
+                end
+                
+                # Облицювання зазвичай вертикальне
+                if height > 200 && (width < 100 || depth < 100)
+                  status[:cladding] = true
+                end
+              end
+            end
+          end
+        end
+        
+        puts "📊 Статус моделі: #{status}"
+        
+        # Відправляємо статус в JavaScript
+        script = "receiveModelStatus(#{status.to_json});"
+        @dialog.execute_script(script)
+        puts "✅ Статус моделі відправлено в JavaScript"
+      end
       
 
 

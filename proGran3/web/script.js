@@ -905,6 +905,57 @@ function addSideCladding() {
   }
 }
 
+// Функція для оновлення специфікації з моделі
+function refreshSpecification() {
+  debugLog(`🔄 Оновлення специфікації з моделі`, 'info');
+  
+  if (window.sketchup && window.sketchup.get_model_status) {
+    // Викликаємо Ruby callback для отримання поточного стану моделі
+    window.sketchup.get_model_status();
+  } else {
+    debugLog(`❌ window.sketchup.get_model_status не доступний`, 'error');
+    // Якщо callback недоступний, просто очищаємо специфікацію
+    clearSpecification();
+  }
+}
+
+// Функція для очищення специфікації
+function clearSpecification() {
+  debugLog(`🧹 Очищення специфікації`, 'info');
+  
+  // Скидаємо всі додані елементи
+  Object.keys(addedElements).forEach(key => {
+    addedElements[key] = false;
+  });
+  
+  // Оновлюємо таблицю
+  updateSummaryTable();
+}
+
+// Функція для отримання статусу моделі з Ruby (callback)
+function receiveModelStatus(statusData) {
+  debugLog(`📥 Отримано статус моделі: ${JSON.stringify(statusData)}`, 'info');
+  
+  // Оновлюємо addedElements на основі отриманих даних
+  if (statusData) {
+    addedElements = {
+      foundation: statusData.foundation || false,
+      tiling: statusData.tiling || false,
+      cladding: statusData.cladding || false,
+      stands: statusData.stands || false,
+      flowerbeds: statusData.flowerbeds || false,
+      steles: statusData.steles || false
+    };
+  } else {
+    // Якщо дані не отримані, очищаємо специфікацію
+    clearSpecification();
+  }
+  
+  // Оновлюємо таблицю
+  updateSummaryTable();
+  debugLog(`✅ Специфікація оновлена`, 'success');
+}
+
 
 
 
