@@ -11,11 +11,320 @@ let testCarouselState = {
   steles: { index: 0 }
 };
 
+// Глобальна змінна для відстеження генерації превью
+let previewGenerationComplete = false;
+let previewGenerationStarted = false;
+
+// Універсальна система каруселей
+const CarouselManager = {
+  // Конфігурація каруселей
+  carousels: {
+    'stands': { 
+      hasPreview: false, 
+      previewMode: 'static',
+      massGeneration: false 
+    },
+    'steles': { 
+      hasPreview: true, 
+      previewMode: 'dynamic',
+      massGeneration: true 
+    },
+    'flowerbeds': { 
+      hasPreview: false, 
+      previewMode: 'static',
+      massGeneration: false 
+    }
+  },
+
+  // Ініціалізація каруселі
+  initialize(category, options = {}) {
+    const config = { ...this.carousels[category], ...options };
+    const track = document.getElementById(`${category}-carousel-track`);
+    const viewport = document.getElementById(`${category}-carousel-viewport`);
+    
+    if (!track || !viewport || !modelLists[category] || modelLists[category].length === 0) return;
+    
+    track.innerHTML = '';
+    
+    modelLists[category].forEach(filename => {
+      const item = this.createCarouselItem(category, filename, config);
+      track.appendChild(item);
+    });
+    
+    this.setupCarouselEvents(category, viewport);
+    
+    setTimeout(() => {
+      this.showCarouselItem(category, 0);
+      if (config.massGeneration) {
+        this.generateAllPreviews(category);
+      }
+    }, 100);
+  },
+
+  // Створення елемента каруселі
+  createCarouselItem(category, filename, config) {
+    const item = document.createElement('div');
+    item.className = 'carousel-item';
+    
+    if (config.hasPreview && config.previewMode === 'dynamic') {
+      // Динамічне превью з ледачим завантаженням
+      item.dataset.status = 'idle';
+      item.dataset.filename = filename;
+      item.dataset.category = category;
+      
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'loading-indicator';
+      loadingDiv.textContent = 'Готово до завантаження';
+      item.appendChild(loadingDiv);
+    } else {
+      // Статичне превью або без превью
+      const img = document.createElement('img');
+      const imgPath = `../assets/${category}/${filename.replace('.skp', '.png')}`;
+      img.src = imgPath;
+      img.alt = filename;
+      item.appendChild(img);
+    }
+    
+    return item;
+  },
+
+  // Налаштування подій каруселі
+  setupCarouselEvents(category, viewport) {
+    viewport.addEventListener('wheel', (event) => {
+      event.preventDefault();
+      this.moveCarousel(category, event.deltaY > 0 ? 1 : -1);
+    });
+  },
+
+  // Показ елемента каруселі
+  showCarouselItem(category, index) {
+    const track = document.getElementById(`${category}-carousel-track`);
+    const viewport = document.getElementById(`${category}-carousel-viewport`);
+    const items = track.querySelectorAll('.carousel-item');
+    
+    if (!track || items.length === 0 || !items[index]) return;
+
+    items.forEach((item, i) => {
+      item.classList.toggle('active', i === index);
+    });
+    
+    const viewportCenter = viewport.offsetWidth / 2;
+    const targetItem = items[index];
+    const itemCenter = targetItem.offsetLeft + targetItem.offsetWidth / 2;
+    const newTransform = viewportCenter - itemCenter;
+
+    carouselState[category].index = index;
+    track.style.transform = `translateX(${newTransform}px)`;
+    
+    // Ледаче завантаження для динамічних превью
+    const config = this.carousels[category];
+    if (config.hasPreview && config.previewMode === 'dynamic') {
+      this.loadOrGeneratePreview(category, index);
+      // Завантажуємо сусідні елементи
+      if (index + 1 < items.length) this.loadOrGeneratePreview(category, index + 1);
+      if (index - 1 >= 0) this.loadOrGeneratePreview(category, index - 1);
+    }
+    
+    updateAllDisplays();
+  },
+
+  // Ледаче завантаження превью
+  loadOrGeneratePreview(category, index) {
+    const track = document.getElementById(`${category}-carousel-track`);
+    if (!track) return;
+    
+    const items = track.querySelectorAll('.carousel-item');
+    const item = items[index];
+    if (!item) return;
+
+    const currentStatus = item.dataset.status;
+    if (currentStatus === 'loaded' || currentStatus === 'pending') return;
+
+    const filename = item.dataset.filename || (modelLists[category] && modelLists[category][index]);
+    if (!filename) return;
+
+    let loadingDiv = item.querySelector('.loading-indicator');
+    if (!loadingDiv) {
+      loadingDiv = document.createElement('div');
+      loadingDiv.className = 'loading-indicator';
+      item.appendChild(loadingDiv);
+    }
+    loadingDiv.textContent = 'Завантаження';
+
+    item.dataset.status = 'pending';
+
+    const img = new Image();
+    img.alt = filename;
+    img.onload = function() {
+      item.dataset.status = 'loaded';
+      if (loadingDiv && loadingDiv.parentNode) loadingDiv.parentNode.removeChild(loadingDiv);
+      item.appendChild(img);
+    };
+    img.onerror = function() {
+      loadingDiv.textContent = 'Генерація превью...';
+      CarouselManager.autoGeneratePreview(category, filename, item, loadingDiv);
+    };
+    img.src = `../assets/${category}/${filename.replace('.skp', '.png')}`;
+  },
+
+  // Автоматична генерація превью
+  autoGeneratePreview(category, filename, item, loadingDiv) {
+    if (!window.sketchup) {
+      this.createPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
+      return;
+    }
+    
+    window.sketchup.generate_web_preview(`${category}/${filename}`);
+    
+    window.pendingPreviews = window.pendingPreviews || {};
+    window.pendingPreviews[`${category}/${filename}`] = { item, loadingDiv, filename };
+  },
+
+  // Масове завантаження превью
+  generateAllPreviews(category) {
+    if (!modelLists[category] || modelLists[category].length === 0) {
+      previewGenerationComplete = true;
+      return;
+    }
+    
+    console.log(`🔄 Початок масової генерації превью для ${category}...`);
+    
+    let completedCount = 0;
+    const totalCount = modelLists[category].length;
+    
+    modelLists[category].forEach((filename, index) => {
+      setTimeout(() => {
+        this.loadOrGeneratePreview(category, index);
+        completedCount++;
+        
+        if (completedCount >= totalCount) {
+          setTimeout(() => {
+            previewGenerationComplete = true;
+            console.log(`✅ Всі превью ${category} згенеровані`);
+          }, 1000);
+        }
+      }, index * 300);
+    });
+  },
+
+  // Створення заглушки
+  createPlaceholder(item, loadingDiv, text) {
+    loadingDiv.remove();
+    const placeholder = document.createElement('div');
+    placeholder.style.cssText = `
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.1);
+      color: #666;
+      font-size: 12px;
+      text-align: center;
+      padding: 10px;
+      box-sizing: border-box;
+    `;
+    placeholder.textContent = text;
+    item.appendChild(placeholder);
+  },
+
+  // Рух каруселі
+  moveCarousel(category, direction) {
+    const state = carouselState[category];
+    const newIndex = state.index + direction;
+    const track = document.getElementById(`${category}-carousel-track`);
+    const items = track.querySelectorAll('.carousel-item');
+    
+    if (newIndex >= 0 && newIndex < items.length) {
+      this.showCarouselItem(category, newIndex);
+    }
+  },
+
+  // Додавання моделі
+  addModel(category) {
+    const state = carouselState[category];
+    const filename = modelLists[category][state.index];
+    
+    if (window.sketchup && window.sketchup.add_model) {
+      window.sketchup.add_model(category, filename);
+      updateAllDisplays();
+    }
+  },
+
+  // Реєстрація нової каруселі
+  registerCarousel(category, config) {
+    this.carousels[category] = config;
+    if (!carouselState[category]) {
+      carouselState[category] = { index: 0 };
+    }
+  }
+};
+
 // --- ІНІЦІАЛІЗАЦІЯ ---
 window.onload = function () {
-  if (window.sketchup && window.sketchup.ready) {
-    window.sketchup.ready();
+  // Запускаємо анімацію запуску
+  startStartupAnimation();
+};
+
+// Анімація запуску
+function startStartupAnimation() {
+  const pixelsContainer = document.querySelector('.pixels-container');
+  const startupAnimation = document.getElementById('startup-animation');
+  const mainContent = document.getElementById('main-content');
+  
+  // Створюємо частинки
+  const colors = ['color1', 'color2', 'color3', 'color4', 'color5', 'color6', 'color7', 'color8'];
+  
+  // Створюємо 200 частинок
+  for (let i = 0; i < 200; i++) {
+    const pixel = document.createElement('div');
+    pixel.className = `pixel ${colors[Math.floor(Math.random() * colors.length)]}`;
+    
+    // Розподіляємо по сторонах екрану
+    const side = Math.floor(Math.random() * 8); // 8 напрямків
+    const angle = (Math.PI * 2 * side) / 8;
+    const distance = 200 + Math.random() * 200;
+    
+    pixel.style.left = `calc(50% + ${Math.cos(angle) * distance}px)`;
+    pixel.style.top = `calc(50% + ${Math.sin(angle) * distance}px)`;
+    
+    pixel.style.animationDelay = Math.random() * 3 + 's';
+    pixelsContainer.appendChild(pixel);
   }
+  
+  // Запускаємо генерацію превью під час анімації
+  setTimeout(() => {
+    if (window.sketchup && window.sketchup.ready) {
+      previewGenerationStarted = true;
+      window.sketchup.ready();
+    }
+  }, 1500);
+  
+  // Перевіряємо завершення генерації та завершуємо анімацію
+  function checkAndFinishAnimation() {
+    if (previewGenerationComplete || !previewGenerationStarted) {
+      // Завершуємо анімацію
+      startupAnimation.style.opacity = '0';
+      startupAnimation.style.transition = 'opacity 1s ease-out';
+      
+      setTimeout(() => {
+        startupAnimation.style.display = 'none';
+        mainContent.style.display = 'block';
+        initializeApp();
+      }, 1000);
+    } else {
+      // Перевіряємо ще раз через 500мс
+      setTimeout(checkAndFinishAnimation, 500);
+    }
+  }
+  
+  // Починаємо перевірку через 8 секунд (мінімальний час анімації)
+  setTimeout(checkAndFinishAnimation, 8000);
+}
+
+// Ініціалізація додатку
+function initializeApp() {
+  // Ініціалізація UI (без повторного виклику ready)
   if(document.getElementById('tiling-mode')) {
     updateTilingControls();
   }
@@ -26,19 +335,23 @@ window.onload = function () {
     }
   });
   updateAllDisplays();
-};
+}
 
 function loadModelLists(data) {
   modelLists = data;
-  ['stands', 'steles', 'flowerbeds'].forEach(category => {
+  
+  // Ініціалізуємо всі каруселі через універсальну систему
+  Object.keys(CarouselManager.carousels).forEach(category => {
     if (modelLists[category] && document.getElementById(`${category}-carousel-track`)) {
-      initializeCarousel(category);
+      CarouselManager.initialize(category);
     }
   });
+  
   // Ініціалізуємо тестову карусель стел
   if (modelLists['steles'] && document.getElementById('test-steles-carousel-track')) {
     initializeTestCarousel('steles');
   }
+  
   updateAllDisplays();
 }
 
@@ -68,33 +381,7 @@ function advanceToNextPanel(buttonElement) {
   }
 }
 
-// --- УНІВЕРСАЛЬНА ЛОГІКА ДЛЯ КАРУСЕЛЕЙ ---
-
-function initializeCarousel(category) {
-  const track = document.getElementById(`${category}-carousel-track`);
-  const viewport = document.getElementById(`${category}-carousel-viewport`);
-  if (!track || !viewport || !modelLists[category] || modelLists[category].length === 0) return;
-  
-  track.innerHTML = '';
-
-  modelLists[category].forEach(filename => {
-    const item = document.createElement('div');
-    item.className = 'carousel-item';
-    const img = document.createElement('img');
-    const imgPath = `../assets/${category}/${filename.replace('.skp', '.png')}`;
-    img.src = imgPath;
-    img.alt = filename;
-    item.appendChild(img);
-    track.appendChild(item);
-  });
-  
-  viewport.addEventListener('wheel', (event) => {
-    event.preventDefault();
-    moveCarousel(category, event.deltaY > 0 ? 1 : -1);
-  });
-
-  setTimeout(() => showCarouselItem(category, 0), 100); 
-}
+// --- ТЕСТОВА КАРУСЕЛЬ (залишаємо для зворотної сумісності) ---
 
 // Ініціалізація тестової каруселі
 function initializeTestCarousel(category) {
@@ -107,54 +394,14 @@ function initializeTestCarousel(category) {
   modelLists[category].forEach(filename => {
     const item = document.createElement('div');
     item.className = 'carousel-item';
-    const img = document.createElement('img');
-    
-    // Додаємо індикатор завантаження
+    // Стан ледачого завантаження
+    item.dataset.status = 'idle';
+    item.dataset.filename = filename;
+    // Початковий індикатор
     const loadingDiv = document.createElement('div');
     loadingDiv.className = 'loading-indicator';
-    loadingDiv.textContent = 'Завантаження';
+    loadingDiv.textContent = 'Готово до завантаження';
     item.appendChild(loadingDiv);
-    
-    // Функція для створення заглушки
-    const createPlaceholder = (text) => {
-      loadingDiv.remove();
-      const placeholder = document.createElement('div');
-      placeholder.style.cssText = `
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(255, 255, 255, 0.1);
-        color: #666;
-        font-size: 12px;
-        text-align: center;
-        padding: 10px;
-        box-sizing: border-box;
-      `;
-      placeholder.textContent = text;
-      item.appendChild(placeholder);
-    };
-    
-    // Спочатку намагаємося завантажити оригінальне зображення
-    const imgPath = `../assets/${category}/${filename.replace('.skp', '.png')}`;
-    img.src = imgPath;
-    img.alt = filename;
-    
-      // Обробка успішного завантаження
-  img.onload = function() {
-    debugLog(`✅ Зображення завантажено: ${filename}`);
-    loadingDiv.remove();
-    item.appendChild(img);
-  };
-
-  // Обробка помилки завантаження - автоматично генеруємо превью
-  img.onerror = function() {
-    debugLog(`❌ Помилка завантаження зображення: ${filename}, запускаємо генерацію`);
-    loadingDiv.textContent = 'Генерація превью...';
-    autoGenerateTestPreview(category, filename, item, loadingDiv);
-  };
-    
     track.appendChild(item);
   });
   
@@ -163,7 +410,51 @@ function initializeTestCarousel(category) {
     moveTestCarousel(category, event.deltaY > 0 ? 1 : -1);
   });
 
-  setTimeout(() => showTestCarouselItem(category, 0), 100); 
+  setTimeout(() => {
+    showTestCarouselItem(category, 0);
+    // Ледаче завантаження для першого елемента
+    loadOrGenerateTestPreview(category, 0);
+  }, 100); 
+}
+
+// Ледаче завантаження превью для активного елемента тестової каруселі
+function loadOrGenerateTestPreview(category, index) {
+  const track = document.getElementById(`test-${category}-carousel-track`);
+  if (!track) return;
+  const items = track.querySelectorAll('.carousel-item');
+  const item = items[index];
+  if (!item) return;
+
+  const currentStatus = item.dataset.status;
+  if (currentStatus === 'loaded' || currentStatus === 'pending') return;
+
+  const filename = item.dataset.filename || (modelLists[category] && modelLists[category][index]);
+  if (!filename) return;
+
+  let loadingDiv = item.querySelector('.loading-indicator');
+  if (!loadingDiv) {
+    loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading-indicator';
+    item.appendChild(loadingDiv);
+  }
+  loadingDiv.textContent = 'Завантаження';
+
+  item.dataset.status = 'pending';
+
+  const img = new Image();
+  img.alt = filename;
+  img.onload = function() {
+    item.dataset.status = 'loaded';
+    if (loadingDiv && loadingDiv.parentNode) loadingDiv.parentNode.removeChild(loadingDiv);
+    item.appendChild(img);
+    debugLog(`✅ Зображення завантажено: ${filename}`);
+  };
+  img.onerror = function() {
+    debugLog(`❌ PNG відсутнє, запускаємо генерацію: ${filename}`);
+    loadingDiv.textContent = 'Генерація превью...';
+    autoGenerateTestPreview(category, filename, item, loadingDiv);
+  };
+  img.src = `../assets/${category}/${filename.replace('.skp', '.png')}`;
 }
 
 // Функція для логування в веб-інтерфейсі
@@ -245,17 +536,15 @@ function receiveWebPreview(componentPath, base64Data) {
     img.alt = filename;
     
     // Видаляємо індикатор завантаження та додаємо зображення
-    loadingDiv.remove();
-    item.appendChild(img);
+    if (loadingDiv && loadingDiv.parentNode) loadingDiv.parentNode.removeChild(loadingDiv);
+    if (item) item.appendChild(img);
     
-    // Показуємо сповіщення
-    showNotification(`Превью згенеровано для ${filename}`, 'success');
   } else {
     debugLog('❌ Невалідні base64 дані або відсутні');
     debugLog(`🔍 Перевірка: startsWith('data:image/'): ${base64Data ? base64Data.startsWith('data:image/') : false}`);
+    
     // Якщо не вдалося згенерувати, показуємо заглушку
-    createTestPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
-    showNotification(`Не вдалося згенерувати превью для ${filename}`, 'warning');
+    if (item && loadingDiv) createTestPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
   }
   
   // Очищаємо pending
@@ -270,52 +559,20 @@ function handlePreviewError(componentPath, errorMessage) {
   
   const { item, loadingDiv, filename } = pendingData;
   createTestPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
-  showNotification(errorMessage || `Помилка генерації превью для ${filename}`, 'error');
   
   // Очищаємо pending
   delete window.pendingPreviews[componentPath];
 }
 
-
-
-function moveCarousel(category, direction) {
-  const state = carouselState[category];
-  const newIndex = state.index + direction;
-  
-  if (newIndex >= 0 && newIndex < modelLists[category].length) {
-    showCarouselItem(category, newIndex);
-  }
-}
-
 function moveTestCarousel(category, direction) {
   const state = testCarouselState[category];
   const newIndex = state.index + direction;
-  
-  if (newIndex >= 0 && newIndex < modelLists[category].length) {
-    showTestCarouselItem(category, newIndex);
-  }
-}
-
-function showCarouselItem(category, index) {
-  const track = document.getElementById(`${category}-carousel-track`);
-  const viewport = document.getElementById(`${category}-carousel-viewport`);
+  const track = document.getElementById(`test-${category}-carousel-track`);
   const items = track.querySelectorAll('.carousel-item');
   
-  if (!track || items.length === 0 || !items[index]) return;
-
-  items.forEach((item, i) => {
-    item.classList.toggle('active', i === index);
-  });
-  
-  const viewportCenter = viewport.offsetWidth / 2;
-  const targetItem = items[index];
-  const itemCenter = targetItem.offsetLeft + targetItem.offsetWidth / 2;
-  const newTransform = viewportCenter - itemCenter;
-
-  carouselState[category].index = index;
-  track.style.transform = `translateX(${newTransform}px)`;
-  
-  updateAllDisplays();
+  if (newIndex >= 0 && newIndex < items.length) {
+    showTestCarouselItem(category, newIndex);
+  }
 }
 
 function showTestCarouselItem(category, index) {
@@ -336,273 +593,204 @@ function showTestCarouselItem(category, index) {
 
   testCarouselState[category].index = index;
   track.style.transform = `translateX(${newTransform}px)`;
+  
+  // Ледаче завантаження для активного елемента та сусідів
+  loadOrGenerateTestPreview(category, index);
+  if (index + 1 < items.length) loadOrGenerateTestPreview(category, index + 1);
+  if (index - 1 >= 0) loadOrGenerateTestPreview(category, index - 1);
 }
 
-// --- ФУНКЦІЇ ДЛЯ СТВОРЕННЯ ЕЛЕМЕНТІВ ---
-
-function addModel(category) {
-  const state = carouselState[category];
-  const filename = modelLists[category][state.index];
-  if (window.sketchup && filename) {
-    window.sketchup.insert_component(`${category}|${filename}`);
-  }
+function generateTestPreviews(category) {
+  if (!modelLists[category] || modelLists[category].length === 0) return;
+  
+  console.log(`🔄 Початок генерації тестових превью для ${category}...`);
+  
+  modelLists[category].forEach((filename, index) => {
+    setTimeout(() => {
+      loadOrGenerateTestPreview(category, index);
+    }, index * 200);
+  });
 }
 
 function addTestModel(category) {
   const state = testCarouselState[category];
   const filename = modelLists[category][state.index];
-  if (window.sketchup && filename) {
-    window.sketchup.insert_component(`${category}|${filename}`);
-    showNotification(`Тестовий компонент ${filename} додано!`, 'success');
+  
+  if (window.sketchup && window.sketchup.add_model) {
+    window.sketchup.add_model(category, filename);
   }
 }
 
+// --- УНІВЕРСАЛЬНІ ФУНКЦІЇ ДЛЯ КАРУСЕЛЕЙ ---
+
+// Замінюємо старі функції на універсальні
+function initializeCarousel(category) {
+  CarouselManager.initialize(category);
+}
+
+function showCarouselItem(category, index) {
+  CarouselManager.showCarouselItem(category, index);
+}
+
+function moveCarousel(category, direction) {
+  CarouselManager.moveCarousel(category, direction);
+}
+
+function addModel(category) {
+  CarouselManager.addModel(category);
+}
+
+// --- ІНШІ ФУНКЦІЇ ---
+
 function updateTilingControls() {
-    const mode = document.getElementById('tiling-mode').value;
-    const frameControls = document.getElementById('frame-controls');
-    const modularControls = document.getElementById('modular-controls');
-    
-    if (mode === 'frame') {
-        frameControls.classList.remove('hidden');
-        modularControls.classList.add('hidden');
-    } else if (mode === 'modular') {
-        frameControls.classList.add('hidden');
-        modularControls.classList.remove('hidden');
+  const tilingMode = document.getElementById('tiling-mode');
+  const frameControls = document.getElementById('frame-controls');
+  const modularControls = document.getElementById('modular-controls');
+  
+  if (tilingMode.value === 'frame') {
+    frameControls.classList.remove('hidden');
+    modularControls.classList.add('hidden');
+  } else {
+    frameControls.classList.add('hidden');
+    modularControls.classList.remove('hidden');
+  }
+}
+
+function updateAllDisplays() {
+  // Оновлення відображення розмірів фундаменту
+  const foundationDepth = document.getElementById('foundation-depth').value;
+  const foundationWidth = document.getElementById('foundation-width').value;
+  const foundationHeight = document.getElementById('foundation-height').value;
+  document.getElementById('foundation-dimensions-display').textContent = 
+    `${foundationDepth}×${foundationWidth}×${foundationHeight} мм`;
+  
+  // Оновлення відображення типу плитки
+  const tilingMode = document.getElementById('tiling-mode');
+  if (tilingMode) {
+    const modeText = tilingMode.options[tilingMode.selectedIndex].text;
+    document.getElementById('tiling-type-display').textContent = modeText;
+  }
+  
+  // Оновлення відображення товщини облицювання
+  const claddingThickness = document.getElementById('cladding-thickness').value;
+  document.getElementById('cladding-dimensions-display').textContent = 
+    `Товщина: ${claddingThickness} мм`;
+  
+  // Оновлення відображення вибраних моделей
+  updateModelDisplays();
+  
+  // Оновлення підсумкової таблиці
+  updateSummaryTable();
+}
+
+function updateModelDisplays() {
+  // Оновлення відображення підставки
+  if (carouselState.stands && modelLists.stands) {
+    const standIndex = carouselState.stands.index;
+    const standFilename = modelLists.stands[standIndex];
+    if (standFilename) {
+      document.getElementById('stands-dimensions-display').textContent = 
+        standFilename.replace('.skp', '');
     }
-    updateAllDisplays();
+  }
+  
+  // Оновлення відображення квітника
+  if (carouselState.flowerbeds && modelLists.flowerbeds) {
+    const flowerbedIndex = carouselState.flowerbeds.index;
+    const flowerbedFilename = modelLists.flowerbeds[flowerbedIndex];
+    if (flowerbedFilename) {
+      document.getElementById('flowerbeds-dimensions-display').textContent = 
+        flowerbedFilename.replace('.skp', '');
+    }
+  }
+  
+  // Оновлення відображення стели
+  if (carouselState.steles && modelLists.steles) {
+    const steleIndex = carouselState.steles.index;
+    const steleFilename = modelLists.steles[steleIndex];
+    if (steleFilename) {
+      document.getElementById('steles-dimensions-display').textContent = 
+        steleFilename.replace('.skp', '');
+    }
+  }
+}
+
+function updateSummaryTable() {
+  // Фундамент
+  const foundationDepth = document.getElementById('foundation-depth').value;
+  const foundationWidth = document.getElementById('foundation-width').value;
+  const foundationHeight = document.getElementById('foundation-height').value;
+  document.getElementById('summary-foundation').textContent = 
+    `${foundationDepth}×${foundationWidth}×${foundationHeight} мм`;
+  
+  // Плитка
+  const tilingMode = document.getElementById('tiling-mode');
+  if (tilingMode) {
+    const modeText = tilingMode.options[tilingMode.selectedIndex].text;
+    document.getElementById('summary-tiling').textContent = modeText;
+  }
+  
+  // Облицювання
+  const claddingThickness = document.getElementById('cladding-thickness').value;
+  document.getElementById('summary-cladding').textContent = 
+    `Товщина: ${claddingThickness} мм`;
+  
+  // Підставка
+  if (carouselState.stands && modelLists.stands) {
+    const standFilename = modelLists.stands[carouselState.stands.index];
+    document.getElementById('summary-stand').textContent = 
+      standFilename ? standFilename.replace('.skp', '') : '--';
+  }
+  
+  // Квітник
+  if (carouselState.flowerbeds && modelLists.flowerbeds) {
+    const flowerbedFilename = modelLists.flowerbeds[carouselState.flowerbeds.index];
+    document.getElementById('summary-flowerbed').textContent = 
+      flowerbedFilename ? flowerbedFilename.replace('.skp', '') : '--';
+  }
+  
+  // Стела
+  if (carouselState.steles && modelLists.steles) {
+    const steleFilename = modelLists.steles[carouselState.steles.index];
+    document.getElementById('summary-stele').textContent = 
+      steleFilename ? steleFilename.replace('.skp', '') : '--';
+  }
+}
+
+// Функції для додавання елементів
+function addFoundation() {
+  const depth = document.getElementById('foundation-depth').value;
+  const width = document.getElementById('foundation-width').value;
+  const height = document.getElementById('foundation-height').value;
+  
+  if (window.sketchup && window.sketchup.add_foundation) {
+    window.sketchup.add_foundation(depth, width, height);
+  }
 }
 
 function addTiles() {
-    updateAllDisplays(); 
-    const mode = document.getElementById('tiling-mode').value;
-    if (mode === 'frame') {
-        addPerimeterTiles();
-    } else if (mode === 'modular') {
-        addModularTiles();
-    }
-}
-
-function addPerimeterTiles() {
-  const thickness = document.getElementById("tile-thickness-frame").value;
-  const borderWidth = document.getElementById("tile-border-width").value;
-  const overhang = document.getElementById("tile-overhang").value;
-  if (window.sketchup) {
-    const params = { type: 'frame', thickness: parseFloat(thickness), borderWidth: parseFloat(borderWidth), overhang: parseFloat(overhang) };
-    window.sketchup.insert_tiles(JSON.stringify(params));
-  }
-}
-
-function addModularTiles() {
-    const tileSize = document.getElementById('modular-tile-size').value;
-    const thickness = document.getElementById('modular-thickness').value;
-    const seam = document.getElementById('modular-seam').value;
-    const overhang = document.getElementById('modular-overhang').value;
-    if (window.sketchup) {
-        const params = { type: 'modular', tileSize: tileSize, thickness: parseFloat(thickness), seam: parseFloat(seam), overhang: parseFloat(overhang) };
-        window.sketchup.insert_tiles(JSON.stringify(params));
-    }
-}
-
-function addFoundation() {
-  const depth = document.getElementById("foundation-depth").value;
-  const width = document.getElementById("foundation-width").value;
-  const height = document.getElementById("foundation-height").value;
+  const mode = document.getElementById('tiling-mode').value;
   
-  if (window.sketchup) {
-    const params = { depth: parseFloat(depth), width: parseFloat(width), height: parseFloat(height) };
-    window.sketchup.insert_foundation(JSON.stringify(params));
+  if (window.sketchup && window.sketchup.add_tiles) {
+    if (mode === 'frame') {
+      const thickness = document.getElementById('tile-thickness-frame').value;
+      const borderWidth = document.getElementById('tile-border-width').value;
+      const overhang = document.getElementById('tile-overhang').value;
+      window.sketchup.add_tiles('frame', thickness, borderWidth, overhang);
+    } else {
+      const size = document.getElementById('modular-tile-size').value;
+      const thickness = document.getElementById('modular-thickness').value;
+      const seam = document.getElementById('modular-seam').value;
+      const overhang = document.getElementById('modular-overhang').value;
+      window.sketchup.add_tiles('modular', size, thickness, seam, overhang);
+    }
   }
-  updateAllDisplays();
 }
 
 function addSideCladding() {
-    const thickness = document.getElementById("cladding-thickness").value;
-    if (window.sketchup) {
-        const params = { thickness: parseFloat(thickness) };
-        window.sketchup.insert_side_cladding(JSON.stringify(params));
-    }
-    updateAllDisplays();
-}
-
-
-// --- ЦЕНТРАЛІЗОВАНА ФУНКЦІЯ ОНОВЛЕННЯ ВСІХ НАПИСІВ ---
-function updateAllDisplays() {
-    updateHeaders();
-    updateSummaryTable();
-}
-
-function updateHeaders() {
-    const getVal = id => document.getElementById(id).value;
-    const getFloat = id => parseFloat(getVal(id));
-    const updateText = (id, text) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = text;
-    };
-
-    const f_depth = getFloat('foundation-depth');
-    const f_width = getFloat('foundation-width');
-    const f_height = getFloat('foundation-height');
-    updateText('foundation-dimensions-display', `${f_depth/10} x ${f_width/10} x ${f_height/10} см`);
-
-    const mode = getVal('tiling-mode');
-    updateText('tiling-type-display', mode === 'frame' ? 'Рамка' : 'Модульна');
-
-    const c_thickness = getVal('cladding-thickness');
-    updateText('cladding-dimensions-display', `h: ${f_height/10}см, товщ: ${c_thickness}мм`);
-
-    ['stands', 'steles', 'flowerbeds'].forEach(category => {
-        const state = carouselState[category];
-        const display = document.getElementById(`${category}-dimensions-display`);
-        if (display && modelLists[category] && modelLists[category].length > 0 && state) {
-            const filename = modelLists[category][state.index];
-            if (filename) {
-                const match = filename.match(/(\d+x\d+x\d+)/);
-                display.textContent = match ? match[1].replace(/x/g, 'x') + 'см' : '';
-            }
-        }
-    });
-}
-
-
-function updateSummaryTable() {
-    if (!document.getElementById('summary-foundation')) return;
-    
-    const getValue = id => document.getElementById(id).value;
-    const getFloat = id => parseFloat(getValue(id));
-    
-    const summary = {
-        foundation: document.getElementById('summary-foundation'),
-        tiling: document.getElementById('summary-tiling'),
-        cladding: document.getElementById('summary-cladding'),
-        stand: document.getElementById('summary-stand'),
-        flowerbed: document.getElementById('summary-flowerbed'),
-        stele: document.getElementById('summary-stele')
-    };
-
-    const f_depth = getFloat('foundation-depth');
-    const f_width = getFloat('foundation-width');
-    const f_height = getFloat('foundation-height');
-    summary.foundation.textContent = `${f_depth/10} x ${f_width/10} x ${f_height/10} см`;
-
-    const mode = getValue('tiling-mode');
-    if (mode === 'frame') {
-        const width = getValue('tile-border-width');
-        const overhang = getValue('tile-overhang');
-        summary.tiling.textContent = `Рамка, шир. ${width}мм, виступ ${overhang}мм`;
-    } else {
-        const size = getValue('modular-tile-size');
-        const seam = getValue('modular-seam');
-        summary.tiling.textContent = `Модульна ${size}см, шов ${seam}мм`;
-    }
-
-    const c_thickness = getFloat('cladding-thickness');
-    const perimeter = 2 * (f_depth + f_width);
-    summary.cladding.textContent = `h: ${f_height/10}см, товщ: ${c_thickness}мм, L: ${perimeter/1000}м`;
-
-    ['stands', 'flowerbeds', 'steles'].forEach(category => {
-        const state = carouselState[category];
-        const displayId = `summary-${category.slice(0, -1)}`;
-        const display = document.getElementById(displayId);
-        if (display && modelLists[category] && modelLists[category].length > 0 && state) {
-            const filename = modelLists[category][state.index];
-            if (filename) {
-                const match = filename.match(/(\d+x\d+x\d+)/);
-                display.textContent = match ? match[1].replace(/x/g, ' x ') + ' см' : '--';
-            }
-        } else if (display) {
-            display.textContent = '--';
-        }
-    });
-}
-
-// ========================================
-// ФУНКЦІЇ ДЛЯ ТЕСТУВАННЯ НОВИХ ФІЧ
-// ========================================
-
-
-
-// Генерація превью для тестової каруселі
-function generateTestPreviews(category) {
-  if (!modelLists[category] || modelLists[category].length === 0) {
-    showNotification('Немає компонентів для генерації превью', 'warning');
-    return;
+  const thickness = document.getElementById('cladding-thickness').value;
+  
+  if (window.sketchup && window.sketchup.add_side_cladding) {
+    window.sketchup.add_side_cladding(thickness);
   }
-  
-  const categoryText = getCategoryDisplayName(category);
-  showNotification(`Генерація превью для ${categoryText}...`, 'info');
-  
-  if (window.sketchup) {
-    window.sketchup.generate_category_previews(category);
-  }
-  
-  showNotification(`Превью для ${categoryText} згенеровано!`, 'success');
-  
-  // Оновлюємо карусель після генерації
-  setTimeout(() => {
-    initializeTestCarousel(category);
-  }, 2000);
-}
-
-// Отримання відображуваної назви категорії
-function getCategoryDisplayName(category) {
-    const names = {
-        'stands': 'підставок',
-        'steles': 'стел',
-        'flowerbeds': 'квітників',
-        'gravestones': 'надгробків',
-        'pavement_tiles': 'плитки'
-    };
-    return names[category] || category;
-}
-
-// Система сповіщень
-function showNotification(message, type = 'info') {
-    // Створюємо елемент сповіщення
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.textContent = message;
-    
-    // Додаємо стилі
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 12px 20px;
-        border-radius: 8px;
-        color: white;
-        font-weight: 500;
-        z-index: 1000;
-        transform: translateX(100%);
-        transition: transform 0.3s ease;
-        max-width: 300px;
-        word-wrap: break-word;
-    `;
-    
-    // Кольори для різних типів
-    const colors = {
-        'info': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        'success': 'linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%)',
-        'warning': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-        'error': 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)'
-    };
-    
-    notification.style.background = colors[type] || colors.info;
-    
-    // Додаємо до сторінки
-    document.body.appendChild(notification);
-    
-    // Показуємо
-    setTimeout(() => {
-        notification.style.transform = 'translateX(0)';
-    }, 100);
-    
-    // Приховуємо через 3 секунди
-    setTimeout(() => {
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
-    }, 3000);
 }
