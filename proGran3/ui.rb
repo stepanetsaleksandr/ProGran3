@@ -37,6 +37,31 @@ module ProGran3
         @dialog.execute_script("loadModelLists(#{categories.to_json});")
       end
 
+      # Callback'и для JavaScript
+      @dialog.add_action_callback("add_foundation") do |dialog, depth, width, height|
+        ProGran3::FoundationBuilder.create(depth.to_i, width.to_i, height.to_i)
+      end
+
+      @dialog.add_action_callback("add_tiles") do |dialog, type, *params|
+        if type == "frame"
+          thickness, borderWidth, overhang = params.map(&:to_i)
+          ProGran3::TilingBuilder.insert_perimeter_tiles(thickness, borderWidth, overhang)
+        elsif type == "modular"
+          tileSize, thickness, seam, overhang = params
+          thickness, seam, overhang = [thickness, seam, overhang].map(&:to_i)
+          ProGran3::TilingBuilder.insert_modular_tiles(tileSize, thickness, seam, overhang)
+        end
+      end
+      
+      @dialog.add_action_callback("add_side_cladding") do |dialog, thickness|
+        ProGran3::CladdingBuilder.create(thickness.to_i)
+      end
+
+      @dialog.add_action_callback("add_model") do |dialog, category, filename|
+        ProGran3.insert_component(category, filename)
+      end
+
+      # Старі callback'и для сумісності
       @dialog.add_action_callback("insert_foundation") do |dialog, params_json|
         params = JSON.parse(params_json)
         ProGran3::FoundationBuilder.create(params["depth"], params["width"], params["height"])

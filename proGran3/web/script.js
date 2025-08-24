@@ -262,65 +262,15 @@ const CarouselManager = {
 
 // --- ІНІЦІАЛІЗАЦІЯ ---
 window.onload = function () {
-  // Запускаємо анімацію запуску
-  startStartupAnimation();
+  // Ініціалізуємо додаток одразу
+  initializeApp();
+  
+  // Запускаємо генерацію превью
+  if (window.sketchup && window.sketchup.ready) {
+    previewGenerationStarted = true;
+    window.sketchup.ready();
+  }
 };
-
-// Анімація запуску
-function startStartupAnimation() {
-  const pixelsContainer = document.querySelector('.pixels-container');
-  const startupAnimation = document.getElementById('startup-animation');
-  const mainContent = document.getElementById('main-content');
-  
-  // Створюємо частинки
-  const colors = ['color1', 'color2', 'color3', 'color4', 'color5', 'color6', 'color7', 'color8'];
-  
-  // Створюємо 200 частинок
-  for (let i = 0; i < 200; i++) {
-    const pixel = document.createElement('div');
-    pixel.className = `pixel ${colors[Math.floor(Math.random() * colors.length)]}`;
-    
-    // Розподіляємо по сторонах екрану
-    const side = Math.floor(Math.random() * 8); // 8 напрямків
-    const angle = (Math.PI * 2 * side) / 8;
-    const distance = 200 + Math.random() * 200;
-    
-    pixel.style.left = `calc(50% + ${Math.cos(angle) * distance}px)`;
-    pixel.style.top = `calc(50% + ${Math.sin(angle) * distance}px)`;
-    
-    pixel.style.animationDelay = Math.random() * 3 + 's';
-    pixelsContainer.appendChild(pixel);
-  }
-  
-  // Запускаємо генерацію превью під час анімації
-  setTimeout(() => {
-    if (window.sketchup && window.sketchup.ready) {
-      previewGenerationStarted = true;
-      window.sketchup.ready();
-    }
-  }, 1500);
-  
-  // Перевіряємо завершення генерації та завершуємо анімацію
-  function checkAndFinishAnimation() {
-    if (previewGenerationComplete || !previewGenerationStarted) {
-      // Завершуємо анімацію
-      startupAnimation.style.opacity = '0';
-      startupAnimation.style.transition = 'opacity 1s ease-out';
-      
-      setTimeout(() => {
-        startupAnimation.style.display = 'none';
-        mainContent.style.display = 'block';
-        initializeApp();
-      }, 1000);
-    } else {
-      // Перевіряємо ще раз через 500мс
-      setTimeout(checkAndFinishAnimation, 500);
-    }
-  }
-  
-  // Починаємо перевірку через 8 секунд (мінімальний час анімації)
-  setTimeout(checkAndFinishAnimation, 8000);
-}
 
 // Ініціалізація додатку
 function initializeApp() {
