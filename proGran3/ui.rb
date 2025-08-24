@@ -158,25 +158,46 @@ module ProGran3
                 name = definition.name.downcase
                 
                 # Перевіряємо категорії на основі імені компонента
-                if name.include?('stand') || name.include?('підставка')
+                if name.include?('stand') || name.include?('підставка') || name.include?('подставка')
                   status[:stands] = true
-                elsif name.include?('flowerbed') || name.include?('квітник')
+                  puts "✅ Знайдено підставку: #{name}"
+                elsif name.include?('flowerbed') || name.include?('квітник') || name.include?('цветник')
                   status[:flowerbeds] = true
-                elsif name.include?('stele') || name.include?('стела')
+                  puts "✅ Знайдено квітник: #{name}"
+                elsif name.include?('stele') || name.include?('стела') || name.include?('стелла')
                   status[:steles] = true
+                  puts "✅ Знайдено стелу: #{name}"
                 end
               elsif entity.is_a?(Sketchup::Group)
                 # Рекурсивно перевіряємо групи
                 check_entities(entity.entities, status)
+                
+                # Також перевіряємо ім'я групи
+                group_name = entity.name.downcase
+                if group_name.include?('foundation') || group_name.include?('фундамент')
+                  status[:foundation] = true
+                  puts "✅ Знайдено фундамент (група): #{group_name}"
+                elsif group_name.include?('tile') || group_name.include?('плитка')
+                  status[:tiling] = true
+                  puts "✅ Знайдено плитку (група): #{group_name}"
+                elsif group_name.include?('cladding') || group_name.include?('облицювання')
+                  status[:cladding] = true
+                  puts "✅ Знайдено облицювання (група): #{group_name}"
+                end
               elsif entity.is_a?(Sketchup::Edge) || entity.is_a?(Sketchup::Face)
                 # Перевіряємо геометрію для фундаменту, плитки та облицювання
-                # Це спрощена логіка - можна покращити
-                if entity.layer && entity.layer.name.downcase.include?('foundation')
-                  status[:foundation] = true
-                elsif entity.layer && entity.layer.name.downcase.include?('tiles')
-                  status[:tiling] = true
-                elsif entity.layer && entity.layer.name.downcase.include?('cladding')
-                  status[:cladding] = true
+                if entity.layer
+                  layer_name = entity.layer.name.downcase
+                  if layer_name.include?('foundation') || layer_name.include?('фундамент')
+                    status[:foundation] = true
+                    puts "✅ Знайдено фундамент (layer): #{layer_name}"
+                  elsif layer_name.include?('tile') || layer_name.include?('плитка')
+                    status[:tiling] = true
+                    puts "✅ Знайдено плитку (layer): #{layer_name}"
+                  elsif layer_name.include?('cladding') || layer_name.include?('облицювання')
+                    status[:cladding] = true
+                    puts "✅ Знайдено облицювання (layer): #{layer_name}"
+                  end
                 end
               end
             end
@@ -197,18 +218,21 @@ module ProGran3
                 depth = bounds.depth
                 
                 # Фундамент зазвичай має великі розміри і малу висоту
-                if width > 1000 && depth > 1000 && height < 200
+                if width > 800 && depth > 800 && height < 300
                   status[:foundation] = true
+                  puts "✅ Знайдено фундамент (розміри): #{width}×#{depth}×#{height}"
                 end
                 
                 # Плитка зазвичай тонка і широка
-                if height < 50 && width > 500 && depth > 500
+                if height < 100 && width > 400 && depth > 400
                   status[:tiling] = true
+                  puts "✅ Знайдено плитку (розміри): #{width}×#{depth}×#{height}"
                 end
                 
                 # Облицювання зазвичай вертикальне
-                if height > 200 && (width < 100 || depth < 100)
+                if height > 150 && (width < 200 || depth < 200)
                   status[:cladding] = true
+                  puts "✅ Знайдено облицювання (розміри): #{width}×#{depth}×#{height}"
                 end
               end
             end

@@ -938,17 +938,30 @@ function receiveModelStatus(statusData) {
   
   // Оновлюємо addedElements на основі отриманих даних
   if (statusData) {
-    addedElements = {
-      foundation: statusData.foundation || false,
-      tiling: statusData.tiling || false,
-      cladding: statusData.cladding || false,
-      stands: statusData.stands || false,
-      flowerbeds: statusData.flowerbeds || false,
-      steles: statusData.steles || false
-    };
+    // Оновлюємо тільки ті елементи, які дійсно знайдені в моделі
+    // Якщо елемент не знайдений в моделі, залишаємо поточний стан
+    if (statusData.foundation === true) {
+      addedElements.foundation = true;
+    }
+    if (statusData.tiling === true) {
+      addedElements.tiling = true;
+    }
+    if (statusData.cladding === true) {
+      addedElements.cladding = true;
+    }
+    if (statusData.stands === true) {
+      addedElements.stands = true;
+    }
+    if (statusData.flowerbeds === true) {
+      addedElements.flowerbeds = true;
+    }
+    if (statusData.steles === true) {
+      addedElements.steles = true;
+    }
+    
+    debugLog(`📊 Оновлений addedElements: ${JSON.stringify(addedElements)}`, 'info');
   } else {
-    // Якщо дані не отримані, очищаємо специфікацію
-    clearSpecification();
+    debugLog(`❌ Дані статусу не отримані`, 'error');
   }
   
   // Оновлюємо таблицю
