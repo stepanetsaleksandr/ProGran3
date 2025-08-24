@@ -11,29 +11,57 @@ let testCarouselState = {
   steles: { index: 0 }
 };
 
-// Глобальна змінна для відстеження генерації превью
-let previewGenerationComplete = false;
-let previewGenerationStarted = false;
+
 
 // Універсальна система каруселей
 const CarouselManager = {
-  // Конфігурація каруселей - всі використовують генерацію
+  // Розширена конфігурація каруселей
   carousels: {
     'stands': { 
       hasPreview: true, 
       previewMode: 'dynamic',
-      massGeneration: false 
-    },
-    'steles': { 
-      hasPreview: true, 
-      previewMode: 'dynamic',
-      massGeneration: true 
+      autoLoad: true,
+      design: 'default',
+      maxItems: 10
     },
     'flowerbeds': { 
       hasPreview: true, 
       previewMode: 'dynamic',
-      massGeneration: false 
+      autoLoad: true,
+      design: 'default',
+      maxItems: 10
+    },
+    'steles': { 
+      hasPreview: true, 
+      previewMode: 'dynamic',
+      autoLoad: true,
+      design: 'default',
+      maxItems: 10
     }
+  },
+
+  // Автоматична реєстрація нових каруселей
+  registerCarousel(category, config = {}) {
+    const defaultConfig = {
+      hasPreview: true,
+      previewMode: 'dynamic',
+      autoLoad: true,
+      design: 'default',
+      maxItems: 10
+    };
+    
+    this.carousels[category] = { ...defaultConfig, ...config };
+    console.log(`🎨 Зареєстровано нову карусель: ${category}`);
+  },
+
+  // Отримання конфігурації каруселі
+  getCarouselConfig(category) {
+    return this.carousels[category] || null;
+  },
+
+  // Перевірка чи існує карусель
+  hasCarousel(category) {
+    return category in this.carousels;
   },
 
   // Ініціалізація каруселі
@@ -55,22 +83,25 @@ const CarouselManager = {
     
     setTimeout(() => {
       this.showCarouselItem(category, 0);
-      // Всі каруселі тепер можуть генерувати превью
-      if (config.massGeneration) {
-        this.generateAllPreviews(category);
-      }
+      // Ледаче завантаження для першого елемента (як у тестовій логіці)
+      this.loadOrGeneratePreview(category, 0);
     }, 100);
   },
 
-  // Створення елемента каруселі - всі використовують динамічне превью
+  // Створення елемента каруселі - з підтримкою дизайнів
   createCarouselItem(category, filename, config) {
     const item = document.createElement('div');
     item.className = 'carousel-item';
+    
+    // Додаємо CSS клас для дизайну
+    const design = config.design || 'default';
+    item.classList.add(`design-${design}`);
     
     // Всі елементи використовують динамічне превью з ледачим завантаженням
     item.dataset.status = 'idle';
     item.dataset.filename = filename;
     item.dataset.category = category;
+    item.dataset.design = design;
     
     const loadingDiv = document.createElement('div');
     loadingDiv.className = 'loading-indicator';
@@ -108,9 +139,8 @@ const CarouselManager = {
     carouselState[category].index = index;
     track.style.transform = `translateX(${newTransform}px)`;
     
-    // Ледаче завантаження для всіх превью (тепер всі динамічні)
+    // Ледаче завантаження для активного елемента та сусідів (як у тестовій логіці)
     this.loadOrGeneratePreview(category, index);
-    // Завантажуємо сусідні елементи
     if (index + 1 < items.length) this.loadOrGeneratePreview(category, index + 1);
     if (index - 1 >= 0) this.loadOrGeneratePreview(category, index - 1);
     
@@ -149,7 +179,7 @@ const CarouselManager = {
   // Автоматична генерація превью
   autoGeneratePreview(category, filename, item, loadingDiv) {
     if (!window.sketchup) {
-      this.createPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
+      createPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
       return;
     }
     
@@ -159,52 +189,11 @@ const CarouselManager = {
     window.pendingPreviews[`${category}/${filename}`] = { item, loadingDiv, filename };
   },
 
-  // Масове завантаження превью
-  generateAllPreviews(category) {
-    if (!modelLists[category] || modelLists[category].length === 0) {
-      previewGenerationComplete = true;
-      return;
-    }
-    
-    console.log(`🔄 Початок масової генерації превью для ${category}...`);
-    
-    let completedCount = 0;
-    const totalCount = modelLists[category].length;
-    
-    modelLists[category].forEach((filename, index) => {
-      setTimeout(() => {
-        this.loadOrGeneratePreview(category, index);
-        completedCount++;
-        
-        if (completedCount >= totalCount) {
-          setTimeout(() => {
-            previewGenerationComplete = true;
-            console.log(`✅ Всі превью ${category} згенеровані`);
-          }, 1000);
-        }
-      }, index * 300);
-    });
-  },
+
 
   // Створення заглушки
   createPlaceholder(item, loadingDiv, text) {
-    loadingDiv.remove();
-    const placeholder = document.createElement('div');
-    placeholder.style.cssText = `
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255, 255, 255, 0.1);
-      color: #666;
-      font-size: 12px;
-      text-align: center;
-      padding: 10px;
-      box-sizing: border-box;
-    `;
-    placeholder.textContent = text;
-    item.appendChild(placeholder);
+    createPlaceholder(item, loadingDiv, text);
   },
 
   // Рух каруселі
@@ -226,16 +215,62 @@ const CarouselManager = {
     
     if (window.sketchup && window.sketchup.add_model) {
       window.sketchup.add_model(category, filename);
-      updateAllDisplays();
     }
   },
 
-  // Реєстрація нової каруселі
-  registerCarousel(category, config) {
-    this.carousels[category] = config;
+  // Реєстрація нової каруселі (оновлена)
+  registerCarousel(category, config = {}) {
+    const defaultConfig = {
+      hasPreview: true,
+      previewMode: 'dynamic',
+      autoLoad: true,
+      design: 'default',
+      maxItems: 10
+    };
+    
+    this.carousels[category] = { ...defaultConfig, ...config };
+    
+    // Автоматично створюємо стан каруселі
     if (!carouselState[category]) {
       carouselState[category] = { index: 0 };
     }
+    
+    console.log(`🎨 Зареєстровано нову карусель: ${category}`);
+  },
+
+  // Автоматична ініціалізація всіх каруселей
+  initializeAllCarousels() {
+    Object.keys(this.carousels).forEach(category => {
+      if (modelLists[category] && document.getElementById(`${category}-carousel-track`)) {
+        this.initialize(category);
+        console.log(`✅ Автоматично ініціалізовано карусель: ${category}`);
+      }
+    });
+  },
+
+  // Отримання статистики каруселей
+  getCarouselStats() {
+    return {
+      total: Object.keys(this.carousels).length,
+      active: Object.keys(this.carousels).filter(cat => 
+        modelLists[cat] && document.getElementById(`${cat}-carousel-track`)
+      ).length,
+      categories: Object.keys(this.carousels)
+    };
+  },
+
+  // Приклад додавання нової каруселі
+  addExampleCarousel() {
+    // Додаємо нову карусель з кастомним дизайном
+    this.registerCarousel('example', {
+      hasPreview: true,
+      previewMode: 'dynamic',
+      autoLoad: true,
+      design: 'gradient',
+      maxItems: 15
+    });
+    
+    console.log('📝 Приклад: Додано нову карусель "example" з дизайном gradient');
   }
 };
 
@@ -244,9 +279,8 @@ window.onload = function () {
   // Ініціалізуємо додаток одразу
   initializeApp();
   
-  // Запускаємо генерацію превью
+  // Запускаємо готовність
   if (window.sketchup && window.sketchup.ready) {
-    previewGenerationStarted = true;
     window.sketchup.ready();
   }
 };
@@ -269,20 +303,17 @@ function initializeApp() {
 function loadModelLists(data) {
   modelLists = data;
   
-  // Ініціалізуємо всі каруселі через універсальну систему
-  Object.keys(CarouselManager.carousels).forEach(category => {
-    if (modelLists[category] && document.getElementById(`${category}-carousel-track`)) {
-      CarouselManager.initialize(category);
-    }
-  });
+  // Використовуємо автоматичну ініціалізацію всіх каруселей
+  CarouselManager.initializeAllCarousels();
   
   // Ініціалізуємо тестову карусель стел
   if (modelLists['steles'] && document.getElementById('test-steles-carousel-track')) {
     initializeTestCarousel('steles');
   }
   
-  // Ініціалізуємо новий незалежний модуль каруселі
-  initializeNewCarouselModule();
+  // Виводимо статистику каруселей
+  const stats = CarouselManager.getCarouselStats();
+  console.log(`📊 Статистика каруселей: ${stats.active}/${stats.total} активних`);
   
   updateAllDisplays();
 }
@@ -312,6 +343,8 @@ function advanceToNextPanel(buttonElement) {
     nextPanel.classList.remove('collapsed');
   }
 }
+
+
 
 // --- ТЕСТОВА КАРУСЕЛЬ (залишаємо для зворотної сумісності) ---
 
@@ -377,28 +410,14 @@ function loadOrGenerateTestPreview(category, index) {
   autoGenerateTestPreview(category, filename, item, loadingDiv);
 }
 
-// Функція для логування в веб-інтерфейсі
-function debugLog(message) {
-  const debugElement = document.getElementById('debug-log');
-  if (debugElement) {
-    const time = new Date().toLocaleTimeString();
-    debugElement.innerHTML += `<div>[${time}] ${message}</div>`;
-    debugElement.scrollTop = debugElement.scrollHeight;
-  }
-  console.log(message);
-}
+
 
 // Автоматична генерація превью для тестової каруселі
 function autoGenerateTestPreview(category, filename, item, loadingDiv) {
-  debugLog(`🔍 autoGenerateTestPreview викликано для: ${category}/${filename}`);
-  
   if (!window.sketchup) {
-    debugLog('❌ window.sketchup не доступний');
-    createTestPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
+    createPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
     return;
   }
-  
-  debugLog('✅ window.sketchup доступний, викликаємо generate_web_preview');
   
   // Генеруємо веб-превью через SketchUp
   window.sketchup.generate_web_preview(`${category}/${filename}`);
@@ -406,12 +425,10 @@ function autoGenerateTestPreview(category, filename, item, loadingDiv) {
   // Зберігаємо посилання на елементи для callback
   window.pendingPreviews = window.pendingPreviews || {};
   window.pendingPreviews[`${category}/${filename}`] = { item, loadingDiv, filename };
-  
-  debugLog(`📝 Збережено pending preview для: ${category}/${filename}`);
 }
 
-// Функція для створення заглушки в тестовій каруселі
-function createTestPlaceholder(item, loadingDiv, text) {
+// Універсальна функція для створення заглушки
+function createPlaceholder(item, loadingDiv, text) {
   loadingDiv.remove();
   const placeholder = document.createElement('div');
   placeholder.style.cssText = `
@@ -431,25 +448,21 @@ function createTestPlaceholder(item, loadingDiv, text) {
   item.appendChild(placeholder);
 }
 
+// Функція для створення заглушки в тестовій каруселі (для зворотної сумісності)
+function createTestPlaceholder(item, loadingDiv, text) {
+  createPlaceholder(item, loadingDiv, text);
+}
+
 // Функція для отримання згенерованого превью з Ruby
 function receiveWebPreview(componentPath, base64Data) {
-  debugLog(`🔍 receiveWebPreview викликано для: ${componentPath}`);
-  debugLog(`📊 base64Data довжина: ${base64Data ? base64Data.length : 0}`);
-  debugLog(`📄 Перші 100 символів: ${base64Data ? base64Data.substring(0, 100) : 'null'}`);
-  
   const pendingData = window.pendingPreviews && window.pendingPreviews[componentPath];
   if (!pendingData) {
-    debugLog('❌ Не знайдено pending data для: ' + componentPath);
     return;
   }
-  
-  debugLog('✅ Знайдено pending data');
   
   const { item, loadingDiv, filename } = pendingData;
   
   if (base64Data && base64Data.startsWith('data:image/')) {
-    debugLog('✅ Отримано валідні base64 дані, створюємо зображення');
-    
     // Створюємо зображення з base64 даних
     const img = document.createElement('img');
     img.src = base64Data;
@@ -460,16 +473,12 @@ function receiveWebPreview(componentPath, base64Data) {
     if (item) item.appendChild(img);
     
   } else {
-    debugLog('❌ Невалідні base64 дані або відсутні');
-    debugLog(`🔍 Перевірка: startsWith('data:image/'): ${base64Data ? base64Data.startsWith('data:image/') : false}`);
-    
     // Якщо не вдалося згенерувати, показуємо заглушку
-    if (item && loadingDiv) createTestPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
+    if (item && loadingDiv) createPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
   }
   
   // Очищаємо pending
   delete window.pendingPreviews[componentPath];
-  debugLog('🧹 Очищено pending preview');
 }
 
 // Функція для обробки помилки генерації превью
@@ -478,7 +487,7 @@ function handlePreviewError(componentPath, errorMessage) {
   if (!pendingData) return;
   
   const { item, loadingDiv, filename } = pendingData;
-  createTestPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
+  createPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
   
   // Очищаємо pending
   delete window.pendingPreviews[componentPath];
@@ -520,17 +529,7 @@ function showTestCarouselItem(category, index) {
   if (index - 1 >= 0) loadOrGenerateTestPreview(category, index - 1);
 }
 
-function generateTestPreviews(category) {
-  if (!modelLists[category] || modelLists[category].length === 0) return;
-  
-  console.log(`🔄 Початок генерації тестових превью для ${category}...`);
-  
-  modelLists[category].forEach((filename, index) => {
-    setTimeout(() => {
-      loadOrGenerateTestPreview(category, index);
-    }, index * 200);
-  });
-}
+
 
 function addTestModel(category) {
   const state = testCarouselState[category];
@@ -715,87 +714,7 @@ function addSideCladding() {
   }
 }
 
-// --- НОВИЙ НЕЗАЛЕЖНИЙ МОДУЛЬ КАРУСЕЛІ ---
 
-// Ініціалізація нового модуля каруселі
-function initializeNewCarouselModule() {
-  console.log('🎨 Ініціалізація нового модуля каруселі...');
-  
-  // Перевіряємо чи є моделі стел
-  if (!modelLists.steles || modelLists.steles.length === 0) {
-    console.log('❌ Немає моделей стел для нового модуля каруселі');
-    return;
-  }
-  
-  // Створюємо HTML для нового модуля каруселі
-  const container = document.getElementById('carousel-module-container');
-  if (!container) {
-    console.log('❌ Контейнер для нового модуля каруселі не знайдено');
-    return;
-  }
-  
-  // Генеруємо HTML через Ruby
-  if (window.sketchup && window.sketchup.get_carousel_html) {
-    const carouselHtml = window.sketchup.get_carousel_html('test_steles');
-    container.innerHTML = carouselHtml;
-  } else {
-    // Fallback HTML
-    container.innerHTML = `
-      <div class="carousel-module" id="test_steles-module">
-        <div class="carousel-module-header">
-          <h3>Тестова карусель стел</h3>
-          <div class="carousel-module-info" id="test_steles-info">
-            <span class="current-model">--</span>
-            <span class="model-counter">0 / 0</span>
-          </div>
-        </div>
-        
-        <div class="carousel-module-viewport" id="test_steles-viewport">
-          <div class="carousel-module-track" id="test_steles-track">
-            <!-- Елементи каруселі будуть додані через JavaScript -->
-          </div>
-        </div>
-        
-        <div class="carousel-module-controls">
-          <button class="carousel-module-btn prev" onclick="carouselModulePrevious('test_steles')">
-            ← Попередня
-          </button>
-          <button class="carousel-module-btn generate" onclick="carouselModuleGeneratePreview('test_steles')">
-            🎨 Генерувати превью
-          </button>
-          <button class="carousel-module-btn add" onclick="carouselModuleAddModel('test_steles')">
-            ➕ Додати модель
-          </button>
-          <button class="carousel-module-btn next" onclick="carouselModuleNext('test_steles')">
-            Наступна →
-          </button>
-        </div>
-        
-        <div class="carousel-module-preview" id="test_steles-preview">
-          <!-- Превью буде відображено тут -->
-        </div>
-      </div>
-    `;
-  }
-  
-  // Створюємо екземпляр нового модуля каруселі
-  if (window.CarouselModule) {
-    const newCarousel = new CarouselModule('test_steles', {
-      hasPreview: true,
-      previewMode: 'dynamic',
-      massGeneration: false,
-      design: 'white_gradient'
-    });
-    
-    // Реєструємо в глобальному реєстрі
-    window.carouselModules = window.carouselModules || {};
-    window.carouselModules['test_steles'] = newCarousel;
-    
-    // Ініціалізуємо з моделями стел
-    newCarousel.initialize(modelLists.steles);
-    
-    console.log('✅ Новий модуль каруселі ініціалізовано');
-  } else {
-    console.error('❌ Клас CarouselModule не знайдено');
-  }
-}
+
+
+

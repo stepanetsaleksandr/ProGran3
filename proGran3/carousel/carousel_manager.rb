@@ -1,5 +1,5 @@
 # proGran3/carousel/carousel_manager.rb
-# Незалежний модуль каруселі з унікальним дизайном
+# Спрощений модуль каруселі - тільки бізнес-логіка
 
 require 'json'
 
@@ -7,36 +7,20 @@ module ProGran3
   module Carousel
     class CarouselManager
       
-      # Конфігурація каруселей
-      CAROUSEL_CONFIG = {
-        'test_steles' => {
-          name: 'Тестова карусель стел',
-          category: 'steles',
-          has_preview: true,
-          preview_mode: 'dynamic',
-          mass_generation: false,
-          design: 'white_gradient'
-        }
-      }
-      
       # Ініціалізація класу
       def initialize
         @carousel_states = {}
       end
       
-      # Ініціалізація каруселі
+      # Ініціалізація каруселі (спрощена версія)
       def initialize_carousel(carousel_id, model_list = [])
-        config = CAROUSEL_CONFIG[carousel_id]
-        return false unless config
-        
         @carousel_states[carousel_id] = {
           index: 0,
           models: model_list,
-          config: config,
           loaded_previews: {}
         }
         
-        puts "🎨 Ініціалізовано карусель: #{config[:name]}"
+        puts "🎨 Ініціалізовано карусель: #{carousel_id}"
         puts "📦 Моделей: #{model_list.length}"
         
         true
@@ -82,15 +66,14 @@ module ProGran3
       end
       
       # Генерація превью для поточної моделі
-      def generate_preview(carousel_id)
+      def generate_preview(carousel_id, category)
         state = @carousel_states[carousel_id]
         return nil unless state
         
-        config = state[:config]
         current_model = get_current_model(carousel_id)
         return nil unless current_model
         
-        component_path = "#{config[:category]}/#{current_model}"
+        component_path = "#{category}/#{current_model}"
         
         puts "🎨 Генерація превью для: #{component_path}"
         
@@ -108,15 +91,14 @@ module ProGran3
       end
       
       # Отримання base64 превью
-      def get_preview_base64(carousel_id)
+      def get_preview_base64(carousel_id, category)
         state = @carousel_states[carousel_id]
         return nil unless state
         
-        config = state[:config]
         current_model = get_current_model(carousel_id)
         return nil unless current_model
         
-        component_path = "#{config[:category]}/#{current_model}"
+        component_path = "#{category}/#{current_model}"
         
         # Використовуємо існуючий модуль превью
         base64_data = ProGran3.get_preview_base64(component_path, 256)
@@ -131,18 +113,17 @@ module ProGran3
       end
       
       # Додавання поточної моделі до сцени
-      def add_current_model(carousel_id)
+      def add_current_model(carousel_id, category)
         state = @carousel_states[carousel_id]
         return false unless state
         
-        config = state[:config]
         current_model = get_current_model(carousel_id)
         return false unless current_model
         
         puts "➕ Додавання моделі до сцени: #{current_model}"
         
         # Використовуємо існуючий метод додавання компонентів
-        ProGran3.insert_component(config[:category], current_model)
+        ProGran3.insert_component(category, current_model)
         
         true
       end
@@ -152,16 +133,13 @@ module ProGran3
         state = @carousel_states[carousel_id]
         return nil unless state
         
-        config = state[:config]
         current_model = get_current_model(carousel_id)
         
         {
-          name: config[:name],
-          category: config[:category],
+          id: carousel_id,
           current_model: current_model,
           current_index: state[:index],
-          total_models: state[:models].length,
-          design: config[:design]
+          total_models: state[:models].length
         }
       end
       

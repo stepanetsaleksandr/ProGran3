@@ -257,8 +257,33 @@ button:active {
   transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
   /* Тінь картки зроблена темнішою */
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); 
-  background: rgba(255, 255, 255, 0.2);
+  background: white;
   overflow: hidden;
+}
+
+/* Дизайн за замовчуванням */
+.carousel-item.design-default {
+  background: white;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Дизайн з градієнтом */
+.carousel-item.design-gradient {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Дизайн з рамкою */
+.carousel-item.design-bordered {
+  background: white;
+  border: 2px solid #e0e0e0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Дизайн з тінню */
+.carousel-item.design-shadow {
+  background: white;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
 }
 
 .carousel-item.active {

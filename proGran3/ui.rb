@@ -124,6 +124,8 @@ module ProGran3
         html = @carousel_ui.get_carousel_html(carousel_id)
         dialog.execute_script("receiveCarouselHtml('#{carousel_id}', `#{html}`);")
       end
+      
+
 
       @dialog.show
     end
