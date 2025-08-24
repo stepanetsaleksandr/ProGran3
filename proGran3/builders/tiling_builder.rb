@@ -10,7 +10,7 @@ module ProGran3
       entities = model.active_entities
       defs = model.definitions
       model.start_operation('Create Perimeter Tiles', true)
-      foundation = model.entities.grep(Sketchup::Group).find { |g| g.name == "Foundation" }
+      foundation = model.entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name == "Foundation" }
       return unless foundation
       entities.grep(Sketchup::ComponentInstance).select { |inst| inst.definition.name.start_with?("Perimeter_Tile_") || inst.definition.name.start_with?("Modular_Tile")}.each(&:erase!)
       defs.purge_unused
@@ -47,7 +47,7 @@ module ProGran3
       
       model.start_operation('Create Modular Tiling', true)
 
-      foundation = model.entities.grep(Sketchup::Group).find { |g| g.name == "Foundation" }
+      foundation = model.entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name == "Foundation" }
       unless foundation
         UI.messagebox("Спочатку потрібно додати фундамент.")
         model.abort_operation

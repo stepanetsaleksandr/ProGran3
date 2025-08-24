@@ -45,7 +45,7 @@ module ProGran3
     all_instances_by_category(category).each(&:erase!)
     comp_def = load_component(category, filename)
     return unless comp_def
-    foundation = model.entities.grep(Sketchup::Group).find { |g| g.name == "Foundation" }
+    foundation = model.entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name == "Foundation" }
     x, y, z = 0, 0, 0
     foundation_z = 0
     foundation_bounds = nil

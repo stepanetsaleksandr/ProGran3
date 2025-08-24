@@ -9,7 +9,7 @@ module ProGran3
       model = Sketchup.active_model
       entities = model.active_entities
       model.start_operation('Create Side Cladding', true)
-      foundation = model.entities.grep(Sketchup::Group).find { |g| g.name == "Foundation" }
+      foundation = model.entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name == "Foundation" }
       return unless foundation
       entities.grep(Sketchup::ComponentInstance).select { |inst| inst.definition.name.start_with?("Cladding_Tile_") }.each(&:erase!)
       model.definitions.purge_unused

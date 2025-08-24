@@ -158,7 +158,10 @@ module ProGran3
                 name = definition.name.downcase
                 
                 # Перевіряємо категорії на основі імені компонента
-                if name.include?('stand') || name.include?('підставка') || name.include?('подставка')
+                if name == 'foundation'
+                  status[:foundation] = true
+                  puts "✅ Знайдено фундамент (компонент): #{name}"
+                elsif name.include?('stand') || name.include?('підставка') || name.include?('подставка')
                   status[:stands] = true
                   puts "✅ Знайдено підставку: #{name}"
                 elsif name.include?('flowerbed') || name.include?('квітник') || name.include?('цветник')
@@ -174,10 +177,7 @@ module ProGran3
                 
                 # Також перевіряємо ім'я групи
                 group_name = entity.name.downcase
-                if group_name.include?('foundation') || group_name.include?('фундамент')
-                  status[:foundation] = true
-                  puts "✅ Знайдено фундамент (група): #{group_name}"
-                elsif group_name.include?('tile') || group_name.include?('плитка')
+                if group_name.include?('tile') || group_name.include?('плитка')
                   status[:tiling] = true
                   puts "✅ Знайдено плитку (група): #{group_name}"
                 elsif group_name.include?('cladding') || group_name.include?('облицювання')
