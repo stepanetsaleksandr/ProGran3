@@ -8,9 +8,6 @@ module ProGran3
   require_relative 'progran3/builders/tiling_builder'
   require_relative 'progran3/builders/cladding_builder'
   require_relative 'progran3/ui'
-  require_relative 'progran3/test_features'
-  require_relative 'progran3/preview_generator'
-  require_relative 'progran3/skp_preview_generator'
   require_relative 'progran3/skp_preview_extractor'
 
   # Метод для створення панелі інструментів
@@ -80,7 +77,6 @@ module ProGran3
       File.join(plugin_dir, 'proGran3', 'builders', 'foundation_builder.rb'),
       File.join(plugin_dir, 'proGran3', 'builders', 'tiling_builder.rb'),
       File.join(plugin_dir, 'proGran3', 'builders', 'cladding_builder.rb'),
-      File.join(plugin_dir, 'proGran3', 'skp_preview_generator.rb'),
       File.join(plugin_dir, 'proGran3', 'skp_preview_extractor.rb')
     ]
     
@@ -104,56 +100,14 @@ module ProGran3
     puts "📁 Шлях до плагіна: #{File.dirname(__FILE__)}"
     puts "📦 Версія: 1.0.0"
     puts "✅ Плагін готовий до роботи!"
-    
-    # Тестуємо нову логіку превью
-    puts "\n🔄 Тестування нової логіки превью..."
-    if defined?(SkpPreviewGenerator)
-      puts "✅ Новий модуль превью завантажено"
-      test_result = test_skp_preview_generator
-      if test_result
-        puts "✅ Тест нової логіки успішний"
-      else
-        puts "❌ Тест нової логіки не вдався"
-      end
-    else
-      puts "❌ Новий модуль превью не знайдено"
-    end
   end
 
-  # Методи для тестування нових функцій
-
-  # Методи для роботи з превью (стара логіка)
-  def self.generate_preview_image(component_path)
-    PreviewGenerator.generate_preview_image(component_path)
+  # Метод для витягування превью з .skp файлів
+  def self.extract_skp_preview(skp_file_path, size = 256)
+    SkpPreviewExtractor.extract_preview_from_skp(skp_file_path, size)
   end
 
-  def self.generate_web_preview(component_path)
-    PreviewGenerator.generate_web_preview(component_path)
+  def self.test_skp_preview_extractor
+    SkpPreviewExtractor.test_extraction
   end
-
-  def self.ensure_preview_exists(component_path)
-    PreviewGenerator.ensure_preview_exists(component_path)
-  end
-
-  # Нові методи для роботи з .skp файлами
-  def self.generate_skp_preview(skp_file_path)
-    SkpPreviewGenerator.generate_preview_from_skp(skp_file_path)
-  end
-
-  def self.generate_all_skp_previews
-    SkpPreviewGenerator.generate_all_skp_previews
-  end
-
-  def self.test_skp_preview_generator
-    SkpPreviewGenerator.test_skp_preview_generator
-  end
-
-      # Метод для витягування превью з .skp файлів
-    def self.extract_skp_preview(skp_file_path, size = 256)
-      SkpPreviewExtractor.extract_preview_from_skp(skp_file_path, size)
-    end
-
-    def self.test_skp_preview_extractor
-      SkpPreviewExtractor.test_extraction
-    end
 end
