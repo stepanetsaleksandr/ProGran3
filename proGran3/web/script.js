@@ -7,9 +7,7 @@ let carouselState = {
   steles: { index: 0 },
   flowerbeds: { index: 0 }
 };
-let testCarouselState = {
-  steles: { index: 0 }
-};
+
 
 
 
@@ -437,11 +435,7 @@ function loadModelLists(data) {
   debugLog(`🔄 Викликаємо CarouselManager.initializeAllCarousels()`, 'info');
   CarouselManager.initializeAllCarousels();
   
-  // Ініціалізуємо тестову карусель стел
-  if (modelLists['steles'] && document.getElementById('test-steles-carousel-track')) {
-    debugLog(`🧪 Ініціалізуємо тестову карусель для steles`, 'info');
-    initializeTestCarousel('steles');
-  }
+     // Тестовий блок очищений - готовий для нової функціональності
   
   // Ініціалізуємо основну карусель стел (копія тестової логіки)
   if (modelLists['steles'] && document.getElementById('steles-carousel-track')) {
@@ -484,41 +478,7 @@ function advanceToNextPanel(buttonElement) {
 
 
 
-// --- ТЕСТОВА КАРУСЕЛЬ (залишаємо для зворотної сумісності) ---
-
-// Ініціалізація тестової каруселі
-function initializeTestCarousel(category) {
-  const track = document.getElementById(`test-${category}-carousel-track`);
-  const viewport = document.getElementById(`test-${category}-carousel-viewport`);
-  if (!track || !viewport || !modelLists[category] || modelLists[category].length === 0) return;
-  
-  track.innerHTML = '';
-
-  modelLists[category].forEach(filename => {
-    const item = document.createElement('div');
-    item.className = 'carousel-item';
-    // Стан ледачого завантаження
-    item.dataset.status = 'idle';
-    item.dataset.filename = filename;
-    // Початковий індикатор
-    const loadingDiv = document.createElement('div');
-    loadingDiv.className = 'loading-indicator';
-    loadingDiv.textContent = 'Готово до завантаження';
-    item.appendChild(loadingDiv);
-    track.appendChild(item);
-  });
-  
-  viewport.addEventListener('wheel', (event) => {
-    event.preventDefault();
-    moveTestCarousel(category, event.deltaY > 0 ? 1 : -1);
-  });
-
-  setTimeout(() => {
-    showTestCarouselItem(category, 0);
-    // Ледаче завантаження для першого елемента
-    loadOrGenerateTestPreview(category, 0);
-  }, 100); 
-}
+// --- ТЕСТОВИЙ БЛОК (очищений для нової функціональності) ---
 
 // Ініціалізація основної каруселі стел (копія тестової логіки)
 function initializeMainStelesCarousel(category) {
@@ -554,55 +514,7 @@ function initializeMainStelesCarousel(category) {
   }, 100); 
 }
 
-// Ледаче завантаження превью для активного елемента тестової каруселі
-function loadOrGenerateTestPreview(category, index) {
-  const track = document.getElementById(`test-${category}-carousel-track`);
-  if (!track) return;
-  const items = track.querySelectorAll('.carousel-item');
-  const item = items[index];
-  if (!item) return;
 
-  const currentStatus = item.dataset.status;
-  if (currentStatus === 'loaded' || currentStatus === 'pending') return;
-
-  const filename = item.dataset.filename || (modelLists[category] && modelLists[category][index]);
-  if (!filename) return;
-
-  let loadingDiv = item.querySelector('.loading-indicator');
-  if (!loadingDiv) {
-    loadingDiv = document.createElement('div');
-    loadingDiv.className = 'loading-indicator';
-    item.appendChild(loadingDiv);
-  }
-  loadingDiv.textContent = 'Генерація превью...';
-
-  item.dataset.status = 'pending';
-
-  // Відразу запускаємо генерацію превью
-  autoGenerateTestPreview(category, filename, item, loadingDiv);
-}
-
-
-
-// Автоматична генерація превью для тестової каруселі
-function autoGenerateTestPreview(category, filename, item, loadingDiv) {
-  if (!window.sketchup) {
-    createPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
-    return;
-  }
-  
-  const componentPath = `${category}/${filename}`;
-  debugLog(`🚀 Запуск генерації превью для: ${componentPath} (Test)`, 'info');
-  
-  // Генеруємо веб-превью через SketchUp
-  window.sketchup.generate_web_preview(componentPath);
-  
-  // Зберігаємо посилання на елементи для callback
-  window.pendingPreviews = window.pendingPreviews || {};
-  window.pendingPreviews[componentPath] = { item, loadingDiv, filename, source: 'TestCarousel' };
-  
-  debugLog(`📝 Додано до pending: ${componentPath} (TestCarousel)`, 'info');
-}
 
 // Ледаче завантаження превью для основної каруселі стел
 function loadOrGenerateMainStelesPreview(category, index) {
@@ -737,16 +649,7 @@ function handlePreviewError(componentPath, errorMessage) {
   delete window.pendingPreviews[componentPath];
 }
 
-function moveTestCarousel(category, direction) {
-  const state = testCarouselState[category];
-  const newIndex = state.index + direction;
-  const track = document.getElementById(`test-${category}-carousel-track`);
-  const items = track.querySelectorAll('.carousel-item');
-  
-  if (newIndex >= 0 && newIndex < items.length) {
-    showTestCarouselItem(category, newIndex);
-  }
-}
+
 
 function moveMainStelesCarousel(category, direction) {
   const state = carouselState[category];
@@ -759,30 +662,7 @@ function moveMainStelesCarousel(category, direction) {
   }
 }
 
-function showTestCarouselItem(category, index) {
-  const track = document.getElementById(`test-${category}-carousel-track`);
-  const viewport = document.getElementById(`test-${category}-carousel-viewport`);
-  const items = track.querySelectorAll('.carousel-item');
-  
-  if (!track || items.length === 0 || !items[index]) return;
 
-  items.forEach((item, i) => {
-    item.classList.toggle('active', i === index);
-  });
-  
-  const viewportCenter = viewport.offsetWidth / 2;
-  const targetItem = items[index];
-  const itemCenter = targetItem.offsetLeft + targetItem.offsetWidth / 2;
-  const newTransform = viewportCenter - itemCenter;
-
-  testCarouselState[category].index = index;
-  track.style.transform = `translateX(${newTransform}px)`;
-  
-  // Ледаче завантаження для активного елемента та сусідів
-  loadOrGenerateTestPreview(category, index);
-  if (index + 1 < items.length) loadOrGenerateTestPreview(category, index + 1);
-  if (index - 1 >= 0) loadOrGenerateTestPreview(category, index - 1);
-}
 
 function showMainStelesCarouselItem(category, index) {
   const track = document.getElementById(`${category}-carousel-track`);
@@ -813,14 +693,7 @@ function showMainStelesCarouselItem(category, index) {
 
 
 
-function addTestModel(category) {
-  const state = testCarouselState[category];
-  const filename = modelLists[category][state.index];
-  
-  if (window.sketchup && window.sketchup.add_model) {
-    window.sketchup.add_model(category, filename);
-  }
-}
+
 
 // --- УНІВЕРСАЛЬНІ ФУНКЦІЇ ДЛЯ КАРУСЕЛЕЙ ---
 
