@@ -281,6 +281,9 @@ function loadModelLists(data) {
     initializeTestCarousel('steles');
   }
   
+  // Ініціалізуємо новий незалежний модуль каруселі
+  initializeNewCarouselModule();
+  
   updateAllDisplays();
 }
 
@@ -709,5 +712,90 @@ function addSideCladding() {
   
   if (window.sketchup && window.sketchup.add_side_cladding) {
     window.sketchup.add_side_cladding(thickness);
+  }
+}
+
+// --- НОВИЙ НЕЗАЛЕЖНИЙ МОДУЛЬ КАРУСЕЛІ ---
+
+// Ініціалізація нового модуля каруселі
+function initializeNewCarouselModule() {
+  console.log('🎨 Ініціалізація нового модуля каруселі...');
+  
+  // Перевіряємо чи є моделі стел
+  if (!modelLists.steles || modelLists.steles.length === 0) {
+    console.log('❌ Немає моделей стел для нового модуля каруселі');
+    return;
+  }
+  
+  // Створюємо HTML для нового модуля каруселі
+  const container = document.getElementById('carousel-module-container');
+  if (!container) {
+    console.log('❌ Контейнер для нового модуля каруселі не знайдено');
+    return;
+  }
+  
+  // Генеруємо HTML через Ruby
+  if (window.sketchup && window.sketchup.get_carousel_html) {
+    const carouselHtml = window.sketchup.get_carousel_html('test_steles');
+    container.innerHTML = carouselHtml;
+  } else {
+    // Fallback HTML
+    container.innerHTML = `
+      <div class="carousel-module" id="test_steles-module">
+        <div class="carousel-module-header">
+          <h3>Тестова карусель стел</h3>
+          <div class="carousel-module-info" id="test_steles-info">
+            <span class="current-model">--</span>
+            <span class="model-counter">0 / 0</span>
+          </div>
+        </div>
+        
+        <div class="carousel-module-viewport" id="test_steles-viewport">
+          <div class="carousel-module-track" id="test_steles-track">
+            <!-- Елементи каруселі будуть додані через JavaScript -->
+          </div>
+        </div>
+        
+        <div class="carousel-module-controls">
+          <button class="carousel-module-btn prev" onclick="carouselModulePrevious('test_steles')">
+            ← Попередня
+          </button>
+          <button class="carousel-module-btn generate" onclick="carouselModuleGeneratePreview('test_steles')">
+            🎨 Генерувати превью
+          </button>
+          <button class="carousel-module-btn add" onclick="carouselModuleAddModel('test_steles')">
+            ➕ Додати модель
+          </button>
+          <button class="carousel-module-btn next" onclick="carouselModuleNext('test_steles')">
+            Наступна →
+          </button>
+        </div>
+        
+        <div class="carousel-module-preview" id="test_steles-preview">
+          <!-- Превью буде відображено тут -->
+        </div>
+      </div>
+    `;
+  }
+  
+  // Створюємо екземпляр нового модуля каруселі
+  if (window.CarouselModule) {
+    const newCarousel = new CarouselModule('test_steles', {
+      hasPreview: true,
+      previewMode: 'dynamic',
+      massGeneration: false,
+      design: 'white_gradient'
+    });
+    
+    // Реєструємо в глобальному реєстрі
+    window.carouselModules = window.carouselModules || {};
+    window.carouselModules['test_steles'] = newCarousel;
+    
+    // Ініціалізуємо з моделями стел
+    newCarousel.initialize(modelLists.steles);
+    
+    console.log('✅ Новий модуль каруселі ініціалізовано');
+  } else {
+    console.error('❌ Клас CarouselModule не знайдено');
   }
 }

@@ -115,6 +115,16 @@ module ProGran3
         end
       end
 
+      # Реєструємо callback'и для нового модуля каруселі
+      @carousel_ui = ProGran3::Carousel::CarouselUI.new
+      @carousel_ui.register_callbacks(@dialog)
+      
+      # Додаємо callback для отримання HTML каруселі
+      @dialog.add_action_callback("get_carousel_html") do |dialog, carousel_id|
+        html = @carousel_ui.get_carousel_html(carousel_id)
+        dialog.execute_script("receiveCarouselHtml('#{carousel_id}', `#{html}`);")
+      end
+
       @dialog.show
     end
   end

@@ -8,6 +8,10 @@ module ProGran3
   
   # Завантажуємо новий модуль для роботи з .skp файлами
   require_relative 'skp_preview_extractor'
+  
+  # Завантажуємо новий модуль каруселі
+  require_relative 'carousel/carousel_manager'
+  require_relative 'carousel/carousel_ui'
 
   def load_component(category, filename)
     path = File.join(ASSETS_PATH, category, filename)

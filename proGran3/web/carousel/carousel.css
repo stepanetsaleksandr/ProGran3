@@ -1,0 +1,355 @@
+/* proGran3/web/carousel/carousel.css */
+/* Унікальні стилі для незалежного модуля каруселі */
+
+/* Основний контейнер модуля каруселі */
+.carousel-module {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  margin: 20px 0;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+}
+
+/* Заголовок модуля */
+.carousel-module-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.carousel-module-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.carousel-module-info {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.carousel-module-info .current-model {
+  font-weight: 500;
+  color: #495057;
+}
+
+.carousel-module-info .model-counter {
+  background: #e9ecef;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+/* Область перегляду каруселі */
+.carousel-module-viewport {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+  background: #fafafa;
+}
+
+.carousel-module-track {
+  display: flex;
+  transition: transform 0.3s ease-in-out;
+  height: 100%;
+}
+
+/* Елементи каруселі */
+.carousel-module-item {
+  flex: 0 0 200px;
+  margin: 10px;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  opacity: 0.6;
+  transform: scale(0.9);
+}
+
+.carousel-module-item.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Контент елемента каруселі */
+.carousel-module-item-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Унікальний градієнт на межі 10px */
+.carousel-module-item-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg,
+    rgba(240, 240, 240, 0.8) 0%,
+    rgba(255, 255, 255, 1) 10%,
+    rgba(255, 255, 255, 1) 90%,
+    rgba(240, 240, 240, 0.8) 100%);
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Область превью */
+.carousel-module-item-preview {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  z-index: 2;
+}
+
+.carousel-module-preview-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+/* Індикатор завантаження */
+.carousel-module-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: #f8f9fa;
+}
+
+.carousel-module-loading-text {
+  color: #6c757d;
+  font-size: 12px;
+  text-align: center;
+  padding: 8px;
+}
+
+/* Інформація про елемент */
+.carousel-module-item-info {
+  padding: 8px 12px;
+  background: white;
+  border-top: 1px solid #e9ecef;
+  z-index: 2;
+  position: relative;
+}
+
+.carousel-module-item-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 2px;
+}
+
+.carousel-module-item-index {
+  font-size: 10px;
+  color: #6c757d;
+}
+
+/* Кнопки управління */
+.carousel-module-controls {
+  display: flex;
+  gap: 8px;
+  padding: 16px 20px;
+  background: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+}
+
+.carousel-module-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background: white;
+  color: #495057;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.carousel-module-btn:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  transform: translateY(-1px);
+}
+
+.carousel-module-btn:active {
+  transform: translateY(0);
+}
+
+.carousel-module-btn.prev {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.carousel-module-btn.next {
+  background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+}
+
+.carousel-module-btn.generate {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  border-color: #28a745;
+  color: #155724;
+}
+
+.carousel-module-btn.generate:hover {
+  background: linear-gradient(135deg, #c3e6cb 0%, #b1dfbb 100%);
+}
+
+.carousel-module-btn.add {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+  border-color: #17a2b8;
+  color: #0c5460;
+}
+
+.carousel-module-btn.add:hover {
+  background: linear-gradient(135deg, #bee5eb 0%, #abdde5 100%);
+}
+
+/* Область превью */
+.carousel-module-preview {
+  padding: 16px 20px;
+  background: white;
+  border-top: 1px solid #e0e0e0;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Анімації */
+@keyframes carouselFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.carousel-module {
+  animation: carouselFadeIn 0.5s ease-out;
+}
+
+@keyframes carouselSlide {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.carousel-module-item.active {
+  animation: carouselSlide 0.3s ease-out;
+}
+
+/* Адаптивність */
+@media (max-width: 768px) {
+  .carousel-module-controls {
+    flex-direction: column;
+  }
+  
+  .carousel-module-item {
+    flex: 0 0 150px;
+  }
+  
+  .carousel-module-viewport {
+    height: 150px;
+  }
+}
+
+/* Стани завантаження */
+.carousel-module-item[data-status="pending"] .carousel-module-loading-text {
+  color: #007bff;
+  animation: pulse 1.5s infinite;
+}
+
+.carousel-module-item[data-status="error"] .carousel-module-loading-text {
+  color: #dc3545;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Унікальні ефекти для модуля */
+.carousel-module::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #007bff, #28a745, #ffc107, #dc3545);
+  border-radius: 12px 12px 0 0;
+}
+
+/* Ховер ефекти */
+.carousel-module-item:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.carousel-module-item.active:hover {
+  transform: scale(1.05);
+}
+
+/* Фокус для доступності */
+.carousel-module-btn:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* Темна тема (опціонально) */
+@media (prefers-color-scheme: dark) {
+  .carousel-module {
+    background: #2d3748;
+    border-color: #4a5568;
+  }
+  
+  .carousel-module-header {
+    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+    border-bottom-color: #4a5568;
+  }
+  
+  .carousel-module-header h3 {
+    color: #e2e8f0;
+  }
+  
+  .carousel-module-item-content {
+    background: #4a5568;
+  }
+  
+  .carousel-module-item-content::before {
+    background: linear-gradient(45deg,
+      rgba(74, 85, 104, 0.8) 0%,
+      rgba(45, 55, 72, 1) 10%,
+      rgba(45, 55, 72, 1) 90%,
+      rgba(74, 85, 104, 0.8) 100%);
+  }
+}
