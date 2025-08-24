@@ -8,6 +8,16 @@ let carouselState = {
   flowerbeds: { index: 0 }
 };
 
+// Відстеження доданих елементів до моделі
+let addedElements = {
+  foundation: false,
+  tiling: false,
+  cladding: false,
+  stands: false,
+  flowerbeds: false,
+  steles: false
+};
+
 
 
 
@@ -275,6 +285,8 @@ const CarouselManager = {
     
     if (window.sketchup && window.sketchup.add_model) {
       window.sketchup.add_model(category, filename);
+      addedElements[category] = true;
+      updateSummaryTable();
     }
   },
 
@@ -791,43 +803,61 @@ function updateModelDisplays() {
 
 function updateSummaryTable() {
   // Фундамент
-  const foundationDepth = document.getElementById('foundation-depth').value;
-  const foundationWidth = document.getElementById('foundation-width').value;
-  const foundationHeight = document.getElementById('foundation-height').value;
-  document.getElementById('summary-foundation').textContent = 
-    `${foundationDepth}×${foundationWidth}×${foundationHeight} мм`;
+  if (addedElements.foundation) {
+    const foundationDepth = document.getElementById('foundation-depth').value;
+    const foundationWidth = document.getElementById('foundation-width').value;
+    const foundationHeight = document.getElementById('foundation-height').value;
+    document.getElementById('summary-foundation').textContent = 
+      `${foundationDepth}×${foundationWidth}×${foundationHeight} мм`;
+  } else {
+    document.getElementById('summary-foundation').textContent = '--';
+  }
   
   // Плитка
-  const tilingMode = document.getElementById('tiling-mode');
-  if (tilingMode) {
-    const modeText = tilingMode.options[tilingMode.selectedIndex].text;
-    document.getElementById('summary-tiling').textContent = modeText;
+  if (addedElements.tiling) {
+    const tilingMode = document.getElementById('tiling-mode');
+    if (tilingMode) {
+      const modeText = tilingMode.options[tilingMode.selectedIndex].text;
+      document.getElementById('summary-tiling').textContent = modeText;
+    }
+  } else {
+    document.getElementById('summary-tiling').textContent = '--';
   }
   
   // Облицювання
-  const claddingThickness = document.getElementById('cladding-thickness').value;
-  document.getElementById('summary-cladding').textContent = 
-    `Товщина: ${claddingThickness} мм`;
+  if (addedElements.cladding) {
+    const claddingThickness = document.getElementById('cladding-thickness').value;
+    document.getElementById('summary-cladding').textContent = 
+      `Товщина: ${claddingThickness} мм`;
+  } else {
+    document.getElementById('summary-cladding').textContent = '--';
+  }
   
   // Підставка
-  if (carouselState.stands && modelLists.stands) {
+  if (addedElements.stands && carouselState.stands && modelLists.stands) {
     const standFilename = modelLists.stands[carouselState.stands.index];
     document.getElementById('summary-stand').textContent = 
       standFilename ? standFilename.replace('.skp', '') : '--';
+  } else {
+    document.getElementById('summary-stand').textContent = '--';
   }
   
   // Квітник
-  if (carouselState.flowerbeds && modelLists.flowerbeds) {
+  if (addedElements.flowerbeds && carouselState.flowerbeds && modelLists.flowerbeds) {
     const flowerbedFilename = modelLists.flowerbeds[carouselState.flowerbeds.index];
     document.getElementById('summary-flowerbed').textContent = 
       flowerbedFilename ? flowerbedFilename.replace('.skp', '') : '--';
+  } else {
+    document.getElementById('summary-flowerbed').textContent = '--';
   }
   
   // Стела
-  if (carouselState.steles && modelLists.steles) {
+  if (addedElements.steles && carouselState.steles && modelLists.steles) {
     const steleFilename = modelLists.steles[carouselState.steles.index];
     document.getElementById('summary-stele').textContent = 
       steleFilename ? steleFilename.replace('.skp', '') : '--';
+  } else {
+    document.getElementById('summary-stele').textContent = '--';
   }
 }
 
@@ -839,6 +869,8 @@ function addFoundation() {
   
   if (window.sketchup && window.sketchup.add_foundation) {
     window.sketchup.add_foundation(depth, width, height);
+    addedElements.foundation = true;
+    updateSummaryTable();
   }
 }
 
@@ -858,6 +890,8 @@ function addTiles() {
       const overhang = document.getElementById('modular-overhang').value;
       window.sketchup.add_tiles('modular', size, thickness, seam, overhang);
     }
+    addedElements.tiling = true;
+    updateSummaryTable();
   }
 }
 
@@ -866,6 +900,8 @@ function addSideCladding() {
   
   if (window.sketchup && window.sketchup.add_side_cladding) {
     window.sketchup.add_side_cladding(thickness);
+    addedElements.cladding = true;
+    updateSummaryTable();
   }
 }
 
