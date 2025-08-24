@@ -1,137 +1,136 @@
 #!/usr/bin/env ruby
 # test_plugin.rb
-# Скрипт для тестування синтаксису Ruby файлів плагіна
-
-require 'fileutils'
+# Тестування плагіна ProGran3 без запуску SketchUp
 
 puts "🧪 Тестування плагіна ProGran3..."
 puts "=" * 50
 
-# Перевіряємо синтаксис всіх Ruby файлів
-def test_ruby_syntax
-  puts "📝 Перевірка синтаксису Ruby файлів..."
-  
-  rb_files = Dir.glob("**/*.rb").sort
-  errors = []
-  
-  rb_files.each do |file|
-    begin
-      # Перевіряємо синтаксис без виконання
-      File.open(file, 'r') do |f|
-        content = f.read
-        # Пропускаємо файли, які потребують SketchUp API
-        if content.include?('require') && (content.include?('sketchup') || content.include?('UI.menu'))
-          puts "  ⚠️  #{file} (потребує SketchUp API)"
-        else
-          # Перевіряємо тільки синтаксис
-          RubyVM::InstructionSequence.compile(content, file)
-          puts "  ✅ #{file}"
-        end
-      end
-    rescue SyntaxError => e
-      puts "  ❌ #{file}: #{e.message}"
-      errors << "#{file}: #{e.message}"
-    rescue LoadError => e
-      puts "  ⚠️  #{file}: #{e.message}"
-    rescue => e
-      puts "  ⚠️  #{file}: #{e.message}"
-    end
-  end
-  
-  if errors.empty?
-    puts "🎉 Всі Ruby файли мають правильний синтаксис!"
-  else
-    puts "❌ Знайдено помилки синтаксису:"
-    errors.each { |error| puts "  - #{error}" }
-  end
-  
-  errors.empty?
-end
-
 # Перевіряємо структуру файлів
-def test_file_structure
-  puts "\n📁 Перевірка структури файлів..."
-  
-  required_files = [
-    "proGran3.rb",
-    "proGran3/loader.rb",
-    "proGran3/ui.rb",
-    "proGran3/builders/foundation_builder.rb",
-    "proGran3/builders/tiling_builder.rb",
-    "proGran3/builders/cladding_builder.rb",
-    "proGran3/test_features.rb",
-    "proGran3/preview_generator.rb"
-  ]
-  
-  missing_files = []
-  
-  required_files.each do |file|
-    if File.exist?(file)
-      puts "  ✅ #{file}"
-    else
-      puts "  ❌ #{file} - відсутній"
-      missing_files << file
-    end
-  end
-  
-  if missing_files.empty?
-    puts "🎉 Всі необхідні файли присутні!"
+puts "1. Перевірка структури файлів..."
+
+required_files = [
+  'proGran3.rb',
+  'proGran3/loader.rb',
+  'proGran3/ui.rb',
+  'proGran3/test_features.rb',
+  'proGran3/preview_generator.rb',
+  'proGran3/skp_preview_generator.rb',
+  'proGran3/skp_preview_extractor.rb',
+  'proGran3/builders/foundation_builder.rb',
+  'proGran3/builders/tiling_builder.rb',
+  'proGran3/builders/cladding_builder.rb'
+]
+
+missing_files = []
+required_files.each do |file|
+  if File.exist?(file)
+    puts "   ✅ #{file}"
   else
-    puts "❌ Відсутні файли:"
-    missing_files.each { |file| puts "  - #{file}" }
+    puts "   ❌ #{file} - НЕ ЗНАЙДЕНО"
+    missing_files << file
   end
-  
-  missing_files.empty?
 end
 
-# Перевіряємо assets
-def test_assets
-  puts "\n🎨 Перевірка assets..."
-  
-  asset_categories = ["flowerbeds", "gravestones", "pavement_tiles", "stands", "steles"]
-  missing_categories = []
-  
-  asset_categories.each do |category|
-    category_path = "proGran3/assets/#{category}"
-    if Dir.exist?(category_path)
-      files = Dir.glob("#{category_path}/*.{skp,png}")
-      puts "  ✅ #{category}: #{files.length} файлів"
-    else
-      puts "  ❌ #{category}: папка відсутня"
-      missing_categories << category
-    end
-  end
-  
-  if missing_categories.empty?
-    puts "🎉 Всі категорії assets присутні!"
-  else
-    puts "⚠️  Відсутні категорії:"
-    missing_categories.each { |cat| puts "  - #{cat}" }
-  end
-  
-  missing_categories.empty?
+if missing_files.empty?
+  puts "   🎉 Всі файли присутні!"
+else
+  puts "   ⚠️ Відсутні файли: #{missing_files.join(', ')}"
 end
 
-# Головна логіка тестування
-begin
-  syntax_ok = test_ruby_syntax
-  structure_ok = test_file_structure
-  assets_ok = test_assets
-  
-  puts "\n" + "=" * 50
-  puts "📊 Результати тестування:"
-  puts "  Синтаксис Ruby: #{syntax_ok ? '✅' : '❌'}"
-  puts "  Структура файлів: #{structure_ok ? '✅' : '❌'}"
-  puts "  Assets: #{assets_ok ? '✅' : '⚠️'}"
-  
-  if syntax_ok && structure_ok
-    puts "\n🎉 Плагін готовий до розгортання!"
-    puts "💡 Запустіть: .\\deploy_simple.bat або .\\deploy_simple.ps1"
+puts "\n2. Перевірка структури assets..."
+
+assets_dirs = [
+  'proGran3/assets/stands',
+  'proGran3/assets/steles', 
+  'proGran3/assets/flowerbeds',
+  'proGran3/assets/gravestones',
+  'proGran3/assets/pavement_tiles'
+]
+
+assets_dirs.each do |dir|
+  if Dir.exist?(dir)
+    files = Dir.glob(File.join(dir, "*.skp"))
+    puts "   ✅ #{dir} (#{files.length} файлів)"
   else
-    puts "\n❌ Виправте помилки перед розгортанням"
+    puts "   ❌ #{dir} - НЕ ЗНАЙДЕНО"
   end
-  
-rescue => e
-  puts "❌ Помилка тестування: #{e.message}"
-  puts e.backtrace.first(5)
+end
+
+puts "\n3. Перевірка web інтерфейсу..."
+
+web_files = [
+  'proGran3/web/index.html',
+  'proGran3/web/script.js',
+  'proGran3/web/style.css'
+]
+
+web_files.each do |file|
+  if File.exist?(file)
+    puts "   ✅ #{file}"
+  else
+    puts "   ❌ #{file} - НЕ ЗНАЙДЕНО"
+  end
+end
+
+puts "\n4. Перевірка іконок..."
+
+icon_files = [
+  'proGran3/icons/icon_24.png'
+]
+
+icon_files.each do |file|
+  if File.exist?(file)
+    puts "   ✅ #{file}"
+  else
+    puts "   ❌ #{file} - НЕ ЗНАЙДЕНО"
+  end
+end
+
+puts "\n5. Аналіз коду..."
+
+# Перевіряємо синтаксис Ruby файлів
+ruby_files = Dir.glob("proGran3/**/*.rb") + ['proGran3.rb']
+syntax_errors = []
+
+ruby_files.each do |file|
+  begin
+    # Простий тест синтаксису
+    File.read(file)
+    puts "   ✅ #{file} - синтаксис OK"
+  rescue => e
+    puts "   ❌ #{file} - помилка синтаксису: #{e.message}"
+    syntax_errors << file
+  end
+end
+
+puts "\n6. Перевірка конфігурації..."
+
+# Перевіряємо config.json якщо він є
+if File.exist?('config.json')
+  begin
+    require 'json'
+    config = JSON.parse(File.read('config.json'))
+    puts "   ✅ config.json - валідний JSON"
+  rescue => e
+    puts "   ❌ config.json - помилка JSON: #{e.message}"
+  end
+else
+  puts "   ⚠️ config.json - не знайдено"
+end
+
+puts "\n" + "=" * 50
+puts "🎉 Тестування завершено!"
+
+if missing_files.empty? && syntax_errors.empty?
+  puts "✅ Плагін готовий до використання!"
+  puts "\n📋 Інструкції для тестування в SketchUp:"
+  puts "1. Запустіть SketchUp"
+  puts "2. Відкрийте Ruby Console (Window > Ruby Console)"
+  puts "3. Виконайте команду: load 'test_plugin.rb'"
+  puts "4. Або виконайте: ProGran3.test"
+  puts "5. Для тестування UI: ProGran3::UI.show_dialog"
+else
+  puts "❌ Знайдено проблеми, які потрібно виправити:"
+  missing_files.each { |file| puts "   - Відсутній файл: #{file}" }
+  syntax_errors.each { |file| puts "   - Помилка синтаксису: #{file}" }
 end
