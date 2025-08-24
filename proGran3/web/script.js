@@ -17,11 +17,11 @@ let previewGenerationStarted = false;
 
 // Універсальна система каруселей
 const CarouselManager = {
-  // Конфігурація каруселей
+  // Конфігурація каруселей - всі використовують генерацію
   carousels: {
     'stands': { 
-      hasPreview: false, 
-      previewMode: 'static',
+      hasPreview: true, 
+      previewMode: 'dynamic',
       massGeneration: false 
     },
     'steles': { 
@@ -30,8 +30,8 @@ const CarouselManager = {
       massGeneration: true 
     },
     'flowerbeds': { 
-      hasPreview: false, 
-      previewMode: 'static',
+      hasPreview: true, 
+      previewMode: 'dynamic',
       massGeneration: false 
     }
   },
@@ -55,35 +55,27 @@ const CarouselManager = {
     
     setTimeout(() => {
       this.showCarouselItem(category, 0);
+      // Всі каруселі тепер можуть генерувати превью
       if (config.massGeneration) {
         this.generateAllPreviews(category);
       }
     }, 100);
   },
 
-  // Створення елемента каруселі
+  // Створення елемента каруселі - всі використовують динамічне превью
   createCarouselItem(category, filename, config) {
     const item = document.createElement('div');
     item.className = 'carousel-item';
     
-    if (config.hasPreview && config.previewMode === 'dynamic') {
-      // Динамічне превью з ледачим завантаженням
-      item.dataset.status = 'idle';
-      item.dataset.filename = filename;
-      item.dataset.category = category;
-      
-      const loadingDiv = document.createElement('div');
-      loadingDiv.className = 'loading-indicator';
-      loadingDiv.textContent = 'Готово до завантаження';
-      item.appendChild(loadingDiv);
-    } else {
-      // Статичне превью або без превью
-      const img = document.createElement('img');
-      const imgPath = `../assets/${category}/${filename.replace('.skp', '.png')}`;
-      img.src = imgPath;
-      img.alt = filename;
-      item.appendChild(img);
-    }
+    // Всі елементи використовують динамічне превью з ледачим завантаженням
+    item.dataset.status = 'idle';
+    item.dataset.filename = filename;
+    item.dataset.category = category;
+    
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading-indicator';
+    loadingDiv.textContent = 'Готово до завантаження';
+    item.appendChild(loadingDiv);
     
     return item;
   },
@@ -116,19 +108,16 @@ const CarouselManager = {
     carouselState[category].index = index;
     track.style.transform = `translateX(${newTransform}px)`;
     
-    // Ледаче завантаження для динамічних превью
-    const config = this.carousels[category];
-    if (config.hasPreview && config.previewMode === 'dynamic') {
-      this.loadOrGeneratePreview(category, index);
-      // Завантажуємо сусідні елементи
-      if (index + 1 < items.length) this.loadOrGeneratePreview(category, index + 1);
-      if (index - 1 >= 0) this.loadOrGeneratePreview(category, index - 1);
-    }
+    // Ледаче завантаження для всіх превью (тепер всі динамічні)
+    this.loadOrGeneratePreview(category, index);
+    // Завантажуємо сусідні елементи
+    if (index + 1 < items.length) this.loadOrGeneratePreview(category, index + 1);
+    if (index - 1 >= 0) this.loadOrGeneratePreview(category, index - 1);
     
     updateAllDisplays();
   },
 
-  // Ледаче завантаження превью
+  // Ледаче завантаження превью - тепер тільки генерація
   loadOrGeneratePreview(category, index) {
     const track = document.getElementById(`${category}-carousel-track`);
     if (!track) return;
@@ -149,22 +138,12 @@ const CarouselManager = {
       loadingDiv.className = 'loading-indicator';
       item.appendChild(loadingDiv);
     }
-    loadingDiv.textContent = 'Завантаження';
+    loadingDiv.textContent = 'Генерація превью...';
 
     item.dataset.status = 'pending';
 
-    const img = new Image();
-    img.alt = filename;
-    img.onload = function() {
-      item.dataset.status = 'loaded';
-      if (loadingDiv && loadingDiv.parentNode) loadingDiv.parentNode.removeChild(loadingDiv);
-      item.appendChild(img);
-    };
-    img.onerror = function() {
-      loadingDiv.textContent = 'Генерація превью...';
-      CarouselManager.autoGeneratePreview(category, filename, item, loadingDiv);
-    };
-    img.src = `../assets/${category}/${filename.replace('.skp', '.png')}`;
+    // Відразу запускаємо генерацію превью
+    this.autoGeneratePreview(category, filename, item, loadingDiv);
   },
 
   // Автоматична генерація превью
@@ -387,24 +366,12 @@ function loadOrGenerateTestPreview(category, index) {
     loadingDiv.className = 'loading-indicator';
     item.appendChild(loadingDiv);
   }
-  loadingDiv.textContent = 'Завантаження';
+  loadingDiv.textContent = 'Генерація превью...';
 
   item.dataset.status = 'pending';
 
-  const img = new Image();
-  img.alt = filename;
-  img.onload = function() {
-    item.dataset.status = 'loaded';
-    if (loadingDiv && loadingDiv.parentNode) loadingDiv.parentNode.removeChild(loadingDiv);
-    item.appendChild(img);
-    debugLog(`✅ Зображення завантажено: ${filename}`);
-  };
-  img.onerror = function() {
-    debugLog(`❌ PNG відсутнє, запускаємо генерацію: ${filename}`);
-    loadingDiv.textContent = 'Генерація превью...';
-    autoGenerateTestPreview(category, filename, item, loadingDiv);
-  };
-  img.src = `../assets/${category}/${filename.replace('.skp', '.png')}`;
+  // Відразу запускаємо генерацію превью
+  autoGenerateTestPreview(category, filename, item, loadingDiv);
 }
 
 // Функція для логування в веб-інтерфейсі

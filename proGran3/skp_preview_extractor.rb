@@ -13,6 +13,28 @@ module ProGran3
     # Створюємо папку для превью якщо її немає
     Dir.mkdir(PREVIEW_PATH) unless Dir.exist?(PREVIEW_PATH)
     
+    # Універсальний метод для всіх категорій
+    def extract_preview(component_path, size = 256)
+      # Розбираємо шлях компонента (наприклад: "steles/stele_100x50x8.skp")
+      category, filename = component_path.split('/')
+      
+      # Формуємо повний шлях до .skp файла
+      skp_file_path = File.join(File.dirname(__FILE__), 'assets', category, filename)
+      
+      puts "🔄 Універсальне витягування превью: #{component_path}"
+      
+      # Використовуємо основний метод
+      result = extract_preview_from_skp(skp_file_path, size)
+      
+      if result
+        puts "✅ Превью створено: #{File.basename(result)}"
+        return result
+      else
+        puts "❌ Помилка створення превью для: #{component_path}"
+        return nil
+      end
+    end
+    
     # Основний метод витягування превью
     def extract_preview_from_skp(skp_file_path, output_size = 256)
       puts "🔄 Витягування превью з: #{File.basename(skp_file_path)}"
@@ -80,6 +102,25 @@ module ProGran3
       File.join(PREVIEW_PATH, "#{filename}_#{size}x#{size}.png")
     end
     
+    # Метод для отримання base64 даних превью
+    def get_preview_base64(component_path, size = 256)
+      preview_path = extract_preview(component_path, size)
+      
+      if preview_path && File.exist?(preview_path)
+        begin
+          require 'base64'
+          image_data = File.read(preview_path, mode: 'rb')
+          base64_data = Base64.strict_encode64(image_data)
+          return "data:image/png;base64,#{base64_data}"
+        rescue => e
+          puts "❌ Помилка конвертації в base64: #{e.message}"
+          return nil
+        end
+      end
+      
+      nil
+    end
+    
     # Тестування методу
     def test_extraction
       puts "🧪 Тестування витягування превью..."
@@ -99,6 +140,29 @@ module ProGran3
         end
       else
         puts "❌ Не знайдено тестовий .skp файл"
+      end
+    end
+    
+    # Тестування універсального методу
+    def test_universal_extraction
+      puts "🧪 Тестування універсального витягування..."
+      
+      # Тестуємо з різними категоріями
+      test_cases = [
+        "steles/stele_100x50x8.skp",
+        "stands/stand_50x20x15.skp",
+        "flowerbeds/flowerbed_100x50x10.skp"
+      ]
+      
+      test_cases.each do |component_path|
+        puts "📁 Тестуємо: #{component_path}"
+        result = extract_preview(component_path, 256)
+        
+        if result
+          puts "✅ Успішно: #{File.basename(result)}"
+        else
+          puts "❌ Невдало"
+        end
       end
     end
   end

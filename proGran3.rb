@@ -102,12 +102,21 @@ module ProGran3
     puts "✅ Плагін готовий до роботи!"
   end
 
-  # Метод для витягування превью з .skp файлів
-  def self.extract_skp_preview(skp_file_path, size = 256)
-    SkpPreviewExtractor.extract_preview_from_skp(skp_file_path, size)
+  # Універсальний метод для витягування превью з .skp файлів
+  def self.extract_skp_preview(component_path, size = 256)
+    SkpPreviewExtractor.extract_preview(component_path, size)
+  end
+  
+  # Метод для отримання base64 даних превью
+  def self.get_preview_base64(component_path, size = 256)
+    SkpPreviewExtractor.get_preview_base64(component_path, size)
   end
 
   def self.test_skp_preview_extractor
     SkpPreviewExtractor.test_extraction
+  end
+  
+  def self.test_universal_extraction
+    SkpPreviewExtractor.test_universal_extraction
   end
 end

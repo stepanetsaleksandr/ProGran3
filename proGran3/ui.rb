@@ -92,56 +92,29 @@ module ProGran3
         ProGran3::UI.show_dialog
       end
 
-      # Callback для тестування нових функцій (нова логіка з .skp файлів)
+      # Callback для тестування нових функцій (універсальна логіка з .skp файлів)
 
-                  @dialog.add_action_callback("generate_preview_image") do |dialog, component_path|
-              # Використовуємо гібридний екстрактор для .skp файлів
-              skp_file_path = File.join(ProGran3::ASSETS_PATH, component_path)
-              if File.exist?(skp_file_path)
-                result = ProGran3.extract_skp_preview(skp_file_path)
-                puts "✅ Превью витягнуто: #{result}" if result
-              else
-                puts "❌ Файл не знайдено: #{skp_file_path}"
-              end
-            end
+      @dialog.add_action_callback("generate_preview_image") do |dialog, component_path|
+        # Використовуємо універсальний екстрактор для .skp файлів
+        result = ProGran3.extract_skp_preview(component_path)
+        puts "✅ Превью витягнуто: #{result}" if result
+      end
 
-                  @dialog.add_action_callback("generate_web_preview") do |dialog, component_path|
-              puts "🔍 generate_web_preview callback викликано для: #{component_path}"
-              
-              # Використовуємо гібридний екстрактор для .skp файлів
-              skp_file_path = File.join(ProGran3::ASSETS_PATH, component_path)
-              
-              if File.exist?(skp_file_path)
-                # Витягуємо превью за допомогою гібридного методу
-                temp_preview_path = ProGran3.extract_skp_preview(skp_file_path, 256)
-                
-                if temp_preview_path && File.exist?(temp_preview_path)
-                  # Читаємо файл та конвертуємо в base64
-                  begin
-                    require 'base64'
-                    image_data = File.read(temp_preview_path, mode: 'rb')
-                    base64_data = Base64.strict_encode64(image_data)
-                    
-                    puts "✅ Отримано base64 дані, довжина: #{base64_data.length}"
-                    @dialog.execute_script("receiveWebPreview('#{component_path}', 'data:image/png;base64,#{base64_data}');")
-                  rescue => e
-                    puts "❌ Помилка конвертації в base64: #{e.message}"
-                    @dialog.execute_script("handlePreviewError('#{component_path}', 'Помилка конвертації превью');")
-                  end
-                else
-                  puts "❌ Не вдалося витягнути превью"
-                  @dialog.execute_script("handlePreviewError('#{component_path}', 'Помилка витягування превью');")
-                end
-              else
-                puts "❌ Файл не знайдено: #{skp_file_path}"
-                @dialog.execute_script("handlePreviewError('#{component_path}', 'Файл не знайдено');")
-              end
-            end
+      @dialog.add_action_callback("generate_web_preview") do |dialog, component_path|
+        puts "🔍 generate_web_preview callback викликано для: #{component_path}"
+        
+        # Використовуємо універсальний метод для отримання base64
+        base64_data = ProGran3.get_preview_base64(component_path, 256)
+        
+        if base64_data
+          puts "✅ Отримано base64 дані, довжина: #{base64_data.length}"
+          @dialog.execute_script("receiveWebPreview('#{component_path}', '#{base64_data}');")
+        else
+          puts "❌ Помилка генерації превью для: #{component_path}"
+          @dialog.execute_script("handlePreviewError('#{component_path}', 'Помилка генерації превью');")
+        end
+      end
 
-
-
-
-      
       @dialog.show
     end
   end
