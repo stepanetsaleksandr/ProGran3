@@ -1,11 +1,22 @@
 # progran3/builders/cladding_builder.rb
 #це модуль який відповідає за створення бокового (вертикального) облицювання фундаменту
+require_relative '../validation'
 
 module ProGran3
   module CladdingBuilder
     extend self
 
     def create(thickness)
+      # Валідація вхідних параметрів
+      validation_result = Validation.validate_dimensions(100, 100, thickness, "CladdingBuilder")
+      unless validation_result.valid
+        ErrorHandler.handle_error(
+          Validation::ValidationError.new("Помилка валідації облицювання: #{validation_result.error_messages.join(', ')}"),
+          "CladdingBuilder",
+          "create"
+        )
+        return false
+      end
       model = Sketchup.active_model
       entities = model.active_entities
       model.start_operation('Create Side Cladding', true)

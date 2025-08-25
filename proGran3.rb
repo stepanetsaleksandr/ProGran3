@@ -6,6 +6,7 @@ module ProGran3
   require_relative 'progran3/constants'
   require_relative 'progran3/logger'
   require_relative 'progran3/error_handler'
+  require_relative 'progran3/validation'
   
   # Підключаємо основні модулі
   require_relative 'progran3/loader'
@@ -69,20 +70,21 @@ module ProGran3
     # Очищаємо завантажені файли
     $LOADED_FEATURES.delete_if { |file| file.include?('progran3') }
     
-    # Перезавантажуємо тільки наші файли
-    plugin_dir = File.dirname(__FILE__)
-    our_files = [
-      File.join(plugin_dir, 'proGran3.rb'),
-      File.join(plugin_dir, 'proGran3', 'constants.rb'),
-      File.join(plugin_dir, 'proGran3', 'logger.rb'),
-      File.join(plugin_dir, 'proGran3', 'error_handler.rb'),
-      File.join(plugin_dir, 'proGran3', 'loader.rb'),
-      File.join(plugin_dir, 'proGran3', 'ui.rb'),
-      File.join(plugin_dir, 'proGran3', 'builders', 'foundation_builder.rb'),
-      File.join(plugin_dir, 'proGran3', 'builders', 'tiling_builder.rb'),
-      File.join(plugin_dir, 'proGran3', 'builders', 'cladding_builder.rb'),
-      File.join(plugin_dir, 'proGran3', 'skp_preview_extractor.rb')
-    ]
+          # Перезавантажуємо тільки наші файли
+      plugin_dir = File.dirname(__FILE__)
+      our_files = [
+        File.join(plugin_dir, 'proGran3.rb'),
+        File.join(plugin_dir, 'proGran3', 'constants.rb'),
+        File.join(plugin_dir, 'proGran3', 'logger.rb'),
+        File.join(plugin_dir, 'proGran3', 'error_handler.rb'),
+        File.join(plugin_dir, 'proGran3', 'validation.rb'),
+        File.join(plugin_dir, 'proGran3', 'loader.rb'),
+        File.join(plugin_dir, 'proGran3', 'ui.rb'),
+        File.join(plugin_dir, 'proGran3', 'builders', 'foundation_builder.rb'),
+        File.join(plugin_dir, 'proGran3', 'builders', 'tiling_builder.rb'),
+        File.join(plugin_dir, 'proGran3', 'builders', 'cladding_builder.rb'),
+        File.join(plugin_dir, 'proGran3', 'skp_preview_extractor.rb')
+      ]
     
     our_files.each do |file|
       if File.exist?(file)
@@ -103,6 +105,10 @@ module ProGran3
     Logger.info("Тестування плагіна ProGran3", "Test")
     Logger.info("Шлях до плагіна: #{File.dirname(__FILE__)}", "Test")
     Logger.info("Версія: #{Constants::VERSION}", "Test")
+    
+    # Тестуємо систему валідації
+    Validation.test
+    
     Logger.success("Плагін готовий до роботи!", "Test")
   end
 
@@ -122,5 +128,10 @@ module ProGran3
   
   def self.test_universal_extraction
     SkpPreviewExtractor.test_universal_extraction
+  end
+  
+  # Метод для тестування системи валідації
+  def self.test_validation
+    Validation.test
   end
 end

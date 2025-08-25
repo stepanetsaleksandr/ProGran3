@@ -1,5 +1,6 @@
 # progran3/ui.rb
 require 'json'
+require_relative 'validation'
 
 module ProGran3
   module UI
@@ -39,54 +40,179 @@ module ProGran3
 
       # Callback'и для JavaScript
       @dialog.add_action_callback("add_foundation") do |dialog, depth, width, height|
+        # Валідація вхідних даних
+        validation_result = Validation.validate_dimensions(depth.to_i, width.to_i, height.to_i, "UI")
+        unless validation_result.valid
+          ErrorHandler.handle_error(
+            Validation::ValidationError.new("Помилка валідації фундаменту: #{validation_result.error_messages.join(', ')}"),
+            "UI",
+            "add_foundation"
+          )
+          return false
+        end
+        
         ProGran3::FoundationBuilder.create(depth.to_i, width.to_i, height.to_i)
       end
 
       @dialog.add_action_callback("add_tiles") do |dialog, type, *params|
         if type == "frame"
           thickness, borderWidth, overhang = params.map(&:to_i)
+          # Валідація параметрів периметральної плитки
+          validation_result = Validation.validate_dimensions(borderWidth, overhang, thickness, "UI")
+          unless validation_result.valid
+            ErrorHandler.handle_error(
+              Validation::ValidationError.new("Помилка валідації периметральної плитки: #{validation_result.error_messages.join(', ')}"),
+              "UI",
+              "add_tiles_frame"
+            )
+            return false
+          end
           ProGran3::TilingBuilder.insert_perimeter_tiles(thickness, borderWidth, overhang)
         elsif type == "modular"
           tileSize, thickness, seam, overhang = params
           thickness, seam, overhang = [thickness, seam, overhang].map(&:to_i)
+          # Валідація параметрів модульної плитки
+          validation_result = Validation.validate_dimensions(100, 100, thickness, "UI")
+          unless validation_result.valid
+            ErrorHandler.handle_error(
+              Validation::ValidationError.new("Помилка валідації модульної плитки: #{validation_result.error_messages.join(', ')}"),
+              "UI",
+              "add_tiles_modular"
+            )
+            return false
+          end
           ProGran3::TilingBuilder.insert_modular_tiles(tileSize, thickness, seam, overhang)
         end
       end
       
       @dialog.add_action_callback("add_side_cladding") do |dialog, thickness|
+        # Валідація товщини облицювання
+        validation_result = Validation.validate_dimensions(100, 100, thickness.to_i, "UI")
+        unless validation_result.valid
+          ErrorHandler.handle_error(
+            Validation::ValidationError.new("Помилка валідації облицювання: #{validation_result.error_messages.join(', ')}"),
+            "UI",
+            "add_side_cladding"
+          )
+          return false
+        end
+        
         ProGran3::CladdingBuilder.create(thickness.to_i)
       end
 
       @dialog.add_action_callback("add_model") do |dialog, category, filename|
+        # Валідація категорії та файлу
+        category_result = Validation.validate_category(category, "UI")
+        unless category_result.valid
+          ErrorHandler.handle_error(
+            Validation::ValidationError.new("Помилка валідації категорії: #{category_result.error_messages.join(', ')}"),
+            "UI",
+            "add_model"
+          )
+          return false
+        end
+        
+        # Валідація файлу (якщо передано повний шлях)
+        if filename && filename.include?('/')
+          file_result = Validation.validate_file_path(filename, "UI")
+          unless file_result.valid
+            ErrorHandler.handle_error(
+              Validation::ValidationError.new("Помилка валідації файлу: #{file_result.error_messages.join(', ')}"),
+              "UI",
+              "add_model"
+            )
+            return false
+          end
+        end
+        
         ProGran3.insert_component(category, filename)
       end
 
       # Старі callback'и для сумісності
       @dialog.add_action_callback("insert_foundation") do |dialog, params_json|
         params = JSON.parse(params_json)
+        
+        # Валідація параметрів фундаменту
+        validation_result = Validation.validate_dimensions(params["depth"], params["width"], params["height"], "UI")
+        unless validation_result.valid
+          ErrorHandler.handle_error(
+            Validation::ValidationError.new("Помилка валідації фундаменту: #{validation_result.error_messages.join(', ')}"),
+            "UI",
+            "insert_foundation"
+          )
+          return false
+        end
+        
         ProGran3::FoundationBuilder.create(params["depth"], params["width"], params["height"])
       end
 
       @dialog.add_action_callback("insert_component") do |dialog, params|
         category, filename = params.split("|")
+        
+        # Валідація категорії
+        category_result = Validation.validate_category(category, "UI")
+        unless category_result.valid
+          ErrorHandler.handle_error(
+            Validation::ValidationError.new("Помилка валідації категорії: #{category_result.error_messages.join(', ')}"),
+            "UI",
+            "insert_component"
+          )
+          return false
+        end
+        
         ProGran3.insert_component(category, filename)
       end
 
       @dialog.add_action_callback("insert_tiles") do |dialog, params_json|
         params = JSON.parse(params_json)
         if params["type"] == "frame"
+          # Валідація параметрів периметральної плитки
+          validation_result = Validation.validate_dimensions(params["borderWidth"], params["overhang"], params["thickness"], "UI")
+          unless validation_result.valid
+            ErrorHandler.handle_error(
+              Validation::ValidationError.new("Помилка валідації периметральної плитки: #{validation_result.error_messages.join(', ')}"),
+              "UI",
+              "insert_tiles_frame"
+            )
+            return false
+          end
           ProGran3::TilingBuilder.insert_perimeter_tiles(params["thickness"], params["borderWidth"], params["overhang"])
         elsif params["type"] == "modular"
+          # Валідація параметрів модульної плитки
+          validation_result = Validation.validate_dimensions(100, 100, params["thickness"], "UI")
+          unless validation_result.valid
+            ErrorHandler.handle_error(
+              Validation::ValidationError.new("Помилка валідації модульної плитки: #{validation_result.error_messages.join(', ')}"),
+              "UI",
+              "insert_tiles_modular"
+            )
+            return false
+          end
           ProGran3::TilingBuilder.insert_modular_tiles(params["tileSize"], params["thickness"], params["seam"], params["overhang"])
         end
       end
       
       @dialog.add_action_callback("insert_side_cladding") do |dialog, params_json|
         params = JSON.parse(params_json)
+        
+        # Валідація товщини облицювання
+        validation_result = Validation.validate_dimensions(100, 100, params["thickness"], "UI")
+        unless validation_result.valid
+          ErrorHandler.handle_error(
+            Validation::ValidationError.new("Помилка валідації облицювання: #{validation_result.error_messages.join(', ')}"),
+            "UI",
+            "insert_side_cladding"
+          )
+          return false
+        end
+        
         ProGran3::CladdingBuilder.create(params["thickness"])
       end
 
       @dialog.add_action_callback("reload_plugin") do |dialog, _|
+        # Валідація перед перезавантаженням
+        Validation.validate!(true, "Перезавантаження плагіна", "UI")
+        
         dialog.close
         ProGran3.reload
         ProGran3::UI.show_dialog
@@ -95,6 +221,17 @@ module ProGran3
       # Callback для тестування нових функцій (універсальна логіка з .skp файлів)
 
       @dialog.add_action_callback("generate_preview_image") do |dialog, component_path|
+        # Валідація шляху до файлу
+        file_result = Validation.validate_file_path(component_path, "UI")
+        unless file_result.valid
+          ErrorHandler.handle_error(
+            Validation::ValidationError.new("Помилка валідації файлу превью: #{file_result.error_messages.join(', ')}"),
+            "UI",
+            "generate_preview_image"
+          )
+          return false
+        end
+        
         # Використовуємо універсальний екстрактор для .skp файлів
         result = ProGran3.extract_skp_preview(component_path)
         puts "✅ Превью витягнуто: #{result}" if result
@@ -247,6 +384,28 @@ module ProGran3
         puts "✅ Статус моделі відправлено в JavaScript"
       end
       
+      # Callback для зміни одиниці вимірювання
+      @dialog.add_action_callback("change_unit") do |dialog, unit|
+        # Валідація одиниці вимірювання
+        unit_result = Validation.validate_unit(unit, "UI")
+        unless unit_result.valid
+          ErrorHandler.handle_error(
+            Validation::ValidationError.new("Помилка валідації одиниці: #{unit_result.error_messages.join(', ')}"),
+            "UI",
+            "change_unit"
+          )
+          return false
+        end
+        
+        # Логуємо зміну одиниці
+        puts "🔄 Змінено одиницю вимірювання на: #{unit}"
+      end
+      
+      # Callback для отримання поточної одиниці
+      @dialog.add_action_callback("get_current_unit") do |dialog, _|
+        # Повертаємо поточну одиницю (за замовчуванням мм)
+        "mm"
+      end
 
 
       @dialog.show

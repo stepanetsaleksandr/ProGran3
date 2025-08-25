@@ -1,11 +1,22 @@
 # progran/builders/tiling_builder.rb
 # Модуль, що відповідає за всі типи плитки на фундаменті.
+require_relative '../validation'
 
 module ProGran3
   module TilingBuilder
     extend self
 
     def insert_perimeter_tiles(thickness, border_width, overhang)
+      # Валідація вхідних параметрів
+      validation_result = Validation.validate_dimensions(border_width, overhang, thickness, "TilingBuilder")
+      unless validation_result.valid
+        ErrorHandler.handle_error(
+          Validation::ValidationError.new("Помилка валідації периметральної плитки: #{validation_result.error_messages.join(', ')}"),
+          "TilingBuilder",
+          "insert_perimeter_tiles"
+        )
+        return false
+      end
       model = Sketchup.active_model
       entities = model.active_entities
       defs = model.definitions

@@ -1,8 +1,20 @@
 # progran3/builders/foundation_builder.rb
+require_relative '../validation'
+
 module ProGran3
   module FoundationBuilder
     extend self
     def create(depth, width, height)
+      # Валідація вхідних параметрів
+      validation_result = Validation.validate_dimensions(depth, width, height, "FoundationBuilder")
+      unless validation_result.valid
+        ErrorHandler.handle_error(
+          Validation::ValidationError.new("Помилка валідації фундаменту: #{validation_result.error_messages.join(', ')}"),
+          "FoundationBuilder",
+          "create"
+        )
+        return false
+      end
       model = Sketchup.active_model
       entities = model.active_entities
       defs = model.definitions
