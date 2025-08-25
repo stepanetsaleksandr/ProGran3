@@ -422,6 +422,14 @@ function initializeApp() {
     debugLog(`❌ Не знайдено tiling-mode`, 'error');
   }
   
+  // Ініціалізація контролів відмостки
+  if(document.getElementById('blind-area-mode')) {
+    debugLog(`✅ Знайдено blind-area-mode, оновлюємо контроли`, 'success');
+    updateBlindAreaControls();
+  } else {
+    debugLog(`❌ Не знайдено blind-area-mode`, 'error');
+  }
+  
   // Згортаємо всі панелі, крім першої
   const panels = document.querySelectorAll('.panel');
   debugLog(`📋 Знайдено ${panels.length} панелей`, 'info');
@@ -743,6 +751,48 @@ function updateTilingControls() {
   }
 }
 
+function updateBlindAreaControls() {
+  const mode = document.getElementById('blind-area-mode').value;
+  const uniformControls = document.getElementById('uniform-controls');
+  const customControls = document.getElementById('custom-controls');
+  
+  if (mode === 'uniform') {
+    uniformControls.classList.remove('hidden');
+    customControls.classList.add('hidden');
+  } else {
+    uniformControls.classList.add('hidden');
+    customControls.classList.remove('hidden');
+  }
+  
+  updateAllDisplays();
+}
+
+function addBlindArea() {
+  const thickness = document.getElementById('blind-area-thickness').value;
+  const mode = document.getElementById('blind-area-mode').value;
+  
+  if (mode === 'uniform') {
+    const width = document.getElementById('blind-area-uniform-width').value;
+    debugLog(`🏗️ Створення відмостки з однаковою шириною: ${width}мм, товщина: ${thickness}мм`, 'info');
+    if (window.sketchup && window.sketchup.add_blind_area_uniform) {
+      window.sketchup.add_blind_area_uniform(width, thickness);
+      addedElements.blindArea = true;
+      updateSummaryTable();
+    } else { debugLog(`❌ window.sketchup.add_blind_area_uniform не доступний`, 'error'); }
+  } else {
+    const north = document.getElementById('blind-area-north').value;
+    const south = document.getElementById('blind-area-south').value;
+    const east = document.getElementById('blind-area-east').value;
+    const west = document.getElementById('blind-area-west').value;
+    debugLog(`🏗️ Створення відмостки з різною шириною: П:${north}мм, Пд:${south}мм, С:${east}мм, З:${west}мм, товщина: ${thickness}мм`, 'info');
+    if (window.sketchup && window.sketchup.add_blind_area_custom) {
+      window.sketchup.add_blind_area_custom(north, south, east, west, thickness);
+      addedElements.blindArea = true;
+      updateSummaryTable();
+    } else { debugLog(`❌ window.sketchup.add_blind_area_custom не доступний`, 'error'); }
+  }
+}
+
 function updateAllDisplays() {
   // Оновлення відображення розмірів фундаменту
   const foundationDepth = document.getElementById('foundation-depth').value;
@@ -765,19 +815,17 @@ function updateAllDisplays() {
   
   // Оновлення відображення розмірів відмостки
   const blindAreaThickness = document.getElementById('blind-area-thickness').value;
-  const blindAreaNorth = document.getElementById('blind-area-north').value;
-  const blindAreaSouth = document.getElementById('blind-area-south').value;
-  const blindAreaEast = document.getElementById('blind-area-east').value;
-  const blindAreaWest = document.getElementById('blind-area-west').value;
+  const blindAreaMode = document.getElementById('blind-area-mode').value;
   
-  // Перевіряємо чи всі ширини однакові
-  const widths = [blindAreaNorth, blindAreaSouth, blindAreaEast, blindAreaWest];
-  const isUniform = widths.every(w => w === widths[0]);
-  
-  if (isUniform) {
+  if (blindAreaMode === 'uniform') {
+    const uniformWidth = document.getElementById('blind-area-uniform-width').value;
     document.getElementById('blind-area-dimensions-display').textContent = 
-      `Ширина: ${blindAreaNorth} мм, Товщина: ${blindAreaThickness} мм`;
+      `Ширина: ${uniformWidth} мм, Товщина: ${blindAreaThickness} мм`;
   } else {
+    const blindAreaNorth = document.getElementById('blind-area-north').value;
+    const blindAreaSouth = document.getElementById('blind-area-south').value;
+    const blindAreaEast = document.getElementById('blind-area-east').value;
+    const blindAreaWest = document.getElementById('blind-area-west').value;
     document.getElementById('blind-area-dimensions-display').textContent = 
       `П:${blindAreaNorth} Пд:${blindAreaSouth} С:${blindAreaEast} З:${blindAreaWest} мм, Т:${blindAreaThickness} мм`;
   }
@@ -856,19 +904,17 @@ function updateSummaryTable() {
   // Відмостка
   if (addedElements.blindArea) {
     const blindAreaThickness = document.getElementById('blind-area-thickness').value;
-    const blindAreaNorth = document.getElementById('blind-area-north').value;
-    const blindAreaSouth = document.getElementById('blind-area-south').value;
-    const blindAreaEast = document.getElementById('blind-area-east').value;
-    const blindAreaWest = document.getElementById('blind-area-west').value;
+    const blindAreaMode = document.getElementById('blind-area-mode').value;
     
-    // Перевіряємо чи всі ширини однакові
-    const widths = [blindAreaNorth, blindAreaSouth, blindAreaEast, blindAreaWest];
-    const isUniform = widths.every(w => w === widths[0]);
-    
-    if (isUniform) {
+    if (blindAreaMode === 'uniform') {
+      const uniformWidth = document.getElementById('blind-area-uniform-width').value;
       document.getElementById('summary-blind-area').textContent = 
-        `Ширина: ${blindAreaNorth} мм, Товщина: ${blindAreaThickness} мм`;
+        `Ширина: ${uniformWidth} мм, Товщина: ${blindAreaThickness} мм`;
     } else {
+      const blindAreaNorth = document.getElementById('blind-area-north').value;
+      const blindAreaSouth = document.getElementById('blind-area-south').value;
+      const blindAreaEast = document.getElementById('blind-area-east').value;
+      const blindAreaWest = document.getElementById('blind-area-west').value;
       document.getElementById('summary-blind-area').textContent = 
         `П:${blindAreaNorth} Пд:${blindAreaSouth} С:${blindAreaEast} З:${blindAreaWest} мм, Т:${blindAreaThickness} мм`;
     }
@@ -1016,30 +1062,7 @@ function receiveModelStatus(statusData) {
 }
 
 // Функції для створення відмостки
-function addBlindAreaUniform() {
-  const thickness = document.getElementById('blind-area-thickness').value;
-  const width = document.getElementById('blind-area-north').value;
-  debugLog(`🏗️ Створення відмостки з однаковою шириною: ${width}мм, товщина: ${thickness}мм`, 'info');
-  if (window.sketchup && window.sketchup.add_blind_area_uniform) {
-    window.sketchup.add_blind_area_uniform(width, thickness);
-    addedElements.blindArea = true;
-    updateSummaryTable();
-  } else { debugLog(`❌ window.sketchup.add_blind_area_uniform не доступний`, 'error'); }
-}
 
-function addBlindAreaCustom() {
-  const thickness = document.getElementById('blind-area-thickness').value;
-  const north = document.getElementById('blind-area-north').value;
-  const south = document.getElementById('blind-area-south').value;
-  const east = document.getElementById('blind-area-east').value;
-  const west = document.getElementById('blind-area-west').value;
-  debugLog(`🏗️ Створення відмостки з різною шириною: П:${north}мм, Пд:${south}мм, С:${east}мм, З:${west}мм, товщина: ${thickness}мм`, 'info');
-  if (window.sketchup && window.sketchup.add_blind_area_custom) {
-    window.sketchup.add_blind_area_custom(north, south, east, west, thickness);
-    addedElements.blindArea = true;
-    updateSummaryTable();
-  } else { debugLog(`❌ window.sketchup.add_blind_area_custom не доступний`, 'error'); }
-}
 
 
 

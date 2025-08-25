@@ -67,11 +67,11 @@ module ProGran3
       east_offset = east_width.mm
       west_offset = west_width.mm
       
-      # Розраховуємо межі відмостки з різною шириною по сторонах
-      blind_min_x = foundation_min_x - west_offset
-      blind_max_x = foundation_max_x + east_offset
-      blind_min_y = foundation_min_y - south_offset
-      blind_max_y = foundation_max_y + north_offset
+             # Розраховуємо межі відмостки з різною шириною по сторонах
+       blind_min_x = foundation_min_x - north_offset
+       blind_max_x = foundation_max_x + south_offset
+       blind_min_y = foundation_min_y - west_offset
+       blind_max_y = foundation_max_y + east_offset
       
       # Верхня грань відмостки повинна бути на рівні нижньої грані фундаменту
       blind_top_z = foundation_bottom_z
@@ -170,87 +170,87 @@ module ProGran3
       # Видаляємо верхню грань вирізу
       top_inner_face.erase!
       
-      # Створюємо вертикальні грані для закриття вирізу фундаменту
-      # Західна стінка вирізу (ліва)
-      west_cut_points = [
-        Geom::Point3d.new(foundation_rel_min_x, foundation_rel_min_y, bottom_z),
-        Geom::Point3d.new(foundation_rel_min_x, foundation_rel_min_y, top_z),
-        Geom::Point3d.new(foundation_rel_min_x, foundation_rel_max_y, top_z),
-        Geom::Point3d.new(foundation_rel_min_x, foundation_rel_max_y, bottom_z)
-      ]
-      west_cut_face = comp_def.entities.add_face(west_cut_points)
-      west_cut_face.reverse! if west_cut_face.normal.x < 0
+             # Створюємо вертикальні грані для закриття вирізу фундаменту
+       # Північна стінка вирізу (ліва)
+       north_cut_points = [
+         Geom::Point3d.new(foundation_rel_min_x, foundation_rel_min_y, bottom_z),
+         Geom::Point3d.new(foundation_rel_min_x, foundation_rel_min_y, top_z),
+         Geom::Point3d.new(foundation_rel_min_x, foundation_rel_max_y, top_z),
+         Geom::Point3d.new(foundation_rel_min_x, foundation_rel_max_y, bottom_z)
+       ]
+       north_cut_face = comp_def.entities.add_face(north_cut_points)
+       north_cut_face.reverse! if north_cut_face.normal.x < 0
+       
+       # Південна стінка вирізу (права)
+       south_cut_points = [
+         Geom::Point3d.new(foundation_rel_max_x, foundation_rel_min_y, bottom_z),
+         Geom::Point3d.new(foundation_rel_max_x, foundation_rel_min_y, top_z),
+         Geom::Point3d.new(foundation_rel_max_x, foundation_rel_max_y, top_z),
+         Geom::Point3d.new(foundation_rel_max_x, foundation_rel_max_y, bottom_z)
+       ]
+       south_cut_face = comp_def.entities.add_face(south_cut_points)
+       south_cut_face.reverse! if south_cut_face.normal.x > 0
+       
+       # Західна стінка вирізу (передня)
+       west_cut_points = [
+         Geom::Point3d.new(foundation_rel_min_x, foundation_rel_min_y, bottom_z),
+         Geom::Point3d.new(foundation_rel_max_x, foundation_rel_min_y, bottom_z),
+         Geom::Point3d.new(foundation_rel_max_x, foundation_rel_min_y, top_z),
+         Geom::Point3d.new(foundation_rel_min_x, foundation_rel_min_y, top_z)
+       ]
+       west_cut_face = comp_def.entities.add_face(west_cut_points)
+       west_cut_face.reverse! if west_cut_face.normal.y < 0
+       
+       # Східна стінка вирізу (задня)
+       east_cut_points = [
+         Geom::Point3d.new(foundation_rel_min_x, foundation_rel_max_y, bottom_z),
+         Geom::Point3d.new(foundation_rel_max_x, foundation_rel_max_y, bottom_z),
+         Geom::Point3d.new(foundation_rel_max_x, foundation_rel_max_y, top_z),
+         Geom::Point3d.new(foundation_rel_min_x, foundation_rel_max_y, top_z)
+       ]
+       east_cut_face = comp_def.entities.add_face(east_cut_points)
+       east_cut_face.reverse! if east_cut_face.normal.y > 0
       
-      # Східна стінка вирізу (права)
-      east_cut_points = [
-        Geom::Point3d.new(foundation_rel_max_x, foundation_rel_min_y, bottom_z),
-        Geom::Point3d.new(foundation_rel_max_x, foundation_rel_min_y, top_z),
-        Geom::Point3d.new(foundation_rel_max_x, foundation_rel_max_y, top_z),
-        Geom::Point3d.new(foundation_rel_max_x, foundation_rel_max_y, bottom_z)
-      ]
-      east_cut_face = comp_def.entities.add_face(east_cut_points)
-      east_cut_face.reverse! if east_cut_face.normal.x > 0
-      
-      # Південна стінка вирізу (передня)
-      south_cut_points = [
-        Geom::Point3d.new(foundation_rel_min_x, foundation_rel_min_y, bottom_z),
-        Geom::Point3d.new(foundation_rel_max_x, foundation_rel_min_y, bottom_z),
-        Geom::Point3d.new(foundation_rel_max_x, foundation_rel_min_y, top_z),
-        Geom::Point3d.new(foundation_rel_min_x, foundation_rel_min_y, top_z)
-      ]
-      south_cut_face = comp_def.entities.add_face(south_cut_points)
-      south_cut_face.reverse! if south_cut_face.normal.y < 0
-      
-      # Північна стінка вирізу (задня)
-      north_cut_points = [
-        Geom::Point3d.new(foundation_rel_min_x, foundation_rel_max_y, bottom_z),
-        Geom::Point3d.new(foundation_rel_max_x, foundation_rel_max_y, bottom_z),
-        Geom::Point3d.new(foundation_rel_max_x, foundation_rel_max_y, top_z),
-        Geom::Point3d.new(foundation_rel_min_x, foundation_rel_max_y, top_z)
-      ]
-      north_cut_face = comp_def.entities.add_face(north_cut_points)
-      north_cut_face.reverse! if north_cut_face.normal.y > 0
-      
-      # Створюємо бічні грані для закриття торців
-      # Західна грань (ліва)
-      west_points = [
-        Geom::Point3d.new(0, 0, bottom_z),
-        Geom::Point3d.new(0, 0, top_z),
-        Geom::Point3d.new(0, depth, top_z),
-        Geom::Point3d.new(0, depth, bottom_z)
-      ]
-      west_face = comp_def.entities.add_face(west_points)
-      west_face.reverse! if west_face.normal.x > 0
-      
-      # Східна грань (права)
-      east_points = [
-        Geom::Point3d.new(width, 0, bottom_z),
-        Geom::Point3d.new(width, 0, top_z),
-        Geom::Point3d.new(width, depth, top_z),
-        Geom::Point3d.new(width, depth, bottom_z)
-      ]
-      east_face = comp_def.entities.add_face(east_points)
-      east_face.reverse! if east_face.normal.x < 0
-      
-      # Південна грань (передня)
-      south_points = [
-        Geom::Point3d.new(0, 0, bottom_z),
-        Geom::Point3d.new(width, 0, bottom_z),
-        Geom::Point3d.new(width, 0, top_z),
-        Geom::Point3d.new(0, 0, top_z)
-      ]
-      south_face = comp_def.entities.add_face(south_points)
-      south_face.reverse! if south_face.normal.y > 0
-      
-      # Північна грань (задня)
-      north_points = [
-        Geom::Point3d.new(0, depth, bottom_z),
-        Geom::Point3d.new(width, depth, bottom_z),
-        Geom::Point3d.new(width, depth, top_z),
-        Geom::Point3d.new(0, depth, top_z)
-      ]
-      north_face = comp_def.entities.add_face(north_points)
-      north_face.reverse! if north_face.normal.y < 0
+             # Створюємо бічні грані для закриття торців
+       # Північна грань (ліва)
+       north_points = [
+         Geom::Point3d.new(0, 0, bottom_z),
+         Geom::Point3d.new(0, 0, top_z),
+         Geom::Point3d.new(0, depth, top_z),
+         Geom::Point3d.new(0, depth, bottom_z)
+       ]
+       north_face = comp_def.entities.add_face(north_points)
+       north_face.reverse! if north_face.normal.x > 0
+       
+       # Південна грань (права)
+       south_points = [
+         Geom::Point3d.new(width, 0, bottom_z),
+         Geom::Point3d.new(width, 0, top_z),
+         Geom::Point3d.new(width, depth, top_z),
+         Geom::Point3d.new(width, depth, bottom_z)
+       ]
+       south_face = comp_def.entities.add_face(south_points)
+       south_face.reverse! if south_face.normal.x < 0
+       
+       # Західна грань (передня)
+       west_points = [
+         Geom::Point3d.new(0, 0, bottom_z),
+         Geom::Point3d.new(width, 0, bottom_z),
+         Geom::Point3d.new(width, 0, top_z),
+         Geom::Point3d.new(0, 0, top_z)
+       ]
+       west_face = comp_def.entities.add_face(west_points)
+       west_face.reverse! if west_face.normal.y > 0
+       
+       # Східна грань (задня)
+       east_points = [
+         Geom::Point3d.new(0, depth, bottom_z),
+         Geom::Point3d.new(width, depth, bottom_z),
+         Geom::Point3d.new(width, depth, top_z),
+         Geom::Point3d.new(0, depth, top_z)
+       ]
+       east_face = comp_def.entities.add_face(east_points)
+       east_face.reverse! if east_face.normal.y < 0
       
       # Додаємо екземпляр компонента
       transformation = Geom::Transformation.new([min_x, min_y, 0])

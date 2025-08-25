@@ -41,6 +41,65 @@
 
     <section class="panel collapsed">
       <div class="panel-header" onclick="togglePanel(this)">
+        <h2 class="panel-title">Відмостка</h2>
+        <span class="chevron"></span>
+        <span id="blind-area-dimensions-display" class="header-dimensions"></span>
+      </div>
+      <div class="panel-content">
+        <div class="input-row">
+          <div class="input-wrapper">
+            <input type="number" id="blind-area-thickness" value="50" min="30" max="200" oninput="updateAllDisplays()">
+            <label>Товщина (мм)</label>
+          </div>
+        </div>
+        
+        <div class="input-wrapper">
+          <label for="blind-area-mode" class="label-left">Режим ширини:</label>
+          <select id="blind-area-mode" onchange="updateBlindAreaControls()">
+            <option value="uniform" selected>Однакова ширина</option>
+            <option value="custom">Різна ширина</option>
+          </select>
+        </div>
+        
+        <div id="uniform-controls">
+          <div class="input-row">
+            <div class="input-wrapper">
+              <input type="number" id="blind-area-uniform-width" value="300" min="50" max="1000" oninput="updateAllDisplays()">
+              <label>Ширина (мм)</label>
+            </div>
+          </div>
+        </div>
+        
+        <div id="custom-controls" class="hidden">
+                     <div class="input-row">
+             <div class="input-wrapper">
+               <input type="number" id="blind-area-north" value="300" min="50" max="1000" oninput="updateAllDisplays()">
+               <label>Північна сторона (мм)</label>
+             </div>
+             <div class="input-wrapper">
+               <input type="number" id="blind-area-south" value="300" min="50" max="1000" oninput="updateAllDisplays()">
+               <label>Південна сторона (мм)</label>
+             </div>
+           </div>
+           
+           <div class="input-row">
+             <div class="input-wrapper">
+               <input type="number" id="blind-area-east" value="300" min="50" max="1000" oninput="updateAllDisplays()">
+               <label>Східна сторона (мм)</label>
+             </div>
+             <div class="input-wrapper">
+               <input type="number" id="blind-area-west" value="300" min="50" max="1000" oninput="updateAllDisplays()">
+               <label>Західна сторона (мм)</label>
+             </div>
+           </div>
+        </div>
+        
+        <button onclick="addBlindArea(); advanceToNextPanel(this);">Створити відмостку</button>
+      </div>
+    </section>
+
+    <section class="panel collapsed">
+      <div class="panel-header" onclick="togglePanel(this)">
         <h2 class="panel-title">Плитка на фундаменті</h2>
         <span class="chevron"></span>
         <span id="tiling-type-display" class="header-dimensions"></span>
@@ -118,49 +177,6 @@
               </div>
           </div>
           <button onclick="addSideCladding(); advanceToNextPanel(this);">Додати</button>
-      </div>
-    </section>
-
-    <section class="panel collapsed">
-      <div class="panel-header" onclick="togglePanel(this)">
-        <h2 class="panel-title">Відмостка</h2>
-        <span class="chevron"></span>
-        <span id="blind-area-dimensions-display" class="header-dimensions"></span>
-      </div>
-      <div class="panel-content">
-        <div class="input-row">
-          <div class="input-wrapper">
-            <input type="number" id="blind-area-thickness" value="50" min="30" max="200" oninput="updateAllDisplays()">
-            <label>Товщина (мм)</label>
-          </div>
-        </div>
-        
-        <div class="input-row">
-          <div class="input-wrapper">
-            <input type="number" id="blind-area-north" value="300" min="50" max="1000" oninput="updateAllDisplays()">
-            <label>Північна сторона (мм)</label>
-          </div>
-          <div class="input-wrapper">
-            <input type="number" id="blind-area-south" value="300" min="50" max="1000" oninput="updateAllDisplays()">
-            <label>Південна сторона (мм)</label>
-          </div>
-        </div>
-        
-        <div class="input-row">
-          <div class="input-wrapper">
-            <input type="number" id="blind-area-east" value="300" min="50" max="1000" oninput="updateAllDisplays()">
-            <label>Східна сторона (мм)</label>
-          </div>
-          <div class="input-wrapper">
-            <input type="number" id="blind-area-west" value="300" min="50" max="1000" oninput="updateAllDisplays()">
-            <label>Західна сторона (мм)</label>
-          </div>
-        </div>
-        
-        <div class="button-group">
-          <button onclick="addBlindAreaUniform(); advanceToNextPanel(this);">Однакова ширина</button>
-          <button onclick="addBlindAreaCustom(); advanceToNextPanel(this);">Різна ширина</button>
-        </div>
       </div>
     </section>
 
