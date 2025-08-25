@@ -99,6 +99,36 @@ module ProGran3
         
         ProGran3::CladdingBuilder.create(thickness.to_i)
       end
+      
+      # Callback для створення відмостки з однаковою шириною
+      @dialog.add_action_callback("add_blind_area_uniform") do |dialog, width, thickness|
+        # Валідація параметрів відмостки
+        validation_result = Validation.validate_dimensions(width.to_i, 100, thickness.to_i, "UI")
+        unless validation_result.valid
+          ErrorHandler.handle_error(
+            Validation::ValidationError.new("Помилка валідації відмостки: #{validation_result.error_messages.join(', ')}"),
+            "UI",
+            "add_blind_area_uniform"
+          )
+          return false
+        end
+        ProGran3::BlindAreaBuilder.create_uniform(width.to_i, thickness.to_i)
+      end
+
+      @dialog.add_action_callback("add_blind_area_custom") do |dialog, north, south, east, west, thickness|
+        # Валідація параметрів відмостки
+        validation_result = Validation.validate_dimensions([north.to_i, south.to_i, east.to_i, west.to_i].max, 100, thickness.to_i, "UI")
+        unless validation_result.valid
+          ErrorHandler.handle_error(
+            Validation::ValidationError.new("Помилка валідації відмостки: #{validation_result.error_messages.join(', ')}"),
+            "UI",
+            "add_blind_area_custom"
+          )
+          return false
+        end
+        ProGran3::BlindAreaBuilder.create(north.to_i, south.to_i, east.to_i, west.to_i, thickness.to_i)
+      end
+
 
       @dialog.add_action_callback("add_model") do |dialog, category, filename|
         # Валідація категорії та файлу
@@ -281,6 +311,7 @@ module ProGran3
           foundation: false,
           tiling: false,
           cladding: false,
+          blindArea: false,
           stands: false,
           flowerbeds: false,
           steles: false
@@ -307,6 +338,9 @@ module ProGran3
                 elsif name.include?('stele') || name.include?('стела') || name.include?('стелла')
                   status[:steles] = true
                   puts "✅ Знайдено стелу: #{name}"
+                elsif name.start_with?('blindarea_') || name.include?('відмостка') || name.include?('отмостка')
+                  status[:blindArea] = true
+                  puts "✅ Знайдено відмостку: #{name}"
                 end
               elsif entity.is_a?(Sketchup::Group)
                 # Рекурсивно перевіряємо групи
@@ -320,6 +354,9 @@ module ProGran3
                 elsif group_name.include?('cladding') || group_name.include?('облицювання')
                   status[:cladding] = true
                   puts "✅ Знайдено облицювання (група): #{group_name}"
+                elsif group_name.include?('blindarea') || group_name.include?('відмостка') || group_name.include?('отмостка')
+                  status[:blindArea] = true
+                  puts "✅ Знайдено відмостку (група): #{group_name}"
                 end
               elsif entity.is_a?(Sketchup::Edge) || entity.is_a?(Sketchup::Face)
                 # Перевіряємо геометрію для фундаменту, плитки та облицювання
@@ -334,6 +371,9 @@ module ProGran3
                   elsif layer_name.include?('cladding') || layer_name.include?('облицювання')
                     status[:cladding] = true
                     puts "✅ Знайдено облицювання (layer): #{layer_name}"
+                  elsif layer_name.include?('blindarea') || layer_name.include?('відмостка') || layer_name.include?('отмостка')
+                    status[:blindArea] = true
+                    puts "✅ Знайдено відмостку (layer): #{layer_name}"
                   end
                 end
               end
@@ -370,6 +410,12 @@ module ProGran3
                 if height > 150 && (width < 200 || depth < 200)
                   status[:cladding] = true
                   puts "✅ Знайдено облицювання (розміри): #{width}×#{depth}×#{height}"
+                end
+                
+                # Відмостка зазвичай широка і тонка
+                if height < 100 && (width > 600 || depth > 600)
+                  status[:blindArea] = true
+                  puts "✅ Знайдено відмостку (розміри): #{width}×#{depth}×#{height}"
                 end
               end
             end

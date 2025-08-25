@@ -13,6 +13,7 @@ let addedElements = {
   foundation: false,
   tiling: false,
   cladding: false,
+  blindArea: false,
   stands: false,
   flowerbeds: false,
   steles: false
@@ -762,6 +763,25 @@ function updateAllDisplays() {
   document.getElementById('cladding-dimensions-display').textContent = 
     `Товщина: ${claddingThickness} мм`;
   
+  // Оновлення відображення розмірів відмостки
+  const blindAreaThickness = document.getElementById('blind-area-thickness').value;
+  const blindAreaNorth = document.getElementById('blind-area-north').value;
+  const blindAreaSouth = document.getElementById('blind-area-south').value;
+  const blindAreaEast = document.getElementById('blind-area-east').value;
+  const blindAreaWest = document.getElementById('blind-area-west').value;
+  
+  // Перевіряємо чи всі ширини однакові
+  const widths = [blindAreaNorth, blindAreaSouth, blindAreaEast, blindAreaWest];
+  const isUniform = widths.every(w => w === widths[0]);
+  
+  if (isUniform) {
+    document.getElementById('blind-area-dimensions-display').textContent = 
+      `Ширина: ${blindAreaNorth} мм, Товщина: ${blindAreaThickness} мм`;
+  } else {
+    document.getElementById('blind-area-dimensions-display').textContent = 
+      `П:${blindAreaNorth} Пд:${blindAreaSouth} С:${blindAreaEast} З:${blindAreaWest} мм, Т:${blindAreaThickness} мм`;
+  }
+  
   // Оновлення відображення вибраних моделей
   updateModelDisplays();
   
@@ -831,6 +851,29 @@ function updateSummaryTable() {
       `Товщина: ${claddingThickness} мм`;
   } else {
     document.getElementById('summary-cladding').textContent = '--';
+  }
+  
+  // Відмостка
+  if (addedElements.blindArea) {
+    const blindAreaThickness = document.getElementById('blind-area-thickness').value;
+    const blindAreaNorth = document.getElementById('blind-area-north').value;
+    const blindAreaSouth = document.getElementById('blind-area-south').value;
+    const blindAreaEast = document.getElementById('blind-area-east').value;
+    const blindAreaWest = document.getElementById('blind-area-west').value;
+    
+    // Перевіряємо чи всі ширини однакові
+    const widths = [blindAreaNorth, blindAreaSouth, blindAreaEast, blindAreaWest];
+    const isUniform = widths.every(w => w === widths[0]);
+    
+    if (isUniform) {
+      document.getElementById('summary-blind-area').textContent = 
+        `Ширина: ${blindAreaNorth} мм, Товщина: ${blindAreaThickness} мм`;
+    } else {
+      document.getElementById('summary-blind-area').textContent = 
+        `П:${blindAreaNorth} Пд:${blindAreaSouth} С:${blindAreaEast} З:${blindAreaWest} мм, Т:${blindAreaThickness} мм`;
+    }
+  } else {
+    document.getElementById('summary-blind-area').textContent = '--';
   }
   
   // Підставка
@@ -949,6 +992,9 @@ function receiveModelStatus(statusData) {
     if (statusData.cladding === true) {
       addedElements.cladding = true;
     }
+    if (statusData.blindArea === true) {
+      addedElements.blindArea = true;
+    }
     if (statusData.stands === true) {
       addedElements.stands = true;
     }
@@ -968,6 +1014,34 @@ function receiveModelStatus(statusData) {
   updateSummaryTable();
   debugLog(`✅ Специфікація оновлена`, 'success');
 }
+
+// Функції для створення відмостки
+function addBlindAreaUniform() {
+  const thickness = document.getElementById('blind-area-thickness').value;
+  const width = document.getElementById('blind-area-north').value;
+  debugLog(`🏗️ Створення відмостки з однаковою шириною: ${width}мм, товщина: ${thickness}мм`, 'info');
+  if (window.sketchup && window.sketchup.add_blind_area_uniform) {
+    window.sketchup.add_blind_area_uniform(width, thickness);
+    addedElements.blindArea = true;
+    updateSummaryTable();
+  } else { debugLog(`❌ window.sketchup.add_blind_area_uniform не доступний`, 'error'); }
+}
+
+function addBlindAreaCustom() {
+  const thickness = document.getElementById('blind-area-thickness').value;
+  const north = document.getElementById('blind-area-north').value;
+  const south = document.getElementById('blind-area-south').value;
+  const east = document.getElementById('blind-area-east').value;
+  const west = document.getElementById('blind-area-west').value;
+  debugLog(`🏗️ Створення відмостки з різною шириною: П:${north}мм, Пд:${south}мм, С:${east}мм, З:${west}мм, товщина: ${thickness}мм`, 'info');
+  if (window.sketchup && window.sketchup.add_blind_area_custom) {
+    window.sketchup.add_blind_area_custom(north, south, east, west, thickness);
+    addedElements.blindArea = true;
+    updateSummaryTable();
+  } else { debugLog(`❌ window.sketchup.add_blind_area_custom не доступний`, 'error'); }
+}
+
+
 
 
 

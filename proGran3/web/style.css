@@ -214,6 +214,18 @@ button:active {
   box-shadow: none;
 }
 
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.button-group button {
+  flex: 1;
+  font-size: 12px;
+  padding: 8px 12px;
+}
+
 /* Кнопка перезавантаження */
 #reload-button {
   background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);

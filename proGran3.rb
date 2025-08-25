@@ -13,6 +13,7 @@ module ProGran3
   require_relative 'progran3/builders/foundation_builder'
   require_relative 'progran3/builders/tiling_builder'
   require_relative 'progran3/builders/cladding_builder'
+  require_relative 'progran3/builders/blind_area_builder'
   require_relative 'progran3/ui'
   require_relative 'progran3/skp_preview_extractor'
 
@@ -83,6 +84,7 @@ module ProGran3
         File.join(plugin_dir, 'proGran3', 'builders', 'foundation_builder.rb'),
         File.join(plugin_dir, 'proGran3', 'builders', 'tiling_builder.rb'),
         File.join(plugin_dir, 'proGran3', 'builders', 'cladding_builder.rb'),
+        File.join(plugin_dir, 'proGran3', 'builders', 'blind_area_builder.rb'),
         File.join(plugin_dir, 'proGran3', 'skp_preview_extractor.rb')
       ]
     
