@@ -7,6 +7,7 @@ module ProGran3
   require_relative 'progran3/logger'
   require_relative 'progran3/error_handler'
   require_relative 'progran3/validation'
+  require_relative 'progran3/coordination_manager'
   
   # Підключаємо основні модулі
   require_relative 'progran3/loader'
@@ -135,5 +136,10 @@ module ProGran3
   # Метод для тестування системи валідації
   def self.test_validation
     Validation.test
+  end
+  
+  # Метод для координації елементів
+  def self.coordinate_elements
+    CoordinationManager.update_all_elements
   end
 end

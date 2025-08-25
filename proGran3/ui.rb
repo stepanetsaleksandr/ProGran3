@@ -51,7 +51,19 @@ module ProGran3
           return false
         end
         
-        ProGran3::FoundationBuilder.create(depth.to_i, width.to_i, height.to_i)
+        # Зберігаємо параметри фундаменту
+        @foundation_params = {
+          depth: depth.to_i,
+          width: width.to_i,
+          height: height.to_i
+        }
+        
+        # Створюємо фундамент з координацією всіх елементів
+        CoordinationManager.update_all_elements({
+          depth: depth.to_i,
+          width: width.to_i,
+          height: height.to_i
+        })
       end
 
       @dialog.add_action_callback("add_tiles") do |dialog, type, *params|
@@ -67,6 +79,15 @@ module ProGran3
             )
             return false
           end
+          
+          # Зберігаємо параметри для автоматичного оновлення
+          @tiles_params = {
+            mode: 'frame',
+            thickness: thickness,
+            border_width: borderWidth,
+            overhang: overhang
+          }
+          
           ProGran3::TilingBuilder.insert_perimeter_tiles(thickness, borderWidth, overhang)
         elsif type == "modular"
           tileSize, thickness, seam, overhang = params
@@ -81,6 +102,16 @@ module ProGran3
             )
             return false
           end
+          
+          # Зберігаємо параметри для автоматичного оновлення
+          @tiles_params = {
+            mode: 'modular',
+            size: tileSize,
+            thickness: thickness,
+            seam: seam,
+            overhang: overhang
+          }
+          
           ProGran3::TilingBuilder.insert_modular_tiles(tileSize, thickness, seam, overhang)
         end
       end
@@ -97,6 +128,11 @@ module ProGran3
           return false
         end
         
+        # Зберігаємо параметри для автоматичного оновлення
+        @cladding_params = {
+          thickness: thickness.to_i
+        }
+        
         ProGran3::CladdingBuilder.create(thickness.to_i)
       end
       
@@ -112,6 +148,14 @@ module ProGran3
           )
           return false
         end
+        
+        # Зберігаємо параметри для автоматичного оновлення
+        @blind_area_params = {
+          mode: 'uniform',
+          uniform_width: width.to_i,
+          thickness: thickness.to_i
+        }
+        
         ProGran3::BlindAreaBuilder.create_uniform(width.to_i, thickness.to_i)
       end
 
@@ -126,6 +170,17 @@ module ProGran3
           )
           return false
         end
+        
+        # Зберігаємо параметри для автоматичного оновлення
+        @blind_area_params = {
+          mode: 'custom',
+          north_width: north.to_i,
+          south_width: south.to_i,
+          east_width: east.to_i,
+          west_width: west.to_i,
+          thickness: thickness.to_i
+        }
+        
         ProGran3::BlindAreaBuilder.create(north.to_i, south.to_i, east.to_i, west.to_i, thickness.to_i)
       end
 
@@ -153,6 +208,16 @@ module ProGran3
             )
             return false
           end
+        end
+        
+        # Зберігаємо параметри для автоматичного оновлення
+        case category
+        when 'stands'
+          @stand_params = { category: category, filename: filename }
+        when 'steles'
+          @stele_params = { category: category, filename: filename }
+        when 'flowerbeds'
+          @flowerbed_params = { category: category, filename: filename }
         end
         
         ProGran3.insert_component(category, filename)
@@ -302,6 +367,56 @@ module ProGran3
       end
 
       # Callback для отримання статусу моделі
+      # Методи для отримання збережених параметрів
+      def self.get_blind_area_params
+        @blind_area_params || {
+          mode: 'uniform',
+          uniform_width: 300,
+          thickness: 50,
+          north_width: 300,
+          south_width: 300,
+          east_width: 300,
+          west_width: 300
+        }
+      end
+      
+      def self.get_tiles_params
+        @tiles_params || {
+          mode: 'frame',
+          thickness: 30,
+          border_width: 300,
+          overhang: 50,
+          size: '60x30',
+          seam: 5
+        }
+      end
+      
+      def self.get_cladding_params
+        @cladding_params || {
+          thickness: 20
+        }
+      end
+      
+      def self.get_foundation_params
+        @foundation_params || {
+          depth: 2000,
+          width: 1000,
+          height: 150
+        }
+      end
+      
+      def self.get_stand_params
+        @stand_params || { category: 'stands', filename: nil }
+      end
+      
+      def self.get_stele_params
+        @stele_params || { category: 'steles', filename: nil }
+      end
+      
+      def self.get_flowerbed_params
+        @flowerbed_params || { category: 'flowerbeds', filename: nil }
+      end
+      
       @dialog.add_action_callback("get_model_status") do |dialog, _|
         puts "🔍 get_model_status callback викликано"
         
@@ -452,6 +567,8 @@ module ProGran3
         # Повертаємо поточну одиницю (за замовчуванням мм)
         "mm"
       end
+      
+
 
 
       @dialog.show

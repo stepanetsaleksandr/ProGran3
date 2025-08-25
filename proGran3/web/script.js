@@ -793,6 +793,8 @@ function addBlindArea() {
   }
 }
 
+
+
 function updateAllDisplays() {
   // Оновлення відображення розмірів фундаменту
   const foundationDepth = document.getElementById('foundation-depth').value;
@@ -960,8 +962,10 @@ function addFoundation() {
     window.sketchup.add_foundation(depth, width, height);
     addedElements.foundation = true;
     updateSummaryTable();
-  }
+  } else { debugLog(`❌ window.sketchup.add_foundation не доступний`, 'error'); }
 }
+
+
 
 function addTiles() {
   const mode = document.getElementById('tiling-mode').value;
@@ -984,6 +988,8 @@ function addTiles() {
   }
 }
 
+
+
 function addSideCladding() {
   const thickness = document.getElementById('cladding-thickness').value;
   
@@ -993,6 +999,8 @@ function addSideCladding() {
     updateSummaryTable();
   }
 }
+
+
 
 // Функція для оновлення специфікації з моделі
 function refreshSpecification() {
