@@ -2,7 +2,12 @@
 require 'sketchup.rb'
 
 module ProGran3
-  # Підключаємо модулі в правильному порядку
+  # Підключаємо нові системні модулі першими
+  require_relative 'progran3/constants'
+  require_relative 'progran3/logger'
+  require_relative 'progran3/error_handler'
+  
+  # Підключаємо основні модулі
   require_relative 'progran3/loader'
   require_relative 'progran3/builders/foundation_builder'
   require_relative 'progran3/builders/tiling_builder'
@@ -12,28 +17,22 @@ module ProGran3
 
   # Метод для створення панелі інструментів
   def self.create_toolbar
-    begin
+    ErrorHandler.safe_execute("Toolbar", "Створення панелі інструментів") do
       # Створюємо панель інструментів
       toolbar = ::UI::Toolbar.new("ProGran3")
       
       # Команда для запуску плагіна
       cmd = ::UI::Command.new("ProGran3 Конструктор") {
-        begin
+        ErrorHandler.safe_execute("UI", "Запуск діалогу") do
           ProGran3::UI.show_dialog
-        rescue => e
-          puts "❌ Помилка запуску UI: #{e.message}"
-          ::UI.messagebox("Помилка запуску ProGran3: #{e.message}")
         end
       }
       
       # Встановлюємо іконки
-      icon_path = "proGran3/icons/icon_24.png"
-      if File.exist?(File.join(File.dirname(__FILE__), icon_path))
-        cmd.small_icon = icon_path
-        cmd.large_icon = icon_path
-      else
-        puts "⚠️ Іконка не знайдена: #{icon_path}"
-      end
+      icon_path = File.join(Constants::ICONS_PATH, "icon_24.png")
+      ErrorHandler.validate_file_exists(icon_path, "Toolbar")
+      cmd.small_icon = icon_path
+      cmd.large_icon = icon_path
       
       cmd.tooltip = "ProGran3 Конструктор - Створення конструкцій"
       
@@ -43,9 +42,7 @@ module ProGran3
       # Показуємо панель
       toolbar.show
       
-      puts "✅ Панель інструментів ProGran3 створена"
-    rescue => e
-      puts "❌ Помилка створення панелі інструментів: #{e.message}"
+      Logger.success("Панель інструментів ProGran3 створена", "Toolbar")
     end
   end
 
@@ -53,17 +50,21 @@ module ProGran3
   unless file_loaded?(__FILE__)
     # Меню Plugins
     ::UI.menu("Plugins").add_item("proGran3 Конструктор") {
-      ProGran3::UI.show_dialog
+      ErrorHandler.safe_execute("Menu", "Запуск з меню") do
+        ProGran3::UI.show_dialog
+      end
     }
     
     # Створюємо панель інструментів
     create_toolbar
     file_loaded(__FILE__)
+    
+    Logger.info("Плагін ProGran3 завантажено", "Main")
   end
 
   # Метод для перезавантаження плагіна
   def self.reload
-    puts "🔄 Перезавантаження плагіна ProGran3..."
+    Logger.start("Перезавантаження плагіна ProGran3", "Main")
     
     # Очищаємо завантажені файли
     $LOADED_FEATURES.delete_if { |file| file.include?('progran3') }
@@ -72,6 +73,9 @@ module ProGran3
     plugin_dir = File.dirname(__FILE__)
     our_files = [
       File.join(plugin_dir, 'proGran3.rb'),
+      File.join(plugin_dir, 'proGran3', 'constants.rb'),
+      File.join(plugin_dir, 'proGran3', 'logger.rb'),
+      File.join(plugin_dir, 'proGran3', 'error_handler.rb'),
       File.join(plugin_dir, 'proGran3', 'loader.rb'),
       File.join(plugin_dir, 'proGran3', 'ui.rb'),
       File.join(plugin_dir, 'proGran3', 'builders', 'foundation_builder.rb'),
@@ -82,24 +86,24 @@ module ProGran3
     
     our_files.each do |file|
       if File.exist?(file)
-        begin
+        ErrorHandler.safe_execute("Reload", "Завантаження #{File.basename(file)}") do
           load file
-          puts "  ✅ #{File.basename(file)}"
-        rescue => e
-          puts "  ❌ #{File.basename(file)}: #{e.message}"
+          Logger.success(File.basename(file), "Reload")
         end
+      else
+        Logger.warn("Файл не знайдено: #{File.basename(file)}", "Reload")
       end
     end
     
-    puts "🎉 Плагін перезавантажено!"
+    Logger.finish("Перезавантаження плагіна ProGran3", "Main")
   end
   
   # Метод для швидкого тестування
   def self.test
-    puts "🧪 Тестування плагіна ProGran3..."
-    puts "📁 Шлях до плагіна: #{File.dirname(__FILE__)}"
-    puts "📦 Версія: 1.0.0"
-    puts "✅ Плагін готовий до роботи!"
+    Logger.info("Тестування плагіна ProGran3", "Test")
+    Logger.info("Шлях до плагіна: #{File.dirname(__FILE__)}", "Test")
+    Logger.info("Версія: #{Constants::VERSION}", "Test")
+    Logger.success("Плагін готовий до роботи!", "Test")
   end
 
   # Універсальний метод для витягування превью з .skp файлів
