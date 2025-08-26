@@ -444,6 +444,7 @@ function initializeApp() {
   const thicknessButtons = document.querySelectorAll('.thickness-btn');
   if (thicknessButtons.length > 0) {
     debugLog(`✅ Знайдено ${thicknessButtons.length} кнопок товщини плитки`, 'success');
+    updateThicknessButtons(); // Оновлюємо відображення кнопок товщини
     const activeThickness = getSelectedThickness();
     debugLog(`✅ Активна товщина: ${activeThickness}`, 'success');
   } else {
@@ -454,6 +455,7 @@ function initializeApp() {
   const seamButtons = document.querySelectorAll('.seam-btn');
   if (seamButtons.length > 0) {
     debugLog(`✅ Знайдено ${seamButtons.length} кнопок шву`, 'success');
+    updateSeamButtons(); // Оновлюємо відображення кнопок шву
     const activeSeam = getSelectedSeam();
     debugLog(`✅ Активний шов: ${activeSeam} мм`, 'success');
   } else {
@@ -1418,7 +1420,15 @@ function selectSeam(button) {
 // Функція для отримання вибраної товщини плитки
 function getSelectedThickness() {
   const activeButton = document.querySelector('.thickness-btn.active');
-  return activeButton ? activeButton.dataset.value : '30';
+  if (!activeButton) return '30';
+  
+  // Якщо одиниці в см, то data-value містить значення в см
+  if (currentUnit === 'cm') {
+    return activeButton.dataset.value;
+  } else {
+    // Якщо одиниці в мм, то data-value містить значення в мм
+    return activeButton.dataset.value;
+  }
 }
 
 // Функція для отримання вибраного способу укладання
@@ -1430,18 +1440,35 @@ function getSelectedTilingMode() {
 // Функція для отримання вибраного шву
 function getSelectedSeam() {
   const activeButton = document.querySelector('.seam-btn.active');
-  return activeButton ? activeButton.dataset.value : '5';
+  if (!activeButton) return '5';
+  
+  // Якщо одиниці в см, то data-value містить значення в см
+  if (currentUnit === 'cm') {
+    return activeButton.dataset.value;
+  } else {
+    // Якщо одиниці в мм, то data-value містить значення в мм
+    return activeButton.dataset.value;
+  }
 }
 
 // Функція для оновлення тексту кнопок товщини при зміні одиниць
 function updateThicknessButtons() {
   const buttons = document.querySelectorAll('.thickness-btn');
   buttons.forEach(button => {
-    const value = button.dataset.value;
+    const originalValue = button.dataset.originalValue || button.dataset.value;
+    
+    // Зберігаємо оригінальне значення в мм при першому виклику
+    if (!button.dataset.originalValue) {
+      button.dataset.originalValue = button.dataset.value;
+    }
+    
     if (currentUnit === 'mm') {
-      button.textContent = `${value} мм`;
+      button.textContent = `${originalValue} мм`;
+      button.dataset.value = originalValue;
     } else {
-      button.textContent = `${(value / 10).toFixed(0)} см`;
+      const cmValue = (originalValue / 10).toFixed(0);
+      button.textContent = `${cmValue} см`;
+      button.dataset.value = cmValue;
     }
   });
 }
@@ -1450,11 +1477,20 @@ function updateThicknessButtons() {
 function updateSeamButtons() {
   const buttons = document.querySelectorAll('.seam-btn');
   buttons.forEach(button => {
-    const value = button.dataset.value;
+    const originalValue = button.dataset.originalValue || button.dataset.value;
+    
+    // Зберігаємо оригінальне значення в мм при першому виклику
+    if (!button.dataset.originalValue) {
+      button.dataset.originalValue = button.dataset.value;
+    }
+    
     if (currentUnit === 'mm') {
-      button.textContent = `${value} мм`;
+      button.textContent = `${originalValue} мм`;
+      button.dataset.value = originalValue;
     } else {
-      button.textContent = `${(value / 10).toFixed(1)} см`;
+      const cmValue = (originalValue / 10).toFixed(1);
+      button.textContent = `${cmValue} см`;
+      button.dataset.value = cmValue;
     }
   });
 }
