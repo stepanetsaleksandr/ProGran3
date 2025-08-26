@@ -7,6 +7,7 @@ module ProGran3
   require_relative 'progran3/logger'
   require_relative 'progran3/error_handler'
   require_relative 'progran3/validation'
+  require_relative 'progran3/dimensions_manager'
   require_relative 'progran3/coordination_manager'
   
   # Підключаємо основні модулі
@@ -80,6 +81,7 @@ module ProGran3
         File.join(plugin_dir, 'proGran3', 'logger.rb'),
         File.join(plugin_dir, 'proGran3', 'error_handler.rb'),
         File.join(plugin_dir, 'proGran3', 'validation.rb'),
+        File.join(plugin_dir, 'proGran3', 'dimensions_manager.rb'),
         File.join(plugin_dir, 'proGran3', 'loader.rb'),
         File.join(plugin_dir, 'proGran3', 'ui.rb'),
         File.join(plugin_dir, 'proGran3', 'builders', 'foundation_builder.rb'),
@@ -133,11 +135,41 @@ module ProGran3
     SkpPreviewExtractor.test_universal_extraction
   end
   
-  # Метод для тестування системи валідації
+  # Метод для тестування валідації
   def self.test_validation
-    Validation.test
+    ErrorHandler.safe_execute("Test", "Тестування валідації") do
+      Logger.info("Тестування системи валідації...", "Test")
+      
+      # Тестуємо DimensionsManager
+      test_dimensions_manager
+      
+      Logger.success("Тестування завершено", "Test")
+    end
   end
   
+  # Тестування DimensionsManager
+  def self.test_dimensions_manager
+    Logger.info("Тестування DimensionsManager...", "Test")
+    
+    # Тест 1: Валідація фундаменту
+    result = DimensionsManager.validate_and_convert(2000, :foundation_depth, "Test")
+    Logger.info("Фундамент 2000мм: #{result[:success]}", "Test")
+    
+    # Тест 2: Валідація відмостки
+    result = DimensionsManager.validate_and_convert(50, :blind_area_thickness, "Test")
+    Logger.info("Відмостка 50мм: #{result[:success]}", "Test")
+    
+    # Тест 3: Неправильний розмір
+    result = DimensionsManager.validate_and_convert(10000, :foundation_depth, "Test")
+    Logger.info("Фундамент 10000мм: #{result[:success]} - #{result[:errors]&.join(', ')}", "Test")
+    
+    # Тест 4: Отримання конфігурації
+    config = DimensionsManager.get_dimension_config(:foundation_depth)
+    Logger.info("Конфігурація фундаменту: #{config}", "Test")
+    
+    Logger.success("DimensionsManager протестовано", "Test")
+  end
+
   # Метод для координації елементів
   def self.coordinate_elements
     CoordinationManager.update_all_elements

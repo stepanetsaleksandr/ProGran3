@@ -12,6 +12,17 @@
   <div class="glass-container" id="main-content">
     <header>
       <h1>proGran3 Конструктор</h1>
+      <div class="unit-switcher">
+        <label>Одиниці:</label>
+        <div class="toggle-switch">
+          <input type="checkbox" id="unit-toggle" onchange="changeUnit(this.checked ? 'cm' : 'mm')">
+          <label for="unit-toggle" class="toggle-label">
+            <span class="toggle-text">мм</span>
+            <span class="toggle-slider"></span>
+            <span class="toggle-text">см</span>
+          </label>
+        </div>
+      </div>
     </header>
 
     <section class="panel">
@@ -24,15 +35,15 @@
         <div class="input-row">
           <div class="input-wrapper">
             <input type="number" id="foundation-depth" value="2000" oninput="updateAllDisplays()">
-            <label>Довжина (мм)</label>
+            <label id="foundation-depth-label">Довжина (мм)</label>
           </div>
           <div class="input-wrapper">
             <input type="number" id="foundation-width" value="1000" oninput="updateAllDisplays()">
-            <label>Ширина (мм)</label>
+            <label id="foundation-width-label">Ширина (мм)</label>
           </div>
           <div class="input-wrapper">
             <input type="number" id="foundation-height" value="150" oninput="updateAllDisplays()">
-            <label>Висота (мм)</label>
+            <label id="foundation-height-label">Висота (мм)</label>
           </div>
         </div>
         <button onclick="addFoundation(); advanceToNextPanel(this);">Створити фундамент</button>
@@ -49,7 +60,7 @@
         <div class="input-row">
           <div class="input-wrapper">
             <input type="number" id="blind-area-thickness" value="50" min="30" max="200" oninput="updateAllDisplays()">
-            <label>Товщина (мм)</label>
+            <label id="blind-area-thickness-label">Товщина (мм)</label>
           </div>
         </div>
         
@@ -65,7 +76,7 @@
           <div class="input-row">
             <div class="input-wrapper">
               <input type="number" id="blind-area-uniform-width" value="300" min="50" max="1000" oninput="updateAllDisplays()">
-              <label>Ширина (мм)</label>
+              <label id="blind-area-uniform-width-label">Ширина (мм)</label>
             </div>
           </div>
         </div>
@@ -74,22 +85,22 @@
                      <div class="input-row">
              <div class="input-wrapper">
                <input type="number" id="blind-area-north" value="300" min="50" max="1000" oninput="updateAllDisplays()">
-               <label>Північна сторона (мм)</label>
+               <label id="blind-area-north-label">Північна сторона (мм)</label>
              </div>
              <div class="input-wrapper">
                <input type="number" id="blind-area-south" value="300" min="50" max="1000" oninput="updateAllDisplays()">
-               <label>Південна сторона (мм)</label>
+               <label id="blind-area-south-label">Південна сторона (мм)</label>
              </div>
            </div>
            
            <div class="input-row">
              <div class="input-wrapper">
                <input type="number" id="blind-area-east" value="300" min="50" max="1000" oninput="updateAllDisplays()">
-               <label>Східна сторона (мм)</label>
+               <label id="blind-area-east-label">Східна сторона (мм)</label>
              </div>
              <div class="input-wrapper">
                <input type="number" id="blind-area-west" value="300" min="50" max="1000" oninput="updateAllDisplays()">
-               <label>Західна сторона (мм)</label>
+               <label id="blind-area-west-label">Західна сторона (мм)</label>
              </div>
            </div>
         </div>
@@ -106,29 +117,30 @@
       </div>
       <div class="panel-content">
         <div class="input-wrapper">
-          <label for="tiling-mode" class="label-left">Спосіб укладання:</label>
-          <select id="tiling-mode" onchange="updateTilingControls()">
-            <option value="frame" selected>Рамка з 4 частин</option>
-            <option value="modular">Модульне замощення</option>
-          </select>
+          <label class="label-left">Спосіб укладання:</label>
+          <div class="button-group-tiling-mode">
+            <button type="button" class="tiling-mode-btn active" data-value="frame" onclick="selectTilingMode(this)">Рамка з 4 частин</button>
+            <button type="button" class="tiling-mode-btn" data-value="modular" onclick="selectTilingMode(this)">Модульне замощення</button>
+          </div>
         </div>
         <div id="frame-controls">
           <div class="input-row tile-inputs">
             <div class="input-wrapper">
-              <select id="tile-thickness-frame" oninput="updateAllDisplays()">
-                <option value="20">20 мм</option>
-                <option value="30" selected>30 мм</option>
-                <option value="50">50 мм</option>
-              </select>
-              <label>Товщина</label>
+              <div class="button-group-thickness">
+                <button type="button" class="thickness-btn" data-value="20" onclick="selectThickness(this)">2 см</button>
+                <button type="button" class="thickness-btn active" data-value="30" onclick="selectThickness(this)">3 см</button>
+                <button type="button" class="thickness-btn" data-value="40" onclick="selectThickness(this)">4 см</button>
+                <button type="button" class="thickness-btn" data-value="50" onclick="selectThickness(this)">5 см</button>
+              </div>
+              <label id="tile-thickness-frame-label">Товщина</label>
             </div>
             <div class="input-wrapper">
               <input type="number" id="tile-border-width" value="300" min="10" oninput="updateAllDisplays()">
-              <label>Ширина рамки</label>
+              <label id="tile-border-width-label">Ширина рамки (мм)</label>
             </div>
             <div class="input-wrapper">
               <input type="number" id="tile-overhang" value="50" oninput="updateAllDisplays()">
-              <label>Виступ (мм)</label>
+              <label id="tile-overhang-label">Виступ (мм)</label>
             </div>
           </div>
         </div>
@@ -137,24 +149,34 @@
             <div class="input-wrapper">
               <label for="modular-tile-size" class="label-left">Розмір (см):</label>
               <select id="modular-tile-size" onchange="updateAllDisplays()">
-                <option value="60x30">60 x 30</option>
-                <option value="50x30">50 x 30</option>
-                <option value="40x30">40 x 30</option>
+                <option value="80x40">80 x 40</option>
+                <option value="70x40">70 x 40</option>
                 <option value="60x40">60 x 40</option>
                 <option value="50x40">50 x 40</option>
                 <option value="40x40">40 x 40</option>
+                <option value="60x30">60 x 30</option>
+                <option value="50x30">50 x 30</option>
+                <option value="40x30">40 x 30</option>
+                <option value="30x30">30 x 30</option>
+                <option value="80x30">80 x 30</option>
+                <option value="70x30">70 x 30</option>
               </select>
             </div>
             <div class="input-wrapper">
-              <label for="modular-thickness" class="label-left">Товщина:</label>
+              <label for="modular-thickness" class="label-left" id="modular-thickness-label">Товщина (мм):</label>
               <input type="number" id="modular-thickness" value="30" oninput="updateAllDisplays()">
             </div>
              <div class="input-wrapper">
-              <label for="modular-seam" class="label-left">Шов:</label>
-              <input type="number" id="modular-seam" value="5" oninput="updateAllDisplays()">
+              <label id="modular-seam-label">Шов</label>
+              <div class="button-group-seam">
+                <button type="button" class="seam-btn" data-value="2" onclick="selectSeam(this)">2 мм</button>
+                <button type="button" class="seam-btn" data-value="3" onclick="selectSeam(this)">3 мм</button>
+                <button type="button" class="seam-btn active" data-value="5" onclick="selectSeam(this)">5 мм</button>
+                <button type="button" class="seam-btn" data-value="4" onclick="selectSeam(this)">4 мм</button>
+              </div>
             </div>
              <div class="input-wrapper">
-              <label for="modular-overhang" class="label-left">Виступ:</label>
+              <label for="modular-overhang" class="label-left" id="modular-overhang-label">Виступ (мм):</label>
               <input type="number" id="modular-overhang" value="50" oninput="updateAllDisplays()">
             </div>
           </div>
@@ -173,7 +195,7 @@
           <div class="input-row">
               <div class="input-wrapper">
                   <input type="number" id="cladding-thickness" value="20" min="10" oninput="updateAllDisplays()">
-                  <label>Товщина (мм)</label>
+                  <label id="cladding-thickness-label">Товщина (мм)</label>
               </div>
           </div>
           <button onclick="addSideCladding(); advanceToNextPanel(this);">Додати</button>
@@ -228,22 +250,148 @@
       </div>
     </section>
 
-         <section class="panel collapsed">
-       <div class="panel-header" onclick="togglePanel(this)">
-         <h2 class="panel-title">🧪 Тестування</h2>
-         <span class="chevron"></span>
-         <span class="header-dimensions">Нові функції</span>
-       </div>
-       <div class="panel-content">
-         <!-- Тут буде нова функціональність -->
-         <div style="text-align: center; padding: 20px; color: #666;">
-           <p>🚧 Блок підготовлений для нової функціональності</p>
-         </div>
-       </div>
-     </section>
+         <section id="debug-panel" class="panel collapsed">
+        <div class="panel-header" onclick="togglePanel(this)">
+          <h2 class="panel-title">🧪 Тестування</h2>
+          <span class="chevron"></span>
+          <span class="header-dimensions">Варіанти дизайну</span>
+        </div>
+                 <div class="panel-content">
+           <!-- Варіант 2: Сучасний з тінями -->
+           <div class="design-variant">
+             <h3>Варіант 2: Сучасний з тінями</h3>
+             <div class="variant-demo">
+               <button class="btn-variant-2">Кнопка</button>
+               <input type="text" class="input-variant-2" placeholder="Поле вводу">
+               <select class="select-variant-2">
+                 <option>Вибір опції</option>
+                 <option>Опція 1</option>
+                 <option>Опція 2</option>
+               </select>
+               <label class="checkbox-variant-2">
+                 <input type="checkbox">
+                 <span class="checkmark"></span>
+                 Чекбокс
+               </label>
+               <div class="toggle-switch-variant-2">
+                 <input type="checkbox" id="toggle-2">
+                 <label for="toggle-2" class="toggle-label-variant-2">
+                   <span class="toggle-slider-variant-2"></span>
+                 </label>
+                 <span class="toggle-text-variant-2">Перемикач</span>
+               </div>
+               <div class="radio-group-variant-2">
+                 <label class="radio-variant-2">
+                   <input type="radio" name="radio-2" value="1">
+                   <span class="radio-checkmark"></span>
+                   Опція 1
+                 </label>
+                 <label class="radio-variant-2">
+                   <input type="radio" name="radio-2" value="2" checked>
+                   <span class="radio-checkmark"></span>
+                   Опція 2
+                 </label>
+               </div>
+             </div>
+           </div>
+
+           <!-- Варіант 4: Скляний ефект -->
+           <div class="design-variant">
+             <h3>Варіант 4: Скляний ефект</h3>
+             <div class="variant-demo">
+               <button class="btn-variant-4">Кнопка</button>
+               <input type="text" class="input-variant-4" placeholder="Поле вводу">
+               <select class="select-variant-4">
+                 <option>Вибір опції</option>
+                 <option>Опція 1</option>
+                 <option>Опція 2</option>
+               </select>
+               <label class="checkbox-variant-4">
+                 <input type="checkbox">
+                 <span class="checkmark"></span>
+                 Чекбокс
+               </label>
+               <div class="toggle-switch-variant-4">
+                 <input type="checkbox" id="toggle-4">
+                 <label for="toggle-4" class="toggle-label-variant-4">
+                   <span class="toggle-slider-variant-4"></span>
+                 </label>
+                 <span class="toggle-text-variant-4">Перемикач</span>
+               </div>
+               <div class="progress-bar-variant-4">
+                 <div class="progress-fill-variant-4" style="width: 65%"></div>
+                 <span class="progress-text-variant-4">65%</span>
+               </div>
+             </div>
+           </div>
+
+           <!-- Варіант 5: Неоморфізм -->
+           <div class="design-variant">
+             <h3>Варіант 5: Неоморфізм</h3>
+             <div class="variant-demo">
+               <button class="btn-variant-5">Кнопка</button>
+               <input type="text" class="input-variant-5" placeholder="Поле вводу">
+               <select class="select-variant-5">
+                 <option>Вибір опції</option>
+                 <option>Опція 1</option>
+                 <option>Опція 2</option>
+               </select>
+               <label class="checkbox-variant-5">
+                 <input type="checkbox">
+                 <span class="checkmark"></span>
+                 Чекбокс
+               </label>
+               <div class="toggle-switch-variant-5">
+                 <input type="checkbox" id="toggle-5">
+                 <label for="toggle-5" class="toggle-label-variant-5">
+                   <span class="toggle-slider-variant-5"></span>
+                 </label>
+                 <span class="toggle-text-variant-5">Перемикач</span>
+               </div>
+                               <div class="slider-variant-5">
+                  <input type="range" min="0" max="100" value="50" class="range-variant-5" oninput="updateSliderValue(this)">
+                  <span class="slider-value-variant-5">50</span>
+                </div>
+             </div>
+           </div>
+
+           <!-- Варіант 8: Металічний ефект -->
+           <div class="design-variant">
+             <h3>Варіант 8: Металічний ефект</h3>
+             <div class="variant-demo">
+               <button class="btn-variant-8">Кнопка</button>
+               <input type="text" class="input-variant-8" placeholder="Поле вводу">
+               <select class="select-variant-8">
+                 <option>Вибір опції</option>
+                 <option>Опція 1</option>
+                 <option>Опція 2</option>
+               </select>
+               <label class="checkbox-variant-8">
+                 <input type="checkbox">
+                 <span class="checkmark"></span>
+                 Чекбокс
+               </label>
+               <div class="toggle-switch-variant-8">
+                 <input type="checkbox" id="toggle-8">
+                 <label for="toggle-8" class="toggle-label-variant-8">
+                   <span class="toggle-slider-variant-8"></span>
+                 </label>
+                 <span class="toggle-text-variant-8">Перемикач</span>
+               </div>
+               <div class="badge-variant-8">
+                 <span class="badge-text-variant-8">Новий</span>
+               </div>
+               <div class="chip-variant-8">
+                 <span class="chip-text-variant-8">Тег</span>
+                 <button class="chip-close-variant-8">×</button>
+               </div>
+             </div>
+           </div>
+        </div>
+      </section>
 
     <!-- Debug Panel -->
-    <div class="panel" id="debug-panel">
+    <div class="panel" id="debug-panel-old">
       <div class="panel-header" onclick="togglePanel(this)">
         <h3>🐛 Debug</h3>
         <span class="toggle-icon">▼</span>
@@ -252,9 +400,12 @@
         <div id="debug-log" style="background: #f5f5f5; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;">
           <div>🔍 Очікування логів...</div>
         </div>
-                 <button onclick="clearDebugLog()" style="margin-top: 10px; padding: 5px 10px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: white; border: none; border-radius: 3px; cursor: pointer; box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3); transition: all 0.3s ease;">
-           Очистити лог
-         </button>
+                                   <button onclick="clearDebugLog()" style="margin-top: 10px; padding: 5px 10px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: white; border: none; border-radius: 3px; cursor: pointer; box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3); transition: all 0.3s ease;">
+            Очистити лог
+          </button>
+          <button onclick="resetTileThicknessOptions()" style="margin-top: 10px; margin-left: 10px; padding: 5px 10px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border: none; border-radius: 3px; cursor: pointer; box-shadow: 0 2px 8px rgba(79, 172, 254, 0.3); transition: all 0.3s ease;">
+            Скинути опції товщини
+          </button>
       </div>
     </div>
 

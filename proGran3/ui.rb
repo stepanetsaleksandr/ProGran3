@@ -547,19 +547,20 @@ module ProGran3
       
       # Callback для зміни одиниці вимірювання
       @dialog.add_action_callback("change_unit") do |dialog, unit|
-        # Валідація одиниці вимірювання
-        unit_result = Validation.validate_unit(unit, "UI")
-        unless unit_result.valid
+        # Встановлюємо нову одиницю в DimensionsManager
+        success = DimensionsManager.set_current_unit(unit)
+        
+        if success
+          Logger.info("Одиниця вимірювання змінена на: #{unit}", "UI")
+          true
+        else
           ErrorHandler.handle_error(
-            Validation::ValidationError.new("Помилка валідації одиниці: #{unit_result.error_messages.join(', ')}"),
+            Validation::ValidationError.new("Непідтримувана одиниця вимірювання: #{unit}"),
             "UI",
             "change_unit"
           )
-          return false
+          false
         end
-        
-        # Логуємо зміну одиниці
-        puts "🔄 Змінено одиницю вимірювання на: #{unit}"
       end
       
       # Callback для отримання поточної одиниці

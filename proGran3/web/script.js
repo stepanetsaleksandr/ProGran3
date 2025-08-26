@@ -19,6 +19,9 @@ let addedElements = {
   steles: false
 };
 
+// Поточна одиниця вимірювання
+let currentUnit = 'mm';
+
 
 
 
@@ -415,11 +418,11 @@ function initializeApp() {
   debugLog(`🚀 initializeApp викликано`, 'info');
   
   // Ініціалізація UI (без повторного виклику ready)
-  if(document.getElementById('tiling-mode')) {
-    debugLog(`✅ Знайдено tiling-mode, оновлюємо контроли`, 'success');
+  if(document.querySelector('.tiling-mode-btn')) {
+    debugLog(`✅ Знайдено кнопки способу укладання, оновлюємо контроли`, 'success');
     updateTilingControls();
   } else {
-    debugLog(`❌ Не знайдено tiling-mode`, 'error');
+    debugLog(`❌ Не знайдено кнопки способу укладання`, 'error');
   }
   
   // Ініціалізація контролів відмостки
@@ -428,6 +431,57 @@ function initializeApp() {
     updateBlindAreaControls();
   } else {
     debugLog(`❌ Не знайдено blind-area-mode`, 'error');
+  }
+  
+  // Перевірка полів плитки
+  debugLog(`🔍 Перевірка полів плитки...`, 'info');
+  const tileBorderWidth = document.getElementById('tile-border-width');
+  const tileOverhang = document.getElementById('tile-overhang');
+  const modularThickness = document.getElementById('modular-thickness');
+  const modularOverhang = document.getElementById('modular-overhang');
+  
+  // Перевіряємо кнопки товщини
+  const thicknessButtons = document.querySelectorAll('.thickness-btn');
+  if (thicknessButtons.length > 0) {
+    debugLog(`✅ Знайдено ${thicknessButtons.length} кнопок товщини плитки`, 'success');
+    const activeThickness = getSelectedThickness();
+    debugLog(`✅ Активна товщина: ${activeThickness}`, 'success');
+  } else {
+    debugLog(`❌ Не знайдено кнопки товщини плитки`, 'error');
+  }
+  
+  // Перевіряємо кнопки шву
+  const seamButtons = document.querySelectorAll('.seam-btn');
+  if (seamButtons.length > 0) {
+    debugLog(`✅ Знайдено ${seamButtons.length} кнопок шву`, 'success');
+    const activeSeam = getSelectedSeam();
+    debugLog(`✅ Активний шов: ${activeSeam} мм`, 'success');
+  } else {
+    debugLog(`❌ Не знайдено кнопки шву`, 'error');
+  }
+  
+  if (tileBorderWidth) {
+    debugLog(`✅ Знайдено поле ширини рамки: ${tileBorderWidth.value}`, 'success');
+  } else {
+    debugLog(`❌ Не знайдено поле ширини рамки`, 'error');
+  }
+  
+  if (tileOverhang) {
+    debugLog(`✅ Знайдено поле виступу: ${tileOverhang.value}`, 'success');
+  } else {
+    debugLog(`❌ Не знайдено поле виступу`, 'error');
+  }
+  
+  if (modularThickness) {
+    debugLog(`✅ Знайдено поле товщини модульної: ${modularThickness.value}`, 'success');
+  } else {
+    debugLog(`❌ Не знайдено поле товщини модульної`, 'error');
+  }
+  
+  if (modularOverhang) {
+    debugLog(`✅ Знайдено поле виступу модульної: ${modularOverhang.value}`, 'success');
+  } else {
+    debugLog(`❌ Не знайдено поле виступу модульної`, 'error');
   }
   
   // Згортаємо всі панелі, крім першої
@@ -442,6 +496,9 @@ function initializeApp() {
   
   debugLog(`🔄 Викликаємо updateAllDisplays()`, 'info');
   updateAllDisplays();
+  updateUnitLabels();
+  updateThicknessButtons();
+  updateSeamButtons();
   
   debugLog(`✅ initializeApp завершено`, 'success');
 }
@@ -738,11 +795,11 @@ function addModel(category) {
 // --- ІНШІ ФУНКЦІЇ ---
 
 function updateTilingControls() {
-  const tilingMode = document.getElementById('tiling-mode');
+  const tilingMode = getSelectedTilingMode();
   const frameControls = document.getElementById('frame-controls');
   const modularControls = document.getElementById('modular-controls');
   
-  if (tilingMode.value === 'frame') {
+  if (tilingMode === 'frame') {
     frameControls.classList.remove('hidden');
     modularControls.classList.add('hidden');
   } else {
@@ -768,11 +825,11 @@ function updateBlindAreaControls() {
 }
 
 function addBlindArea() {
-  const thickness = document.getElementById('blind-area-thickness').value;
+  const thickness = convertToMm(document.getElementById('blind-area-thickness').value);
   const mode = document.getElementById('blind-area-mode').value;
   
   if (mode === 'uniform') {
-    const width = document.getElementById('blind-area-uniform-width').value;
+    const width = convertToMm(document.getElementById('blind-area-uniform-width').value);
     debugLog(`🏗️ Створення відмостки з однаковою шириною: ${width}мм, товщина: ${thickness}мм`, 'info');
     if (window.sketchup && window.sketchup.add_blind_area_uniform) {
       window.sketchup.add_blind_area_uniform(width, thickness);
@@ -780,10 +837,10 @@ function addBlindArea() {
       updateSummaryTable();
     } else { debugLog(`❌ window.sketchup.add_blind_area_uniform не доступний`, 'error'); }
   } else {
-    const north = document.getElementById('blind-area-north').value;
-    const south = document.getElementById('blind-area-south').value;
-    const east = document.getElementById('blind-area-east').value;
-    const west = document.getElementById('blind-area-west').value;
+    const north = convertToMm(document.getElementById('blind-area-north').value);
+    const south = convertToMm(document.getElementById('blind-area-south').value);
+    const east = convertToMm(document.getElementById('blind-area-east').value);
+    const west = convertToMm(document.getElementById('blind-area-west').value);
     debugLog(`🏗️ Створення відмостки з різною шириною: П:${north}мм, Пд:${south}мм, С:${east}мм, З:${west}мм, товщина: ${thickness}мм`, 'info');
     if (window.sketchup && window.sketchup.add_blind_area_custom) {
       window.sketchup.add_blind_area_custom(north, south, east, west, thickness);
@@ -796,24 +853,26 @@ function addBlindArea() {
 
 
 function updateAllDisplays() {
+  const unitText = currentUnit === 'mm' ? 'мм' : 'см';
+  
   // Оновлення відображення розмірів фундаменту
   const foundationDepth = document.getElementById('foundation-depth').value;
   const foundationWidth = document.getElementById('foundation-width').value;
   const foundationHeight = document.getElementById('foundation-height').value;
   document.getElementById('foundation-dimensions-display').textContent = 
-    `${foundationDepth}×${foundationWidth}×${foundationHeight} мм`;
+    `${foundationDepth}×${foundationWidth}×${foundationHeight} ${unitText}`;
   
   // Оновлення відображення типу плитки
-  const tilingMode = document.getElementById('tiling-mode');
-  if (tilingMode) {
-    const modeText = tilingMode.options[tilingMode.selectedIndex].text;
-    document.getElementById('tiling-type-display').textContent = modeText;
+  const tilingMode = getSelectedTilingMode();
+  const activeButton = document.querySelector('.tiling-mode-btn.active');
+  if (activeButton) {
+    document.getElementById('tiling-type-display').textContent = activeButton.textContent;
   }
   
   // Оновлення відображення товщини облицювання
   const claddingThickness = document.getElementById('cladding-thickness').value;
   document.getElementById('cladding-dimensions-display').textContent = 
-    `Товщина: ${claddingThickness} мм`;
+    `Товщина: ${claddingThickness} ${unitText}`;
   
   // Оновлення відображення розмірів відмостки
   const blindAreaThickness = document.getElementById('blind-area-thickness').value;
@@ -822,14 +881,14 @@ function updateAllDisplays() {
   if (blindAreaMode === 'uniform') {
     const uniformWidth = document.getElementById('blind-area-uniform-width').value;
     document.getElementById('blind-area-dimensions-display').textContent = 
-      `Ширина: ${uniformWidth} мм, Товщина: ${blindAreaThickness} мм`;
+      `Ширина: ${uniformWidth} ${unitText}, Товщина: ${blindAreaThickness} ${unitText}`;
   } else {
     const blindAreaNorth = document.getElementById('blind-area-north').value;
     const blindAreaSouth = document.getElementById('blind-area-south').value;
     const blindAreaEast = document.getElementById('blind-area-east').value;
     const blindAreaWest = document.getElementById('blind-area-west').value;
     document.getElementById('blind-area-dimensions-display').textContent = 
-      `П:${blindAreaNorth} Пд:${blindAreaSouth} С:${blindAreaEast} З:${blindAreaWest} мм, Т:${blindAreaThickness} мм`;
+      `П:${blindAreaNorth} Пд:${blindAreaSouth} С:${blindAreaEast} З:${blindAreaWest} ${unitText}, Т:${blindAreaThickness} ${unitText}`;
   }
   
   // Оновлення відображення вибраних моделей
@@ -872,23 +931,24 @@ function updateModelDisplays() {
 }
 
 function updateSummaryTable() {
+  const unitText = currentUnit === 'mm' ? 'мм' : 'см';
+  
   // Фундамент
   if (addedElements.foundation) {
     const foundationDepth = document.getElementById('foundation-depth').value;
     const foundationWidth = document.getElementById('foundation-width').value;
     const foundationHeight = document.getElementById('foundation-height').value;
     document.getElementById('summary-foundation').textContent = 
-      `${foundationDepth}×${foundationWidth}×${foundationHeight} мм`;
+      `${foundationDepth}×${foundationWidth}×${foundationHeight} ${unitText}`;
   } else {
     document.getElementById('summary-foundation').textContent = '--';
   }
   
   // Плитка
   if (addedElements.tiling) {
-    const tilingMode = document.getElementById('tiling-mode');
-    if (tilingMode) {
-      const modeText = tilingMode.options[tilingMode.selectedIndex].text;
-      document.getElementById('summary-tiling').textContent = modeText;
+    const activeButton = document.querySelector('.tiling-mode-btn.active');
+    if (activeButton) {
+      document.getElementById('summary-tiling').textContent = activeButton.textContent;
     }
   } else {
     document.getElementById('summary-tiling').textContent = '--';
@@ -898,7 +958,7 @@ function updateSummaryTable() {
   if (addedElements.cladding) {
     const claddingThickness = document.getElementById('cladding-thickness').value;
     document.getElementById('summary-cladding').textContent = 
-      `Товщина: ${claddingThickness} мм`;
+      `Товщина: ${claddingThickness} ${unitText}`;
   } else {
     document.getElementById('summary-cladding').textContent = '--';
   }
@@ -911,14 +971,14 @@ function updateSummaryTable() {
     if (blindAreaMode === 'uniform') {
       const uniformWidth = document.getElementById('blind-area-uniform-width').value;
       document.getElementById('summary-blind-area').textContent = 
-        `Ширина: ${uniformWidth} мм, Товщина: ${blindAreaThickness} мм`;
+        `Ширина: ${uniformWidth} ${unitText}, Товщина: ${blindAreaThickness} ${unitText}`;
     } else {
       const blindAreaNorth = document.getElementById('blind-area-north').value;
       const blindAreaSouth = document.getElementById('blind-area-south').value;
       const blindAreaEast = document.getElementById('blind-area-east').value;
       const blindAreaWest = document.getElementById('blind-area-west').value;
       document.getElementById('summary-blind-area').textContent = 
-        `П:${blindAreaNorth} Пд:${blindAreaSouth} С:${blindAreaEast} З:${blindAreaWest} мм, Т:${blindAreaThickness} мм`;
+        `П:${blindAreaNorth} Пд:${blindAreaSouth} С:${blindAreaEast} З:${blindAreaWest} ${unitText}, Т:${blindAreaThickness} ${unitText}`;
     }
   } else {
     document.getElementById('summary-blind-area').textContent = '--';
@@ -959,7 +1019,12 @@ function addFoundation() {
   const height = document.getElementById('foundation-height').value;
   
   if (window.sketchup && window.sketchup.add_foundation) {
-    window.sketchup.add_foundation(depth, width, height);
+    // Конвертуємо в мм перед відправкою в Ruby
+    const depthMm = convertToMm(depth);
+    const widthMm = convertToMm(width);
+    const heightMm = convertToMm(height);
+    
+    window.sketchup.add_foundation(depthMm, widthMm, heightMm);
     addedElements.foundation = true;
     updateSummaryTable();
   } else { debugLog(`❌ window.sketchup.add_foundation не доступний`, 'error'); }
@@ -968,23 +1033,76 @@ function addFoundation() {
 
 
 function addTiles() {
-  const mode = document.getElementById('tiling-mode').value;
+  const mode = getSelectedTilingMode();
+  debugLog(`🏗️ Додавання плитки, режим: ${mode}`, 'info');
   
   if (window.sketchup && window.sketchup.add_tiles) {
     if (mode === 'frame') {
-      const thickness = document.getElementById('tile-thickness-frame').value;
-      const borderWidth = document.getElementById('tile-border-width').value;
-      const overhang = document.getElementById('tile-overhang').value;
-      window.sketchup.add_tiles('frame', thickness, borderWidth, overhang);
+      const borderWidthElement = document.getElementById('tile-border-width');
+      const overhangElement = document.getElementById('tile-overhang');
+      
+      if (!borderWidthElement) {
+        debugLog(`❌ Не знайдено поле ширини рамки (tile-border-width)`, 'error');
+        return;
+      }
+      if (!overhangElement) {
+        debugLog(`❌ Не знайдено поле виступу (tile-overhang)`, 'error');
+        return;
+      }
+      
+      const thickness = getSelectedThickness();
+      const borderWidth = borderWidthElement.value;
+      const overhang = overhangElement.value;
+      
+      debugLog(`📏 Параметри рамки: товщина=${thickness}, ширина=${borderWidth}, виступ=${overhang}`, 'info');
+      
+      // Конвертуємо в мм
+      const thicknessMm = convertToMm(thickness);
+      const borderWidthMm = convertToMm(borderWidth);
+      const overhangMm = convertToMm(overhang);
+      
+      debugLog(`📏 Параметри в мм: товщина=${thicknessMm}, ширина=${borderWidthMm}, виступ=${overhangMm}`, 'info');
+      
+      window.sketchup.add_tiles('frame', thicknessMm, borderWidthMm, overhangMm);
     } else {
-      const size = document.getElementById('modular-tile-size').value;
-      const thickness = document.getElementById('modular-thickness').value;
-      const seam = document.getElementById('modular-seam').value;
-      const overhang = document.getElementById('modular-overhang').value;
-      window.sketchup.add_tiles('modular', size, thickness, seam, overhang);
+      const sizeElement = document.getElementById('modular-tile-size');
+      const thicknessElement = document.getElementById('modular-thickness');
+      const overhangElement = document.getElementById('modular-overhang');
+      
+      if (!sizeElement) {
+        debugLog(`❌ Не знайдено поле розміру плитки (modular-tile-size)`, 'error');
+        return;
+      }
+      if (!thicknessElement) {
+        debugLog(`❌ Не знайдено поле товщини модульної плитки (modular-thickness)`, 'error');
+        return;
+      }
+      if (!overhangElement) {
+        debugLog(`❌ Не знайдено поле виступу модульної плитки (modular-overhang)`, 'error');
+        return;
+      }
+      
+      const size = sizeElement.value;
+      const thickness = thicknessElement.value;
+      const seam = getSelectedSeam();
+      const overhang = overhangElement.value;
+      
+      debugLog(`📏 Параметри модульної: розмір=${size}, товщина=${thickness}, шов=${seam}, виступ=${overhang}`, 'info');
+      
+      // Конвертуємо в мм
+      const thicknessMm = convertToMm(thickness);
+      const seamMm = convertToMm(seam);
+      const overhangMm = convertToMm(overhang);
+      
+      debugLog(`📏 Параметри в мм: товщина=${thicknessMm}, шов=${seamMm}, виступ=${overhangMm}`, 'info');
+      
+      window.sketchup.add_tiles('modular', size, thicknessMm, seamMm, overhangMm);
     }
     addedElements.tiling = true;
     updateSummaryTable();
+    debugLog(`✅ Плитка додана успішно`, 'success');
+  } else {
+    debugLog(`❌ window.sketchup.add_tiles не доступний`, 'error');
   }
 }
 
@@ -994,7 +1112,9 @@ function addSideCladding() {
   const thickness = document.getElementById('cladding-thickness').value;
   
   if (window.sketchup && window.sketchup.add_side_cladding) {
-    window.sketchup.add_side_cladding(thickness);
+    // Конвертуємо в мм
+    const thicknessMm = convertToMm(thickness);
+    window.sketchup.add_side_cladding(thicknessMm);
     addedElements.cladding = true;
     updateSummaryTable();
   }
@@ -1071,10 +1191,284 @@ function receiveModelStatus(statusData) {
 
 // Функції для створення відмостки
 
+// Функції для роботи з одиницями вимірювання
+function changeUnit(newUnit) {
+  debugLog(`🔄 Зміна одиниці вимірювання: ${currentUnit} -> ${newUnit}`, 'info');
+  
+  if (currentUnit === newUnit) {
+    debugLog(`ℹ️ Одиниця вже встановлена: ${newUnit}`, 'info');
+    return;
+  }
+  
+  // Зберігаємо старі значення та одиницю
+  const oldValues = getAllInputValues();
+  const oldUnit = currentUnit;
+  
+  // Оновлюємо поточну одиницю
+  currentUnit = newUnit;
+  
+  // Конвертуємо всі значення
+  convertAllValues(oldValues, oldUnit, newUnit);
+  
+  // Оновлюємо відображення
+  updateAllDisplays();
+  updateUnitLabels();
+  updateThicknessButtons();
+  updateSeamButtons();
+  
+  // Відправляємо зміну в Ruby
+  if (window.sketchup && window.sketchup.change_unit) {
+    window.sketchup.change_unit(newUnit);
+  }
+  
+  debugLog(`✅ Одиниця вимірювання змінена на: ${newUnit}`, 'success');
+}
+
+// Отримання всіх значень з полів вводу
+function getAllInputValues() {
+  return {
+    foundation: {
+      depth: document.getElementById('foundation-depth').value,
+      width: document.getElementById('foundation-width').value,
+      height: document.getElementById('foundation-height').value
+    },
+    blindArea: {
+      thickness: document.getElementById('blind-area-thickness').value,
+      uniformWidth: document.getElementById('blind-area-uniform-width').value,
+      north: document.getElementById('blind-area-north').value,
+      south: document.getElementById('blind-area-south').value,
+      east: document.getElementById('blind-area-east').value,
+      west: document.getElementById('blind-area-west').value
+    },
+    tiles: {
+      thickness: getSelectedThickness(),
+      borderWidth: document.getElementById('tile-border-width').value,
+      overhang: document.getElementById('tile-overhang').value,
+      modularThickness: document.getElementById('modular-thickness').value,
+      modularSeam: getSelectedSeam(),
+      modularOverhang: document.getElementById('modular-overhang').value
+    },
+    cladding: {
+      thickness: document.getElementById('cladding-thickness').value
+    }
+  };
+}
+
+// Конвертація всіх значень
+function convertAllValues(oldValues, oldUnit, newUnit) {
+  // Конвертуємо значення фундаменту
+  if (oldValues.foundation) {
+    document.getElementById('foundation-depth').value = convertValue(oldValues.foundation.depth, oldUnit, newUnit);
+    document.getElementById('foundation-width').value = convertValue(oldValues.foundation.width, oldUnit, newUnit);
+    document.getElementById('foundation-height').value = convertValue(oldValues.foundation.height, oldUnit, newUnit);
+  }
+  
+  // Конвертуємо значення відмостки
+  if (oldValues.blindArea) {
+    document.getElementById('blind-area-thickness').value = convertValue(oldValues.blindArea.thickness, oldUnit, newUnit);
+    document.getElementById('blind-area-uniform-width').value = convertValue(oldValues.blindArea.uniformWidth, oldUnit, newUnit);
+    document.getElementById('blind-area-north').value = convertValue(oldValues.blindArea.north, oldUnit, newUnit);
+    document.getElementById('blind-area-south').value = convertValue(oldValues.blindArea.south, oldUnit, newUnit);
+    document.getElementById('blind-area-east').value = convertValue(oldValues.blindArea.east, oldUnit, newUnit);
+    document.getElementById('blind-area-west').value = convertValue(oldValues.blindArea.west, oldUnit, newUnit);
+  }
+  
+  // Конвертуємо значення плитки
+  if (oldValues.tiles) {
+    // Оновлюємо кнопки товщини
+    updateThicknessButtons();
+    // Оновлюємо кнопки шву
+    updateSeamButtons();
+    document.getElementById('tile-border-width').value = convertValue(oldValues.tiles.borderWidth, oldUnit, newUnit);
+    document.getElementById('tile-overhang').value = convertValue(oldValues.tiles.overhang, oldUnit, newUnit);
+    document.getElementById('modular-thickness').value = convertValue(oldValues.tiles.modularThickness, oldUnit, newUnit);
+    document.getElementById('modular-overhang').value = convertValue(oldValues.tiles.modularOverhang, oldUnit, newUnit);
+  }
+  
+  // Конвертуємо значення облицювання
+  if (oldValues.cladding) {
+    document.getElementById('cladding-thickness').value = convertValue(oldValues.cladding.thickness, oldUnit, newUnit);
+  }
+}
+
+// Конвертація одного значення
+function convertValue(value, oldUnit, newUnit) {
+  const numValue = parseFloat(value);
+  if (isNaN(numValue)) return value;
+  
+  if (oldUnit === 'mm' && newUnit === 'cm') {
+    return (numValue / 10).toFixed(1);
+  } else if (oldUnit === 'cm' && newUnit === 'mm') {
+    return Math.round(numValue * 10);
+  }
+  
+  return value;
+}
+
+// Отримання поточної одиниці вимірювання
+function getCurrentUnit() {
+  return currentUnit;
+}
+
+// Оновлення всіх лейблів з одиницями вимірювання
+function updateUnitLabels() {
+  const unitText = currentUnit === 'mm' ? 'мм' : 'см';
+  
+  // Фундамент
+  document.getElementById('foundation-depth-label').textContent = `Довжина (${unitText})`;
+  document.getElementById('foundation-width-label').textContent = `Ширина (${unitText})`;
+  document.getElementById('foundation-height-label').textContent = `Висота (${unitText})`;
+  
+  // Відмостка
+  document.getElementById('blind-area-thickness-label').textContent = `Товщина (${unitText})`;
+  document.getElementById('blind-area-uniform-width-label').textContent = `Ширина (${unitText})`;
+  document.getElementById('blind-area-north-label').textContent = `Північна сторона (${unitText})`;
+  document.getElementById('blind-area-south-label').textContent = `Південна сторона (${unitText})`;
+  document.getElementById('blind-area-east-label').textContent = `Східна сторона (${unitText})`;
+  document.getElementById('blind-area-west-label').textContent = `Західна сторона (${unitText})`;
+  
+  // Плитка
+  document.getElementById('tile-thickness-frame-label').textContent = `Товщина`;
+  document.getElementById('tile-border-width-label').textContent = `Ширина рамки (${unitText})`;
+  document.getElementById('tile-overhang-label').textContent = `Виступ (${unitText})`;
+  document.getElementById('modular-thickness-label').textContent = `Товщина (${unitText}):`;
+  document.getElementById('modular-seam-label').textContent = `Шов`;
+  document.getElementById('modular-overhang-label').textContent = `Виступ (${unitText}):`;
+  
+  // Облицювання
+  document.getElementById('cladding-thickness-label').textContent = `Товщина (${unitText})`;
+}
+
+// Форматування значення для відображення
+function formatValue(value, unit = null) {
+  const u = unit || currentUnit;
+  const numValue = parseFloat(value);
+  if (isNaN(numValue)) return value;
+  
+  if (u === 'mm') {
+    return `${Math.round(numValue)}мм`;
+  } else if (u === 'cm') {
+    return `${numValue.toFixed(1)}см`;
+  }
+  
+  return value;
+}
+
+// Конвертація значення в мм для відправки в Ruby
+function convertToMm(value) {
+  const numValue = parseFloat(value);
+  if (isNaN(numValue)) return value;
+  
+  if (currentUnit === 'mm') {
+    return numValue;
+  } else if (currentUnit === 'cm') {
+    return Math.round(numValue * 10);
+  }
+  
+  return numValue;
+}
 
 
 
+// Функція для вибору товщини плитки
+function selectThickness(button) {
+  // Видаляємо активний клас з усіх кнопок
+  const buttons = document.querySelectorAll('.thickness-btn');
+  buttons.forEach(btn => btn.classList.remove('active'));
+  
+  // Додаємо активний клас до натиснутої кнопки
+  button.classList.add('active');
+  
+  // Оновлюємо відображення
+  updateAllDisplays();
+  
+  debugLog(`✅ Вибрано товщину плитки: ${button.dataset.value}`, 'success');
+}
 
+// Функція для вибору способу укладання
+function selectTilingMode(button) {
+  // Видаляємо активний клас з усіх кнопок
+  const buttons = document.querySelectorAll('.tiling-mode-btn');
+  buttons.forEach(btn => btn.classList.remove('active'));
+  
+  // Додаємо активний клас до натиснутої кнопки
+  button.classList.add('active');
+  
+  // Оновлюємо контроли
+  updateTilingControls();
+  
+  debugLog(`✅ Вибрано спосіб укладання: ${button.dataset.value}`, 'success');
+}
 
+// Функція для вибору шву
+function selectSeam(button) {
+  // Видаляємо активний клас з усіх кнопок
+  const buttons = document.querySelectorAll('.seam-btn');
+  buttons.forEach(btn => btn.classList.remove('active'));
+  
+  // Додаємо активний клас до натиснутої кнопки
+  button.classList.add('active');
+  
+  // Оновлюємо відображення
+  updateAllDisplays();
+  
+  debugLog(`✅ Вибрано шов: ${button.dataset.value} мм`, 'success');
+}
 
+// Функція для отримання вибраної товщини плитки
+function getSelectedThickness() {
+  const activeButton = document.querySelector('.thickness-btn.active');
+  return activeButton ? activeButton.dataset.value : '30';
+}
 
+// Функція для отримання вибраного способу укладання
+function getSelectedTilingMode() {
+  const activeButton = document.querySelector('.tiling-mode-btn.active');
+  return activeButton ? activeButton.dataset.value : 'frame';
+}
+
+// Функція для отримання вибраного шву
+function getSelectedSeam() {
+  const activeButton = document.querySelector('.seam-btn.active');
+  return activeButton ? activeButton.dataset.value : '5';
+}
+
+// Функція для оновлення тексту кнопок товщини при зміні одиниць
+function updateThicknessButtons() {
+  const buttons = document.querySelectorAll('.thickness-btn');
+  buttons.forEach(button => {
+    const value = button.dataset.value;
+    if (currentUnit === 'mm') {
+      button.textContent = `${value} мм`;
+    } else {
+      button.textContent = `${(value / 10).toFixed(0)} см`;
+    }
+  });
+}
+
+// Функція для оновлення тексту кнопок шву при зміні одиниць
+function updateSeamButtons() {
+  const buttons = document.querySelectorAll('.seam-btn');
+  buttons.forEach(button => {
+    const value = button.dataset.value;
+    if (currentUnit === 'mm') {
+      button.textContent = `${value} мм`;
+    } else {
+      button.textContent = `${(value / 10).toFixed(1)} см`;
+    }
+  });
+}
+
+// Функція для скидання опцій товщини плитки до початкових значень (для зворотної сумісності)
+function resetTileThicknessOptions() {
+  debugLog(`🔄 Функція resetTileThicknessOptions застаріла, використовуйте кнопки`, 'warning');
+}
+
+// Функція для оновлення значення слайдера
+function updateSliderValue(slider) {
+  const value = slider.value;
+  const valueDisplay = slider.parentElement.querySelector('.slider-value-variant-5');
+  if (valueDisplay) {
+    valueDisplay.textContent = value;
+  }
+}
