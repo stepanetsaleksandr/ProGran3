@@ -8,6 +8,72 @@ let carouselState = {
   flowerbeds: { index: 0 }
 };
 
+// Ініціалізація floating labels
+function initializeFloatingLabels() {
+  const floatingInputs = document.querySelectorAll('.floating-label input');
+  const floatingSelects = document.querySelectorAll('.floating-label select');
+  
+  // Обробка input елементів
+  floatingInputs.forEach(input => {
+    // Встановлюємо початковий стан для полів зі значеннями
+    if (input.value && input.value.trim() !== '') {
+      input.classList.add('has-value');
+    }
+    
+    // Додаємо обробники подій
+    input.addEventListener('focus', function() {
+      this.parentElement.classList.add('focused');
+    });
+    
+    input.addEventListener('blur', function() {
+      this.parentElement.classList.remove('focused');
+      if (this.value && this.value.trim() !== '') {
+        this.classList.add('has-value');
+      } else {
+        this.classList.remove('has-value');
+      }
+    });
+    
+    input.addEventListener('input', function() {
+      if (this.value && this.value.trim() !== '') {
+        this.classList.add('has-value');
+      } else {
+        this.classList.remove('has-value');
+      }
+    });
+  });
+  
+  // Обробка select елементів
+  floatingSelects.forEach(select => {
+    // Встановлюємо початковий стан для полів зі значеннями
+    if (select.value && select.value.trim() !== '') {
+      select.classList.add('has-value');
+    }
+    
+    // Додаємо обробники подій
+    select.addEventListener('focus', function() {
+      this.parentElement.classList.add('focused');
+    });
+    
+    select.addEventListener('blur', function() {
+      this.parentElement.classList.remove('focused');
+      if (this.value && this.value.trim() !== '') {
+        this.classList.add('has-value');
+      } else {
+        this.classList.remove('has-value');
+      }
+    });
+    
+    select.addEventListener('change', function() {
+      if (this.value && this.value.trim() !== '') {
+        this.classList.add('has-value');
+      } else {
+        this.classList.remove('has-value');
+      }
+    });
+  });
+}
+
 // Відстеження доданих елементів до моделі
 let addedElements = {
   foundation: false,
@@ -495,6 +561,10 @@ function initializeApp() {
       panel.classList.add('collapsed');
     }
   });
+  
+  // Ініціалізуємо floating labels
+  initializeFloatingLabels();
+  debugLog(`✅ Floating labels ініціалізовано`, 'success');
   
   debugLog(`🔄 Викликаємо updateAllDisplays()`, 'info');
   updateAllDisplays();

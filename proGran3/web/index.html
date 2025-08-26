@@ -33,17 +33,17 @@
       </div>
       <div class="panel-content">
         <div class="input-row">
-          <div class="input-wrapper">
-            <input type="number" id="foundation-depth" value="2000" oninput="updateAllDisplays()">
-            <label id="foundation-depth-label">Довжина (мм)</label>
+          <div class="input-wrapper floating-label">
+            <input type="number" id="foundation-depth" value="2000" oninput="updateAllDisplays()" placeholder=" ">
+            <label id="foundation-depth-label" for="foundation-depth">Довжина (мм)</label>
           </div>
-          <div class="input-wrapper">
-            <input type="number" id="foundation-width" value="1000" oninput="updateAllDisplays()">
-            <label id="foundation-width-label">Ширина (мм)</label>
+          <div class="input-wrapper floating-label">
+            <input type="number" id="foundation-width" value="1000" oninput="updateAllDisplays()" placeholder=" ">
+            <label id="foundation-width-label" for="foundation-width">Ширина (мм)</label>
           </div>
-          <div class="input-wrapper">
-            <input type="number" id="foundation-height" value="150" oninput="updateAllDisplays()">
-            <label id="foundation-height-label">Висота (мм)</label>
+          <div class="input-wrapper floating-label">
+            <input type="number" id="foundation-height" value="150" oninput="updateAllDisplays()" placeholder=" ">
+            <label id="foundation-height-label" for="foundation-height">Висота (мм)</label>
           </div>
         </div>
         <button onclick="addFoundation(); advanceToNextPanel(this);">Створити фундамент</button>
@@ -58,49 +58,49 @@
       </div>
       <div class="panel-content">
         <div class="input-row">
-          <div class="input-wrapper">
-            <input type="number" id="blind-area-thickness" value="50" min="30" max="200" oninput="updateAllDisplays()">
-            <label id="blind-area-thickness-label">Товщина (мм)</label>
+          <div class="input-wrapper floating-label">
+            <input type="number" id="blind-area-thickness" value="50" min="30" max="200" oninput="updateAllDisplays()" placeholder=" ">
+            <label id="blind-area-thickness-label" for="blind-area-thickness">Товщина (мм)</label>
           </div>
         </div>
         
-        <div class="input-wrapper">
-          <label for="blind-area-mode" class="label-left">Режим ширини:</label>
-          <select id="blind-area-mode" onchange="updateBlindAreaControls()">
+        <div class="input-wrapper floating-label">
+          <select id="blind-area-mode" onchange="updateBlindAreaControls()" placeholder=" ">
             <option value="uniform" selected>Однакова ширина</option>
             <option value="custom">Різна ширина</option>
           </select>
+          <label for="blind-area-mode">Режим ширини</label>
         </div>
         
         <div id="uniform-controls">
           <div class="input-row">
-            <div class="input-wrapper">
-              <input type="number" id="blind-area-uniform-width" value="300" min="50" max="1000" oninput="updateAllDisplays()">
-              <label id="blind-area-uniform-width-label">Ширина (мм)</label>
+            <div class="input-wrapper floating-label">
+              <input type="number" id="blind-area-uniform-width" value="300" min="50" max="1000" oninput="updateAllDisplays()" placeholder=" ">
+              <label id="blind-area-uniform-width-label" for="blind-area-uniform-width">Ширина (мм)</label>
             </div>
           </div>
         </div>
         
         <div id="custom-controls" class="hidden">
                      <div class="input-row">
-             <div class="input-wrapper">
-               <input type="number" id="blind-area-north" value="300" min="50" max="1000" oninput="updateAllDisplays()">
-               <label id="blind-area-north-label">Північна сторона (мм)</label>
+             <div class="input-wrapper floating-label">
+               <input type="number" id="blind-area-north" value="300" min="50" max="1000" oninput="updateAllDisplays()" placeholder=" ">
+               <label id="blind-area-north-label" for="blind-area-north">Північна сторона (мм)</label>
              </div>
-             <div class="input-wrapper">
-               <input type="number" id="blind-area-south" value="300" min="50" max="1000" oninput="updateAllDisplays()">
-               <label id="blind-area-south-label">Південна сторона (мм)</label>
+             <div class="input-wrapper floating-label">
+               <input type="number" id="blind-area-south" value="300" min="50" max="1000" oninput="updateAllDisplays()" placeholder=" ">
+               <label id="blind-area-south-label" for="blind-area-south">Південна сторона (мм)</label>
              </div>
            </div>
            
            <div class="input-row">
-             <div class="input-wrapper">
-               <input type="number" id="blind-area-east" value="300" min="50" max="1000" oninput="updateAllDisplays()">
-               <label id="blind-area-east-label">Східна сторона (мм)</label>
+             <div class="input-wrapper floating-label">
+               <input type="number" id="blind-area-east" value="300" min="50" max="1000" oninput="updateAllDisplays()" placeholder=" ">
+               <label id="blind-area-east-label" for="blind-area-east">Східна сторона (мм)</label>
              </div>
-             <div class="input-wrapper">
-               <input type="number" id="blind-area-west" value="300" min="50" max="1000" oninput="updateAllDisplays()">
-               <label id="blind-area-west-label">Західна сторона (мм)</label>
+             <div class="input-wrapper floating-label">
+               <input type="number" id="blind-area-west" value="300" min="50" max="1000" oninput="updateAllDisplays()" placeholder=" ">
+               <label id="blind-area-west-label" for="blind-area-west">Західна сторона (мм)</label>
              </div>
            </div>
         </div>
@@ -134,21 +134,20 @@
               </div>
               <label id="tile-thickness-frame-label">Товщина</label>
             </div>
-            <div class="input-wrapper">
-              <input type="number" id="tile-border-width" value="300" min="10" oninput="updateAllDisplays()">
-              <label id="tile-border-width-label">Ширина рамки (мм)</label>
+            <div class="input-wrapper floating-label">
+              <input type="number" id="tile-border-width" value="300" min="10" oninput="updateAllDisplays()" placeholder=" ">
+              <label id="tile-border-width-label" for="tile-border-width">Ширина рамки (мм)</label>
             </div>
-            <div class="input-wrapper">
-              <input type="number" id="tile-overhang" value="50" oninput="updateAllDisplays()">
-              <label id="tile-overhang-label">Виступ (мм)</label>
+            <div class="input-wrapper floating-label">
+              <input type="number" id="tile-overhang" value="50" oninput="updateAllDisplays()" placeholder=" ">
+              <label id="tile-overhang-label" for="tile-overhang">Виступ (мм)</label>
             </div>
           </div>
         </div>
         <div id="modular-controls" class="hidden">
           <div class="input-row tile-inputs">
-            <div class="input-wrapper">
-              <label for="modular-tile-size" class="label-left">Розмір (см):</label>
-              <select id="modular-tile-size" onchange="updateAllDisplays()">
+            <div class="input-wrapper floating-label">
+              <select id="modular-tile-size" onchange="updateAllDisplays()" placeholder=" ">
                 <option value="80x40">80 x 40</option>
                 <option value="70x40">70 x 40</option>
                 <option value="60x40">60 x 40</option>
@@ -161,10 +160,11 @@
                 <option value="80x30">80 x 30</option>
                 <option value="70x30">70 x 30</option>
               </select>
+              <label for="modular-tile-size">Розмір (см)</label>
             </div>
-            <div class="input-wrapper">
-              <label for="modular-thickness" class="label-left" id="modular-thickness-label">Товщина (мм):</label>
-              <input type="number" id="modular-thickness" value="30" oninput="updateAllDisplays()">
+            <div class="input-wrapper floating-label">
+              <input type="number" id="modular-thickness" value="30" oninput="updateAllDisplays()" placeholder=" ">
+              <label for="modular-thickness" id="modular-thickness-label">Товщина (мм)</label>
             </div>
              <div class="input-wrapper">
               <label id="modular-seam-label">Шов</label>
@@ -175,9 +175,9 @@
                 <button type="button" class="seam-btn" data-value="4" onclick="selectSeam(this)">4 мм</button>
               </div>
             </div>
-             <div class="input-wrapper">
-              <label for="modular-overhang" class="label-left" id="modular-overhang-label">Виступ (мм):</label>
-              <input type="number" id="modular-overhang" value="50" oninput="updateAllDisplays()">
+             <div class="input-wrapper floating-label">
+              <input type="number" id="modular-overhang" value="50" oninput="updateAllDisplays()" placeholder=" ">
+              <label for="modular-overhang" id="modular-overhang-label">Виступ (мм)</label>
             </div>
           </div>
         </div>
@@ -193,9 +193,9 @@
       </div>
       <div class="panel-content">
           <div class="input-row">
-              <div class="input-wrapper">
-                  <input type="number" id="cladding-thickness" value="20" min="10" oninput="updateAllDisplays()">
-                  <label id="cladding-thickness-label">Товщина (мм)</label>
+              <div class="input-wrapper floating-label">
+                  <input type="number" id="cladding-thickness" value="20" min="10" oninput="updateAllDisplays()" placeholder=" ">
+                  <label id="cladding-thickness-label" for="cladding-thickness">Товщина (мм)</label>
               </div>
           </div>
           <button onclick="addSideCladding(); advanceToNextPanel(this);">Додати</button>
