@@ -1093,7 +1093,7 @@ function addTiles() {
       
       // Конвертуємо в мм
       const thicknessMm = convertToMm(thickness);
-      const seamMm = convertToMm(seam);
+      const seamMm = convertToMm(seam, true); // Шви завжди в мм
       const overhangMm = convertToMm(overhang);
       
       debugLog(`📏 Параметри в мм: товщина=${thicknessMm}, шов=${seamMm}, виступ=${overhangMm}`, 'info');
@@ -1279,12 +1279,13 @@ function convertAllValues(oldValues, oldUnit, newUnit) {
   if (oldValues.tiles) {
     // Оновлюємо кнопки товщини
     updateThicknessButtons();
-    // Оновлюємо кнопки шву
+    // Оновлюємо кнопки шву (шви завжди в мм)
     updateSeamButtons();
     document.getElementById('tile-border-width').value = convertValue(oldValues.tiles.borderWidth, oldUnit, newUnit);
     document.getElementById('tile-overhang').value = convertValue(oldValues.tiles.overhang, oldUnit, newUnit);
     document.getElementById('modular-thickness').value = convertValue(oldValues.tiles.modularThickness, oldUnit, newUnit);
     document.getElementById('modular-overhang').value = convertValue(oldValues.tiles.modularOverhang, oldUnit, newUnit);
+    // Шви не конвертуються - залишаються в мм
   }
   
   // Конвертуємо значення облицювання
@@ -1294,12 +1295,17 @@ function convertAllValues(oldValues, oldUnit, newUnit) {
 }
 
 // Конвертація одного значення
-function convertValue(value, oldUnit, newUnit) {
+function convertValue(value, oldUnit, newUnit, isSeam = false) {
   const numValue = parseFloat(value);
   if (isNaN(numValue)) return value;
   
+  // Шви завжди залишаються в мм, не конвертуються
+  if (isSeam) {
+    return value;
+  }
+  
   if (oldUnit === 'mm' && newUnit === 'cm') {
-    return (numValue / 10).toFixed(1);
+    return (numValue / 10).toFixed(0); // Прибираємо десяткові знаки для см
   } else if (oldUnit === 'cm' && newUnit === 'mm') {
     return Math.round(numValue * 10);
   }
@@ -1334,7 +1340,7 @@ function updateUnitLabels() {
   document.getElementById('tile-border-width-label').textContent = `Ширина рамки (${unitText})`;
   document.getElementById('tile-overhang-label').textContent = `Виступ (${unitText})`;
   document.getElementById('modular-thickness-label').textContent = `Товщина (${unitText}):`;
-  document.getElementById('modular-seam-label').textContent = `Шов`;
+  document.getElementById('modular-seam-label').textContent = `Шов (мм)`; // Шви завжди в мм
   document.getElementById('modular-overhang-label').textContent = `Виступ (${unitText}):`;
   
   // Облицювання
@@ -1350,16 +1356,21 @@ function formatValue(value, unit = null) {
   if (u === 'mm') {
     return `${Math.round(numValue)}мм`;
   } else if (u === 'cm') {
-    return `${numValue.toFixed(1)}см`;
+    return `${numValue.toFixed(0)}см`; // Прибираємо десяткові знаки для см
   }
   
   return value;
 }
 
 // Конвертація значення в мм для відправки в Ruby
-function convertToMm(value) {
+function convertToMm(value, isSeam = false) {
   const numValue = parseFloat(value);
   if (isNaN(numValue)) return value;
+  
+  // Шви завжди вже в мм, не потребують конвертації
+  if (isSeam) {
+    return numValue;
+  }
   
   if (currentUnit === 'mm') {
     return numValue;
@@ -1442,13 +1453,8 @@ function getSelectedSeam() {
   const activeButton = document.querySelector('.seam-btn.active');
   if (!activeButton) return '5';
   
-  // Якщо одиниці в см, то data-value містить значення в см
-  if (currentUnit === 'cm') {
-    return activeButton.dataset.value;
-  } else {
-    // Якщо одиниці в мм, то data-value містить значення в мм
-    return activeButton.dataset.value;
-  }
+  // Шви завжди повертаються в мм, незалежно від поточних одиниць
+  return activeButton.dataset.value;
 }
 
 // Функція для оновлення тексту кнопок товщини при зміні одиниць
@@ -1466,7 +1472,7 @@ function updateThicknessButtons() {
       button.textContent = `${originalValue} мм`;
       button.dataset.value = originalValue;
     } else {
-      const cmValue = (originalValue / 10).toFixed(0);
+      const cmValue = (originalValue / 10).toFixed(0); // Прибираємо десяткові знаки для см
       button.textContent = `${cmValue} см`;
       button.dataset.value = cmValue;
     }
@@ -1484,14 +1490,9 @@ function updateSeamButtons() {
       button.dataset.originalValue = button.dataset.value;
     }
     
-    if (currentUnit === 'mm') {
-      button.textContent = `${originalValue} мм`;
-      button.dataset.value = originalValue;
-    } else {
-      const cmValue = (originalValue / 10).toFixed(1);
-      button.textContent = `${cmValue} см`;
-      button.dataset.value = cmValue;
-    }
+    // Шви завжди відображаються в мм, незалежно від поточних одиниць
+    button.textContent = `${originalValue} мм`;
+    button.dataset.value = originalValue;
   });
 }
 
