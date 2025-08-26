@@ -8,6 +8,7 @@ body {
   background: #e9eff5;
   color: #333;
   min-height: calc(100vh - 40px);
+  font-size: 16px; /* Збільшуємо базовий розмір шрифту */
 }
 
 /* Основний "скляний" контейнер */
@@ -40,7 +41,7 @@ header {
 }
 
 header h1 {
-  font-size: 16px;
+  font-size: 18px; /* Збільшуємо розмір заголовка сторінки */
   font-weight: 600;
   margin: 0;
   color: white;
@@ -60,7 +61,7 @@ header h1 {
 }
 
 .unit-switcher label {
-  font-size: 12px;
+  font-size: 14px; /* Збільшуємо розмір шрифту перемикача одиниць */
   font-weight: 500;
   margin: 0;
   color: white;
@@ -140,7 +141,7 @@ header h1 {
 
 /* Панелі для кожної секції */
 .panel {
-  margin-bottom: 15px;
+  margin-bottom: 20px; /* Збільшуємо відстань між панелями */
   background: rgba(255, 255, 255, 0.2);
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -154,7 +155,7 @@ header h1 {
 }
 
 .panel-header {
-  padding: 15px;
+  padding: 18px; /* Збільшуємо внутрішні відступи заголовка панелі */
   cursor: pointer;
   display: flex;
   justify-content: space-between;
@@ -167,7 +168,7 @@ header h1 {
 }
 
 .panel-title {
-    font-size: 16px;
+    font-size: 18px; /* Збільшуємо розмір заголовків панелей */
     font-weight: 600;
     margin: 0;
     padding: 0;
@@ -177,13 +178,13 @@ header h1 {
 .header-dimensions {
     flex-grow: 1;
     text-align: right;
-    font-size: 14px;
+    font-size: 16px; /* Збільшуємо розмір шрифту розмірів */
     font-weight: normal;
     color: #555;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding-left: 10px;
+    padding-left: 15px; /* Збільшуємо відстань від заголовка */
 }
 
 .header-placeholder {
@@ -191,7 +192,7 @@ header h1 {
 }
 
 .panel-content {
-  padding: 15px;
+  padding: 20px; /* Збільшуємо внутрішні відступи контенту панелі */
   overflow: hidden;
   max-height: 1000px;
   transition: max-height 0.4s ease-in-out, padding 0.4s ease, visibility 0.4s ease, opacity 0.3s ease-in-out;
@@ -224,8 +225,8 @@ header h1 {
 /* Рядок для групування полів вводу */
 .input-row {
   display: flex;
-  gap: 15px;
-  margin-bottom: 15px;
+  gap: 20px; /* Збільшуємо відстань між полями в рядку */
+  margin-bottom: 20px; /* Збільшуємо відстань між рядами */
 }
 
 /* Обгортка для поля вводу та його підпису */
@@ -234,32 +235,34 @@ header h1 {
   width: 100%;
   display: flex;
   flex-direction: column;
+  position: relative; /* Для позиціонування підпису */
 }
 
 .input-wrapper label {
   display: block;
-  font-size: 12px;
+  font-size: 14px; /* Збільшуємо розмір шрифту підпису */
   color: #555;
-  margin-top: 5px;
-  text-align: center;
+  margin-bottom: 8px; /* Відстань від підпису до поля */
+  text-align: left; /* Вирівнюємо по лівому краю */
+  font-weight: 500; /* Робимо трохи жирнішим */
 }
 
 .input-wrapper label.label-left {
     text-align: left;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
 }
 
 /* Стилі для полів вводу та випадаючих списків */
 input[type="number"],
 select {
   width: 100%;
-  padding: 12px;
+  padding: 14px; /* Збільшуємо внутрішні відступи */
   box-sizing: border-box;
   border: 1px solid rgba(204, 204, 204, 0.5);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.5);
   font-family: inherit;
-  font-size: 14px;
+  font-size: 16px; /* Збільшуємо розмір шрифту в полях */
   text-align: center;
   transition: all 0.2s ease-in-out;
 }
@@ -274,17 +277,17 @@ select:focus {
 /* Кнопки */
 button {
   width: 100%;
-  padding: 14px;
+  padding: 16px; /* Збільшуємо внутрішні відступи кнопок */
   border: none;
   border-radius: 8px;
   font-family: inherit;
-  font-size: 15px;
+  font-size: 16px; /* Збільшуємо розмір шрифту кнопок */
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
   color: white;
-  margin-top: auto;
+  margin-top: 20px; /* Збільшуємо відстань від кнопки до попереднього елемента */
   box-shadow: 
     0 4px 12px rgba(30, 58, 138, 0.3),
     0 2px 4px rgba(0, 0, 0, 0.1);
@@ -323,8 +326,8 @@ button:active {
 
 .button-group {
   display: flex;
-  gap: 10px;
-  margin-top: 15px;
+  gap: 15px; /* Збільшуємо відстань між кнопками в групі */
+  margin-top: 20px; /* Збільшуємо відстань від групи кнопок */
 }
 
 .button-group button {
@@ -350,18 +353,18 @@ button:active {
 /* Стилі для кнопок товщини плитки */
 .button-group-thickness {
   display: flex;
-  gap: 4px;
-  margin-bottom: 5px;
+  gap: 8px; /* Збільшуємо відстань між кнопками товщини */
+  margin-bottom: 10px; /* Збільшуємо відстань під групою кнопок */
 }
 
 .thickness-btn {
   flex: 1;
-  padding: 8px 4px;
+  padding: 10px 6px; /* Збільшуємо внутрішні відступи */
   border: 1px solid rgba(204, 204, 204, 0.5);
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.5);
   font-family: inherit;
-  font-size: 12px;
+  font-size: 14px; /* Збільшуємо розмір шрифту */
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
@@ -383,18 +386,18 @@ button:active {
 /* Стилі для кнопок шву */
 .button-group-seam {
   display: flex;
-  gap: 4px;
-  margin-bottom: 5px;
+  gap: 8px; /* Збільшуємо відстань між кнопками шву */
+  margin-bottom: 10px; /* Збільшуємо відстань під групою кнопок */
 }
 
 .seam-btn {
   flex: 1;
-  padding: 8px 4px;
+  padding: 10px 6px; /* Збільшуємо внутрішні відступи */
   border: 1px solid rgba(204, 204, 204, 0.5);
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.5);
   font-family: inherit;
-  font-size: 12px;
+  font-size: 14px; /* Збільшуємо розмір шрифту */
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
@@ -416,18 +419,19 @@ button:active {
 /* Стилі для кнопок способу укладання */
 .button-group-tiling-mode {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 12px; /* Збільшуємо відстань між кнопками */
+  margin-top: 15px; /* Збільшуємо відстань зверху */
+  margin-bottom: 15px; /* Додаємо відстань знизу */
 }
 
 .tiling-mode-btn {
   flex: 1;
-  padding: 8px 12px;
+  padding: 12px 16px; /* Збільшуємо внутрішні відступи */
   border: 2px solid #e0e0e0;
   border-radius: 6px;
   background: white;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px; /* Збільшуємо розмір шрифту */
   font-weight: 500;
   transition: all 0.2s ease-in-out;
   color: #333;
@@ -459,7 +463,7 @@ button:active {
   position: relative;
   width: 100%;
   height: 270px;
-  margin-bottom: 15px;
+  margin-bottom: 20px; /* Збільшуємо відстань під каруселлю */
 }
 
 .carousel-viewport {
@@ -536,29 +540,29 @@ button:active {
 
 /* Таблиця підсумку */
 .summary-card {
-    padding: 15px;
+    padding: 20px; /* Збільшуємо внутрішні відступи */
     background-color: rgba(255, 255, 255, 0.25);
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.3);
-    margin-top: 20px;
+    margin-top: 25px; /* Збільшуємо відстань зверху */
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 .summary-card h2 {
-    font-size: 16px;
+    font-size: 18px; /* Збільшуємо розмір заголовка */
     font-weight: 600;
-    margin: 0 0 15px 0;
+    margin: 0 0 20px 0; /* Збільшуємо відстань під заголовком */
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    padding-bottom: 10px;
+    padding-bottom: 12px; /* Збільшуємо відстань під лінією */
     text-align: center;
     display: block;
 }
 .summary-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 16px; /* Збільшуємо розмір шрифту в таблиці */
 }
 .summary-table td {
-  padding: 8px 4px;
+  padding: 12px 8px; /* Збільшуємо внутрішні відступи в комірках */
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 .summary-table tr:last-child td {
@@ -577,17 +581,17 @@ button:active {
 /* Кнопка оновлення в стилі попереднього варіанту */
 .refresh-button {
   width: 100%;
-  padding: 14px;
+  padding: 16px; /* Збільшуємо внутрішні відступи */
   border: none;
   border-radius: 8px;
   font-family: inherit;
-  font-size: 15px;
+  font-size: 16px; /* Збільшуємо розмір шрифту */
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
   color: white;
-  margin-top: 15px;
+  margin-top: 20px; /* Збільшуємо відстань зверху */
   box-shadow: 
     0 4px 12px rgba(30, 58, 138, 0.3),
     0 2px 4px rgba(0, 0, 0, 0.1);
