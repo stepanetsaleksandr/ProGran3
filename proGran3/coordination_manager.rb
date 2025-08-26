@@ -189,19 +189,19 @@ module ProGran3
       ProGran3::CladdingBuilder.create(cladding_params[:thickness] || 20)
     end
     
-    # Отримання параметрів відмостки з UI
+    # Отримання параметрів відмостки з CallbackManager
     def get_blind_area_params
-      ProGran3::UI.get_blind_area_params
+      ProGran3::CallbackManager.get_blind_area_params
     end
     
-    # Отримання параметрів плитки з UI
+    # Отримання параметрів плитки з CallbackManager
     def get_tiles_params
-      ProGran3::UI.get_tiles_params
+      ProGran3::CallbackManager.get_tiles_params
     end
     
-    # Отримання параметрів облицювання з UI
+    # Отримання параметрів облицювання з CallbackManager
     def get_cladding_params
-      ProGran3::UI.get_cladding_params
+      ProGran3::CallbackManager.get_cladding_params
     end
     
     # Оновлення підставки
@@ -252,19 +252,19 @@ module ProGran3
       ProGran3.insert_component(flowerbed_params[:category], flowerbed_params[:filename])
     end
     
-    # Отримання параметрів підставки з UI
+    # Отримання параметрів підставки з CallbackManager
     def get_stand_params
-      ProGran3::UI.get_stand_params
+      ProGran3::CallbackManager.get_stand_params
     end
     
-    # Отримання параметрів стели з UI
+    # Отримання параметрів стели з CallbackManager
     def get_stele_params
-      ProGran3::UI.get_stele_params
+      ProGran3::CallbackManager.get_stele_params
     end
     
-    # Отримання параметрів квітника з UI
+    # Отримання параметрів квітника з CallbackManager
     def get_flowerbed_params
-      ProGran3::UI.get_flowerbed_params
+      ProGran3::CallbackManager.get_flowerbed_params
     end
   end
 end

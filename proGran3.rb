@@ -9,6 +9,8 @@ module ProGran3
   require_relative 'progran3/validation'
   require_relative 'progran3/dimensions_manager'
   require_relative 'progran3/coordination_manager'
+  require_relative 'progran3/callback_manager'
+  require_relative 'progran3/test_suite'
   
   # Підключаємо основні модулі
   require_relative 'progran3/loader'
@@ -82,13 +84,18 @@ module ProGran3
         File.join(plugin_dir, 'proGran3', 'error_handler.rb'),
         File.join(plugin_dir, 'proGran3', 'validation.rb'),
         File.join(plugin_dir, 'proGran3', 'dimensions_manager.rb'),
+        File.join(plugin_dir, 'proGran3', 'coordination_manager.rb'),
+        File.join(plugin_dir, 'proGran3', 'callback_manager.rb'),
+        File.join(plugin_dir, 'proGran3', 'test_suite.rb'),
         File.join(plugin_dir, 'proGran3', 'loader.rb'),
         File.join(plugin_dir, 'proGran3', 'ui.rb'),
         File.join(plugin_dir, 'proGran3', 'builders', 'foundation_builder.rb'),
         File.join(plugin_dir, 'proGran3', 'builders', 'tiling_builder.rb'),
         File.join(plugin_dir, 'proGran3', 'builders', 'cladding_builder.rb'),
         File.join(plugin_dir, 'proGran3', 'builders', 'blind_area_builder.rb'),
-        File.join(plugin_dir, 'proGran3', 'skp_preview_extractor.rb')
+        File.join(plugin_dir, 'proGran3', 'skp_preview_extractor.rb'),
+        File.join(plugin_dir, 'proGran3', 'carousel', 'carousel_manager.rb'),
+        File.join(plugin_dir, 'proGran3', 'carousel', 'carousel_ui.rb')
       ]
     
     our_files.each do |file|
@@ -107,14 +114,7 @@ module ProGran3
   
   # Метод для швидкого тестування
   def self.test
-    Logger.info("Тестування плагіна ProGran3", "Test")
-    Logger.info("Шлях до плагіна: #{File.dirname(__FILE__)}", "Test")
-    Logger.info("Версія: #{Constants::VERSION}", "Test")
-    
-    # Тестуємо систему валідації
-    Validation.test
-    
-    Logger.success("Плагін готовий до роботи!", "Test")
+    TestSuite.test_plugin
   end
 
   # Універсальний метод для витягування превью з .skp файлів
@@ -127,51 +127,37 @@ module ProGran3
     SkpPreviewExtractor.get_preview_base64(component_path, size)
   end
 
-  def self.test_skp_preview_extractor
-    SkpPreviewExtractor.test_extraction
-  end
-  
-  def self.test_universal_extraction
-    SkpPreviewExtractor.test_universal_extraction
-  end
-  
-  # Метод для тестування валідації
-  def self.test_validation
-    ErrorHandler.safe_execute("Test", "Тестування валідації") do
-      Logger.info("Тестування системи валідації...", "Test")
-      
-      # Тестуємо DimensionsManager
-      test_dimensions_manager
-      
-      Logger.success("Тестування завершено", "Test")
-    end
-  end
-  
-  # Тестування DimensionsManager
-  def self.test_dimensions_manager
-    Logger.info("Тестування DimensionsManager...", "Test")
-    
-    # Тест 1: Валідація фундаменту
-    result = DimensionsManager.validate_and_convert(2000, :foundation_depth, "Test")
-    Logger.info("Фундамент 2000мм: #{result[:success]}", "Test")
-    
-    # Тест 2: Валідація відмостки
-    result = DimensionsManager.validate_and_convert(50, :blind_area_thickness, "Test")
-    Logger.info("Відмостка 50мм: #{result[:success]}", "Test")
-    
-    # Тест 3: Неправильний розмір
-    result = DimensionsManager.validate_and_convert(10000, :foundation_depth, "Test")
-    Logger.info("Фундамент 10000мм: #{result[:success]} - #{result[:errors]&.join(', ')}", "Test")
-    
-    # Тест 4: Отримання конфігурації
-    config = DimensionsManager.get_dimension_config(:foundation_depth)
-    Logger.info("Конфігурація фундаменту: #{config}", "Test")
-    
-    Logger.success("DimensionsManager протестовано", "Test")
-  end
-
   # Метод для координації елементів
   def self.coordinate_elements
     CoordinationManager.update_all_elements
+  end
+
+  # Додаткові тестові методи (делегування до TestSuite)
+  def self.test_skp_preview_extractor
+    TestSuite.test_skp_preview_extractor
+  end
+  
+  def self.test_universal_extraction
+    TestSuite.test_universal_extraction
+  end
+  
+  def self.test_validation
+    TestSuite.test_validation
+  end
+  
+  def self.test_dimensions_manager
+    TestSuite.test_dimensions_manager
+  end
+
+  def self.test_carousel
+    TestSuite.test_carousel
+  end
+
+  def self.test_ui
+    TestSuite.test_ui
+  end
+
+  def self.run_all_tests
+    TestSuite.run_all_tests
   end
 end

@@ -1,6 +1,7 @@
 # progran3/builders/cladding_builder.rb
 #це модуль який відповідає за створення бокового (вертикального) облицювання фундаменту
 require_relative '../validation'
+require_relative '../error_handler'
 
 module ProGran3
   module CladdingBuilder

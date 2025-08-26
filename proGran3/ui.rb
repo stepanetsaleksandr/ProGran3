@@ -38,271 +38,57 @@ module ProGran3
         @dialog.execute_script("loadModelLists(#{categories.to_json});")
       end
 
-      # Callback'и для JavaScript
+      # Callback'и для JavaScript (використовуємо CallbackManager)
       @dialog.add_action_callback("add_foundation") do |dialog, depth, width, height|
-        # Валідація вхідних даних
-        validation_result = Validation.validate_dimensions(depth.to_i, width.to_i, height.to_i, "UI")
-        unless validation_result.valid
-          ErrorHandler.handle_error(
-            Validation::ValidationError.new("Помилка валідації фундаменту: #{validation_result.error_messages.join(', ')}"),
-            "UI",
-            "add_foundation"
-          )
-          return false
-        end
-        
-        # Зберігаємо параметри фундаменту
-        @foundation_params = {
-          depth: depth.to_i,
-          width: width.to_i,
-          height: height.to_i
-        }
-        
-        # Створюємо фундамент з координацією всіх елементів
-        CoordinationManager.update_all_elements({
-          depth: depth.to_i,
-          width: width.to_i,
-          height: height.to_i
-        })
+        CallbackManager.add_foundation_callback(dialog, depth, width, height)
       end
 
       @dialog.add_action_callback("add_tiles") do |dialog, type, *params|
-        if type == "frame"
-          thickness, borderWidth, overhang = params.map(&:to_i)
-          # Валідація параметрів периметральної плитки
-          validation_result = Validation.validate_dimensions(borderWidth, overhang, thickness, "UI")
-          unless validation_result.valid
-            ErrorHandler.handle_error(
-              Validation::ValidationError.new("Помилка валідації периметральної плитки: #{validation_result.error_messages.join(', ')}"),
-              "UI",
-              "add_tiles_frame"
-            )
-            return false
-          end
-          
-          # Зберігаємо параметри для автоматичного оновлення
-          @tiles_params = {
-            mode: 'frame',
-            thickness: thickness,
-            border_width: borderWidth,
-            overhang: overhang
-          }
-          
-          ProGran3::TilingBuilder.insert_perimeter_tiles(thickness, borderWidth, overhang)
-        elsif type == "modular"
-          tileSize, thickness, seam, overhang = params
-          thickness, seam, overhang = [thickness, seam, overhang].map(&:to_i)
-          # Валідація параметрів модульної плитки
-          validation_result = Validation.validate_dimensions(100, 100, thickness, "UI")
-          unless validation_result.valid
-            ErrorHandler.handle_error(
-              Validation::ValidationError.new("Помилка валідації модульної плитки: #{validation_result.error_messages.join(', ')}"),
-              "UI",
-              "add_tiles_modular"
-            )
-            return false
-          end
-          
-          # Зберігаємо параметри для автоматичного оновлення
-          @tiles_params = {
-            mode: 'modular',
-            size: tileSize,
-            thickness: thickness,
-            seam: seam,
-            overhang: overhang
-          }
-          
-          ProGran3::TilingBuilder.insert_modular_tiles(tileSize, thickness, seam, overhang)
-        end
+        CallbackManager.add_tiles_callback(dialog, type, *params)
       end
       
       @dialog.add_action_callback("add_side_cladding") do |dialog, thickness|
-        # Валідація товщини облицювання
-        validation_result = Validation.validate_dimensions(100, 100, thickness.to_i, "UI")
-        unless validation_result.valid
-          ErrorHandler.handle_error(
-            Validation::ValidationError.new("Помилка валідації облицювання: #{validation_result.error_messages.join(', ')}"),
-            "UI",
-            "add_side_cladding"
-          )
-          return false
-        end
-        
-        # Зберігаємо параметри для автоматичного оновлення
-        @cladding_params = {
-          thickness: thickness.to_i
-        }
-        
-        ProGran3::CladdingBuilder.create(thickness.to_i)
+        CallbackManager.add_cladding_callback(dialog, thickness)
       end
       
-      # Callback для створення відмостки з однаковою шириною
-      @dialog.add_action_callback("add_blind_area_uniform") do |dialog, width, thickness|
-        # Валідація параметрів відмостки
-        validation_result = Validation.validate_dimensions(width.to_i, 100, thickness.to_i, "UI")
-        unless validation_result.valid
-          ErrorHandler.handle_error(
-            Validation::ValidationError.new("Помилка валідації відмостки: #{validation_result.error_messages.join(', ')}"),
-            "UI",
-            "add_blind_area_uniform"
-          )
-          return false
-        end
-        
-        # Зберігаємо параметри для автоматичного оновлення
-        @blind_area_params = {
-          mode: 'uniform',
-          uniform_width: width.to_i,
-          thickness: thickness.to_i
-        }
-        
-        ProGran3::BlindAreaBuilder.create_uniform(width.to_i, thickness.to_i)
-      end
+             # Callback для відмостки (використовуємо CallbackManager)
+       @dialog.add_action_callback("add_blind_area_uniform") do |dialog, width, thickness|
+         CallbackManager.add_blind_area_callback(dialog, thickness, "uniform", width)
+       end
 
-      @dialog.add_action_callback("add_blind_area_custom") do |dialog, north, south, east, west, thickness|
-        # Валідація параметрів відмостки
-        validation_result = Validation.validate_dimensions([north.to_i, south.to_i, east.to_i, west.to_i].max, 100, thickness.to_i, "UI")
-        unless validation_result.valid
-          ErrorHandler.handle_error(
-            Validation::ValidationError.new("Помилка валідації відмостки: #{validation_result.error_messages.join(', ')}"),
-            "UI",
-            "add_blind_area_custom"
-          )
-          return false
-        end
-        
-        # Зберігаємо параметри для автоматичного оновлення
-        @blind_area_params = {
-          mode: 'custom',
-          north_width: north.to_i,
-          south_width: south.to_i,
-          east_width: east.to_i,
-          west_width: west.to_i,
-          thickness: thickness.to_i
-        }
-        
-        ProGran3::BlindAreaBuilder.create(north.to_i, south.to_i, east.to_i, west.to_i, thickness.to_i)
-      end
+       @dialog.add_action_callback("add_blind_area_custom") do |dialog, north, south, east, west, thickness|
+         CallbackManager.add_blind_area_callback(dialog, thickness, "custom", north, south, east, west)
+       end
 
 
-      @dialog.add_action_callback("add_model") do |dialog, category, filename|
-        # Валідація категорії та файлу
-        category_result = Validation.validate_category(category, "UI")
-        unless category_result.valid
-          ErrorHandler.handle_error(
-            Validation::ValidationError.new("Помилка валідації категорії: #{category_result.error_messages.join(', ')}"),
-            "UI",
-            "add_model"
-          )
-          return false
-        end
-        
-        # Валідація файлу (якщо передано повний шлях)
-        if filename && filename.include?('/')
-          file_result = Validation.validate_file_path(filename, "UI")
-          unless file_result.valid
-            ErrorHandler.handle_error(
-              Validation::ValidationError.new("Помилка валідації файлу: #{file_result.error_messages.join(', ')}"),
-              "UI",
-              "add_model"
-            )
-            return false
-          end
-        end
-        
-        # Зберігаємо параметри для автоматичного оновлення
-        case category
-        when 'stands'
-          @stand_params = { category: category, filename: filename }
-        when 'steles'
-          @stele_params = { category: category, filename: filename }
-        when 'flowerbeds'
-          @flowerbed_params = { category: category, filename: filename }
-        end
-        
-        ProGran3.insert_component(category, filename)
-      end
+             @dialog.add_action_callback("add_model") do |dialog, category, filename|
+         CallbackManager.add_model_callback(dialog, category, filename)
+       end
 
-      # Старі callback'и для сумісності
-      @dialog.add_action_callback("insert_foundation") do |dialog, params_json|
-        params = JSON.parse(params_json)
-        
-        # Валідація параметрів фундаменту
-        validation_result = Validation.validate_dimensions(params["depth"], params["width"], params["height"], "UI")
-        unless validation_result.valid
-          ErrorHandler.handle_error(
-            Validation::ValidationError.new("Помилка валідації фундаменту: #{validation_result.error_messages.join(', ')}"),
-            "UI",
-            "insert_foundation"
-          )
-          return false
-        end
-        
-        ProGran3::FoundationBuilder.create(params["depth"], params["width"], params["height"])
-      end
+             # Старі callback'и для сумісності (делегування до CallbackManager)
+       @dialog.add_action_callback("insert_foundation") do |dialog, params_json|
+         params = JSON.parse(params_json)
+         CallbackManager.add_foundation_callback(dialog, params["depth"], params["width"], params["height"])
+       end
 
-      @dialog.add_action_callback("insert_component") do |dialog, params|
-        category, filename = params.split("|")
-        
-        # Валідація категорії
-        category_result = Validation.validate_category(category, "UI")
-        unless category_result.valid
-          ErrorHandler.handle_error(
-            Validation::ValidationError.new("Помилка валідації категорії: #{category_result.error_messages.join(', ')}"),
-            "UI",
-            "insert_component"
-          )
-          return false
-        end
-        
-        ProGran3.insert_component(category, filename)
-      end
+       @dialog.add_action_callback("insert_component") do |dialog, params|
+         category, filename = params.split("|")
+         CallbackManager.add_model_callback(dialog, category, filename)
+       end
 
-      @dialog.add_action_callback("insert_tiles") do |dialog, params_json|
-        params = JSON.parse(params_json)
-        if params["type"] == "frame"
-          # Валідація параметрів периметральної плитки
-          validation_result = Validation.validate_dimensions(params["borderWidth"], params["overhang"], params["thickness"], "UI")
-          unless validation_result.valid
-            ErrorHandler.handle_error(
-              Validation::ValidationError.new("Помилка валідації периметральної плитки: #{validation_result.error_messages.join(', ')}"),
-              "UI",
-              "insert_tiles_frame"
-            )
-            return false
-          end
-          ProGran3::TilingBuilder.insert_perimeter_tiles(params["thickness"], params["borderWidth"], params["overhang"])
-        elsif params["type"] == "modular"
-          # Валідація параметрів модульної плитки
-          validation_result = Validation.validate_dimensions(100, 100, params["thickness"], "UI")
-          unless validation_result.valid
-            ErrorHandler.handle_error(
-              Validation::ValidationError.new("Помилка валідації модульної плитки: #{validation_result.error_messages.join(', ')}"),
-              "UI",
-              "insert_tiles_modular"
-            )
-            return false
-          end
-          ProGran3::TilingBuilder.insert_modular_tiles(params["tileSize"], params["thickness"], params["seam"], params["overhang"])
-        end
-      end
-      
-      @dialog.add_action_callback("insert_side_cladding") do |dialog, params_json|
-        params = JSON.parse(params_json)
-        
-        # Валідація товщини облицювання
-        validation_result = Validation.validate_dimensions(100, 100, params["thickness"], "UI")
-        unless validation_result.valid
-          ErrorHandler.handle_error(
-            Validation::ValidationError.new("Помилка валідації облицювання: #{validation_result.error_messages.join(', ')}"),
-            "UI",
-            "insert_side_cladding"
-          )
-          return false
-        end
-        
-        ProGran3::CladdingBuilder.create(params["thickness"])
-      end
+       @dialog.add_action_callback("insert_tiles") do |dialog, params_json|
+         params = JSON.parse(params_json)
+         if params["type"] == "frame"
+           CallbackManager.add_tiles_frame_callback(dialog, params["thickness"], params["borderWidth"], params["overhang"])
+         elsif params["type"] == "modular"
+           CallbackManager.add_tiles_modular_callback(dialog, params["tileSize"], params["thickness"], params["seam"], params["overhang"])
+         end
+       end
+       
+       @dialog.add_action_callback("insert_side_cladding") do |dialog, params_json|
+         params = JSON.parse(params_json)
+         CallbackManager.add_cladding_callback(dialog, params["thickness"])
+       end
 
       @dialog.add_action_callback("reload_plugin") do |dialog, _|
         # Валідація перед перезавантаженням
@@ -367,55 +153,22 @@ module ProGran3
       end
 
       # Callback для отримання статусу моделі
-      # Методи для отримання збережених параметрів
-      def self.get_blind_area_params
-        @blind_area_params || {
-          mode: 'uniform',
-          uniform_width: 300,
-          thickness: 50,
-          north_width: 300,
-          south_width: 300,
-          east_width: 300,
-          west_width: 300
-        }
-      end
-      
-      def self.get_tiles_params
-        @tiles_params || {
-          mode: 'frame',
-          thickness: 30,
-          border_width: 300,
-          overhang: 50,
-          size: '60x30',
-          seam: 5
-        }
-      end
-      
-      def self.get_cladding_params
-        @cladding_params || {
-          thickness: 20
-        }
-      end
-      
-      def self.get_foundation_params
-        @foundation_params || {
-          depth: 2000,
-          width: 1000,
-          height: 150
-        }
-      end
-      
-      def self.get_stand_params
-        @stand_params || { category: 'stands', filename: nil }
-      end
-      
-      def self.get_stele_params
-        @stele_params || { category: 'steles', filename: nil }
-      end
-      
-      def self.get_flowerbed_params
-        @flowerbed_params || { category: 'flowerbeds', filename: nil }
-      end
+             # Методи для отримання збережених параметрів (делегування до CallbackManager)
+       def self.get_blind_area_params
+         CallbackManager.get_blind_area_params
+       end
+       
+       def self.get_tiles_params
+         CallbackManager.get_tiles_params
+       end
+       
+       def self.get_cladding_params
+         CallbackManager.get_cladding_params
+       end
+       
+       def self.get_foundation_params
+         CallbackManager.get_foundation_params
+       end
       
       @dialog.add_action_callback("get_model_status") do |dialog, _|
         puts "🔍 get_model_status callback викликано"
