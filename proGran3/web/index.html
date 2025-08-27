@@ -25,250 +25,281 @@
       </div>
     </header>
 
-    <section class="panel">
-      <div class="panel-header" onclick="togglePanel(this)">
-        <h2 class="panel-title">Фундамент</h2>
-        <span class="chevron"></span>
-        <span id="foundation-dimensions-display" class="header-dimensions"></span>
-      </div>
-      <div class="panel-content">
-        <div class="input-row">
-          <div class="input-wrapper floating-label">
-            <input type="number" id="foundation-depth" value="2000" oninput="updateAllDisplays()" placeholder=" ">
-            <label id="foundation-depth-label" for="foundation-depth">Довжина (мм)</label>
-          </div>
-          <div class="input-wrapper floating-label">
-            <input type="number" id="foundation-width" value="1000" oninput="updateAllDisplays()" placeholder=" ">
-            <label id="foundation-width-label" for="foundation-width">Ширина (мм)</label>
-          </div>
-          <div class="input-wrapper floating-label">
-            <input type="number" id="foundation-height" value="150" oninput="updateAllDisplays()" placeholder=" ">
-            <label id="foundation-height-label" for="foundation-height">Висота (мм)</label>
-          </div>
-        </div>
-        <button onclick="addFoundation(); advanceToNextPanel(this);">Створити фундамент</button>
-      </div>
-    </section>
+    <!-- Навігація табів -->
+    <div class="tabs-navigation">
+      <button class="tab-button active" data-tab="base" onclick="switchTab('base')">База</button>
+      <button class="tab-button" data-tab="monument" onclick="switchTab('monument')">Памятник</button>
+      <button class="tab-button" data-tab="gravestone" onclick="switchTab('gravestone')">Надгробна частина</button>
+      <button class="tab-button" data-tab="fence" onclick="switchTab('fence')">Огорожа</button>
+      <button class="tab-button" data-tab="additional" onclick="switchTab('additional')">Додаткові елементи</button>
+    </div>
 
-    <section class="panel collapsed">
-      <div class="panel-header" onclick="togglePanel(this)">
-        <h2 class="panel-title">Відмостка</h2>
-        <span class="chevron"></span>
-        <span id="blind-area-dimensions-display" class="header-dimensions"></span>
-      </div>
-      <div class="panel-content">
-        <div class="input-row">
-          <div class="input-wrapper floating-label">
-            <input type="number" id="blind-area-thickness" value="50" min="30" max="200" oninput="updateAllDisplays()" placeholder=" ">
-            <label id="blind-area-thickness-label" for="blind-area-thickness">Товщина (мм)</label>
-          </div>
+    <!-- Таб "База" -->
+    <div class="tab-content active" id="base-tab">
+      <section class="panel">
+        <div class="panel-header" onclick="togglePanel(this)">
+          <h2 class="panel-title">Фундамент</h2>
+          <span class="chevron"></span>
+          <span id="foundation-dimensions-display" class="header-dimensions"></span>
         </div>
-        
-        <div class="input-wrapper floating-label">
-          <select id="blind-area-mode" onchange="updateBlindAreaControls()" placeholder=" ">
-            <option value="uniform" selected>Однакова ширина</option>
-            <option value="custom">Різна ширина</option>
-          </select>
-          <label for="blind-area-mode">Режим ширини</label>
-        </div>
-        
-        <div id="uniform-controls">
+        <div class="panel-content">
           <div class="input-row">
             <div class="input-wrapper floating-label">
-              <input type="number" id="blind-area-uniform-width" value="300" min="50" max="1000" oninput="updateAllDisplays()" placeholder=" ">
-              <label id="blind-area-uniform-width-label" for="blind-area-uniform-width">Ширина (мм)</label>
+              <input type="number" id="foundation-depth" value="2000" oninput="updateAllDisplays()" placeholder=" ">
+              <label id="foundation-depth-label" for="foundation-depth">Довжина (мм)</label>
+            </div>
+            <div class="input-wrapper floating-label">
+              <input type="number" id="foundation-width" value="1000" oninput="updateAllDisplays()" placeholder=" ">
+              <label id="foundation-width-label" for="foundation-width">Ширина (мм)</label>
+            </div>
+            <div class="input-wrapper floating-label">
+              <input type="number" id="foundation-height" value="150" oninput="updateAllDisplays()" placeholder=" ">
+              <label id="foundation-height-label" for="foundation-height">Висота (мм)</label>
             </div>
           </div>
+          <button onclick="addFoundation(); advanceToNextPanel(this);">Створити фундамент</button>
         </div>
-        
-        <div id="custom-controls" class="hidden">
-                     <div class="input-row">
-             <div class="input-wrapper floating-label">
-               <input type="number" id="blind-area-north" value="300" min="50" max="1000" oninput="updateAllDisplays()" placeholder=" ">
-               <label id="blind-area-north-label" for="blind-area-north">Північна сторона (мм)</label>
-             </div>
-             <div class="input-wrapper floating-label">
-               <input type="number" id="blind-area-south" value="300" min="50" max="1000" oninput="updateAllDisplays()" placeholder=" ">
-               <label id="blind-area-south-label" for="blind-area-south">Південна сторона (мм)</label>
-             </div>
-           </div>
-           
-           <div class="input-row">
-             <div class="input-wrapper floating-label">
-               <input type="number" id="blind-area-east" value="300" min="50" max="1000" oninput="updateAllDisplays()" placeholder=" ">
-               <label id="blind-area-east-label" for="blind-area-east">Східна сторона (мм)</label>
-             </div>
-             <div class="input-wrapper floating-label">
-               <input type="number" id="blind-area-west" value="300" min="50" max="1000" oninput="updateAllDisplays()" placeholder=" ">
-               <label id="blind-area-west-label" for="blind-area-west">Західна сторона (мм)</label>
-             </div>
-           </div>
-        </div>
-        
-        <button onclick="addBlindArea(); advanceToNextPanel(this);">Створити відмостку</button>
-      </div>
-    </section>
+      </section>
 
-    <section class="panel collapsed">
-      <div class="panel-header" onclick="togglePanel(this)">
-        <h2 class="panel-title">Плитка на фундаменті</h2>
-        <span class="chevron"></span>
-        <span id="tiling-type-display" class="header-dimensions"></span>
-      </div>
-      <div class="panel-content">
-        <div class="input-wrapper">
-          <label class="label-left">Спосіб укладання:</label>
-          <div class="button-group-tiling-mode">
-            <button type="button" class="tiling-mode-btn active" data-value="frame" onclick="selectTilingMode(this)">Рамка з 4 частин</button>
-            <button type="button" class="tiling-mode-btn" data-value="modular" onclick="selectTilingMode(this)">Модульне замощення</button>
-          </div>
+      <section class="panel collapsed">
+        <div class="panel-header" onclick="togglePanel(this)">
+          <h2 class="panel-title">Відмостка</h2>
+          <span class="chevron"></span>
+          <span id="blind-area-dimensions-display" class="header-dimensions"></span>
         </div>
-        <div id="frame-controls">
-          <div class="input-row tile-inputs">
-            <div class="input-wrapper">
-              <div class="button-group-thickness">
-                <button type="button" class="thickness-btn" data-value="20" onclick="selectThickness(this)">2 см</button>
-                <button type="button" class="thickness-btn active" data-value="30" onclick="selectThickness(this)">3 см</button>
-                <button type="button" class="thickness-btn" data-value="40" onclick="selectThickness(this)">4 см</button>
-                <button type="button" class="thickness-btn" data-value="50" onclick="selectThickness(this)">5 см</button>
-              </div>
-              <label id="tile-thickness-frame-label">Товщина</label>
-            </div>
-            <div class="input-wrapper floating-label">
-              <input type="number" id="tile-border-width" value="300" min="10" oninput="updateAllDisplays()" placeholder=" ">
-              <label id="tile-border-width-label" for="tile-border-width">Ширина рамки (мм)</label>
-            </div>
-            <div class="input-wrapper floating-label">
-              <input type="number" id="tile-overhang" value="50" oninput="updateAllDisplays()" placeholder=" ">
-              <label id="tile-overhang-label" for="tile-overhang">Виступ (мм)</label>
-            </div>
-          </div>
-        </div>
-        <div id="modular-controls" class="hidden">
-          <div class="input-row tile-inputs">
-            <div class="input-wrapper floating-label">
-              <select id="modular-tile-size" onchange="updateAllDisplays()" placeholder=" ">
-                <option value="80x40">80 x 40</option>
-                <option value="70x40">70 x 40</option>
-                <option value="60x40">60 x 40</option>
-                <option value="50x40">50 x 40</option>
-                <option value="40x40">40 x 40</option>
-                <option value="60x30">60 x 30</option>
-                <option value="50x30">50 x 30</option>
-                <option value="40x30">40 x 30</option>
-                <option value="30x30">30 x 30</option>
-                <option value="80x30">80 x 30</option>
-                <option value="70x30">70 x 30</option>
-              </select>
-              <label for="modular-tile-size">Розмір (см)</label>
-            </div>
-            <div class="input-wrapper floating-label">
-              <input type="number" id="modular-thickness" value="30" oninput="updateAllDisplays()" placeholder=" ">
-              <label for="modular-thickness" id="modular-thickness-label">Товщина (мм)</label>
-            </div>
-             <div class="input-wrapper">
-              <label id="modular-seam-label">Шов</label>
-              <div class="button-group-seam">
-                <button type="button" class="seam-btn" data-value="2" onclick="selectSeam(this)">2 мм</button>
-                <button type="button" class="seam-btn" data-value="3" onclick="selectSeam(this)">3 мм</button>
-                <button type="button" class="seam-btn active" data-value="5" onclick="selectSeam(this)">5 мм</button>
-                <button type="button" class="seam-btn" data-value="4" onclick="selectSeam(this)">4 мм</button>
-              </div>
-            </div>
-             <div class="input-wrapper floating-label">
-              <input type="number" id="modular-overhang" value="50" oninput="updateAllDisplays()" placeholder=" ">
-              <label for="modular-overhang" id="modular-overhang-label">Виступ (мм)</label>
-            </div>
-          </div>
-        </div>
-        <button onclick="addTiles(); advanceToNextPanel(this);">Додати плитку</button>
-      </div>
-    </section>
-
-    <section class="panel collapsed">
-      <div class="panel-header" onclick="togglePanel(this)">
-        <h2 class="panel-title">Бокове облицювання</h2>
-        <span class="chevron"></span>
-        <span id="cladding-dimensions-display" class="header-dimensions"></span>
-      </div>
-      <div class="panel-content">
+        <div class="panel-content">
           <div class="input-row">
+            <div class="input-wrapper floating-label">
+              <input type="number" id="blind-area-thickness" value="50" min="30" max="200" oninput="updateAllDisplays()" placeholder=" ">
+              <label id="blind-area-thickness-label" for="blind-area-thickness">Товщина (мм)</label>
+            </div>
+          </div>
+          
+          <div class="input-wrapper floating-label">
+            <select id="blind-area-mode" onchange="updateBlindAreaControls()" placeholder=" ">
+              <option value="uniform" selected>Однакова ширина</option>
+              <option value="custom">Різна ширина</option>
+            </select>
+            <label for="blind-area-mode">Режим ширини</label>
+          </div>
+          
+          <div id="uniform-controls">
+            <div class="input-row">
               <div class="input-wrapper floating-label">
-                  <input type="number" id="cladding-thickness" value="20" min="10" oninput="updateAllDisplays()" placeholder=" ">
-                  <label id="cladding-thickness-label" for="cladding-thickness">Товщина (мм)</label>
+                <input type="number" id="blind-area-uniform-width" value="300" min="50" max="1000" oninput="updateAllDisplays()" placeholder=" ">
+                <label id="blind-area-uniform-width-label" for="blind-area-uniform-width">Ширина (мм)</label>
               </div>
+            </div>
+          </div>
+          
+          <div id="custom-controls" class="hidden">
+            <div class="input-row">
+              <div class="input-wrapper floating-label">
+                <input type="number" id="blind-area-north" value="300" min="50" max="1000" oninput="updateAllDisplays()" placeholder=" ">
+                <label id="blind-area-north-label" for="blind-area-north">Північна сторона (мм)</label>
+              </div>
+              <div class="input-wrapper floating-label">
+                <input type="number" id="blind-area-south" value="300" min="50" max="1000" oninput="updateAllDisplays()" placeholder=" ">
+                <label id="blind-area-south-label" for="blind-area-south">Південна сторона (мм)</label>
+              </div>
+            </div>
+            
+            <div class="input-row">
+              <div class="input-wrapper floating-label">
+                <input type="number" id="blind-area-east" value="300" min="50" max="1000" oninput="updateAllDisplays()" placeholder=" ">
+                <label id="blind-area-east-label" for="blind-area-east">Східна сторона (мм)</label>
+              </div>
+              <div class="input-wrapper floating-label">
+                <input type="number" id="blind-area-west" value="300" min="50" max="1000" oninput="updateAllDisplays()" placeholder=" ">
+                <label id="blind-area-west-label" for="blind-area-west">Західна сторона (мм)</label>
+              </div>
+            </div>
+          </div>
+          
+          <button onclick="addBlindArea(); advanceToNextPanel(this);">Створити відмостку</button>
+        </div>
+      </section>
+
+      <section class="panel collapsed">
+        <div class="panel-header" onclick="togglePanel(this)">
+          <h2 class="panel-title">Плитка на фундаменті</h2>
+          <span class="chevron"></span>
+          <span id="tiling-type-display" class="header-dimensions"></span>
+        </div>
+        <div class="panel-content">
+          <div class="input-wrapper">
+            <label class="label-left">Спосіб укладання:</label>
+            <div class="button-group-tiling-mode">
+              <button type="button" class="tiling-mode-btn active" data-value="frame" onclick="selectTilingMode(this)">Рамка з 4 частин</button>
+              <button type="button" class="tiling-mode-btn" data-value="modular" onclick="selectTilingMode(this)">Модульне замощення</button>
+            </div>
+          </div>
+          <div id="frame-controls">
+            <div class="input-row tile-inputs">
+              <div class="input-wrapper">
+                <div class="button-group-thickness">
+                  <button type="button" class="thickness-btn" data-value="20" onclick="selectThickness(this)">2 см</button>
+                  <button type="button" class="thickness-btn active" data-value="30" onclick="selectThickness(this)">3 см</button>
+                  <button type="button" class="thickness-btn" data-value="40" onclick="selectThickness(this)">4 см</button>
+                  <button type="button" class="thickness-btn" data-value="50" onclick="selectThickness(this)">5 см</button>
+                </div>
+                <label id="tile-thickness-frame-label">Товщина</label>
+              </div>
+              <div class="input-wrapper floating-label">
+                <input type="number" id="tile-border-width" value="300" min="10" oninput="updateAllDisplays()" placeholder=" ">
+                <label id="tile-border-width-label" for="tile-border-width">Ширина рамки (мм)</label>
+              </div>
+              <div class="input-wrapper floating-label">
+                <input type="number" id="tile-overhang" value="50" oninput="updateAllDisplays()" placeholder=" ">
+                <label id="tile-overhang-label" for="tile-overhang">Виступ (мм)</label>
+              </div>
+            </div>
+          </div>
+          <div id="modular-controls" class="hidden">
+            <div class="input-row tile-inputs">
+              <div class="input-wrapper floating-label">
+                <select id="modular-tile-size" onchange="updateAllDisplays()" placeholder=" ">
+                  <option value="80x40">80 x 40</option>
+                  <option value="70x40">70 x 40</option>
+                  <option value="60x40">60 x 40</option>
+                  <option value="50x40">50 x 40</option>
+                  <option value="40x40">40 x 40</option>
+                  <option value="60x30">60 x 30</option>
+                  <option value="50x30">50 x 30</option>
+                  <option value="40x30">40 x 30</option>
+                  <option value="30x30">30 x 30</option>
+                  <option value="80x30">80 x 30</option>
+                  <option value="70x30">70 x 30</option>
+                </select>
+                <label for="modular-tile-size">Розмір (см)</label>
+              </div>
+              <div class="input-wrapper floating-label">
+                <input type="number" id="modular-thickness" value="30" oninput="updateAllDisplays()" placeholder=" ">
+                <label for="modular-thickness" id="modular-thickness-label">Товщина (мм)</label>
+              </div>
+              <div class="input-wrapper">
+                <label id="modular-seam-label">Шов</label>
+                <div class="button-group-seam">
+                  <button type="button" class="seam-btn" data-value="2" onclick="selectSeam(this)">2 мм</button>
+                  <button type="button" class="seam-btn" data-value="3" onclick="selectSeam(this)">3 мм</button>
+                  <button type="button" class="seam-btn active" data-value="5" onclick="selectSeam(this)">5 мм</button>
+                  <button type="button" class="seam-btn" data-value="4" onclick="selectSeam(this)">4 мм</button>
+                </div>
+              </div>
+              <div class="input-wrapper floating-label">
+                <input type="number" id="modular-overhang" value="50" oninput="updateAllDisplays()" placeholder=" ">
+                <label for="modular-overhang" id="modular-overhang-label">Виступ (мм)</label>
+              </div>
+            </div>
+          </div>
+          <button onclick="addTiles(); advanceToNextPanel(this);">Додати плитку</button>
+        </div>
+      </section>
+
+      <section class="panel collapsed">
+        <div class="panel-header" onclick="togglePanel(this)">
+          <h2 class="panel-title">Бокове облицювання</h2>
+          <span class="chevron"></span>
+          <span id="cladding-dimensions-display" class="header-dimensions"></span>
+        </div>
+        <div class="panel-content">
+          <div class="input-row">
+            <div class="input-wrapper floating-label">
+              <input type="number" id="cladding-thickness" value="20" min="10" oninput="updateAllDisplays()" placeholder=" ">
+              <label id="cladding-thickness-label" for="cladding-thickness">Товщина (мм)</label>
+            </div>
           </div>
           <button onclick="addSideCladding(); advanceToNextPanel(this);">Додати</button>
-      </div>
-    </section>
-
-    <section class="panel collapsed">
-      <div class="panel-header" onclick="togglePanel(this)">
-        <h2 class="panel-title">Підставка</h2>
-        <span class="chevron"></span>
-        <span id="stands-dimensions-display" class="header-dimensions"></span>
-      </div>
-      <div class="panel-content">
-        <div class="carousel-container">
-          <div class="carousel-viewport" id="stands-carousel-viewport">
-            <div class="carousel-track" id="stands-carousel-track"></div>
-          </div>
         </div>
-        <button onclick="addModel('stands'); advanceToNextPanel(this);">Додати підставку</button>
-      </div>
-    </section>
-    
-    <section class="panel collapsed">
-      <div class="panel-header" onclick="togglePanel(this)">
-        <h2 class="panel-title">Квітник</h2>
-        <span class="chevron"></span>
-        <span id="flowerbeds-dimensions-display" class="header-dimensions"></span>
-      </div>
-      <div class="panel-content">
-        <div class="carousel-container">
-          <div class="carousel-viewport" id="flowerbeds-carousel-viewport">
-            <div class="carousel-track" id="flowerbeds-carousel-track"></div>
-          </div>
+      </section>
+    </div>
+
+    <!-- Таб "Памятник" -->
+    <div class="tab-content" id="monument-tab">
+      <section class="panel">
+        <div class="panel-header" onclick="togglePanel(this)">
+          <h2 class="panel-title">Підставка</h2>
+          <span class="chevron"></span>
+          <span id="stands-dimensions-display" class="header-dimensions"></span>
         </div>
-        <button onclick="addModel('flowerbeds'); advanceToNextPanel(this);">Додати квітник</button>
-      </div>
-    </section>
-
-    <section class="panel collapsed">
-      <div class="panel-header" onclick="togglePanel(this)">
-        <h2 class="panel-title">Стела</h2>
-        <span class="chevron"></span>
-        <span id="steles-dimensions-display" class="header-dimensions"></span>
-      </div>
-      <div class="panel-content">
-        <div class="carousel-container">
-          <div class="carousel-viewport" id="steles-carousel-viewport">
-            <div class="carousel-track" id="steles-carousel-track"></div>
+        <div class="panel-content">
+          <div class="carousel-container">
+            <div class="carousel-viewport" id="stands-carousel-viewport">
+              <div class="carousel-track" id="stands-carousel-track"></div>
+            </div>
           </div>
+          <button onclick="addModel('stands'); advanceToNextPanel(this);">Додати підставку</button>
         </div>
-                 <button onclick="addModel('steles'); advanceToNextPanel(this);">Додати стелу</button>
+      </section>
+      
+      <section class="panel collapsed">
+        <div class="panel-header" onclick="togglePanel(this)">
+          <h2 class="panel-title">Стела</h2>
+          <span class="chevron"></span>
+          <span id="steles-dimensions-display" class="header-dimensions"></span>
+        </div>
+        <div class="panel-content">
+          <div class="carousel-container">
+            <div class="carousel-viewport" id="steles-carousel-viewport">
+              <div class="carousel-track" id="steles-carousel-track"></div>
+            </div>
+          </div>
+          <button onclick="addModel('steles'); advanceToNextPanel(this);">Додати стелу</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Таб "Надгробна частина" -->
+    <div class="tab-content" id="gravestone-tab">
+      <section class="panel">
+        <div class="panel-header" onclick="togglePanel(this)">
+          <h2 class="panel-title">Квітник</h2>
+          <span class="chevron"></span>
+          <span id="flowerbeds-dimensions-display" class="header-dimensions"></span>
+        </div>
+        <div class="panel-content">
+          <div class="carousel-container">
+            <div class="carousel-viewport" id="flowerbeds-carousel-viewport">
+              <div class="carousel-track" id="flowerbeds-carousel-track"></div>
+            </div>
+          </div>
+          <button onclick="addModel('flowerbeds'); advanceToNextPanel(this);">Додати квітник</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Таб "Огорожа" -->
+    <div class="tab-content" id="fence-tab">
+      <div class="empty-tab-message">
+        <p>Розділ "Огорожа" знаходиться в розробці</p>
+        <p>Тут будуть доступні елементи огорожі та огородження</p>
       </div>
-    </section>
+    </div>
 
-
-
-
-
-                                                                               <div class="summary-card">
-         <div class="summary-header">
-           <h2>Специфікація</h2>
-         </div>
-        <table class="summary-table">
-          <tr> <td>Фундамент:</td> <td id="summary-foundation">--</td> </tr>
-          <tr> <td>Плитка (верх):</td> <td id="summary-tiling">--</td> </tr>
-          <tr> <td>Облицювання (бік):</td> <td id="summary-cladding">--</td> </tr>
-          <tr> <td>Відмостка:</td> <td id="summary-blind-area">--</td> </tr>
-          <tr> <td>Підставка:</td> <td id="summary-stand">--</td> </tr>
-          <tr> <td>Квітник:</td> <td id="summary-flowerbed">--</td> </tr>
-          <tr> <td>Стела:</td> <td id="summary-stele">--</td> </tr>
-        </table>
-                 <button onclick="refreshSpecification()" class="refresh-button">Оновити</button>
+    <!-- Таб "Додаткові елементи" -->
+    <div class="tab-content" id="additional-tab">
+      <div class="empty-tab-message">
+        <p>Розділ "Додаткові елементи" знаходиться в розробці</p>
+        <p>Тут будуть доступні додаткові компоненти та аксесуари</p>
       </div>
+    </div>
+
+    <!-- Специфікація (залишається поза табами) -->
+    <div class="summary-card">
+      <div class="summary-header">
+        <h2>Специфікація</h2>
+      </div>
+      <table class="summary-table">
+        <tr> <td>Фундамент:</td> <td id="summary-foundation">--</td> </tr>
+        <tr> <td>Плитка (верх):</td> <td id="summary-tiling">--</td> </tr>
+        <tr> <td>Облицювання (бік):</td> <td id="summary-cladding">--</td> </tr>
+        <tr> <td>Відмостка:</td> <td id="summary-blind-area">--</td> </tr>
+        <tr> <td>Підставка:</td> <td id="summary-stand">--</td> </tr>
+        <tr> <td>Квітник:</td> <td id="summary-flowerbed">--</td> </tr>
+        <tr> <td>Стела:</td> <td id="summary-stele">--</td> </tr>
+      </table>
+      <button onclick="refreshSpecification()" class="refresh-button">Оновити</button>
+    </div>
 
   </div>
 

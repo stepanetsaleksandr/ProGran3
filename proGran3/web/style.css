@@ -13,9 +13,9 @@ body {
 
 /* Основний "скляний" контейнер */
 .glass-container {
-  max-width: 400px;
+  max-width: 500px;
   margin: auto;
-  padding: 20px 30px;
+  padding: 15px 20px;
   background: rgba(255, 255, 255, 0.35);
   border-radius: 20px;
   /* Тінь зроблена темнішою і виразнішою */
@@ -137,6 +137,86 @@ header h1 {
 
 .toggle-switch input[type="checkbox"]:not(:checked) + .toggle-label .toggle-text:last-child {
   opacity: 0.5;
+}
+
+/* Навігація табів */
+.tabs-navigation {
+  display: flex;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 2px;
+  margin-bottom: 20px;
+  gap: 1px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.tab-button {
+  flex: 1;
+  padding: 12px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #555;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tab-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #333;
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+/* Контент табів */
+.tab-content {
+  display: none;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Повідомлення для порожніх табів */
+.empty-tab-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.empty-tab-message p {
+  margin: 10px 0;
+  font-size: 16px;
+}
+
+.empty-tab-message p:first-child {
+  font-weight: 600;
+  color: #555;
 }
 
 /* Панелі для кожної секції */

@@ -8,6 +8,102 @@ let carouselState = {
   flowerbeds: { index: 0 }
 };
 
+// --- СИСТЕМА ТАБІВ ---
+let activeTab = 'base'; // Активний таб за замовчуванням
+
+// Функція переключення табів
+function switchTab(tabName) {
+  // Приховуємо всі таби
+  const tabContents = document.querySelectorAll('.tab-content');
+  tabContents.forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  // Видаляємо активний клас з усіх кнопок табів
+  const tabButtons = document.querySelectorAll('.tab-button');
+  tabButtons.forEach(button => {
+    button.classList.remove('active');
+  });
+  
+  // Показуємо вибраний таб
+  const selectedTab = document.getElementById(tabName + '-tab');
+  if (selectedTab) {
+    selectedTab.classList.add('active');
+  }
+  
+  // Активуємо відповідну кнопку
+  const selectedButton = document.querySelector(`[data-tab="${tabName}"]`);
+  if (selectedButton) {
+    selectedButton.classList.add('active');
+  }
+  
+  // Зберігаємо активний таб
+  activeTab = tabName;
+  
+  // Оновлюємо каруселі в активному табі
+  setTimeout(() => {
+    updateCarouselsInActiveTab();
+  }, 100);
+}
+
+// Оновлення каруселей в активному табі
+function updateCarouselsInActiveTab() {
+  const activeTabContent = document.querySelector('.tab-content.active');
+  if (activeTabContent) {
+    // Знаходимо всі каруселі в активному табі
+    const carousels = activeTabContent.querySelectorAll('.carousel-container');
+    carousels.forEach(carousel => {
+      // Тригеримо оновлення каруселі
+      const viewport = carousel.querySelector('.carousel-viewport');
+      if (viewport) {
+        viewport.style.display = 'none';
+        setTimeout(() => {
+          viewport.style.display = 'block';
+        }, 10);
+      }
+    });
+  }
+}
+
+// Ініціалізація табів
+function initializeTabs() {
+  debugLog(`🚀 Ініціалізація табів`, 'info');
+  
+  // Перевіряємо наявність навігації табів
+  const tabsNavigation = document.querySelector('.tabs-navigation');
+  if (!tabsNavigation) {
+    debugLog(`❌ Не знайдено навігацію табів`, 'error');
+    return;
+  }
+  
+  // Перевіряємо наявність контенту табів
+  const tabContents = document.querySelectorAll('.tab-content');
+  if (tabContents.length === 0) {
+    debugLog(`❌ Не знайдено контент табів`, 'error');
+    return;
+  }
+  
+  debugLog(`✅ Знайдено ${tabContents.length} табів`, 'success');
+  
+  // Встановлюємо активний таб за замовчуванням
+  switchTab('base');
+  
+  // Додаємо обробники подій для кнопок табів
+  const tabButtons = document.querySelectorAll('.tab-button');
+  tabButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.preventDefault();
+      const tabName = this.getAttribute('data-tab');
+      if (tabName) {
+        debugLog(`🔄 Переключення на таб: ${tabName}`, 'info');
+        switchTab(tabName);
+      }
+    });
+  });
+  
+  debugLog(`✅ Таби ініціалізовані успішно`, 'success');
+}
+
 // Ініціалізація floating labels
 function initializeFloatingLabels() {
   const floatingInputs = document.querySelectorAll('.floating-label input');
@@ -483,6 +579,9 @@ window.onload = function () {
 function initializeApp() {
   debugLog(`🚀 initializeApp викликано`, 'info');
   
+  // Ініціалізація табів
+  initializeTabs();
+  
   // Ініціалізація UI (без повторного виклику ready)
   if(document.querySelector('.tiling-mode-btn')) {
     debugLog(`✅ Знайдено кнопки способу укладання, оновлюємо контроли`, 'success');
@@ -552,14 +651,19 @@ function initializeApp() {
     debugLog(`❌ Не знайдено поле виступу модульної`, 'error');
   }
   
-  // Згортаємо всі панелі, крім першої
-  const panels = document.querySelectorAll('.panel');
-  debugLog(`📋 Знайдено ${panels.length} панелей`, 'info');
+  // Згортаємо всі панелі в кожному табі, крім першої
+  const tabContents = document.querySelectorAll('.tab-content');
+  debugLog(`📋 Знайдено ${tabContents.length} табів`, 'info');
   
-  panels.forEach((panel, index) => {
-    if (index > 0) {
-      panel.classList.add('collapsed');
-    }
+  tabContents.forEach(tabContent => {
+    const panels = tabContent.querySelectorAll('.panel');
+    debugLog(`📋 Знайдено ${panels.length} панелей в табі ${tabContent.id}`, 'info');
+    
+    panels.forEach((panel, index) => {
+      if (index > 0) {
+        panel.classList.add('collapsed');
+      }
+    });
   });
   
   // Ініціалізуємо floating labels
@@ -610,10 +714,17 @@ function togglePanel(headerElement) {
 function advanceToNextPanel(buttonElement) {
   // Знаходимо батьківську панель кнопки
   const currentPanel = buttonElement.closest('.panel');
-  // Знаходимо всі панелі на сторінці
-  const allPanels = Array.from(document.querySelectorAll('.panel'));
-  const currentIndex = allPanels.indexOf(currentPanel);
-  const nextPanel = allPanels[currentIndex + 1];
+  
+  // Знаходимо всі панелі в поточному активному табі
+  const activeTabContent = document.querySelector('.tab-content.active');
+  if (!activeTabContent) {
+    debugLog(`❌ Не знайдено активний таб для advanceToNextPanel`, 'error');
+    return;
+  }
+  
+  const allPanelsInTab = Array.from(activeTabContent.querySelectorAll('.panel'));
+  const currentIndex = allPanelsInTab.indexOf(currentPanel);
+  const nextPanel = allPanelsInTab[currentIndex + 1];
 
   // Згортаємо поточну панель
   if (currentPanel && !currentPanel.classList.contains('collapsed')) {
@@ -624,6 +735,8 @@ function advanceToNextPanel(buttonElement) {
   if (nextPanel && nextPanel.classList.contains('collapsed')) {
     nextPanel.classList.remove('collapsed');
   }
+  
+  debugLog(`🔄 advanceToNextPanel: поточна панель ${currentIndex + 1}/${allPanelsInTab.length} в табі ${activeTab}`, 'info');
 }
 
 

@@ -17,9 +17,9 @@ module ProGran3
     DEFAULT_UNIT = :mm
     
     # Налаштування UI
-    DEFAULT_DIALOG_WIDTH = 420
+    DEFAULT_DIALOG_WIDTH = 500
     DEFAULT_DIALOG_HEIGHT = 850
-    MIN_DIALOG_WIDTH = 350
+    MIN_DIALOG_WIDTH = 400
     MIN_DIALOG_HEIGHT = 600
     
     # Налаштування каруселі
