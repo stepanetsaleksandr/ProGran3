@@ -40,10 +40,17 @@ function switchTab(tabName) {
   // Зберігаємо активний таб
   activeTab = tabName;
   
-  // Оновлюємо каруселі в активному табі
-  setTimeout(() => {
-    updateCarouselsInActiveTab();
-  }, 100);
+      // Оновлюємо каруселі в активному табі
+    setTimeout(() => {
+      updateCarouselsInActiveTab();
+    }, 100);
+    
+    // Якщо переключилися на тестовий таб, створюємо UI компоненти
+    if (tabName === 'test') {
+      setTimeout(() => {
+        createTestAccordion();
+      }, 150);
+    }
 }
 
 // Оновлення каруселей в активному табі
@@ -675,6 +682,9 @@ function initializeApp() {
   updateUnitLabels();
   updateThicknessButtons();
   updateSeamButtons();
+  
+  // Створюємо тестовий акордеон
+  createTestAccordion();
   
   debugLog(`✅ initializeApp завершено`, 'success');
 }
@@ -1691,4 +1701,390 @@ function updateSliderValue(slider) {
   if (valueDisplay) {
     valueDisplay.textContent = value;
   }
+}
+
+// ========== CREATE TEST ACCORDION FUNCTION ==========
+function createTestAccordion() {
+  debugLog('🔄 createTestAccordion викликано', 'info');
+  const testTab = document.getElementById('test-tab');
+  if (!testTab) {
+    debugLog('❌ Не знайдено елемент test-tab', 'error');
+    return;
+  }
+  debugLog('✅ Знайдено елемент test-tab', 'success');
+
+  // Повний UI showcase
+  testTab.innerHTML = `
+    <div class="ui-showcase">
+      <h2 class="showcase-title">Liquid Glass UI Components</h2>
+      <p class="showcase-subtitle">Тестування основних елементів інтерфейсу</p>
+      
+      <!-- Кнопки -->
+      <div class="component-section">
+        <h3 class="section-title">Кнопки (Buttons)</h3>
+        <div class="component-demo">
+          <div class="button-group-demo">
+            <button class="lg-btn lg-btn-primary" onclick="testButton('Primary')">Primary</button>
+            <button class="lg-btn lg-btn-ghost" onclick="testButton('Ghost')">Ghost</button>
+            <button class="lg-btn lg-btn-outline" onclick="testButton('Outline')">Outline</button>
+            <button class="lg-btn lg-btn-soft" onclick="testButton('Soft')">Soft</button>
+            <button class="lg-btn lg-btn-danger" onclick="testButton('Danger')">Danger</button>
+            <button class="lg-btn lg-btn-loading" disabled>Loading...</button>
+          </div>
+          <div class="component-description">
+            <p>Різні варіанти кнопок з hover ефектами та анімаціями. Клікніть для тестування.</p>
+            <div class="test-result" id="button-test-result"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Поля вводу -->
+      <div class="component-section">
+        <h3 class="section-title">Поля вводу (Inputs)</h3>
+        <div class="component-demo">
+          <div class="input-group-demo">
+            <div class="input-wrapper">
+              <label>Текстове поле</label>
+              <input type="text" class="lg-input" placeholder="Введіть текст..." onchange="testInput(this.value, 'text')">
+            </div>
+            <div class="input-wrapper">
+              <label>Числове поле</label>
+              <input type="number" class="lg-input" placeholder="0" onchange="testInput(this.value, 'number')">
+            </div>
+            <div class="input-wrapper">
+              <label>Email поле</label>
+              <input type="email" class="lg-input" placeholder="email@example.com" onchange="testInput(this.value, 'email')">
+            </div>
+          </div>
+          <div class="component-description">
+            <p>Поля вводу з різними типами та валідацією. Змінюйте значення для тестування.</p>
+            <div class="test-result" id="input-test-result"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Випадаючі списки -->
+      <div class="component-section">
+        <h3 class="section-title">Випадаючі списки (Selects)</h3>
+        <div class="component-demo">
+          <div class="select-group-demo">
+            <div class="input-wrapper">
+              <label>Вибір кольору</label>
+              <select class="lg-select" onchange="testSelect(this.value, 'color')">
+                <option value="">Оберіть колір</option>
+                <option value="red">Червоний</option>
+                <option value="blue">Синій</option>
+                <option value="green">Зелений</option>
+                <option value="yellow">Жовтий</option>
+              </select>
+            </div>
+            <div class="input-wrapper">
+              <label>Вибір розміру</label>
+              <select class="lg-select" onchange="testSelect(this.value, 'size')">
+                <option value="">Оберіть розмір</option>
+                <option value="small">Малий</option>
+                <option value="medium">Середній</option>
+                <option value="large">Великий</option>
+              </select>
+            </div>
+          </div>
+          <div class="component-description">
+            <p>Випадаючі списки з різними опціями. Змінюйте вибір для тестування.</p>
+            <div class="test-result" id="select-test-result"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Перемикачі -->
+      <div class="component-section">
+        <h3 class="section-title">Перемикачі (Toggles)</h3>
+        <div class="component-demo">
+          <div class="toggle-group-demo">
+            <div class="toggle-item">
+              <label>Темна тема</label>
+              <div class="lg-toggle" onclick="testToggle(this, 'dark-theme')">
+                <div class="toggle-slider"></div>
+              </div>
+            </div>
+            <div class="toggle-item">
+              <label>Звук</label>
+              <div class="lg-toggle lg-toggle-active" onclick="testToggle(this, 'sound')">
+                <div class="toggle-slider"></div>
+              </div>
+            </div>
+            <div class="toggle-item">
+              <label>Автозбереження</label>
+              <div class="lg-toggle" onclick="testToggle(this, 'autosave')">
+                <div class="toggle-slider"></div>
+              </div>
+            </div>
+          </div>
+          <div class="component-description">
+            <p>Перемикачі для різних налаштувань. Клікніть для зміни стану.</p>
+            <div class="test-result" id="toggle-test-result"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Чекбокси та радіо -->
+      <div class="component-section">
+        <h3 class="section-title">Чекбокси та радіо кнопки</h3>
+        <div class="component-demo">
+          <div class="checkbox-radio-group-demo">
+            <div class="checkbox-group">
+              <h4>Чекбокси:</h4>
+              <label class="lg-checkbox">
+                <input type="checkbox" onchange="testCheckbox(this, 'option1')">
+                <span class="checkmark"></span>
+                Опція 1
+              </label>
+              <label class="lg-checkbox">
+                <input type="checkbox" onchange="testCheckbox(this, 'option2')">
+                <span class="checkmark"></span>
+                Опція 2
+              </label>
+              <label class="lg-checkbox">
+                <input type="checkbox" onchange="testCheckbox(this, 'option3')">
+                <span class="checkmark"></span>
+                Опція 3
+              </label>
+            </div>
+            <div class="radio-group">
+              <h4>Радіо кнопки:</h4>
+              <label class="lg-radio">
+                <input type="radio" name="radio-group" value="a" onchange="testRadio(this, 'radio-a')">
+                <span class="radio-mark"></span>
+                Варіант A
+              </label>
+              <label class="lg-radio">
+                <input type="radio" name="radio-group" value="b" onchange="testRadio(this, 'radio-b')">
+                <span class="radio-mark"></span>
+                Варіант B
+              </label>
+              <label class="lg-radio">
+                <input type="radio" name="radio-group" value="c" onchange="testRadio(this, 'radio-c')">
+                <span class="radio-mark"></span>
+                Варіант C
+              </label>
+            </div>
+          </div>
+          <div class="component-description">
+            <p>Чекбокси та радіо кнопки для вибору опцій. Тестуйте різні комбінації.</p>
+            <div class="test-result" id="checkbox-radio-test-result"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Слайдер -->
+      <div class="component-section">
+        <h3 class="section-title">Слайдер (Slider)</h3>
+        <div class="component-demo">
+          <div class="slider-group-demo">
+            <div class="slider-item">
+              <label>Гучність: <span id="volume-value">50</span>%</label>
+              <input type="range" class="lg-slider" min="0" max="100" value="50" oninput="testSlider(this, 'volume')">
+            </div>
+            <div class="slider-item">
+              <label>Яскравість: <span id="brightness-value">75</span>%</label>
+              <input type="range" class="lg-slider" min="0" max="100" value="75" oninput="testSlider(this, 'brightness')">
+            </div>
+            <div class="slider-item">
+              <label>Контраст: <span id="contrast-value">60</span>%</label>
+              <input type="range" class="lg-slider" min="0" max="100" value="60" oninput="testSlider(this, 'contrast')">
+            </div>
+          </div>
+          <div class="component-description">
+            <p>Слайдери для налаштування числових значень. Пересувайте для зміни.</p>
+            <div class="test-result" id="slider-test-result"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Прогрес бар -->
+      <div class="component-section">
+        <h3 class="section-title">Прогрес бар (Progress)</h3>
+        <div class="component-demo">
+          <div class="progress-group-demo">
+            <div class="progress-item">
+              <label>Завантаження: <span id="progress-value">45</span>%</label>
+              <div class="lg-progress">
+                <div class="progress-fill" style="width: 45%"></div>
+              </div>
+            </div>
+            <div class="progress-item">
+              <label>Виконання: <span id="progress-value2">78</span>%</label>
+              <div class="lg-progress">
+                <div class="progress-fill" style="width: 78%"></div>
+              </div>
+            </div>
+            <button class="lg-btn lg-btn-primary" onclick="testProgress()">Оновити прогрес</button>
+          </div>
+          <div class="component-description">
+            <p>Прогрес бари для відображення процесу виконання. Клікніть кнопку для тестування.</p>
+            <div class="test-result" id="progress-test-result"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Бейджі та чіпи -->
+      <div class="component-section">
+        <h3 class="section-title">Бейджі та чіпи (Badges & Chips)</h3>
+        <div class="component-demo">
+          <div class="badge-chip-group-demo">
+            <div class="badge-group">
+              <span class="lg-badge">New</span>
+              <span class="lg-badge lg-badge-success">Success</span>
+              <span class="lg-badge lg-badge-warning">Warning</span>
+              <span class="lg-badge lg-badge-error">Error</span>
+            </div>
+            <div class="chip-group">
+              <span class="lg-chip">Тег 1 <button class="chip-close" onclick="removeChip(this)">×</button></span>
+              <span class="lg-chip">Тег 2 <button class="chip-close" onclick="removeChip(this)">×</button></span>
+              <span class="lg-chip">Тег 3 <button class="chip-close" onclick="removeChip(this)">×</button></span>
+            </div>
+            <button class="lg-btn lg-btn-outline" onclick="addChip()">Додати чіп</button>
+          </div>
+          <div class="component-description">
+            <p>Бейджі для статусів та чіпи для тегів. Тестуйте видалення чіпів.</p>
+            <div class="test-result" id="badge-chip-test-result"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Алерти -->
+      <div class="component-section">
+        <h3 class="section-title">Алерти (Alerts)</h3>
+        <div class="component-demo">
+          <div class="alert-group-demo">
+            <div class="lg-alert lg-alert-info">
+              <span class="alert-icon">ℹ</span>
+              <div class="alert-content">
+                <strong>Інформація:</strong> Це інформаційне повідомлення
+              </div>
+              <button class="alert-close" onclick="closeAlert(this)">×</button>
+            </div>
+            <div class="lg-alert lg-alert-success">
+              <span class="alert-icon">✓</span>
+              <div class="alert-content">
+                <strong>Успіх:</strong> Операція виконана успішно
+              </div>
+              <button class="alert-close" onclick="closeAlert(this)">×</button>
+            </div>
+            <div class="lg-alert lg-alert-warning">
+              <span class="alert-icon">⚠</span>
+              <div class="alert-content">
+                <strong>Попередження:</strong> Будьте обережні
+              </div>
+              <button class="alert-close" onclick="closeAlert(this)">×</button>
+            </div>
+            <div class="lg-alert lg-alert-error">
+              <span class="alert-icon">✕</span>
+              <div class="alert-content">
+                <strong>Помилка:</strong> Щось пішло не так
+              </div>
+              <button class="alert-close" onclick="closeAlert(this)">×</button>
+            </div>
+          </div>
+          <div class="component-description">
+            <p>Алерти для різних типів повідомлень. Клікніть × для закриття.</p>
+            <div class="test-result" id="alert-test-result"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Таблиця -->
+      <div class="component-section">
+        <h3 class="section-title">Таблиця (Table)</h3>
+        <div class="component-demo">
+          <div class="table-demo">
+            <table class="lg-table">
+              <thead>
+                <tr>
+                  <th>Ім'я</th>
+                  <th>Роль</th>
+                  <th>Статус</th>
+                  <th>Дії</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Анна</td>
+                  <td>Дизайнер</td>
+                  <td><span class="lg-badge lg-badge-success">Активна</span></td>
+                  <td><button class="lg-btn lg-btn-ghost" onclick="testTableAction('edit', 'Анна')">Редагувати</button></td>
+                </tr>
+                <tr>
+                  <td>Борис</td>
+                  <td>Розробник</td>
+                  <td><span class="lg-badge lg-badge-warning">Відсутній</span></td>
+                  <td><button class="lg-btn lg-btn-ghost" onclick="testTableAction('edit', 'Борис')">Редагувати</button></td>
+                </tr>
+                <tr>
+                  <td>Віра</td>
+                  <td>Менеджер</td>
+                  <td><span class="lg-badge lg-badge-success">Активна</span></td>
+                  <td><button class="lg-btn lg-btn-ghost" onclick="testTableAction('edit', 'Віра')">Редагувати</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="component-description">
+            <p>Таблиця з даними та інтерактивними елементами. Клікніть кнопки для тестування.</p>
+            <div class="test-result" id="table-test-result"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Пагінація -->
+      <div class="component-section">
+        <h3 class="section-title">Пагінація (Pagination)</h3>
+        <div class="component-demo">
+          <div class="pagination-demo">
+            <div class="lg-pagination">
+              <button class="pagination-btn" onclick="testPagination('prev')">‹ Попередня</button>
+              <button class="pagination-btn pagination-active">1</button>
+              <button class="pagination-btn" onclick="testPagination('2')">2</button>
+              <button class="pagination-btn" onclick="testPagination('3')">3</button>
+              <button class="pagination-btn" onclick="testPagination('next')">Наступна ›</button>
+            </div>
+            <div class="pagination-info">
+              Показано сторінку <span id="current-page">1</span> з 3
+            </div>
+          </div>
+          <div class="component-description">
+            <p>Пагінація для навігації по сторінках. Клікніть номери сторінок.</p>
+            <div class="test-result" id="pagination-test-result"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Результати тестування -->
+      <div class="component-section">
+        <h3 class="section-title">Результати тестування</h3>
+        <div class="test-results">
+          <div class="test-summary">
+            <h4>Загальна статистика:</h4>
+            <div class="test-stats">
+              <div class="stat-item">
+                <span class="stat-label">Кліків по кнопках:</span>
+                <span class="stat-value" id="button-clicks">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Змін у полях:</span>
+                <span class="stat-value" id="input-changes">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Перемикань:</span>
+                <span class="stat-value" id="toggle-switches">0</span>
+              </div>
+            </div>
+          </div>
+          <button class="lg-btn lg-btn-outline" onclick="resetTestStats()">Скинути статистику</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  debugLog('✅ UI showcase додано в test-tab', 'success');
+  debugLog('✅ UI компоненти створено в тестовому табі', 'success');
 }
