@@ -45,12 +45,7 @@ function switchTab(tabName) {
       updateCarouselsInActiveTab();
     }, 100);
     
-    // Якщо переключилися на тестовий таб, створюємо UI компоненти
-    if (tabName === 'test') {
-      setTimeout(() => {
-        createTestAccordion();
-      }, 150);
-    }
+    
 }
 
 // Оновлення каруселей в активному табі
@@ -683,8 +678,11 @@ function initializeApp() {
   updateThicknessButtons();
   updateSeamButtons();
   
-  // Створюємо тестовий акордеон
-  createTestAccordion();
+  
+  
+  // Ініціалізуємо тему
+  initializeTheme();
+  debugLog(`✅ Тема ініціалізована`, 'success');
   
   debugLog(`✅ initializeApp завершено`, 'success');
 }
@@ -699,7 +697,7 @@ function loadModelLists(data) {
   debugLog(`🔄 Викликаємо CarouselManager.initializeAllCarousels()`, 'info');
   CarouselManager.initializeAllCarousels();
   
-     // Тестовий блок очищений - готовий для нової функціональності
+  
   
   // Ініціалізуємо основну карусель стел (копія тестової логіки)
   if (modelLists['steles'] && document.getElementById('steles-carousel-track')) {
@@ -864,10 +862,7 @@ function createPlaceholder(item, loadingDiv, text) {
   item.appendChild(placeholder);
 }
 
-// Функція для створення заглушки в тестовій каруселі (для зворотної сумісності)
-function createTestPlaceholder(item, loadingDiv, text) {
-  createPlaceholder(item, loadingDiv, text);
-}
+
 
 // Функція для отримання згенерованого превью з Ruby
 function receiveWebPreview(componentPath, base64Data) {
@@ -1709,153 +1704,29 @@ function updateSliderValue(slider) {
   }
 }
 
-// ========== CREATE TEST ACCORDION FUNCTION ==========
-function createTestAccordion() {
-  debugLog('🔄 createTestAccordion викликано', 'info');
-  const testTab = document.getElementById('test-tab');
-  if (!testTab) {
-    debugLog('❌ Не знайдено елемент test-tab', 'error');
-    return;
-  }
-  debugLog('✅ Знайдено елемент test-tab', 'success');
 
-  // Очищений тестовий блок - показуємо тільки елементи, які використовувались для редизайну
-  testTab.innerHTML = `
-    <div class="ui-showcase">
-      <h2 class="showcase-title">Liquid Glass Design Elements</h2>
-      <p class="showcase-subtitle">Елементи, які використовувались для редизайну плагіна</p>
-      
-      <!-- Ghost Button -->
-      <div class="component-section">
-        <h3 class="section-title">Ghost Button (Кнопка Ghost)</h3>
-        <div class="component-demo">
-          <div class="button-group-demo">
-            <button class="lg-btn lg-btn-ghost" onclick="testButton('Ghost')">Ghost Button</button>
-          </div>
-          <div class="component-description">
-            <p>Кнопка з прозорим фоном та тонкою рамкою. Використовується як основа для всіх кнопок плагіна.</p>
-            <div class="test-result" id="button-test-result"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Sound Toggle -->
-      <div class="component-section">
-        <h3 class="section-title">Sound Toggle (Перемикач Звук)</h3>
-        <div class="component-demo">
-          <div class="toggle-group-demo">
-            <div class="toggle-item">
-              <label>Звук</label>
-              <div class="lg-toggle lg-toggle-active" onclick="testToggle(this, 'sound')">
-                <div class="toggle-slider"></div>
-              </div>
-            </div>
-          </div>
-          <div class="component-description">
-            <p>Перемикач з плавною анімацією та backdrop-filter ефектом. Використовується як основа для всіх перемикачів.</p>
-            <div class="test-result" id="toggle-test-result"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Number Input -->
-      <div class="component-section">
-        <h3 class="section-title">Number Input (Числове поле)</h3>
-        <div class="component-demo">
-          <div class="input-group-demo">
-            <div class="input-wrapper">
-              <label>Числове поле</label>
-              <input type="number" class="lg-input" placeholder="0" onchange="testInput(this.value, 'number')">
-            </div>
-          </div>
-          <div class="component-description">
-            <p>Поле вводу з backdrop-filter ефектом та плавними переходами. Використовується як основа для всіх полів вводу.</p>
-            <div class="test-result" id="input-test-result"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Design Principles -->
-      <div class="component-section">
-        <h3 class="section-title">Принципи дизайну</h3>
-        <div class="design-principles">
-          <div class="principle-item">
-            <h4>🎨 Liquid Glass Effect</h4>
-            <p>Прозорі фони з backdrop-filter: blur(12px) для створення ефекту скла</p>
-          </div>
-          <div class="principle-item">
-            <h4>💫 Плавні переходи</h4>
-            <p>Всі анімації використовують transition: all 0.3s ease</p>
-          </div>
-          <div class="principle-item">
-            <h4>🔲 Закруглені кути</h4>
-            <p>border-radius: 12px для кнопок, 8px для менших елементів</p>
-          </div>
-          <div class="principle-item">
-            <h4>🌫️ Тонкі тіні</h4>
-            <p>М'які тіні з rgba(0, 0, 0, 0.05-0.15) для глибини</p>
-          </div>
-          <div class="principle-item">
-            <h4>🎯 Hover ефекти</h4>
-            <p>transform: translateY(-1px) та зміна прозорості при наведенні</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  debugLog('✅ Очищений тестовий блок створено', 'success');
-}
 
 // ========== MISSING FUNCTIONS ==========
 
 // Глобальні змінні для функціональності
-let reduceEffectsEnabled = false;
 let currentTheme = 'light';
 let currentAccent = 'blue';
-let testStats = {
-  buttonClicks: 0,
-  inputChanges: 0,
-  toggleSwitches: 0,
-  selectChanges: 0,
-  checkboxChanges: 0,
-  radioChanges: 0,
-  sliderChanges: 0,
-  progressUpdates: 0,
-  chipActions: 0,
-  alertActions: 0,
-  tableActions: 0,
-  paginationActions: 0
-};
 
-// ========== REDUCE EFFECTS FUNCTIONALITY ==========
-function toggleReduceEffects() {
-  reduceEffectsEnabled = !reduceEffectsEnabled;
-  document.body.classList.toggle('reduced-effects', reduceEffectsEnabled);
-  
-  const button = document.querySelector('.reduce-effects-btn');
-  if (button) {
-    button.textContent = reduceEffectsEnabled ? 'Повні ефекти' : 'Зменшити ефекти';
-  }
-  
-  updateTestResult('reduce-effects', `Ефекти ${reduceEffectsEnabled ? 'зменшено' : 'відновлено'}`);
-}
+
 
 // ========== THEME FUNCTIONS ==========
 function toggleTheme() {
   currentTheme = currentTheme === 'light' ? 'dark' : 'light';
   document.documentElement.classList.toggle('dark', currentTheme === 'dark');
   localStorage.setItem('theme', currentTheme);
-  
-  const button = document.querySelector('#main-theme-toggle');
-  if (button) {
-    const icon = button.querySelector('.btn-icon');
-    const text = button.querySelector('.btn-text');
-    if (icon) icon.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
-    if (text) text.textContent = currentTheme === 'dark' ? 'Світла' : 'Темна';
+
+  // Update header text to show current theme
+  const header = document.querySelector('header h1');
+  if (header) {
+    header.textContent = 'ProGran';
   }
-  
-  updateTestResult('theme', `Тема змінена на: ${currentTheme === 'dark' ? 'темну' : 'світлу'}`);
+
+
 }
 
 function changeAccent(color) {
@@ -1863,288 +1734,31 @@ function changeAccent(color) {
   document.documentElement.setAttribute('data-accent', color);
   localStorage.setItem('accent', color);
   
-  updateTestResult('accent', `Акцентний колір змінено на: ${color}`);
+
 }
 
 function initializeTheme() {
   const savedTheme = localStorage.getItem('theme') || 'light';
   const savedAccent = localStorage.getItem('accent') || 'blue';
-  
+
   currentTheme = savedTheme;
   currentAccent = savedAccent;
-  
+
   document.documentElement.classList.toggle('dark', currentTheme === 'dark');
   document.documentElement.setAttribute('data-accent', currentAccent);
-  
-  const button = document.querySelector('#main-theme-toggle');
-  if (button) {
-    const icon = button.querySelector('.btn-icon');
-    const text = button.querySelector('.btn-text');
-    if (icon) icon.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
-    if (text) text.textContent = currentTheme === 'dark' ? 'Світла' : 'Темна';
+
+  // Set initial header text
+  const header = document.querySelector('header h1');
+  if (header) {
+    header.textContent = 'ProGran';
   }
 }
 
-// ========== UI INTERACTION FUNCTIONS ==========
-function switchComponentTab(tabName) {
-  const tabs = document.querySelectorAll('.component-tab');
-  const contents = document.querySelectorAll('.component-content');
-  
-  tabs.forEach(tab => tab.classList.remove('active'));
-  contents.forEach(content => content.classList.remove('active'));
-  
-  document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-  document.querySelector(`[data-content="${tabName}"]`).classList.add('active');
-}
 
-function toggleSwitch(element, type) {
-  element.classList.toggle('lg-toggle-active');
-  const isActive = element.classList.contains('lg-toggle-active');
-  updateTestResult('toggle', `${type} ${isActive ? 'увімкнено' : 'вимкнено'}`);
-}
 
-function updateSlider(slider, type) {
-  const value = slider.value;
-  const valueDisplay = slider.parentElement.querySelector('.slider-value');
-  if (valueDisplay) {
-    valueDisplay.textContent = value;
-  }
-  updateTestResult('slider', `${type}: ${value}`);
-}
 
-function removeChip(button) {
-  const chip = button.parentElement;
-  chip.remove();
-  testStats.chipActions++;
-  updateTestStats();
-  updateTestResult('chip', 'Чіп видалено');
-}
 
-function showToast(message, type = 'info') {
-  const toast = document.createElement('div');
-  toast.className = `lg-toast lg-toast-${type}`;
-  toast.innerHTML = `
-    <div class="toast-content">${message}</div>
-    <button class="toast-close" onclick="closeToast(this)">×</button>
-  `;
-  
-  document.body.appendChild(toast);
-  
-  setTimeout(() => {
-    toast.classList.add('show');
-  }, 100);
-  
-  setTimeout(() => {
-    closeToast(toast.querySelector('.toast-close'));
-  }, 3000);
-}
 
-function closeToast(button) {
-  const toast = button.closest('.lg-toast');
-  toast.classList.remove('show');
-  setTimeout(() => {
-    if (toast.parentNode) {
-      toast.parentNode.removeChild(toast);
-    }
-  }, 300);
-}
-
-function toggleDropdown(button) {
-  const dropdown = button.nextElementSibling;
-  dropdown.classList.toggle('show');
-}
-
-function openDrawer() {
-  const drawer = document.querySelector('.lg-drawer');
-  if (drawer) {
-    drawer.classList.add('open');
-  }
-}
-
-function closeDrawer() {
-  const drawer = document.querySelector('.lg-drawer');
-  if (drawer) {
-    drawer.classList.remove('open');
-  }
-}
-
-function togglePopover(button) {
-  const popover = button.nextElementSibling;
-  popover.classList.toggle('show');
-}
-
-function togglePanel(header) {
-  const panel = header.closest('.panel');
-  if (panel) {
-    panel.classList.toggle('collapsed');
-  }
-}
-
-function changePage(page) {
-  const currentPageElement = document.getElementById('current-page');
-  if (currentPageElement) {
-    currentPageElement.textContent = page;
-  }
-  
-  const buttons = document.querySelectorAll('.pagination-btn');
-  buttons.forEach(btn => btn.classList.remove('pagination-active'));
-  
-  const activeButton = document.querySelector(`[onclick="testPagination('${page}')"]`);
-  if (activeButton) {
-    activeButton.classList.add('pagination-active');
-  }
-  
-  updateTestResult('pagination', `Перехід на сторінку ${page}`);
-}
-
-// ========== TEST FUNCTIONS ==========
-function testButton(type) {
-  testStats.buttonClicks++;
-  updateTestStats();
-  updateTestResult('button', `Кнопка ${type} натиснута`);
-  showToast(`Кнопка ${type} натиснута!`, 'success');
-}
-
-function testInput(value, type) {
-  testStats.inputChanges++;
-  updateTestStats();
-  updateTestResult('input', `${type} поле: ${value}`);
-}
-
-function testSelect(value, type) {
-  testStats.selectChanges++;
-  updateTestStats();
-  updateTestResult('select', `${type} вибрано: ${value}`);
-}
-
-function testToggle(element, type) {
-  element.classList.toggle('lg-toggle-active');
-  testStats.toggleSwitches++;
-  updateTestStats();
-  const isActive = element.classList.contains('lg-toggle-active');
-  updateTestResult('toggle', `${type} ${isActive ? 'увімкнено' : 'вимкнено'}`);
-}
-
-function testCheckbox(checkbox, type) {
-  testStats.checkboxChanges++;
-  updateTestStats();
-  updateTestResult('checkbox', `${type} ${checkbox.checked ? 'відмічено' : 'знято'}`);
-}
-
-function testRadio(radio, type) {
-  testStats.radioChanges++;
-  updateTestStats();
-  updateTestResult('radio', `${type} вибрано`);
-}
-
-function testSlider(slider, type) {
-  const value = slider.value;
-  const valueDisplay = slider.parentElement.querySelector('span');
-  if (valueDisplay) {
-    valueDisplay.textContent = value;
-  }
-  testStats.sliderChanges++;
-  updateTestStats();
-  updateTestResult('slider', `${type}: ${value}`);
-}
-
-function testProgress() {
-  const progressBars = document.querySelectorAll('.progress-fill');
-  progressBars.forEach(bar => {
-    const newValue = Math.floor(Math.random() * 100);
-    bar.style.width = `${newValue}%`;
-    
-    const valueDisplay = bar.parentElement.parentElement.querySelector('span');
-    if (valueDisplay) {
-      valueDisplay.textContent = newValue;
-    }
-  });
-  
-  testStats.progressUpdates++;
-  updateTestStats();
-  updateTestResult('progress', 'Прогрес оновлено');
-}
-
-function addChip() {
-  const chipGroup = document.querySelector('.chip-group');
-  if (chipGroup) {
-    const newChip = document.createElement('span');
-    newChip.className = 'lg-chip';
-    newChip.innerHTML = `Тег ${chipGroup.children.length + 1} <button class="chip-close" onclick="removeChip(this)">×</button>`;
-    chipGroup.appendChild(newChip);
-    
-    testStats.chipActions++;
-    updateTestStats();
-    updateTestResult('chip', 'Новий чіп додано');
-  }
-}
-
-function closeAlert(button) {
-  const alert = button.closest('.lg-alert');
-  alert.remove();
-  testStats.alertActions++;
-  updateTestStats();
-  updateTestResult('alert', 'Алерт закрито');
-}
-
-function testTableAction(action, name) {
-  testStats.tableActions++;
-  updateTestStats();
-  updateTestResult('table', `${action} для ${name}`);
-  showToast(`${action} для ${name}`, 'info');
-}
-
-function testPagination(page) {
-  testStats.paginationActions++;
-  updateTestStats();
-  changePage(page);
-}
-
-function updateTestResult(type, message) {
-  const resultElement = document.getElementById(`${type}-test-result`);
-  if (resultElement) {
-    resultElement.textContent = message;
-    resultElement.style.opacity = '1';
-    setTimeout(() => {
-      resultElement.style.opacity = '0.7';
-    }, 2000);
-  }
-}
-
-function updateTestStats() {
-  document.getElementById('button-clicks').textContent = testStats.buttonClicks;
-  document.getElementById('input-changes').textContent = testStats.inputChanges;
-  document.getElementById('toggle-switches').textContent = testStats.toggleSwitches;
-}
-
-function resetTestStats() {
-  testStats = {
-    buttonClicks: 0,
-    inputChanges: 0,
-    toggleSwitches: 0,
-    selectChanges: 0,
-    checkboxChanges: 0,
-    radioChanges: 0,
-    sliderChanges: 0,
-    progressUpdates: 0,
-    chipActions: 0,
-    alertActions: 0,
-    tableActions: 0,
-    paginationActions: 0
-  };
-  updateTestStats();
-  showToast('Статистику скинуто!', 'info');
-}
-
-// ========== EVENT LISTENERS ==========
-document.addEventListener('click', function(event) {
-  // Закриття поповерів та дропдаунів при кліку поза ними
-  if (!event.target.closest('.lg-popover, .lg-dropdown')) {
-    document.querySelectorAll('.lg-popover.show, .lg-dropdown.show').forEach(element => {
-      element.classList.remove('show');
-    });
-  }
-});
 
 // Ініціалізація теми при завантаженні
 document.addEventListener('DOMContentLoaded', function() {
