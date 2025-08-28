@@ -23,26 +23,31 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
-/* Заголовок */
+/* Заголовок - Liquid Glass Design */
 header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
   padding: 10px 15px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 15px;
-  color: white;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  color: #333;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.05);
   position: relative;
   min-height: 50px;
 }
 
 header h1 {
-  font-size: 18px; /* Збільшуємо розмір заголовка сторінки */
+  font-size: 18px;
   font-weight: 600;
   margin: 0;
-  color: white;
+  color: #333;
   flex-shrink: 0;
 }
 
@@ -50,23 +55,28 @@ header h1 {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 4px 8px;
-  border-radius: 6px;
-  backdrop-filter: blur(10px);
+  border-radius: 8px;
   flex-shrink: 0;
   margin-left: 10px;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .unit-switcher label {
-  font-size: 14px; /* Збільшуємо розмір шрифту перемикача одиниць */
+  font-size: 14px;
   font-weight: 500;
   margin: 0;
-  color: white;
+  color: #333;
   white-space: nowrap;
 }
 
-/* Toggle Switch Styles */
+/* Toggle Switch Styles - Liquid Glass Design */
 .toggle-switch {
   position: relative;
   display: inline-block;
@@ -81,7 +91,10 @@ header h1 {
 .toggle-label {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 14px;
   padding: 2px;
   cursor: pointer;
@@ -89,10 +102,18 @@ header h1 {
   position: relative;
   min-width: 60px;
   height: 20px;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .toggle-label:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .toggle-slider {
@@ -101,10 +122,12 @@ header h1 {
   left: 2px;
   width: 16px;
   height: 16px;
-  background: white;
+  background: rgba(255, 255, 255, 0.9);
   border-radius: 50%;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .toggle-switch input[type="checkbox"]:checked + .toggle-label .toggle-slider {
@@ -114,7 +137,7 @@ header h1 {
 .toggle-text {
   font-size: 10px;
   font-weight: 600;
-  color: white;
+  color: #333;
   transition: all 0.3s ease;
   z-index: 1;
 }
@@ -152,10 +175,10 @@ header h1 {
 .tab-button {
   flex: 1;
   padding: 12px 8px;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  color: #555;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  color: #333;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -163,17 +186,31 @@ header h1 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .tab-button:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
   color: #333;
+  transform: translateY(-1px);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .tab-button.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #333;
+  font-weight: 600;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* Контент табів */
@@ -217,19 +254,26 @@ header h1 {
   color: #555;
 }
 
-/* Панелі для кожної секції */
+/* Панелі для кожної секції - Liquid Glass Design */
 .panel {
-  margin-bottom: 20px; /* Збільшуємо відстань між панелями */
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  transition: all 0.3s ease-in-out;
+   margin-bottom: 20px;
+   background: rgba(255, 255, 255, 0.08);
+   backdrop-filter: blur(12px);
+   -webkit-backdrop-filter: blur(12px);
+   border-radius: 12px;
+   border: 1px solid rgba(255, 255, 255, 0.15);
+   transition: all 0.3s ease;
+   box-shadow: 
+     0 4px 12px rgba(0, 0, 0, 0.05),
+     0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .panel.collapsed {
-    background: transparent;
-    border-color: transparent;
-    box-shadow: none;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 
+      0 2px 8px rgba(0, 0, 0, 0.03),
+      0 1px 2px rgba(0, 0, 0, 0.01);
 }
 
 .panel-header {
@@ -349,7 +393,7 @@ header h1 {
          background: transparent;
          padding: 0 4px;
          margin: 0;
-         transition: all 0.2s ease-in-out;
+         transition: all 0.3s ease;
          pointer-events: none;
          z-index: 1;
        }
@@ -360,14 +404,25 @@ header h1 {
            top: -8px;
            left: 10px;
            font-size: 12px;
-           color: #1e3a8a;
-           background: rgba(255, 255, 255, 0.2);
+           color: #333;
+           background: rgba(255, 255, 255, 0.08);
+           backdrop-filter: blur(12px);
+           -webkit-backdrop-filter: blur(12px);
+           border: 1px solid rgba(255, 255, 255, 0.15);
+           border-radius: 6px;
            font-weight: 600;
+           box-shadow: 
+             0 2px 8px rgba(0, 0, 0, 0.05),
+             0 1px 2px rgba(0, 0, 0, 0.02);
          }
 
 .input-wrapper.floating-label input:focus {
-  border-color: #1e3a8a;
-  box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.05),
+    0 0 0 3px rgba(255, 255, 255, 0.1);
 }
 
 /* Floating Label для select елементів */
@@ -382,55 +437,78 @@ header h1 {
            top: -8px;
            left: 10px;
            font-size: 12px;
-           color: #1e3a8a;
-           background: rgba(255, 255, 255, 0.2);
+           color: #333;
+           background: rgba(255, 255, 255, 0.08);
+           backdrop-filter: blur(12px);
+           -webkit-backdrop-filter: blur(12px);
+           border: 1px solid rgba(255, 255, 255, 0.15);
+           border-radius: 6px;
            font-weight: 600;
+           box-shadow: 
+             0 2px 8px rgba(0, 0, 0, 0.05),
+             0 1px 2px rgba(0, 0, 0, 0.02);
          }
 
 .input-wrapper.floating-label select:focus {
-  border-color: #1e3a8a;
-  box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.05),
+    0 0 0 3px rgba(255, 255, 255, 0.1);
 }
 
-/* Стилі для полів вводу та випадаючих списків */
+/* Стилі для полів вводу та випадаючих списків - Liquid Glass Design */
 input[type="number"],
 select {
   width: 100%;
-  padding: 14px; /* Збільшуємо внутрішні відступи */
+  padding: 14px;
   box-sizing: border-box;
-  border: 1px solid rgba(204, 204, 204, 0.5);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   font-family: inherit;
-  font-size: 16px; /* Збільшуємо розмір шрифту в полях */
+  font-size: 16px;
   text-align: center;
-  transition: all 0.2s ease-in-out;
+  color: #333;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 input[type="number"]:focus,
 select:focus {
   outline: none;
-  border-color: rgba(0, 123, 255, 0.7);
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.05),
+    0 0 0 3px rgba(255, 255, 255, 0.1);
 }
 
-/* Кнопки */
+/* Кнопки - Liquid Glass Design */
 button {
   width: 100%;
-  padding: 16px; /* Збільшуємо внутрішні відступи кнопок */
-  border: none;
-  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
   font-family: inherit;
-  font-size: 16px; /* Збільшуємо розмір шрифту кнопок */
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-  color: white;
-  margin-top: 20px; /* Збільшуємо відстань від кнопки до попереднього елемента */
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #333;
+  margin-top: 20px;
   box-shadow: 
-    0 4px 12px rgba(30, 58, 138, 0.3),
-    0 2px 4px rgba(0, 0, 0, 0.1);
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.05);
   position: relative;
   overflow: hidden;
 }
@@ -442,7 +520,7 @@ button::before {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
   transition: left 0.5s;
 }
 
@@ -451,15 +529,20 @@ button:hover::before {
 }
 
 button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
   transform: translateY(-2px);
   box-shadow: 
-    0 8px 20px rgba(30, 58, 138, 0.4),
-    0 4px 8px rgba(0, 0, 0, 0.15);
+    0 8px 20px rgba(0, 0, 0, 0.15),
+    0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 button:active {
   transform: translateY(0);
-  box-shadow: none;
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 
@@ -499,28 +582,40 @@ button:active {
 
 .thickness-btn {
   flex: 1;
-  padding: 10px 6px; /* Збільшуємо внутрішні відступи */
-  border: 1px solid rgba(204, 204, 204, 0.5);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.5);
+  padding: 10px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   font-family: inherit;
-  font-size: 14px; /* Збільшуємо розмір шрифту */
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.3s ease;
   color: #333;
+  box-shadow: 
+    0 2px 6px rgba(0, 0, 0, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .thickness-btn:hover {
-  background: rgba(255, 255, 255, 0.8);
-  border-color: rgba(0, 123, 255, 0.5);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .thickness-btn.active {
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-  color: white;
-  border-color: #1e3a8a;
-  box-shadow: 0 2px 8px rgba(30, 58, 138, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #333;
+  font-weight: 600;
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* Стилі для кнопок шву */
@@ -532,28 +627,40 @@ button:active {
 
 .seam-btn {
   flex: 1;
-  padding: 10px 6px; /* Збільшуємо внутрішні відступи */
-  border: 1px solid rgba(204, 204, 204, 0.5);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.5);
+  padding: 10px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   font-family: inherit;
-  font-size: 14px; /* Збільшуємо розмір шрифту */
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.3s ease;
   color: #333;
+  box-shadow: 
+    0 2px 6px rgba(0, 0, 0, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .seam-btn:hover {
-  background: rgba(255, 255, 255, 0.8);
-  border-color: rgba(0, 123, 255, 0.5);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .seam-btn.active {
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-  color: white;
-  border-color: #1e3a8a;
-  box-shadow: 0 2px 8px rgba(30, 58, 138, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #333;
+  font-weight: 600;
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* Стилі для кнопок способу укладання */
@@ -566,27 +673,39 @@ button:active {
 
 .tiling-mode-btn {
   flex: 1;
-  padding: 12px 16px; /* Збільшуємо внутрішні відступи */
-  border: 2px solid #e0e0e0;
-  border-radius: 6px;
-  background: white;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   cursor: pointer;
-  font-size: 14px; /* Збільшуємо розмір шрифту */
+  font-size: 14px;
   font-weight: 500;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.3s ease;
   color: #333;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .tiling-mode-btn:hover {
-  background: rgba(255, 255, 255, 0.8);
-  border-color: rgba(0, 123, 255, 0.5);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .tiling-mode-btn.active {
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-  color: white;
-  border-color: #1e3a8a;
-  box-shadow: 0 2px 8px rgba(30, 58, 138, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #333;
+  font-weight: 600;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .tile-inputs {
@@ -678,14 +797,18 @@ button:active {
   padding: 10px;
 }
 
-/* Таблиця підсумку */
+/* Таблиця підсумку - Liquid Glass Design */
 .summary-card {
-    padding: 20px; /* Збільшуємо внутрішні відступи */
-    background-color: rgba(255, 255, 255, 0.25);
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    margin-top: 25px; /* Збільшуємо відстань зверху */
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    margin-top: 25px;
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.1),
+        0 2px 4px rgba(0, 0, 0, 0.05);
 }
 .summary-card h2 {
     font-size: 18px; /* Збільшуємо розмір заголовка */
@@ -718,23 +841,25 @@ button:active {
   color: #333;
 }
 
-/* Кнопка оновлення в стилі попереднього варіанту */
+/* Кнопка оновлення - Liquid Glass Design */
 .refresh-button {
   width: 100%;
-  padding: 16px; /* Збільшуємо внутрішні відступи */
-  border: none;
-  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
   font-family: inherit;
-  font-size: 16px; /* Збільшуємо розмір шрифту */
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-  color: white;
-  margin-top: 20px; /* Збільшуємо відстань зверху */
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #333;
+  margin-top: 20px;
   box-shadow: 
-    0 4px 12px rgba(30, 58, 138, 0.3),
-    0 2px 4px rgba(0, 0, 0, 0.1);
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.05);
   position: relative;
   overflow: hidden;
 }
@@ -746,7 +871,7 @@ button:active {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
   transition: left 0.5s;
 }
 
@@ -755,15 +880,20 @@ button:active {
 }
 
 .refresh-button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
   transform: translateY(-2px);
   box-shadow: 
-    0 8px 20px rgba(30, 58, 138, 0.4),
-    0 4px 8px rgba(0, 0, 0, 0.15);
+    0 8px 20px rgba(0, 0, 0, 0.15),
+    0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .refresh-button:active {
   transform: translateY(0);
-  box-shadow: none;
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* Стилі для тестової вкладки */
