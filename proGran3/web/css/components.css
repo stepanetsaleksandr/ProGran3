@@ -131,6 +131,7 @@ header h1 {
 /* Buttons */
 button {
   width: 100%;
+  height: 48px; /* Фіксована висота для всіх кнопок */
   padding: var(--spacing-lg);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
@@ -143,10 +144,14 @@ button {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   color: var(--text-color);
-  margin-top: var(--spacing-xl);
   box-shadow: var(--shadow-medium);
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap; /* Заборона переносу тексту */
+  min-width: fit-content; /* Мінімальна ширина по тексту */
 }
 
 button::before {
@@ -180,28 +185,27 @@ button:active {
 /* Button Groups */
 .button-group {
   display: flex;
-  gap: 15px;
-  margin-top: var(--spacing-xl);
+  gap: var(--spacing-lg);
 }
 
 .button-group button {
   flex: 1;
+  height: 48px; /* Однакова висота з основними кнопками */
   font-size: var(--font-sm);
   padding: var(--spacing-sm) var(--spacing-md);
+  white-space: nowrap;
+  min-width: 0; /* Дозволяє flex зменшувати ширину */
 }
 
 .button-group-thickness,
 .button-group-seam {
   display: flex;
   gap: var(--spacing-sm);
-  margin-bottom: 10px;
 }
 
 .button-group-tiling-mode {
   display: flex;
   gap: var(--spacing-md);
-  margin-top: 15px;
-  margin-bottom: 15px;
 }
 
 /* Button Variants */
@@ -209,7 +213,8 @@ button:active {
 .seam-btn,
 .tiling-mode-btn {
   flex: 1;
-  padding: 10px 6px;
+  height: 48px; /* Однакова висота з основними кнопками */
+  padding: var(--spacing-sm) var(--spacing-md);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
   background: var(--glass-bg);
@@ -222,6 +227,11 @@ button:active {
   transition: all 0.3s ease;
   color: var(--text-color);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  min-width: 0; /* Дозволяє flex зменшувати ширину */
 }
 
 .thickness-btn:hover,
@@ -248,7 +258,23 @@ button:active {
 }
 
 /* Input Fields */
-input[type="number"],
+input[type="number"] {
+  width: 125px;
+  padding: 14px;
+  box-sizing: border-box;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-family: inherit;
+  font-size: var(--font-md);
+  text-align: center;
+  color: var(--text-color);
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-light);
+}
+
 select {
   width: 100%;
   padding: 14px;
@@ -266,6 +292,17 @@ select {
   box-shadow: var(--shadow-light);
 }
 
+/* Remove spinner buttons from number inputs */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
 input[type="number"]:focus,
 select:focus {
   outline: none;
@@ -276,25 +313,30 @@ select:focus {
 
 /* Input Wrapper */
 .input-wrapper {
-  flex-grow: 1;
-  width: 100%;
   display: flex;
   flex-direction: column;
-  position: relative;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
 }
 
 .input-wrapper label {
   display: block;
   font-size: var(--font-base);
   color: var(--text-secondary);
-  margin-bottom: var(--spacing-sm);
-  text-align: left;
+  margin-bottom: var(--spacing-md);
+  text-align: center;
   font-weight: 500;
+  white-space: nowrap;
 }
 
-.input-wrapper label.label-left {
+.input-wrapper label.label-left,
+label.label-left {
   text-align: left;
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  display: block;
+  font-size: var(--font-base);
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 /* Floating Labels */
@@ -311,7 +353,8 @@ select:focus {
 .input-wrapper.floating-label label {
   position: absolute;
   top: 12px;
-  left: 14px;
+  left: 50%;
+  transform: translateX(-50%);
   font-size: var(--font-md);
   color: var(--text-muted);
   background: transparent;
@@ -320,6 +363,8 @@ select:focus {
   transition: all 0.3s ease;
   pointer-events: none;
   z-index: 1;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .input-wrapper.floating-label input:focus + label,
@@ -329,7 +374,8 @@ select:focus {
 .input-wrapper.floating-label select:not([value=""]) + label,
 .input-wrapper.floating-label select.has-value + label {
   top: -8px;
-  left: 10px;
+  left: 50%;
+  transform: translateX(-50%);
   font-size: var(--font-sm);
   color: var(--text-color);
   background: var(--glass-bg);
@@ -430,7 +476,13 @@ select:focus {
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15), 0 2px 4px rgba(102, 126, 234, 0.1);
 }
 
-.dark input[type="number"],
+.dark input[type="number"] {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  color: var(--text-color);
+  box-shadow: var(--shadow-light);
+}
+
 .dark select {
   background: var(--glass-bg);
   border-color: var(--glass-border);

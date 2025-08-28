@@ -1004,8 +1004,26 @@ function updateTilingControls() {
   }
 }
 
+function selectBlindAreaMode(button) {
+  // Видаляємо активний клас з усіх кнопок режиму ширини
+  document.querySelectorAll('.button-group-tiling-mode .tiling-mode-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // Додаємо активний клас до натиснутої кнопки
+  button.classList.add('active');
+  
+  // Оновлюємо контроли
+  updateBlindAreaControls();
+}
+
+function getSelectedBlindAreaMode() {
+  const activeButton = document.querySelector('.button-group-tiling-mode .tiling-mode-btn.active');
+  return activeButton ? activeButton.dataset.value : 'uniform';
+}
+
 function updateBlindAreaControls() {
-  const mode = document.getElementById('blind-area-mode').value;
+  const mode = getSelectedBlindAreaMode();
   const uniformControls = document.getElementById('uniform-controls');
   const customControls = document.getElementById('custom-controls');
   
@@ -1022,7 +1040,7 @@ function updateBlindAreaControls() {
 
 function addBlindArea() {
   const thickness = convertToMm(document.getElementById('blind-area-thickness').value);
-  const mode = document.getElementById('blind-area-mode').value;
+  const mode = getSelectedBlindAreaMode();
   
   if (mode === 'uniform') {
     const width = convertToMm(document.getElementById('blind-area-uniform-width').value);
@@ -1072,7 +1090,7 @@ function updateAllDisplays() {
   
   // Оновлення відображення розмірів відмостки
   const blindAreaThickness = document.getElementById('blind-area-thickness').value;
-  const blindAreaMode = document.getElementById('blind-area-mode').value;
+  const blindAreaMode = getSelectedBlindAreaMode();
   
   if (blindAreaMode === 'uniform') {
     const uniformWidth = document.getElementById('blind-area-uniform-width').value;
