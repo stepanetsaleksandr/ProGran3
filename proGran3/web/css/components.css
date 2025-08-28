@@ -1,0 +1,466 @@
+/* ========== COMPONENTS ========== */
+
+/* Header */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+  padding: 10px 15px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  color: var(--text-color);
+  box-shadow: var(--shadow-medium);
+  position: relative;
+  min-height: 50px;
+}
+
+header h1 {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-color);
+  flex-shrink: 0;
+}
+
+/* Unit Switcher */
+.unit-switcher {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  margin-left: 10px;
+  box-shadow: var(--shadow-light);
+}
+
+.unit-switcher label {
+  font-size: var(--font-base);
+  font-weight: 500;
+  margin: 0;
+  color: var(--text-color);
+  white-space: nowrap;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+}
+
+.toggle-switch input[type="checkbox"] {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 2px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  min-width: 60px;
+  height: 20px;
+  box-shadow: var(--shadow-light);
+}
+
+.toggle-label:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-medium);
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.toggle-switch input[type="checkbox"]:checked + .toggle-label .toggle-slider {
+  transform: translateX(40px);
+}
+
+.toggle-text {
+  font-size: var(--font-xs);
+  font-weight: 600;
+  color: var(--text-color);
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+.toggle-text:first-child {
+  margin-right: 30px;
+  margin-left: 4px;
+}
+
+.toggle-text:last-child {
+  margin-left: 30px;
+  margin-right: 4px;
+}
+
+.toggle-switch input[type="checkbox"]:checked + .toggle-label .toggle-text:first-child {
+  opacity: 0.5;
+}
+
+.toggle-switch input[type="checkbox"]:not(:checked) + .toggle-label .toggle-text:last-child {
+  opacity: 0.5;
+}
+
+/* Buttons */
+button {
+  width: 100%;
+  padding: var(--spacing-lg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: var(--font-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--text-color);
+  margin-top: var(--spacing-xl);
+  box-shadow: var(--shadow-medium);
+  position: relative;
+  overflow: hidden;
+}
+
+button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+button:hover::before {
+  left: 100%;
+}
+
+button:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-heavy);
+}
+
+button:active {
+  transform: translateY(0);
+  background: var(--glass-bg-active);
+  box-shadow: var(--shadow-light);
+}
+
+/* Button Groups */
+.button-group {
+  display: flex;
+  gap: 15px;
+  margin-top: var(--spacing-xl);
+}
+
+.button-group button {
+  flex: 1;
+  font-size: var(--font-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.button-group-thickness,
+.button-group-seam {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: 10px;
+}
+
+.button-group-tiling-mode {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+/* Button Variants */
+.thickness-btn,
+.seam-btn,
+.tiling-mode-btn {
+  flex: 1;
+  padding: 10px 6px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-family: inherit;
+  font-size: var(--font-base);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--text-color);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.thickness-btn:hover,
+.seam-btn:hover,
+.tiling-mode-btn:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.thickness-btn.active,
+.seam-btn.active,
+.tiling-mode-btn.active {
+  background: var(--glass-bg-active);
+  border-color: var(--glass-border-active);
+  color: var(--text-color);
+  font-weight: 600;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.tiling-mode-btn {
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+/* Input Fields */
+input[type="number"],
+select {
+  width: 100%;
+  padding: 14px;
+  box-sizing: border-box;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-family: inherit;
+  font-size: var(--font-md);
+  text-align: center;
+  color: var(--text-color);
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-light);
+}
+
+input[type="number"]:focus,
+select:focus {
+  outline: none;
+  border-color: var(--glass-border-active);
+  background: var(--glass-bg-hover);
+  box-shadow: var(--shadow-medium), 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+/* Input Wrapper */
+.input-wrapper {
+  flex-grow: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.input-wrapper label {
+  display: block;
+  font-size: var(--font-base);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+  text-align: left;
+  font-weight: 500;
+}
+
+.input-wrapper label.label-left {
+  text-align: left;
+  margin-bottom: var(--spacing-sm);
+}
+
+/* Floating Labels */
+.input-wrapper.floating-label {
+  position: relative;
+}
+
+.input-wrapper.floating-label input,
+.input-wrapper.floating-label select {
+  padding-top: 12px;
+  padding-bottom: 8px;
+}
+
+.input-wrapper.floating-label label {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  font-size: var(--font-md);
+  color: var(--text-muted);
+  background: transparent;
+  padding: 0 4px;
+  margin: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.input-wrapper.floating-label input:focus + label,
+.input-wrapper.floating-label input:not(:placeholder-shown) + label,
+.input-wrapper.floating-label input.has-value + label,
+.input-wrapper.floating-label select:focus + label,
+.input-wrapper.floating-label select:not([value=""]) + label,
+.input-wrapper.floating-label select.has-value + label {
+  top: -8px;
+  left: 10px;
+  font-size: var(--font-sm);
+  color: var(--text-color);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  font-weight: 600;
+  box-shadow: var(--shadow-light);
+}
+
+/* Utility Classes */
+.hidden {
+  display: none !important;
+}
+
+/* Dark theme overrides */
+.dark header {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  color: var(--text-color);
+  box-shadow: var(--shadow-medium);
+}
+
+.dark header:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--shadow-heavy);
+}
+
+.dark header h1 {
+  color: var(--text-color);
+}
+
+.dark .unit-switcher {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  color: var(--text-color);
+  box-shadow: var(--shadow-light);
+}
+
+.dark .unit-switcher label {
+  color: var(--text-color);
+}
+
+.dark .toggle-label {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  box-shadow: var(--shadow-light);
+}
+
+.dark .toggle-label:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--shadow-medium);
+}
+
+.dark .toggle-text {
+  color: var(--text-color);
+}
+
+.dark button {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  color: var(--text-color);
+  box-shadow: var(--shadow-light);
+}
+
+.dark button:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--shadow-medium);
+}
+
+.dark .thickness-btn,
+.dark .seam-btn,
+.dark .tiling-mode-btn {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  color: var(--text-color);
+  box-shadow: var(--shadow-light);
+}
+
+.dark .thickness-btn:hover,
+.dark .seam-btn:hover,
+.dark .tiling-mode-btn:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--shadow-medium);
+}
+
+.dark .thickness-btn.active,
+.dark .seam-btn.active,
+.dark .tiling-mode-btn.active {
+  background: rgba(102, 126, 234, 0.2);
+  border-color: rgba(102, 126, 234, 0.3);
+  color: var(--text-color);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15), 0 2px 4px rgba(102, 126, 234, 0.1);
+}
+
+.dark input[type="number"],
+.dark select {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  color: var(--text-color);
+  box-shadow: var(--shadow-light);
+}
+
+.dark input[type="number"]:focus,
+.dark select:focus {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-active);
+  box-shadow: var(--shadow-medium);
+}
+
+.dark input[type="number"]::placeholder,
+.dark select::placeholder {
+  color: var(--text-muted);
+}
+
+.dark .input-wrapper.floating-label label {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  color: var(--text-color);
+  box-shadow: var(--shadow-light);
+}
+
+.dark .input-wrapper.floating-label input:focus + label,
+.dark .input-wrapper.floating-label select:focus + label {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-active);
+  color: var(--text-color);
+  box-shadow: var(--shadow-medium);
+}
