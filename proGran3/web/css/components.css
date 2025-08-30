@@ -8,14 +8,27 @@ header {
   margin-bottom: var(--spacing-xl);
   padding: 10px 15px;
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   color: var(--text-color);
   box-shadow: var(--shadow-medium);
   position: relative;
   min-height: 50px;
+  overflow: hidden;
+}
+
+header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 header h1 {
@@ -32,14 +45,28 @@ header h1 {
   align-items: center;
   gap: 6px;
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   border: 1px solid var(--glass-border);
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-sm);
   flex-shrink: 0;
   margin-left: 10px;
   box-shadow: var(--shadow-light);
+  position: relative;
+  overflow: hidden;
+}
+
+.unit-switcher::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .unit-switcher label {
@@ -66,8 +93,8 @@ header h1 {
   display: flex;
   align-items: center;
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   border: 1px solid var(--glass-border);
   border-radius: 14px;
   padding: 2px;
@@ -77,6 +104,19 @@ header h1 {
   min-width: 60px;
   height: 20px;
   box-shadow: var(--shadow-light);
+  overflow: hidden;
+}
+
+.toggle-label::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .toggle-label:hover {
@@ -141,8 +181,8 @@ button {
   cursor: pointer;
   transition: all 0.3s ease;
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   color: var(--text-color);
   box-shadow: var(--shadow-medium);
   position: relative;
@@ -218,8 +258,8 @@ button:active {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   font-family: inherit;
   font-size: var(--font-base);
   font-weight: 500;
@@ -232,6 +272,22 @@ button:active {
   justify-content: center;
   white-space: nowrap;
   min-width: 0; /* Дозволяє flex зменшувати ширину */
+  position: relative;
+  overflow: hidden;
+}
+
+.thickness-btn::before,
+.seam-btn::before,
+.tiling-mode-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .thickness-btn:hover,
@@ -265,14 +321,28 @@ input[type="number"] {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   font-family: inherit;
   font-size: var(--font-md);
   text-align: center;
   color: var(--text-color);
   transition: all 0.3s ease;
   box-shadow: var(--shadow-light);
+  position: relative;
+  overflow: hidden;
+}
+
+input[type="number"]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 select {
@@ -282,14 +352,28 @@ select {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   font-family: inherit;
   font-size: var(--font-md);
   text-align: center;
   color: var(--text-color);
   transition: all 0.3s ease;
   box-shadow: var(--shadow-light);
+  position: relative;
+  overflow: hidden;
+}
+
+select::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 /* Remove spinner buttons from number inputs */

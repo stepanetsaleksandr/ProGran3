@@ -8,18 +8,18 @@
   --text-secondary: #555;
   --text-muted: #666;
   
-  /* Glass effects */
-  --glass-bg: rgba(255, 255, 255, 0.08);
-  --glass-bg-hover: rgba(255, 255, 255, 0.12);
-  --glass-bg-active: rgba(255, 255, 255, 0.15);
-  --glass-border: rgba(255, 255, 255, 0.15);
-  --glass-border-hover: rgba(255, 255, 255, 0.25);
-  --glass-border-active: rgba(255, 255, 255, 0.3);
+  /* Glass effects - Покращений скляний ефект */
+  --glass-bg: rgba(255, 255, 255, 0.12);
+  --glass-bg-hover: rgba(255, 255, 255, 0.18);
+  --glass-bg-active: rgba(255, 255, 255, 0.25);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-border-hover: rgba(255, 255, 255, 0.3);
+  --glass-border-active: rgba(255, 255, 255, 0.4);
   
-  /* Shadows */
-  --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02);
-  --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.05);
-  --shadow-heavy: 0 8px 20px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
+  /* Shadows - Покращені тіні для скляного ефекту */
+  --shadow-light: 0 2px 12px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+  --shadow-medium: 0 4px 20px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-heavy: 0 8px 32px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.12);
   
   /* Spacing */
   --spacing-xs: 4px;
@@ -63,10 +63,26 @@ body {
   margin: 0;
   padding: var(--spacing-xl);
   font-family: 'Manrope', 'Comfortaa', sans-serif;
-  background: var(--primary-bg);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: var(--text-color);
   min-height: calc(100vh - 40px);
   font-size: var(--font-md);
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 /* Main glass container */
@@ -74,12 +90,26 @@ body {
   max-width: 500px;
   margin: auto;
   padding: 15px var(--spacing-xl);
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-xl);
-  box-shadow: 0 10px 35px 0 rgba(31, 38, 135, 0.25);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 15px 45px 0 rgba(31, 38, 135, 0.3), 0 8px 25px 0 rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .dark .glass-container {

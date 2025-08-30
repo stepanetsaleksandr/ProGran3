@@ -3,13 +3,15 @@
 /* Tab Navigation */
 .tabs-navigation {
   display: flex;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   padding: 2px;
   margin-bottom: var(--spacing-xl);
   gap: 1px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .tab-button {
@@ -26,9 +28,23 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   box-shadow: var(--shadow-light);
+  position: relative;
+}
+
+.tab-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border-radius: var(--radius-md);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .tab-button:hover {
@@ -92,12 +108,26 @@
 .panel {
    margin-bottom: var(--spacing-xl);
    background: var(--glass-bg);
-   backdrop-filter: blur(12px);
-   -webkit-backdrop-filter: blur(12px);
+   backdrop-filter: blur(20px);
+   -webkit-backdrop-filter: blur(20px);
    border-radius: var(--radius-md);
    border: 1px solid var(--glass-border);
    transition: all 0.3s ease;
    box-shadow: var(--shadow-light);
+   position: relative;
+   overflow: hidden;
+ }
+
+.panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .panel.collapsed {
@@ -255,8 +285,8 @@
   cursor: pointer;
   transition: all 0.3s ease;
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   color: var(--text-color);
   box-shadow: var(--shadow-medium);
   position: relative;
