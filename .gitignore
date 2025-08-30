@@ -74,3 +74,4 @@ test_output/
 # Превью зображення (автогенеровані)
 proGran3/previews/
 node_modules
+proGran3/web/node_modules
