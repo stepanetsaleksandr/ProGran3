@@ -138,8 +138,16 @@ header h1 {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
+.toggle-switch input[type="checkbox"]:checked + .toggle-label {
+  background: rgba(74, 144, 226, 0.25);
+  border-color: rgba(74, 144, 226, 0.4);
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+}
+
 .toggle-switch input[type="checkbox"]:checked + .toggle-label .toggle-slider {
   transform: translateX(40px);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 6px rgba(74, 144, 226, 0.4);
 }
 
 .toggle-text {
@@ -210,16 +218,16 @@ button:hover::before {
 }
 
 button:hover {
-  background: var(--glass-bg-hover);
-  border-color: var(--glass-border-hover);
+  background: rgba(74, 144, 226, 0.15);
+  border-color: rgba(74, 144, 226, 0.3);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-heavy);
+  box-shadow: 0 6px 20px rgba(74, 144, 226, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 button:active {
   transform: translateY(0);
-  background: var(--glass-bg-active);
-  box-shadow: var(--shadow-light);
+  background: rgba(74, 144, 226, 0.2);
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
 }
 
 /* Button Groups */
@@ -293,20 +301,21 @@ button:active {
 .thickness-btn:hover,
 .seam-btn:hover,
 .tiling-mode-btn:hover {
-  background: var(--glass-bg-hover);
-  border-color: var(--glass-border-hover);
+  background: rgba(74, 144, 226, 0.15);
+  border-color: rgba(74, 144, 226, 0.3);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2), 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .thickness-btn.active,
 .seam-btn.active,
 .tiling-mode-btn.active {
-  background: var(--glass-bg-active);
-  border-color: var(--glass-border-active);
-  color: var(--text-color);
+  background: rgba(74, 144, 226, 0.25);
+  border-color: rgba(74, 144, 226, 0.4);
+  color: #ffffff;
   font-weight: 600;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3), 0 2px 6px rgba(74, 144, 226, 0.2);
+  transform: translateY(-1px);
 }
 
 .tiling-mode-btn {
@@ -390,9 +399,9 @@ input[type="number"] {
 input[type="number"]:focus,
 select:focus {
   outline: none;
-  border-color: var(--glass-border-active);
-  background: var(--glass-bg-hover);
-  box-shadow: var(--shadow-medium), 0 0 0 3px rgba(255, 255, 255, 0.1);
+  border-color: rgba(74, 144, 226, 0.5);
+  background: rgba(74, 144, 226, 0.1);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2), 0 0 0 3px rgba(74, 144, 226, 0.2);
 }
 
 /* Input Wrapper */
@@ -767,11 +776,12 @@ label.label-left {
 }
 
 .thickness-btn.active {
-  background: var(--glass-bg-active);
-  border-color: var(--glass-border-active);
-  color: var(--text-color);
+  background: rgba(74, 144, 226, 0.25);
+  border-color: rgba(74, 144, 226, 0.4);
+  color: #ffffff;
   font-weight: 600;
-  box-shadow: var(--shadow-medium);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3), 0 2px 6px rgba(74, 144, 226, 0.2);
+  transform: translateY(-1px);
 }
 
 /* Кнопки швів */
@@ -807,11 +817,12 @@ label.label-left {
 }
 
 .seam-btn.active {
-  background: var(--glass-bg-active);
-  border-color: var(--glass-border-active);
-  color: var(--text-color);
+  background: rgba(74, 144, 226, 0.25);
+  border-color: rgba(74, 144, 226, 0.4);
+  color: #ffffff;
   font-weight: 600;
-  box-shadow: var(--shadow-medium);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3), 0 2px 6px rgba(74, 144, 226, 0.2);
+  transform: translateY(-1px);
 }
 
 /* Покращення для input-wrapper з кнопками */

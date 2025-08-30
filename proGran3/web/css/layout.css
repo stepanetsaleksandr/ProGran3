@@ -56,11 +56,12 @@
 }
 
 .tab-button.active {
-  background: var(--glass-bg-active);
-  border-color: var(--glass-border-active);
-  color: var(--text-color);
+  background: rgba(74, 144, 226, 0.25);
+  border-color: rgba(74, 144, 226, 0.4);
+  color: #ffffff;
   font-weight: 600;
-  box-shadow: var(--shadow-medium);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3), 0 2px 6px rgba(74, 144, 226, 0.2);
+  transform: translateY(-1px);
 }
 
 /* Tab Content */
