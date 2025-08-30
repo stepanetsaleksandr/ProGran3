@@ -13,14 +13,14 @@
     <header onclick="toggleTheme()" style="cursor: pointer;">
       <h1>ProGran</h1>
       <div class="unit-switcher">
-        <label>Одиниці:</label>
-        <div class="toggle-switch">
-          <input type="checkbox" id="unit-toggle" onchange="changeUnit(this.checked ? 'cm' : 'mm')">
-          <label for="unit-toggle" class="toggle-label">
-            <span class="toggle-text">мм</span>
-            <span class="toggle-slider"></span>
-            <span class="toggle-text">см</span>
-          </label>
+        <label>Одиниці</label>
+        <div class="unit-toggle" onclick="event.stopPropagation()">
+          <button type="button" class="unit-btn active" data-unit="mm" onclick="event.stopPropagation(); changeUnit('mm'); console.log('Клік мм');">
+            мм
+          </button>
+          <button type="button" class="unit-btn" data-unit="cm" onclick="event.stopPropagation(); changeUnit('cm'); console.log('Клік см');">
+            см
+          </button>
         </div>
       </div>
     </header>

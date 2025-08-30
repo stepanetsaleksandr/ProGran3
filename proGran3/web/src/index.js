@@ -4,16 +4,19 @@
 // Імпорт модулів
 import { Logger, debugLog, clearDebugLog } from './modules/utils/Logger.js';
 import { 
-  changeUnit, 
-  getCurrentUnit, 
-  updateUnitLabels, 
+    changeUnit,
+  getCurrentUnit,
+  updateUnitLabels,
+  initializeUnits, 
   updateThicknessButtons, 
   updateSeamButtons,
   formatValue,
   convertToMm,
   getAllInputValues,
   convertAllValues,
-  convertValue
+  convertValue,
+  initializeUnits,
+  updateUnitToggleButtons
 } from './modules/utils/Units.js';
 import { 
   switchTab, 
@@ -151,6 +154,7 @@ window.addedElements = addedElements;
 window.debugLog = debugLog;
 window.clearDebugLog = clearDebugLog;
 window.changeUnit = changeUnit;
+window.updateUnitToggleButtons = updateUnitToggleButtons;
 window.getCurrentUnit = getCurrentUnit;
 window.updateUnitLabels = updateUnitLabels;
 window.updateThicknessButtons = updateThicknessButtons;
@@ -356,5 +360,7 @@ export {
   modelLists,
   carouselState,
   activeTab,
-  addedElements
+  addedElements,
+  initializeUnits,
+  updateUnitToggleButtons
 };

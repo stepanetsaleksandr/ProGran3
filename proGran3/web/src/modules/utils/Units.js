@@ -6,6 +6,18 @@ import { Logger } from './Logger.js';
 export class UnitsManager {
   constructor() {
     this.currentUnit = 'mm';
+    this.initialized = false;
+  }
+
+  // Ініціалізація перемикача одиниць
+  initialize() {
+    if (this.initialized) return;
+    
+    // Встановлюємо початковий стан кнопок
+    this.updateUnitToggleButtons();
+    
+    this.initialized = true;
+    Logger.debug('✅ Перемикач одиниць ініціалізовано', 'success');
   }
 
   // Зміна одиниць вимірювання
@@ -14,6 +26,11 @@ export class UnitsManager {
     
     const oldUnit = this.currentUnit;
     this.currentUnit = newUnit;
+    
+    Logger.debug(`📝 Поточна одиниця встановлена: ${this.currentUnit}`, 'info');
+    
+    // Оновлюємо стан кнопок перемикача
+    this.updateUnitToggleButtons();
     
     // Отримуємо всі поточні значення
     const oldValues = this.getAllInputValues();
@@ -37,6 +54,31 @@ export class UnitsManager {
     }
     
     Logger.debug(`✅ Одиниці змінено на ${newUnit}`, 'success');
+  }
+
+  // Оновлення стану кнопок перемикача одиниць
+  updateUnitToggleButtons() {
+    const mmBtn = document.querySelector('.unit-btn[data-unit="mm"]');
+    const cmBtn = document.querySelector('.unit-btn[data-unit="cm"]');
+    
+    Logger.debug(`🔍 Пошук кнопок: mmBtn=${!!mmBtn}, cmBtn=${!!cmBtn}`, 'info');
+    
+    if (mmBtn && cmBtn) {
+      // Видаляємо активний клас з обох кнопок
+      mmBtn.classList.remove('active');
+      cmBtn.classList.remove('active');
+      
+      // Додаємо активний клас до поточної одиниці
+      if (this.currentUnit === 'mm') {
+        mmBtn.classList.add('active');
+        Logger.debug('✅ Активна кнопка мм', 'success');
+      } else {
+        cmBtn.classList.add('active');
+        Logger.debug('✅ Активна кнопка см', 'success');
+      }
+    } else {
+      Logger.debug('❌ Кнопки не знайдено', 'error');
+    }
   }
 
   // Отримання всіх значень з input полів
@@ -210,6 +252,14 @@ const unitsManager = new UnitsManager();
 // Експорт глобальних функцій для зворотної сумісності
 export function changeUnit(newUnit) {
   unitsManager.changeUnit(newUnit);
+}
+
+export function initializeUnits() {
+  unitsManager.initialize();
+}
+
+export function updateUnitToggleButtons() {
+  unitsManager.updateUnitToggleButtons();
 }
 
 export function getCurrentUnit() {

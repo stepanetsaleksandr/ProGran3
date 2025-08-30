@@ -42,19 +42,21 @@ header h1 {
 /* Unit Switcher */
 .unit-switcher {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: var(--spacing-sm);
   background: var(--glass-bg);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-md);
   flex-shrink: 0;
   margin-left: 10px;
-  box-shadow: var(--shadow-light);
+  box-shadow: var(--shadow-medium);
   position: relative;
   overflow: hidden;
+  min-width: 80px;
 }
 
 .unit-switcher::before {
@@ -64,50 +66,44 @@ header h1 {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
   pointer-events: none;
   z-index: -1;
 }
 
 .unit-switcher label {
-  font-size: var(--font-base);
-  font-weight: 500;
+  font-size: var(--font-sm);
+  font-weight: 600;
   margin: 0;
-  color: var(--text-color);
+  color: var(--text-secondary);
   white-space: nowrap;
+  text-align: center;
 }
 
-/* Toggle Switch */
-.toggle-switch {
-  position: relative;
-  display: inline-block;
+.unit-switcher:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-heavy);
 }
 
-.toggle-switch input[type="checkbox"] {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-label {
+/* Unit Toggle */
+.unit-toggle {
   display: flex;
-  align-items: center;
   background: var(--glass-bg);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 14px;
-  padding: 2px;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  border-radius: 18px;
+  padding: 3px;
   position: relative;
-  min-width: 60px;
-  height: 20px;
-  box-shadow: var(--shadow-light);
   overflow: hidden;
+  min-width: 70px;
+  height: 26px;
+  box-shadow: var(--shadow-medium);
 }
 
-.toggle-label::before {
+.unit-toggle::before {
   content: '';
   position: absolute;
   top: 0;
@@ -119,61 +115,40 @@ header h1 {
   z-index: -1;
 }
 
-.toggle-label:hover {
-  background: var(--glass-bg-hover);
-  border-color: var(--glass-border-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-medium);
-}
-
-.toggle-slider {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.toggle-switch input[type="checkbox"]:checked + .toggle-label {
-  background: rgba(74, 144, 226, 0.25);
-  border-color: rgba(74, 144, 226, 0.4);
-  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
-}
-
-.toggle-switch input[type="checkbox"]:checked + .toggle-label .toggle-slider {
-  transform: translateX(40px);
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 2px 6px rgba(74, 144, 226, 0.4);
-}
-
-.toggle-text {
-  font-size: var(--font-xs);
+.unit-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-radius: 14px;
+  font-size: var(--font-sm);
   font-weight: 600;
   color: var(--text-color);
+  cursor: pointer;
   transition: all 0.3s ease;
+  position: relative;
   z-index: 1;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.toggle-text:first-child {
-  margin-right: 30px;
-  margin-left: 4px;
+.unit-btn.active {
+  background: rgba(74, 144, 226, 0.25);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(74, 144, 226, 0.3);
 }
 
-.toggle-text:last-child {
-  margin-left: 30px;
-  margin-right: 4px;
+.unit-btn:hover:not(.active) {
+  background: rgba(74, 144, 226, 0.1);
+  color: var(--text-color);
 }
 
-.toggle-switch input[type="checkbox"]:checked + .toggle-label .toggle-text:first-child {
-  opacity: 0.5;
-}
-
-.toggle-switch input[type="checkbox"]:not(:checked) + .toggle-label .toggle-text:last-child {
-  opacity: 0.5;
+.unit-btn:active {
+  transform: scale(0.95);
 }
 
 /* Buttons */
@@ -510,23 +485,34 @@ label.label-left {
   box-shadow: var(--shadow-light);
 }
 
-.dark .unit-switcher label {
-  color: var(--text-color);
-}
-
-.dark .toggle-label {
-  background: var(--glass-bg);
-  border-color: var(--glass-border);
-  box-shadow: var(--shadow-light);
-}
-
-.dark .toggle-label:hover {
+.dark .unit-switcher:hover {
   background: var(--glass-bg-hover);
   border-color: var(--glass-border-hover);
   box-shadow: var(--shadow-medium);
 }
 
-.dark .toggle-text {
+.dark .unit-switcher label {
+  color: var(--text-color);
+}
+
+.dark .unit-toggle {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  box-shadow: var(--shadow-light);
+}
+
+.dark .unit-btn {
+  color: var(--text-color);
+}
+
+.dark .unit-btn.active {
+  background: rgba(74, 144, 226, 0.2);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(74, 144, 226, 0.25);
+}
+
+.dark .unit-btn:hover:not(.active) {
+  background: rgba(74, 144, 226, 0.1);
   color: var(--text-color);
 }
 

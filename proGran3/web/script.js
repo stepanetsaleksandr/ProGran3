@@ -1781,4 +1781,9 @@ function initializeTheme() {
 // Ініціалізація теми при завантаженні
 document.addEventListener('DOMContentLoaded', function() {
   initializeTheme();
+  
+  // Ініціалізація перемикача одиниць
+  if (window.initializeUnits) {
+    window.initializeUnits();
+  }
 });
