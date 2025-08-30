@@ -208,45 +208,9 @@
   transform: rotate(-135deg);
 }
 
-/* Input Rows - застарілі стилі, використовуємо нові в кінці файлу */
 
-.tile-inputs {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: var(--spacing-xl);
-}
-
-#modular-controls .input-wrapper {
-    flex: 1;
-}
 
 /* Summary Table */
-.summary-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--font-md);
-}
-
-.summary-table td {
-  padding: var(--spacing-md) var(--spacing-sm);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.summary-table tr:last-child td {
-  border-bottom: none;
-}
-
-.summary-table td:first-child {
-  font-weight: 600;
-  color: #2c3e50;
-  text-align: left;
-}
-
-.summary-table td:last-child {
-  text-align: right;
-  color: var(--text-color);
-}
-
 .summary-table {
   width: 100%;
   border-collapse: collapse;

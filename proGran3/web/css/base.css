@@ -43,20 +43,7 @@
   --font-lg: 18px;
 }
 
-/* Dark theme variables */
-.dark {
-  --primary-bg: #f8f9fa;
-  --text-color: #333;
-  --text-secondary: #666;
-  --text-muted: #666;
-  
-  --glass-bg: rgba(255, 255, 255, 0.8);
-  --glass-bg-hover: rgba(255, 255, 255, 0.9);
-  --glass-bg-active: rgba(255, 255, 255, 0.95);
-  --glass-border: rgba(0, 0, 0, 0.1);
-  --glass-border-hover: rgba(0, 0, 0, 0.15);
-  --glass-border-active: rgba(0, 0, 0, 0.2);
-}
+
 
 /* Base body styles */
 body {
