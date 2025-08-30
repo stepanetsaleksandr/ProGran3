@@ -13,14 +13,12 @@
     <header>
       <h1 onclick="toggleTheme()" style="cursor: pointer;">ProGran</h1>
       <div class="unit-switcher">
-        <label>Одиниці</label>
-        <div class="unit-toggle" onclick="event.stopPropagation()">
-          <button type="button" class="unit-btn active" data-unit="mm" onclick="event.stopPropagation(); changeUnit('mm'); updateUnitToggleButtons();">
-            мм
-          </button>
-          <button type="button" class="unit-btn" data-unit="cm" onclick="event.stopPropagation(); changeUnit('cm'); updateUnitToggleButtons();">
-            см
-          </button>
+        <div class="unit-toggle">
+          <input type="radio" id="unit-mm" name="unit" value="mm" checked onchange="changeUnit('mm')">
+          <input type="radio" id="unit-cm" name="unit" value="cm" onchange="changeUnit('cm')">
+          <label for="unit-mm" class="unit-label" onclick="changeUnit('mm')">мм</label>
+          <label for="unit-cm" class="unit-label" onclick="changeUnit('cm')">см</label>
+          <div class="unit-slider"></div>
         </div>
       </div>
     </header>

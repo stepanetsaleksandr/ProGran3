@@ -1,31 +1,112 @@
 // proGran3/web/src/modules/utils/Units.js
-// Модуль управління одиницями вимірювання для ProGran3
-
-import { Logger } from './Logger.js';
+// Новий модуль управління одиницями вимірювання для ProGran3
 
 export class UnitsManager {
   constructor() {
     this.currentUnit = 'mm';
     this.initialized = false;
+    this.radioInputs = null;
   }
 
-  // Ініціалізація перемикача одиниць
+  // Ініціалізація нового перемикача
   initialize() {
     if (this.initialized) return;
     
-    // Встановлюємо початковий стан кнопок
-    this.updateUnitToggleButtons();
+    // Знаходимо radio inputs
+    this.radioInputs = {
+      mm: document.getElementById('unit-mm'),
+      cm: document.getElementById('unit-cm')
+    };
+    
+    // Встановлюємо початковий стан
+    this.setCurrentUnit(this.currentUnit);
+    
+    // Додаємо event listeners
+    this.setupEventListeners();
+    
+    // Додаємо обробник кліків на весь перемикач
+    const unitToggle = document.querySelector('.unit-toggle');
+    if (unitToggle) {
+      unitToggle.addEventListener('click', (e) => {
+        // Якщо клікнули не на label або input
+        if (!e.target.matches('label, input')) {
+          // Перемикаємо на протилежну одиницю
+          const newUnit = this.currentUnit === 'mm' ? 'cm' : 'mm';
+          this.changeUnit(newUnit);
+        }
+      });
+    }
+    
+    // Оновлюємо всі лейбли та значення
+    this.updateAll();
     
     this.initialized = true;
   }
 
+  // Налаштування event listeners
+  setupEventListeners() {
+    if (this.radioInputs.mm) {
+      this.radioInputs.mm.addEventListener('change', () => {
+        if (this.radioInputs.mm.checked) {
+          this.changeUnit('mm');
+        }
+      });
+    }
+    
+    if (this.radioInputs.cm) {
+      this.radioInputs.cm.addEventListener('change', () => {
+        if (this.radioInputs.cm.checked) {
+          this.changeUnit('cm');
+        }
+      });
+    }
+    
+    // Додатково додаємо обробники для labels
+    const mmLabel = document.querySelector('label[for="unit-mm"]');
+    const cmLabel = document.querySelector('label[for="unit-cm"]');
+    
+    if (mmLabel) {
+      mmLabel.addEventListener('click', () => {
+        this.changeUnit('mm');
+      });
+    }
+    
+    if (cmLabel) {
+      cmLabel.addEventListener('click', () => {
+        this.changeUnit('cm');
+      });
+    }
+  }
+
+  // Встановлення поточної одиниці
+  setCurrentUnit(unit) {
+    this.currentUnit = unit;
+    
+    if (this.radioInputs[unit]) {
+      this.radioInputs[unit].checked = true;
+    }
+    
+    // Також оновлюємо radio inputs напряму
+    const mmRadio = document.getElementById('unit-mm');
+    const cmRadio = document.getElementById('unit-cm');
+    
+    if (mmRadio && cmRadio) {
+      mmRadio.checked = (unit === 'mm');
+      cmRadio.checked = (unit === 'cm');
+    }
+  }
+
   // Зміна одиниць вимірювання
   changeUnit(newUnit) {
+    if (this.currentUnit === newUnit) return;
+    
+    console.log(`Зміна одиниць з ${this.currentUnit} на ${newUnit}`);
+    
     const oldUnit = this.currentUnit;
     this.currentUnit = newUnit;
     
-    // Оновлюємо стан кнопок перемикача
-    this.updateUnitToggleButtons();
+    // Оновлюємо radio inputs
+    this.setCurrentUnit(newUnit);
     
     // Отримуємо всі поточні значення
     const oldValues = this.getAllInputValues();
@@ -36,35 +117,19 @@ export class UnitsManager {
     // Застосовуємо нові значення
     this.applyValues(newValues);
     
-    // Оновлюємо лейбли
+    // Оновлюємо все інше
+    this.updateAll();
+  }
+
+  // Оновлення всього інтерфейсу
+  updateAll() {
     this.updateUnitLabels();
-    
-    // Оновлюємо кнопки товщини та шву
     this.updateThicknessButtons();
     this.updateSeamButtons();
     
     // Оновлюємо всі відображення
     if (window.updateAllDisplays) {
       window.updateAllDisplays();
-    }
-  }
-
-  // Оновлення стану кнопок перемикача одиниць
-  updateUnitToggleButtons() {
-    const mmBtn = document.querySelector('.unit-btn[data-unit="mm"]');
-    const cmBtn = document.querySelector('.unit-btn[data-unit="cm"]');
-    
-    if (mmBtn && cmBtn) {
-      // Видаляємо активний клас з обох кнопок
-      mmBtn.classList.remove('active');
-      cmBtn.classList.remove('active');
-      
-      // Додаємо активний клас до поточної одиниці
-      if (this.currentUnit === 'mm') {
-        mmBtn.classList.add('active');
-      } else {
-        cmBtn.classList.add('active');
-      }
     }
   }
 
@@ -103,7 +168,7 @@ export class UnitsManager {
     
     Object.keys(oldValues).forEach(key => {
       const value = oldValues[key];
-      if (value !== undefined && value !== null) {
+      if (value !== undefined && value !== null && value !== '') {
         newValues[key] = this.convertValue(value, oldUnit, newUnit);
       }
     });
@@ -119,9 +184,9 @@ export class UnitsManager {
     if (isNaN(numValue)) return value;
     
     if (oldUnit === 'mm' && newUnit === 'cm') {
-      return isSeam ? numValue : (numValue / 10).toFixed(0);
+      return isSeam ? numValue : Math.round(numValue / 10);
     } else if (oldUnit === 'cm' && newUnit === 'mm') {
-      return (numValue * 10).toFixed(0);
+      return numValue * 10;
     }
     
     return value;
@@ -181,7 +246,7 @@ export class UnitsManager {
         button.textContent = `${originalValue} мм`;
         button.dataset.value = originalValue;
       } else {
-        const cmValue = (originalValue / 10).toFixed(0);
+        const cmValue = Math.round(originalValue / 10);
         button.textContent = `${cmValue} см`;
         button.dataset.value = cmValue;
       }
@@ -212,7 +277,7 @@ export class UnitsManager {
     
     if (displayUnit === 'cm' && !unit) {
       // Для см не показуємо десяткові знаки
-      return `${value} ${unitText}`;
+      return `${Math.round(value)} ${unitText}`;
     }
     
     return `${value} ${unitText}`;
@@ -241,12 +306,14 @@ export function changeUnit(newUnit) {
   unitsManager.changeUnit(newUnit);
 }
 
-export function initializeUnits() {
-  unitsManager.initialize();
+// Функція для перемикання одиниць з HTML
+export function toggleUnit() {
+  const newUnit = unitsManager.getCurrentUnit() === 'mm' ? 'cm' : 'mm';
+  unitsManager.changeUnit(newUnit);
 }
 
-export function updateUnitToggleButtons() {
-  unitsManager.updateUnitToggleButtons();
+export function initializeUnits() {
+  unitsManager.initialize();
 }
 
 export function getCurrentUnit() {

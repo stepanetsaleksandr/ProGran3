@@ -15,7 +15,7 @@ import {
   getAllInputValues,
   convertAllValues,
   convertValue,
-  updateUnitToggleButtons
+  toggleUnit
 } from './modules/utils/Units.js';
 import { 
   switchTab, 
@@ -153,6 +153,7 @@ window.addedElements = addedElements;
 window.debugLog = debugLog;
 window.clearDebugLog = clearDebugLog;
 window.changeUnit = changeUnit;
+window.toggleUnit = toggleUnit;
 window.updateUnitToggleButtons = updateUnitToggleButtons;
 window.getCurrentUnit = getCurrentUnit;
 window.updateUnitLabels = updateUnitLabels;
@@ -406,11 +407,6 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Ініціалізація перемикача одиниць
   initializeUnits();
-  
-  // Додатково оновлюємо стан кнопок після ініціалізації
-  setTimeout(() => {
-    updateUnitToggleButtons();
-  }, 100);
 });
 
 // Експорт глобальних функцій
