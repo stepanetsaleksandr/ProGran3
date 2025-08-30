@@ -182,6 +182,7 @@ module ProGran3
           blindArea: false,
           stands: false,
           flowerbeds: false,
+          gravestones: false,
           steles: false
         }
         
@@ -203,6 +204,9 @@ module ProGran3
                 elsif name.include?('flowerbed') || name.include?('квітник') || name.include?('цветник')
                   status[:flowerbeds] = true
                   puts "✅ Знайдено квітник: #{name}"
+                elsif name.include?('gravestone') || name.include?('plate') || name.include?('надгробна') || name.include?('плита')
+                  status[:gravestones] = true
+                  puts "✅ Знайдено надгробну плиту: #{name}"
                 elsif name.include?('stele') || name.include?('стела') || name.include?('стелла')
                   status[:steles] = true
                   puts "✅ Знайдено стелу: #{name}"

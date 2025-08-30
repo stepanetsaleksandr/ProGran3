@@ -39,6 +39,7 @@ module ProGran3
         update_stand(foundation_bounds) if elements[:stand]
         update_stele(foundation_bounds) if elements[:stele]
         update_flowerbed(foundation_bounds) if elements[:flowerbed]
+        update_gravestone(foundation_bounds) if elements[:gravestone]
         
         model.commit_operation
         Logger.success("Всі елементи оновлено успішно", "CoordinationManager")
@@ -89,7 +90,8 @@ module ProGran3
         cladding: entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.start_with?("Cladding") },
         stand: entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('stand') },
         stele: entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('stele') },
-        flowerbed: entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('flowerbed') }
+        flowerbed: entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('flowerbed') },
+        gravestone: entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('gravestone') || c.definition.name.downcase.include?('plate') }
       }
     end
     
@@ -265,6 +267,23 @@ module ProGran3
     # Отримання параметрів квітника з CallbackManager
     def get_flowerbed_params
       ProGran3::CallbackManager.get_flowerbed_params
+    end
+    
+    # Оновлення надгробної плити
+    def update_gravestone(foundation_bounds)
+      # Отримуємо поточні параметри надгробної плити
+      gravestone_params = get_gravestone_params
+      return unless gravestone_params[:filename]
+      
+      # Створюємо нову надгробну плиту з правильним позиціонуванням
+      ProGran3.insert_component(gravestone_params[:category], gravestone_params[:filename])
+    end
+    
+
+    
+    # Отримання параметрів надгробної плити з CallbackManager
+    def get_gravestone_params
+      ProGran3::CallbackManager.get_gravestone_params
     end
   end
 end

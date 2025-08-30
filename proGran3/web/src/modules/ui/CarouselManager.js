@@ -8,7 +8,8 @@ export class CarouselManager {
     this.carouselState = window.carouselState || {
       stands: { index: 0 },
       steles: { index: 0 },
-      flowerbeds: { index: 0 }
+      flowerbeds: { index: 0 },
+      gravestones: { index: 0 }
     };
     this.modelLists = window.modelLists || {};
   }
@@ -206,6 +207,8 @@ export class CarouselManager {
   getCarouselTypesForTab(tabName) {
     const tabCarousels = {
       'base': ['stands', 'flowerbeds'],
+      'monument': ['stands', 'steles'],
+      'gravestone': ['flowerbeds', 'gravestones'],
       'elements': ['steles'],
       'finishing': []
     };

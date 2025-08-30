@@ -31,7 +31,12 @@ module ProGran3
     model = Sketchup.active_model
     search_name = category[0..-2]
     model.active_entities.grep(Sketchup::ComponentInstance).select do |e|
-      e.definition.name.downcase.include?(search_name)
+      name = e.definition.name.downcase
+      if category == "gravestones"
+        name.include?(search_name) || name.include?('plate')
+      else
+        name.include?(search_name)
+      end
     end
   end
 
@@ -53,6 +58,13 @@ module ProGran3
       foundation_bounds = foundation.bounds
       foundation_z = foundation_bounds.max.z
     end
+    
+    # Якщо немає фундаменту, розміщуємо в центрі
+    if !foundation
+      x = 0 - comp_def.bounds.center.x
+      y = 0 - comp_def.bounds.center.y
+      z = 0 - comp_def.bounds.min.z
+    end
 
     if category == "stands"
       if foundation
@@ -65,6 +77,7 @@ module ProGran3
         y = foundation_bounds.center.y - comp_def.bounds.center.y
         z = placement_z - comp_def.bounds.min.z
       end
+      # Якщо немає фундаменту, координати вже встановлені вище
     else
       stand = last_stand_instance
       if stand
@@ -86,10 +99,72 @@ module ProGran3
           x = insert_x - comp_bounds.min.x
           y = center_y_stand - center_y_comp
           z = placement_z - comp_bounds.min.z
+        elsif category == "gravestones"
+          # Шукаємо квітник
+          flowerbed = entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('flowerbed') }
+          if flowerbed
+            # Позиціонуємо на південній стороні квітника з вирівнюванням країв
+            flowerbed_bounds = flowerbed.bounds
+            x = flowerbed_bounds.min.x - comp_bounds.min.x  # Південний край квітника збігається з південним краєм плити
+            y = flowerbed_bounds.center.y - comp_bounds.center.y  # По центру квітника
+            z = flowerbed_bounds.max.z - comp_bounds.min.z  # На верхній поверхні квітника
+          else
+            # Якщо немає квітника, позиціонуємо прилягаючи до південної площини підставки
+            x = stand_bounds.max.x - comp_bounds.min.x  # Південна сторона надгробки прилягає до північної сторони підставки
+            y = stand_bounds.center.y - comp_bounds.center.y  # По центру підставки відносно ЗХ-СХ
+            z = stand_bounds.min.z - comp_bounds.min.z  # На тому ж рівні що і підставка (по низу)
+          end
         end
+      elsif category == "gravestones"
+        # Якщо немає підставки, розміщуємо на фундаменті
+        if foundation
+          x = foundation_bounds.center.x - comp_def.bounds.center.x
+          y = foundation_bounds.center.y - comp_def.bounds.center.y
+          z = foundation_bounds.max.z - comp_def.bounds.min.z
+        end
+        # Якщо немає фундаменту, координати вже встановлені вище
       end
+      # Якщо немає підставки для інших категорій, координати вже встановлені вище
     end
     trans = Geom::Transformation.new([x, y, z])
-    entities.add_instance(comp_def, trans)
+    instance = entities.add_instance(comp_def, trans)
+    
+    # Діагностика для надгробної плити
+    if category == "gravestones"
+             flowerbed = entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('flowerbed') }
+       if flowerbed
+         puts "Надгробна плита розміщена на південній стороні квітника з вирівнюванням країв: x=#{x}, y=#{y}, z=#{z}"
+      else
+        stand = last_stand_instance
+                 if stand
+           puts "Надгробна плита розміщена прилягаючи до північної площини підставки (південна сторона плити до північної сторони підставки, на тому ж рівні): x=#{x}, y=#{y}, z=#{z}"
+        else
+          puts "Надгробна плита розміщена на фундаменті: x=#{x}, y=#{y}, z=#{z}"
+        end
+      end
+      
+             # Додаткова діагностика для розуміння позиціонування
+       puts "Надгробна плита: південний край (min.x)=#{comp_bounds.min.x}, північний край (max.x)=#{comp_bounds.max.x}, центр (center.x)=#{comp_bounds.center.x}"
+       puts "Надгробна плита: західна сторона (min.y)=#{comp_bounds.min.y}, східна сторона (max.y)=#{comp_bounds.max.y}, центр (center.y)=#{comp_bounds.center.y}"
+       puts "Надгробна плита: низ (min.z)=#{comp_bounds.min.z}, верх (max.z)=#{comp_bounds.max.z}, центр (center.z)=#{comp_bounds.center.z}"
+       
+       flowerbed = entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('flowerbed') }
+       if flowerbed
+         flowerbed_bounds = flowerbed.bounds
+         puts "Квітник: південна сторона (min.x)=#{flowerbed_bounds.min.x}, північна сторона (max.x)=#{flowerbed_bounds.max.x}, центр (center.x)=#{flowerbed_bounds.center.x}"
+         puts "Квітник: західна сторона (min.y)=#{flowerbed_bounds.min.y}, східна сторона (max.y)=#{flowerbed_bounds.max.y}, центр (center.y)=#{flowerbed_bounds.center.y}"
+         puts "Квітник: низ (min.z)=#{flowerbed_bounds.min.z}, верх (max.z)=#{flowerbed_bounds.max.z}"
+       end
+      
+             stand = last_stand_instance
+       if stand
+         stand_bounds = stand.bounds
+         puts "Підставка: південна сторона (min.x)=#{stand_bounds.min.x}, північна сторона (max.x)=#{stand_bounds.max.x}, центр (center.x)=#{stand_bounds.center.x}"
+         puts "Підставка: західна сторона (min.y)=#{stand_bounds.min.y}, східна сторона (max.y)=#{stand_bounds.max.y}, центр (center.y)=#{stand_bounds.center.y}"
+         puts "Підставка: низ (min.z)=#{stand_bounds.min.z}, верх (max.z)=#{stand_bounds.max.z}, центр (center.z)=#{stand_bounds.center.z}"
+       end
+    end
+    
+    instance
   end
 end

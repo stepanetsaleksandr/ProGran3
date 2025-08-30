@@ -37,7 +37,8 @@ export class SketchUpBridge {
         'add_cladding_custom',
         'add_stand',
         'add_stele',
-        'add_flowerbed'
+        'add_flowerbed',
+        'add_gravestone'
       ];
 
       const missingMethods = requiredMethods.filter(method => 
@@ -214,6 +215,15 @@ export class SketchUpBridge {
       });
   }
 
+  // Додавання надгробної плити
+  addGravestone(modelIndex) {
+    return this.callSketchUpMethod('add_gravestone', modelIndex)
+      .then(result => {
+        Logger.debug(`🏗️ Надгробна плита ${modelIndex} додана`, 'success');
+        return result;
+      });
+  }
+
   // Обробка черги викликів
   processCallbackQueue() {
     if (this.callbackQueue.length === 0) return;
@@ -356,6 +366,10 @@ export function addStele(modelIndex) {
 
 export function addFlowerbed(modelIndex) {
   return sketchUpBridge.addFlowerbed(modelIndex);
+}
+
+export function addGravestone(modelIndex) {
+  return sketchUpBridge.addGravestone(modelIndex);
 }
 
 export function getConnectionStatus() {

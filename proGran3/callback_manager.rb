@@ -144,6 +144,8 @@ module ProGran3
           @stele_params = { category: category, filename: model_name }
         when :flowerbeds
           @flowerbed_params = { category: category, filename: model_name }
+        when :gravestones
+          @gravestone_params = { category: category, filename: model_name }
         end
         
         # Додаємо модель
@@ -187,6 +189,11 @@ module ProGran3
       @flowerbed_params || {}
     end
 
+    # Отримання параметрів надгробної плити
+    def get_gravestone_params
+      @gravestone_params || {}
+    end
+
     # Очищення параметрів
     def clear_params
       @foundation_params = nil
@@ -196,6 +203,7 @@ module ProGran3
       @stand_params = nil
       @stele_params = nil
       @flowerbed_params = nil
+      @gravestone_params = nil
     end
   end
 end

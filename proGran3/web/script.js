@@ -5,7 +5,8 @@ let modelLists = {};
 let carouselState = {
   stands: { index: 0 },
   steles: { index: 0 },
-  flowerbeds: { index: 0 }
+  flowerbeds: { index: 0 },
+  gravestones: { index: 0 }
 };
 
 // --- СИСТЕМА ТАБІВ ---
@@ -43,6 +44,28 @@ function switchTab(tabName) {
       // Оновлюємо каруселі в активному табі
     setTimeout(() => {
       updateCarouselsInActiveTab();
+        // Додатково ініціалізуємо каруселі для нового таба
+  initializeCarouselsForTab(tabName);
+  
+  // Спеціальна обробка для таба gravestone
+  if (tabName === 'gravestone') {
+    setTimeout(() => {
+      debugLog(`🎠 Спеціальна ініціалізація каруселі gravestones для таба gravestone`, 'info');
+      if (CarouselManager.hasCarousel('gravestones') && modelLists['gravestones']) {
+        const trackElement = document.getElementById('gravestones-carousel-track');
+        const viewportElement = document.getElementById('gravestones-carousel-viewport');
+        
+        if (trackElement && viewportElement) {
+          debugLog(`✅ Спеціально ініціалізуємо карусель gravestones для таба gravestone`, 'success');
+          CarouselManager.initialize('gravestones');
+        } else {
+          debugLog(`❌ Не знайдено елементи каруселі gravestones для таба gravestone`, 'error');
+        }
+      } else {
+        debugLog(`⚠️ Карусель gravestones не доступна або немає моделей для таба gravestone`, 'warning');
+      }
+    }, 300);
+  }
     }, 100);
     
     
@@ -65,6 +88,38 @@ function updateCarouselsInActiveTab() {
       }
     });
   }
+}
+
+// Ініціалізація каруселей для конкретного таба
+function initializeCarouselsForTab(tabName) {
+  debugLog(`🎠 Ініціалізація каруселей для таба: ${tabName}`, 'info');
+  
+  const tabCarousels = {
+    'base': ['stands', 'flowerbeds'],
+    'monument': ['stands', 'steles'],
+    'gravestone': ['flowerbeds', 'gravestones'],
+    'elements': ['steles'],
+    'finishing': []
+  };
+  
+  const carouselTypes = tabCarousels[tabName] || [];
+  carouselTypes.forEach(category => {
+    debugLog(`🔍 Перевіряємо карусель ${category} для таба ${tabName}`, 'info');
+    
+    if (CarouselManager.hasCarousel(category) && modelLists[category]) {
+      const trackElement = document.getElementById(`${category}-carousel-track`);
+      const viewportElement = document.getElementById(`${category}-carousel-viewport`);
+      
+      if (trackElement && viewportElement) {
+        debugLog(`✅ Ініціалізуємо карусель ${category} для таба ${tabName}`, 'success');
+        CarouselManager.initialize(category);
+      } else {
+        debugLog(`❌ Не знайдено елементи каруселі ${category} для таба ${tabName}`, 'error');
+      }
+    } else {
+      debugLog(`⚠️ Карусель ${category} не доступна або немає моделей для таба ${tabName}`, 'warning');
+    }
+  });
 }
 
 // Ініціалізація табів
@@ -180,6 +235,7 @@ let addedElements = {
   blindArea: false,
   stands: false,
   flowerbeds: false,
+  gravestones: false,
   steles: false
 };
 
@@ -201,6 +257,13 @@ const CarouselManager = {
       maxItems: 10
     },
     'flowerbeds': { 
+      hasPreview: true, 
+      previewMode: 'dynamic',
+      autoLoad: true,
+      design: 'default',
+      maxItems: 10
+    },
+    'gravestones': { 
       hasPreview: true, 
       previewMode: 'dynamic',
       autoLoad: true,
@@ -483,6 +546,13 @@ const CarouselManager = {
     debugLog(`🚀 initializeAllCarousels викликано`, 'info');
     debugLog(`📋 Доступні каруселі: ${Object.keys(this.carousels).join(', ')}`, 'info');
     
+    // Додаткова перевірка для gravestones
+    if (this.carousels.gravestones) {
+      debugLog(`✅ Карусель gravestones знайдена в конфігурації`, 'success');
+    } else {
+      debugLog(`❌ Карусель gravestones не знайдена в конфігурації`, 'error');
+    }
+    
     Object.keys(this.carousels).forEach(category => {
       debugLog(`🔍 Перевіряємо карусель: ${category}`, 'info');
       
@@ -490,6 +560,18 @@ const CarouselManager = {
       const viewportElement = document.getElementById(`${category}-carousel-viewport`);
       
       debugLog(`🔍 Перевірка каруселі ${category}: моделі=${!!modelLists[category]}, кількість=${modelLists[category]?.length || 0}, track=${!!trackElement}, viewport=${!!viewportElement}`, 'info');
+      
+      // Додаткова перевірка для gravestones
+      if (category === 'gravestones') {
+        debugLog(`🎯 Спеціальна перевірка для gravestones:`, 'info');
+        debugLog(`   - trackElement: ${!!trackElement}`, 'info');
+        debugLog(`   - viewportElement: ${!!viewportElement}`, 'info');
+        debugLog(`   - modelLists[gravestones]: ${!!modelLists[category]}`, 'info');
+        debugLog(`   - кількість моделей: ${modelLists[category]?.length || 0}`, 'info');
+        if (modelLists[category]) {
+          debugLog(`   - моделі: ${modelLists[category].join(', ')}`, 'info');
+        }
+      }
       
       if (modelLists[category] && trackElement && viewportElement) {
         debugLog(`✅ Умови виконані для ${category}, запускаємо initialize`, 'success');
@@ -691,11 +773,42 @@ function loadModelLists(data) {
   debugLog(`📥 loadModelLists викликано`, 'info');
   debugLog(`📊 Отримано дані для категорій: ${Object.keys(data).join(', ')}`, 'info');
   
+  // Додаткова перевірка для gravestones
+  if (data.gravestones) {
+    debugLog(`✅ Категорія gravestones знайдена з ${data.gravestones.length} моделями`, 'success');
+    debugLog(`📋 Моделі gravestones: ${data.gravestones.join(', ')}`, 'info');
+  } else {
+    debugLog(`❌ Категорія gravestones не знайдена в даних`, 'error');
+  }
+  
   modelLists = data;
   
   // Використовуємо автоматичну ініціалізацію всіх каруселей
   debugLog(`🔄 Викликаємо CarouselManager.initializeAllCarousels()`, 'info');
   CarouselManager.initializeAllCarousels();
+  
+  // Додатково ініціалізуємо каруселі для активного таба
+  setTimeout(() => {
+    initializeCarouselsForTab(activeTab);
+  }, 200);
+  
+  // Примусово ініціалізуємо карусель gravestones
+  setTimeout(() => {
+    debugLog(`🎠 Примусова ініціалізація каруселі gravestones`, 'info');
+    if (CarouselManager.hasCarousel('gravestones') && modelLists['gravestones']) {
+      const trackElement = document.getElementById('gravestones-carousel-track');
+      const viewportElement = document.getElementById('gravestones-carousel-viewport');
+      
+      if (trackElement && viewportElement) {
+        debugLog(`✅ Примусово ініціалізуємо карусель gravestones`, 'success');
+        CarouselManager.initialize('gravestones');
+      } else {
+        debugLog(`❌ Не знайдено елементи каруселі gravestones для примусової ініціалізації`, 'error');
+      }
+    } else {
+      debugLog(`⚠️ Карусель gravestones не доступна або немає моделей для примусової ініціалізації`, 'warning');
+    }
+  }, 500);
   
   
   
@@ -718,8 +831,43 @@ function togglePanel(headerElement) {
   const panel = headerElement.closest('.panel');
   if (panel) {
     console.log('Toggle panel:', panel);
+    const wasCollapsed = panel.classList.contains('collapsed');
     panel.classList.toggle('collapsed');
     console.log('Panel collapsed:', panel.classList.contains('collapsed'));
+    
+    // Якщо панель була розгорнута, ініціалізуємо каруселі в ній
+    if (wasCollapsed) {
+      setTimeout(() => {
+        const carousels = panel.querySelectorAll('.carousel-container');
+        carousels.forEach(carousel => {
+          const viewport = carousel.querySelector('.carousel-viewport');
+          if (viewport) {
+            // Тригеримо оновлення каруселі
+            viewport.style.display = 'none';
+            setTimeout(() => {
+              viewport.style.display = 'block';
+            }, 10);
+          }
+        });
+        
+        // Додатково ініціалізуємо каруселі в розгорнутій панелі
+        const carouselTracks = panel.querySelectorAll('.carousel-track');
+        carouselTracks.forEach(track => {
+          const category = track.id.replace('-carousel-track', '');
+          if (CarouselManager.hasCarousel(category) && modelLists[category]) {
+            debugLog(`🎠 Ініціалізуємо карусель ${category} в розгорнутій панелі`, 'info');
+            CarouselManager.initialize(category);
+          }
+        });
+        
+        // Спеціальна обробка для каруселі gravestones
+        const gravestoneTrack = panel.querySelector('#gravestones-carousel-track');
+        if (gravestoneTrack && CarouselManager.hasCarousel('gravestones') && modelLists['gravestones']) {
+          debugLog(`🎠 Спеціальна ініціалізація каруселі gravestones в розгорнутій панелі`, 'info');
+          CarouselManager.initialize('gravestones');
+        }
+      }, 100);
+    }
   } else {
     console.error('Panel not found for element:', headerElement);
   }
@@ -1216,6 +1364,15 @@ function updateSummaryTable() {
     document.getElementById('summary-flowerbed').textContent = '--';
   }
   
+  // Надгробна плита
+  if (addedElements.gravestones && carouselState.gravestones && modelLists.gravestones) {
+    const gravestoneFilename = modelLists.gravestones[carouselState.gravestones.index];
+    document.getElementById('summary-gravestone').textContent = 
+      gravestoneFilename ? gravestoneFilename.replace('.skp', '') : '--';
+  } else {
+    document.getElementById('summary-gravestone').textContent = '--';
+  }
+  
   // Стела
   if (addedElements.steles && carouselState.steles && modelLists.steles) {
     const steleFilename = modelLists.steles[carouselState.steles.index];
@@ -1388,6 +1545,9 @@ function receiveModelStatus(statusData) {
     }
     if (statusData.flowerbeds === true) {
       addedElements.flowerbeds = true;
+    }
+    if (statusData.gravestones === true) {
+      addedElements.gravestones = true;
     }
     if (statusData.steles === true) {
       addedElements.steles = true;

@@ -98,6 +98,7 @@ import {
   addStand,
   addStele,
   addFlowerbed,
+  addGravestone,
   getConnectionStatus,
   resetSketchUpBridge,
   isMethodAvailable,
@@ -130,7 +131,8 @@ let modelLists = {};
 let carouselState = {
   stands: { index: 0 },
   steles: { index: 0 },
-  flowerbeds: { index: 0 }
+  flowerbeds: { index: 0 },
+  gravestones: { index: 0 }
 };
 let activeTab = 'base';
 let addedElements = {
@@ -140,6 +142,7 @@ let addedElements = {
   blindArea: false,
   stands: false,
   flowerbeds: false,
+  gravestones: false,
   steles: false
 };
 
@@ -334,6 +337,7 @@ export {
   addStand,
   addStele,
   addFlowerbed,
+  addGravestone,
   getConnectionStatus,
   resetSketchUpBridge,
   isMethodAvailable,

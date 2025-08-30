@@ -272,6 +272,22 @@
           <button onclick="addModel('flowerbeds'); advanceToNextPanel(this);">Додати квітник</button>
         </div>
       </section>
+      
+      <section class="panel collapsed">
+        <div class="panel-header" onclick="togglePanel(this)">
+          <h2 class="panel-title">Надгробна плита</h2>
+          <span class="chevron"></span>
+          <span id="gravestones-dimensions-display" class="header-dimensions"></span>
+        </div>
+        <div class="panel-content">
+          <div class="carousel-container">
+            <div class="carousel-viewport" id="gravestones-carousel-viewport">
+              <div class="carousel-track" id="gravestones-carousel-track"></div>
+            </div>
+          </div>
+          <button onclick="addModel('gravestones'); advanceToNextPanel(this);">Додати надгробну плиту</button>
+        </div>
+      </section>
     </div>
 
     <!-- Таб "Огорожа" -->
@@ -307,6 +323,7 @@
           <tr> <td>Відмостка:</td> <td id="summary-blind-area">--</td> </tr>
           <tr> <td>Підставка:</td> <td id="summary-stand">--</td> </tr>
           <tr> <td>Квітник:</td> <td id="summary-flowerbed">--</td> </tr>
+          <tr> <td>Надгробна плита:</td> <td id="summary-gravestone">--</td> </tr>
           <tr> <td>Стела:</td> <td id="summary-stele">--</td> </tr>
         </table>
         <button onclick="refreshSpecification()" class="refresh-button">Оновити</button>
