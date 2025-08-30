@@ -15,7 +15,6 @@ import {
   getAllInputValues,
   convertAllValues,
   convertValue,
-  initializeUnits,
   updateUnitToggleButtons
 } from './modules/utils/Units.js';
 import { 
@@ -364,3 +363,57 @@ export {
   initializeUnits,
   updateUnitToggleButtons
 };
+
+// Глобальні змінні для теми
+let currentTheme = 'light';
+let currentAccent = 'blue';
+
+// Функція перемикання теми
+function toggleTheme() {
+  currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+  document.documentElement.classList.toggle('dark', currentTheme === 'dark');
+  localStorage.setItem('theme', currentTheme);
+
+  // Update header text to show current theme
+  const header = document.querySelector('header h1');
+  if (header) {
+    header.textContent = 'ProGran';
+  }
+}
+
+// Функція ініціалізації теми
+function initializeTheme() {
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  const savedAccent = localStorage.getItem('accent') || 'blue';
+
+  currentTheme = savedTheme;
+  currentAccent = savedAccent;
+
+  document.documentElement.classList.toggle('dark', currentTheme === 'dark');
+  document.documentElement.setAttribute('data-accent', currentAccent);
+
+  // Set initial header text
+  const header = document.querySelector('header h1');
+  if (header) {
+    header.textContent = 'ProGran';
+  }
+}
+
+// Ініціалізація при завантаженні DOM
+document.addEventListener('DOMContentLoaded', function() {
+  // Ініціалізація теми
+  initializeTheme();
+  
+  // Ініціалізація перемикача одиниць
+  initializeUnits();
+  
+  // Додатково оновлюємо стан кнопок після ініціалізації
+  setTimeout(() => {
+    updateUnitToggleButtons();
+  }, 100);
+});
+
+// Експорт глобальних функцій
+window.initializeTheme = initializeTheme;
+window.initializeUnits = initializeUnits;
+window.toggleTheme = toggleTheme;

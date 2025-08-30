@@ -10,15 +10,15 @@
 <body>
 
   <div class="glass-container" id="main-content">
-    <header onclick="toggleTheme()" style="cursor: pointer;">
-      <h1>ProGran</h1>
+    <header>
+      <h1 onclick="toggleTheme()" style="cursor: pointer;">ProGran</h1>
       <div class="unit-switcher">
         <label>Одиниці</label>
         <div class="unit-toggle" onclick="event.stopPropagation()">
-          <button type="button" class="unit-btn active" data-unit="mm" onclick="event.stopPropagation(); changeUnit('mm'); console.log('Клік мм');">
+          <button type="button" class="unit-btn active" data-unit="mm" onclick="event.stopPropagation(); changeUnit('mm'); updateUnitToggleButtons();">
             мм
           </button>
-          <button type="button" class="unit-btn" data-unit="cm" onclick="event.stopPropagation(); changeUnit('cm'); console.log('Клік см');">
+          <button type="button" class="unit-btn" data-unit="cm" onclick="event.stopPropagation(); changeUnit('cm'); updateUnitToggleButtons();">
             см
           </button>
         </div>

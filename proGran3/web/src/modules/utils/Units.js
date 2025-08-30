@@ -17,17 +17,12 @@ export class UnitsManager {
     this.updateUnitToggleButtons();
     
     this.initialized = true;
-    Logger.debug('✅ Перемикач одиниць ініціалізовано', 'success');
   }
 
   // Зміна одиниць вимірювання
   changeUnit(newUnit) {
-    Logger.debug(`🔄 Зміна одиниць з ${this.currentUnit} на ${newUnit}`, 'info');
-    
     const oldUnit = this.currentUnit;
     this.currentUnit = newUnit;
-    
-    Logger.debug(`📝 Поточна одиниця встановлена: ${this.currentUnit}`, 'info');
     
     // Оновлюємо стан кнопок перемикача
     this.updateUnitToggleButtons();
@@ -52,16 +47,12 @@ export class UnitsManager {
     if (window.updateAllDisplays) {
       window.updateAllDisplays();
     }
-    
-    Logger.debug(`✅ Одиниці змінено на ${newUnit}`, 'success');
   }
 
   // Оновлення стану кнопок перемикача одиниць
   updateUnitToggleButtons() {
     const mmBtn = document.querySelector('.unit-btn[data-unit="mm"]');
     const cmBtn = document.querySelector('.unit-btn[data-unit="cm"]');
-    
-    Logger.debug(`🔍 Пошук кнопок: mmBtn=${!!mmBtn}, cmBtn=${!!cmBtn}`, 'info');
     
     if (mmBtn && cmBtn) {
       // Видаляємо активний клас з обох кнопок
@@ -71,13 +62,9 @@ export class UnitsManager {
       // Додаємо активний клас до поточної одиниці
       if (this.currentUnit === 'mm') {
         mmBtn.classList.add('active');
-        Logger.debug('✅ Активна кнопка мм', 'success');
       } else {
         cmBtn.classList.add('active');
-        Logger.debug('✅ Активна кнопка см', 'success');
       }
-    } else {
-      Logger.debug('❌ Кнопки не знайдено', 'error');
     }
   }
 
