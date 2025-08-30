@@ -177,13 +177,7 @@
   transform: rotate(-135deg);
 }
 
-/* Input Rows */
-.input-row {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xl);
-  margin-bottom: var(--spacing-xl);
-}
+/* Input Rows - застарілі стилі, використовуємо нові в кінці файлу */
 
 .tile-inputs {
     flex-direction: row;
@@ -416,4 +410,35 @@
 
 .dark .summary-table td:last-child {
   color: var(--text-color);
+}
+
+/* ========== ПОКРАЩЕННЯ INPUT ROWS ========== */
+
+/* Основні стилі для горизонтального розташування */
+.input-row {
+  display: flex;
+  flex-direction: row;  /* Горизонтальне розташування */
+  flex-wrap: wrap;      /* Дозволяємо перенос на новий ряд */
+  gap: var(--spacing-lg); /* Зменшуємо відступ між полями */
+  margin-bottom: var(--spacing-xl);
+  align-items: flex-start; /* Вирівнюємо по верхньому краю */
+}
+
+/* Спеціальний клас для вертикального розташування (якщо потрібно) */
+.input-row.vertical {
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+/* Покращення для input-wrapper в горизонтальному ряді */
+.input-row .input-wrapper {
+  margin-bottom: 0;
+  flex: 1;
+  min-width: 120px;
+}
+
+.input-row .input-wrapper label {
+  font-size: var(--font-sm);
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-muted);
 }

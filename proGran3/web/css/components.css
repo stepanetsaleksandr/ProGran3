@@ -516,3 +516,134 @@ label.label-left {
   color: var(--text-color);
   box-shadow: var(--shadow-medium);
 }
+
+/* ========== ДОДАТКОВІ ПОКРАЩЕННЯ ========== */
+
+/* Покращення кнопок */
+.panel-content button {
+  width: 100%;
+  height: 48px;
+  padding: var(--spacing-lg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: var(--font-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--text-color);
+  box-shadow: var(--shadow-medium);
+  position: relative;
+  overflow: hidden;
+  margin-top: var(--spacing-lg);
+}
+
+.panel-content button:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-heavy);
+}
+
+.panel-content button:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-medium);
+}
+
+/* Покращення input полів */
+.input-wrapper input[type="number"],
+.input-wrapper input[type="text"],
+.input-wrapper select {
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: var(--font-md);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--text-color);
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-light);
+}
+
+.input-wrapper input[type="number"]:focus,
+.input-wrapper input[type="text"]:focus,
+.input-wrapper select:focus {
+  outline: none;
+  border-color: var(--glass-border-hover);
+  background: var(--glass-bg-hover);
+  box-shadow: var(--shadow-medium), 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+/* Покращення панелей */
+.panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: var(--shadow-medium);
+  transition: all 0.3s ease;
+}
+
+.panel:hover {
+  box-shadow: var(--shadow-heavy);
+  border-color: var(--glass-border-hover);
+}
+
+/* Покращення заголовків панелей */
+.panel-header {
+  padding: var(--spacing-lg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.panel-header:hover {
+  background: var(--glass-bg-hover);
+}
+
+.panel-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+}
+
+/* Покращення контенту панелей */
+.panel-content {
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* Адаптивність для малих екранів */
+@media (max-width: 480px) {
+  .input-row {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .input-row .input-wrapper {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .panel-content {
+    padding: var(--spacing-md);
+  }
+  
+  .panel-header {
+    padding: var(--spacing-md);
+  }
+}
