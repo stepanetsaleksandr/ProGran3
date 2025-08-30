@@ -69,13 +69,7 @@
           <span id="blind-area-dimensions-display" class="header-dimensions"></span>
         </div>
         <div class="panel-content">
-          <div class="input-row">
-            <div class="input-wrapper">
-              <label id="blind-area-thickness-label">Товщина (мм)</label>
-              <input type="number" id="blind-area-thickness" value="50" min="30" max="200" oninput="updateAllDisplays()">
-            </div>
-          </div>
-          
+          <!-- Режим ширини вгорі -->
           <div>
             <label>Режим ширини:</label>
             <div class="button-group-tiling-mode">
@@ -84,13 +78,20 @@
             </div>
           </div>
           
-          <div id="uniform-controls">
-            <div class="input-row">
-              <div class="input-wrapper">
-                <label id="blind-area-uniform-width-label">Ширина (мм)</label>
-                <input type="number" id="blind-area-uniform-width" value="300" min="50" max="1000" oninput="updateAllDisplays()">
-              </div>
+          <!-- Ширина і товщина в один ряд -->
+          <div class="input-row">
+            <div class="input-wrapper">
+              <label id="blind-area-thickness-label">Товщина (мм)</label>
+              <input type="number" id="blind-area-thickness" value="50" min="30" max="200" oninput="updateAllDisplays()">
             </div>
+            <div class="input-wrapper">
+              <label id="blind-area-uniform-width-label">Ширина (мм)</label>
+              <input type="number" id="blind-area-uniform-width" value="300" min="50" max="1000" oninput="updateAllDisplays()">
+            </div>
+          </div>
+          
+          <div id="uniform-controls">
+            <!-- Порожній блок для однакової ширини (вже є в ряді вище) -->
           </div>
           
           <div id="custom-controls" class="hidden">
@@ -136,16 +137,7 @@
             </div>
           </div>
           <div id="frame-controls">
-            <div class="input-row tile-inputs">
-              <div class="input-wrapper">
-                <div class="button-group-thickness">
-                  <button type="button" class="thickness-btn" data-value="20" onclick="selectThickness(this)">2 см</button>
-                  <button type="button" class="thickness-btn active" data-value="30" onclick="selectThickness(this)">3 см</button>
-                  <button type="button" class="thickness-btn" data-value="40" onclick="selectThickness(this)">4 см</button>
-                  <button type="button" class="thickness-btn" data-value="50" onclick="selectThickness(this)">5 см</button>
-                </div>
-                <label id="tile-thickness-frame-label">Товщина</label>
-              </div>
+            <div class="input-row">
               <div class="input-wrapper">
                 <label id="tile-border-width-label" for="tile-border-width">Ширина рамки (мм)</label>
                 <input type="number" id="tile-border-width" value="300" min="10" oninput="updateAllDisplays()">
@@ -155,9 +147,21 @@
                 <input type="number" id="tile-overhang" value="50" oninput="updateAllDisplays()">
               </div>
             </div>
+            
+            <div class="input-row">
+              <div class="input-wrapper">
+                <label id="tile-thickness-frame-label">Товщина</label>
+                <div class="button-group-thickness">
+                  <button type="button" class="thickness-btn" data-value="20" onclick="selectThickness(this)">2 см</button>
+                  <button type="button" class="thickness-btn active" data-value="30" onclick="selectThickness(this)">3 см</button>
+                  <button type="button" class="thickness-btn" data-value="40" onclick="selectThickness(this)">4 см</button>
+                  <button type="button" class="thickness-btn" data-value="50" onclick="selectThickness(this)">5 см</button>
+                </div>
+              </div>
+            </div>
           </div>
           <div id="modular-controls" class="hidden">
-            <div class="input-row tile-inputs">
+            <div class="input-row">
               <div class="input-wrapper">
                 <label for="modular-tile-size">Розмір (см)</label>
                 <select id="modular-tile-size" onchange="updateAllDisplays()">
@@ -179,6 +183,13 @@
                 <input type="number" id="modular-thickness" value="30" oninput="updateAllDisplays()">
               </div>
               <div class="input-wrapper">
+                <label for="modular-overhang" id="modular-overhang-label">Виступ (мм)</label>
+                <input type="number" id="modular-overhang" value="50" oninput="updateAllDisplays()">
+              </div>
+            </div>
+            
+            <div class="input-row">
+              <div class="input-wrapper">
                 <label id="modular-seam-label">Шов</label>
                 <div class="button-group-seam">
                   <button type="button" class="seam-btn" data-value="2" onclick="selectSeam(this)">2 мм</button>
@@ -186,10 +197,6 @@
                   <button type="button" class="seam-btn active" data-value="5" onclick="selectSeam(this)">5 мм</button>
                   <button type="button" class="seam-btn" data-value="4" onclick="selectSeam(this)">4 мм</button>
                 </div>
-              </div>
-              <div class="input-wrapper">
-                <label for="modular-overhang" id="modular-overhang-label">Виступ (мм)</label>
-                <input type="number" id="modular-overhang" value="50" oninput="updateAllDisplays()">
               </div>
             </div>
           </div>

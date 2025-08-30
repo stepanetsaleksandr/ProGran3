@@ -186,7 +186,7 @@
 }
 
 #modular-controls .input-wrapper {
-    flex: 0 0 auto;
+    flex: 1;
 }
 
 /* Summary Table */

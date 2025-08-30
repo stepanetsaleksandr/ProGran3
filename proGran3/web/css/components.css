@@ -647,3 +647,108 @@ label.label-left {
     padding: var(--spacing-md);
   }
 }
+
+/* ========== СТИЛІ ДЛЯ КНОПОК ТОВЩИНИ ТА ШВІВ ========== */
+
+/* Кнопки товщини */
+.button-group-thickness {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  margin-top: var(--spacing-sm);
+  justify-content: center;
+}
+
+.thickness-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  background: var(--glass-bg);
+  color: var(--text-color);
+  font-size: var(--font-sm);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  min-width: 50px;
+  text-align: center;
+  flex: 1;
+  max-width: 60px;
+}
+
+.thickness-btn:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+}
+
+.thickness-btn.active {
+  background: var(--glass-bg-active);
+  border-color: var(--glass-border-active);
+  color: var(--text-color);
+  font-weight: 600;
+  box-shadow: var(--shadow-medium);
+}
+
+/* Кнопки швів */
+.button-group-seam {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  margin-top: var(--spacing-sm);
+  justify-content: center;
+}
+
+.seam-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  background: var(--glass-bg);
+  color: var(--text-color);
+  font-size: var(--font-sm);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  min-width: 50px;
+  text-align: center;
+  flex: 1;
+  max-width: 60px;
+}
+
+.seam-btn:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+}
+
+.seam-btn.active {
+  background: var(--glass-bg-active);
+  border-color: var(--glass-border-active);
+  color: var(--text-color);
+  font-weight: 600;
+  box-shadow: var(--shadow-medium);
+}
+
+/* Покращення для input-wrapper з кнопками */
+.input-wrapper .button-group-thickness,
+.input-wrapper .button-group-seam {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Адаптивність для кнопок */
+@media (max-width: 480px) {
+  .button-group-thickness,
+  .button-group-seam {
+    gap: 2px;
+  }
+  
+  .thickness-btn,
+  .seam-btn {
+    padding: 4px 8px;
+    font-size: var(--font-xs);
+    min-width: 40px;
+    max-width: 50px;
+  }
+}
