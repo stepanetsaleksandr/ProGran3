@@ -157,6 +157,10 @@ module ProGran3
     TestSuite.test_ui
   end
 
+  def self.test_gravestones_preview
+    TestSuite.test_gravestones_preview
+  end
+
   def self.run_all_tests
     TestSuite.run_all_tests
   end

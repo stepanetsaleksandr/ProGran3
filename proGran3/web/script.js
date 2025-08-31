@@ -57,7 +57,7 @@ function switchTab(tabName) {
         
         if (trackElement && viewportElement) {
           debugLog(`✅ Спеціально ініціалізуємо карусель gravestones для таба gravestone`, 'success');
-          CarouselManager.initialize('gravestones');
+          initializeGravestonesCarousel('gravestones');
         } else {
           debugLog(`❌ Не знайдено елементи каруселі gravestones для таба gravestone`, 'error');
         }
@@ -112,7 +112,13 @@ function initializeCarouselsForTab(tabName) {
       
       if (trackElement && viewportElement) {
         debugLog(`✅ Ініціалізуємо карусель ${category} для таба ${tabName}`, 'success');
-        CarouselManager.initialize(category);
+        
+        // Спеціальна обробка для gravestones з превью
+        if (category === 'gravestones') {
+          initializeGravestonesCarousel(category);
+        } else {
+          CarouselManager.initialize(category);
+        }
       } else {
         debugLog(`❌ Не знайдено елементи каруселі ${category} для таба ${tabName}`, 'error');
       }
@@ -801,7 +807,7 @@ function loadModelLists(data) {
       
       if (trackElement && viewportElement) {
         debugLog(`✅ Примусово ініціалізуємо карусель gravestones`, 'success');
-        CarouselManager.initialize('gravestones');
+        initializeGravestonesCarousel('gravestones');
       } else {
         debugLog(`❌ Не знайдено елементи каруселі gravestones для примусової ініціалізації`, 'error');
       }
@@ -864,7 +870,7 @@ function togglePanel(headerElement) {
         const gravestoneTrack = panel.querySelector('#gravestones-carousel-track');
         if (gravestoneTrack && CarouselManager.hasCarousel('gravestones') && modelLists['gravestones']) {
           debugLog(`🎠 Спеціальна ініціалізація каруселі gravestones в розгорнутій панелі`, 'info');
-          CarouselManager.initialize('gravestones');
+          initializeGravestonesCarousel('gravestones');
         }
       }, 100);
     }
@@ -1288,6 +1294,16 @@ function updateModelDisplays() {
     if (steleFilename) {
       document.getElementById('steles-dimensions-display').textContent = 
         steleFilename.replace('.skp', '');
+    }
+  }
+  
+  // Оновлення відображення надгробної плити
+  if (carouselState.gravestones && modelLists.gravestones) {
+    const gravestoneIndex = carouselState.gravestones.index;
+    const gravestoneFilename = modelLists.gravestones[gravestoneIndex];
+    if (gravestoneFilename) {
+      document.getElementById('gravestones-dimensions-display').textContent = 
+        gravestoneFilename.replace('.skp', '');
     }
   }
 }
@@ -1940,3 +1956,158 @@ function initializeTheme() {
 
 // Ініціалізація теми при завантаженні
 // ВИДАЛЕНО - тепер ініціалізація відбувається в index.js
+
+// ========== GRAVESTONES CAROUSEL FUNCTIONS ==========
+
+// Ініціалізація каруселі надгробних плит з превью
+function initializeGravestonesCarousel(category) {
+  const track = document.getElementById(`${category}-carousel-track`);
+  const viewport = document.getElementById(`${category}-carousel-viewport`);
+  if (!track || !viewport || !modelLists[category] || modelLists[category].length === 0) return;
+  
+  track.innerHTML = '';
+
+  modelLists[category].forEach((filename, index) => {
+    const item = document.createElement('div');
+    item.className = 'carousel-item';
+    // Стан ледачого завантаження
+    item.dataset.status = 'idle';
+    item.dataset.filename = filename;
+    item.dataset.index = index;
+    // Початковий індикатор
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading-indicator';
+    loadingDiv.textContent = 'Готово до завантаження';
+    item.appendChild(loadingDiv);
+    
+    // Додаємо обробник кліків для вибору елемента
+    item.addEventListener('click', () => {
+      showGravestonesCarouselItem(category, index);
+    });
+    
+    track.appendChild(item);
+  });
+  
+  viewport.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    moveGravestonesCarousel(category, event.deltaY > 0 ? 1 : -1);
+  });
+
+  setTimeout(() => {
+    showGravestonesCarouselItem(category, 0);
+    // Ледаче завантаження для першого елемента
+    loadOrGenerateGravestonesPreview(category, 0);
+  }, 100); 
+}
+
+// Ледаче завантаження превью для каруселі надгробних плит
+function loadOrGenerateGravestonesPreview(category, index) {
+  const track = document.getElementById(`${category}-carousel-track`);
+  if (!track) return;
+  const items = track.querySelectorAll('.carousel-item');
+  const item = items[index];
+  if (!item) return;
+
+  const currentStatus = item.dataset.status;
+  if (currentStatus === 'loaded' || currentStatus === 'pending') return;
+
+  const filename = item.dataset.filename || (modelLists[category] && modelLists[category][index]);
+  if (!filename) return;
+
+  let loadingDiv = item.querySelector('.loading-indicator');
+  if (!loadingDiv) {
+    loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading-indicator';
+    item.appendChild(loadingDiv);
+  }
+  loadingDiv.textContent = 'Генерація превью...';
+
+  item.dataset.status = 'pending';
+
+  // Відразу запускаємо генерацію превью
+  autoGenerateGravestonesPreview(category, filename, item, loadingDiv);
+}
+
+// Автоматична генерація превью для каруселі надгробних плит
+function autoGenerateGravestonesPreview(category, filename, item, loadingDiv) {
+  if (!window.sketchup) {
+    createPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
+    return;
+  }
+  
+  const componentPath = `${category}/${filename}`;
+  debugLog(`🚀 Запуск генерації превью для: ${componentPath} (Gravestones)`, 'info');
+  
+  // Генеруємо веб-превью через SketchUp
+  window.sketchup.generate_web_preview(componentPath);
+  
+  // Зберігаємо посилання на елементи для callback
+  window.pendingPreviews = window.pendingPreviews || {};
+  window.pendingPreviews[componentPath] = { item, loadingDiv, filename, source: 'Gravestones' };
+  
+  debugLog(`📝 Додано до pending: ${componentPath} (Gravestones)`, 'info');
+}
+
+// Переміщення каруселі надгробних плит
+function moveGravestonesCarousel(category, direction) {
+  const state = carouselState[category];
+  const newIndex = state.index + direction;
+  const track = document.getElementById(`${category}-carousel-track`);
+  const items = track.querySelectorAll('.carousel-item');
+  
+  if (newIndex >= 0 && newIndex < items.length) {
+    showGravestonesCarouselItem(category, newIndex);
+  }
+}
+
+// Показ елемента каруселі надгробних плит
+function showGravestonesCarouselItem(category, index) {
+  const track = document.getElementById(`${category}-carousel-track`);
+  const viewport = document.getElementById(`${category}-carousel-viewport`);
+  const items = track.querySelectorAll('.carousel-item');
+  
+  if (!track || items.length === 0 || !items[index]) return;
+
+  items.forEach((item, i) => {
+    item.classList.toggle('active', i === index);
+  });
+  
+  const viewportCenter = viewport.offsetWidth / 2;
+  const itemCenter = items[index].offsetLeft + items[index].offsetWidth / 2;
+  const scrollLeft = itemCenter - viewportCenter;
+  
+  track.style.transform = `translateX(-${scrollLeft}px)`;
+  
+  carouselState[category].index = index;
+  
+  // Ледаче завантаження для поточного та сусідніх елементів
+  loadOrGenerateGravestonesPreview(category, index);
+  if (index + 1 < items.length) loadOrGenerateGravestonesPreview(category, index + 1);
+  if (index - 1 >= 0) loadOrGenerateGravestonesPreview(category, index - 1);
+  
+  // Оновлюємо відображення
+  updateAllDisplays();
+}
+
+// Додавання вибраної надгробної плити до моделі
+function addGravestone() {
+  const category = 'gravestones';
+  const state = carouselState[category];
+  
+  if (!state || !modelLists[category] || !modelLists[category][state.index]) {
+    debugLog(`❌ Не вдалося додати надгробну плиту: немає вибраного елемента`, 'error');
+    return;
+  }
+  
+  const filename = modelLists[category][state.index];
+  debugLog(`🏗️ Додавання надгробної плити: ${filename}`, 'info');
+  
+  if (window.sketchup && window.sketchup.add_model) {
+    window.sketchup.add_model(category, filename);
+    addedElements[category] = true;
+    updateSummaryTable();
+    debugLog(`✅ Надгробна плита додана: ${filename}`, 'success');
+  } else {
+    debugLog(`❌ window.sketchup.add_model не доступний`, 'error');
+  }
+}
