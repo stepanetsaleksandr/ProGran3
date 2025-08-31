@@ -64,6 +64,10 @@ module ProGran3
              @dialog.add_action_callback("add_model") do |dialog, category, filename|
          CallbackManager.add_model_callback(dialog, category, filename)
        end
+       
+       @dialog.add_action_callback("add_lamp") do |dialog, category, filename, position|
+         CallbackManager.add_lamp_callback(dialog, category, filename, position)
+       end
 
              # Старі callback'и для сумісності (делегування до CallbackManager)
        @dialog.add_action_callback("insert_foundation") do |dialog, params_json|
@@ -308,7 +312,7 @@ module ProGran3
         success = DimensionsManager.set_current_unit(unit)
         
         if success
-          Logger.info("Одиниця вимірювання змінена на: #{unit}", "UI")
+          ProGran3::Logger.info("Одиниця вимірювання змінена на: #{unit}", "UI")
           true
         else
           ErrorHandler.handle_error(

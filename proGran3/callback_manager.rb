@@ -2,6 +2,9 @@
 module ProGran3
   module CallbackManager
     extend self
+    
+    # Підключення ModelStateManager
+    require_relative 'model_state_manager'
 
     # Уніфікована валідація розмірів
     def validate_dimensions_callback(depth, width, height, context)
@@ -29,8 +32,14 @@ module ProGran3
       }
       
       # Створюємо фундамент з координацією всіх елементів
-      CoordinationManager.update_all_elements(@foundation_params)
-      true
+      success = CoordinationManager.update_all_elements(@foundation_params)
+      
+      if success
+        # Оновлення стану через ModelStateManager
+        ModelStateManager.component_added(:foundation, @foundation_params)
+      end
+      
+      success
     end
 
     # Callback для плитки
@@ -136,6 +145,16 @@ module ProGran3
           return false
         end
         
+        # Перевірка через ModelStateManager
+        unless ModelStateManager.can_add_component?(category.to_sym)
+          ErrorHandler.handle_error(
+            StandardError.new("Неможливо додати компонент: #{category}"),
+            "UI",
+            "add_model"
+          )
+          return false
+        end
+        
         # Зберігаємо параметри для автоматичного оновлення
         case category.to_sym
         when :stands
@@ -149,8 +168,14 @@ module ProGran3
         end
         
         # Додаємо модель
-        ProGran3.insert_component(category, model_name)
-        true
+        success = ProGran3.insert_component(category, model_name)
+        
+        if success
+          # Оновлення стану через ModelStateManager
+          ModelStateManager.component_added(category.to_sym, { filename: model_name })
+        end
+        
+        success
       rescue => e
         ErrorHandler.handle_error(e, "UI", "add_model")
         false
@@ -193,7 +218,54 @@ module ProGran3
     def get_gravestone_params
       @gravestone_params || {}
     end
+    
+    # Callback для додавання лампадок
+    def add_lamp_callback(dialog, category, model_name, position)
+      begin
+        # Валідація категорії
+        validation_result = Validation.validate_category(category.to_sym, "UI")
+        unless validation_result.valid
+          ErrorHandler.handle_error(
+            Validation::ValidationError.new("Помилка валідації категорії: #{validation_result.error_messages.join(', ')}"),
+            "UI",
+            "add_lamp"
+          )
+          return false
+        end
+        
+        # Перевірка через ModelStateManager
+        unless ModelStateManager.can_add_component?(category.to_sym)
+          ErrorHandler.handle_error(
+            StandardError.new("Неможливо додати лампадку: #{category}"),
+            "UI",
+            "add_lamp"
+          )
+          return false
+        end
+        
+        # Зберігаємо параметри
+        @lamp_params = { category: category, filename: model_name, position: position }
+        
+        # Додаємо лампадку
+        success = ProGran3.insert_lamp_component(category, model_name, position, true)
+        
+        if success
+          # Оновлення стану через ModelStateManager
+          ModelStateManager.component_added(category.to_sym, { filename: model_name, position: position })
+        end
+        
+        success
+      rescue => e
+        ErrorHandler.handle_error(e, "UI", "add_lamp")
+        false
+      end
+    end
 
+    # Отримання параметрів лампадки
+    def get_lamp_params
+      @lamp_params || {}
+    end
+    
     # Очищення параметрів
     def clear_params
       @foundation_params = nil
@@ -204,6 +276,7 @@ module ProGran3
       @stele_params = nil
       @flowerbed_params = nil
       @gravestone_params = nil
+      @lamp_params = nil
     end
   end
 end

@@ -3,6 +3,7 @@
 require_relative 'validation'
 require_relative 'logger'
 require_relative 'error_handler'
+require_relative 'model_state_manager'
 
 module ProGran3
   module CoordinationManager
@@ -14,6 +15,9 @@ module ProGran3
       model.start_operation('Update All Elements', true)
       
       begin
+        # Збереження стану перед оновленням
+        saved_state = ModelStateManager.save_state_before_update
+        
         # Знаходимо всі існуючі елементи
         elements = find_existing_elements
         
@@ -42,11 +46,13 @@ module ProGran3
         update_gravestone(foundation_bounds) if elements[:gravestone]
         
         model.commit_operation
-        Logger.success("Всі елементи оновлено успішно", "CoordinationManager")
+        ProGran3::Logger.success("Всі елементи оновлено успішно", "CoordinationManager")
         true
         
       rescue => e
         model.abort_operation
+        # Відновлення стану при помилці
+        ModelStateManager.restore_state_after_update(saved_state)
         ErrorHandler.handle_error(e, "CoordinationManager", "update_all_elements")
         false
       end

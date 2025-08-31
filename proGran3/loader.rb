@@ -12,6 +12,9 @@ module ProGran3
   # Завантажуємо новий модуль каруселі
   require_relative 'carousel/carousel_manager'
   require_relative 'carousel/carousel_ui'
+  
+  # Завантажуємо ModelStateManager
+  require_relative 'model_state_manager'
 
   def load_component(category, filename)
     path = File.join(ASSETS_PATH, category, filename)
@@ -45,11 +48,17 @@ module ProGran3
   end
 
   def insert_component(category, filename)
+    # Перевірка через ModelStateManager
+    unless ModelStateManager.can_add_component?(category.to_sym)
+      ProGran3::Logger.error("Неможливо додати компонент: #{category}", "Loader")
+      return false
+    end
+    
     model = Sketchup.active_model
     entities = model.active_entities
     all_instances_by_category(category).each(&:erase!)
     comp_def = load_component(category, filename)
-    return unless comp_def
+    return false unless comp_def
     foundation = model.entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name == "Foundation" }
     x, y, z = 0, 0, 0
     foundation_z = 0
@@ -144,9 +153,12 @@ module ProGran3
       end
       
              # Додаткова діагностика для розуміння позиціонування
-       puts "Надгробна плита: південний край (min.x)=#{comp_bounds.min.x}, північний край (max.x)=#{comp_bounds.max.x}, центр (center.x)=#{comp_bounds.center.x}"
-       puts "Надгробна плита: західна сторона (min.y)=#{comp_bounds.min.y}, східна сторона (max.y)=#{comp_bounds.max.y}, центр (center.y)=#{comp_bounds.center.y}"
-       puts "Надгробна плита: низ (min.z)=#{comp_bounds.min.z}, верх (max.z)=#{comp_bounds.max.z}, центр (center.z)=#{comp_bounds.center.z}"
+       if comp_def && comp_def.bounds
+         comp_bounds = comp_def.bounds
+         puts "Надгробна плита: південний край (min.x)=#{comp_bounds.min.x}, північний край (max.x)=#{comp_bounds.max.x}, центр (center.x)=#{comp_bounds.center.x}"
+         puts "Надгробна плита: західна сторона (min.y)=#{comp_bounds.min.y}, східна сторона (max.y)=#{comp_bounds.max.y}, центр (center.y)=#{comp_bounds.center.y}"
+         puts "Надгробна плита: низ (min.z)=#{comp_bounds.min.z}, верх (max.z)=#{comp_bounds.max.z}, центр (center.z)=#{comp_bounds.center.z}"
+       end
        
        flowerbed = entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('flowerbed') }
        if flowerbed
