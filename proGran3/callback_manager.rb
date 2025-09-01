@@ -5,6 +5,8 @@ module ProGran3
     
     # Підключення ModelStateManager
     require_relative 'model_state_manager'
+    # Підключення FenceBuilder
+    require_relative 'builders/fence_builder'
 
     # Уніфікована валідація розмірів
     def validate_dimensions_callback(depth, width, height, context)
@@ -266,6 +268,120 @@ module ProGran3
       @lamp_params || {}
     end
     
+    # Callback для кутової огорожі
+    def add_fence_corner_callback(dialog, post_height, post_width, post_depth, side_height, side_length, side_thickness, decorative_size)
+      begin
+        # Валідація розмірів
+        validation_result = Validation.validate_dimensions(post_height.to_i, post_width.to_i, post_depth.to_i, "кутової огорожі")
+        unless validation_result.valid
+          ErrorHandler.handle_error(
+            Validation::ValidationError.new("Помилка валідації кутової огорожі: #{validation_result.error_messages.join(', ')}"),
+            "UI",
+            "add_fence_corner"
+          )
+          return false
+        end
+        
+        # Перевірка через ModelStateManager
+        unless ModelStateManager.can_add_component?(:fence_corner)
+          ErrorHandler.handle_error(
+            StandardError.new("Неможливо додати кутову огорожу"),
+            "UI",
+            "add_fence_corner"
+          )
+          return false
+        end
+        
+        # Зберігаємо параметри
+        @fence_corner_params = {
+          post_height: post_height.to_i,
+          post_width: post_width.to_i,
+          post_depth: post_depth.to_i,
+          side_height: side_height.to_i,
+          side_length: side_length.to_i,
+          side_thickness: side_thickness.to_i,
+          decorative_size: decorative_size.to_i
+        }
+        
+        # Створюємо кутову огорожу
+        success = ProGran3::FenceBuilder.create_corner_fence(
+          post_height.to_i, post_width.to_i, post_depth.to_i,
+          side_height.to_i, side_length.to_i, side_thickness.to_i, decorative_size.to_i
+        )
+        
+        if success
+          # Оновлення стану через ModelStateManager
+          ModelStateManager.component_added(:fence_corner, @fence_corner_params)
+        end
+        
+        success
+      rescue => e
+        ErrorHandler.handle_error(e, "UI", "add_fence_corner")
+        false
+      end
+    end
+    
+    # Callback для периметральної огорожі
+    def add_fence_perimeter_callback(dialog, post_height, post_width, post_depth, intermediate_count, decorative_height, decorative_thickness)
+      begin
+        # Валідація розмірів
+        validation_result = Validation.validate_dimensions(post_height.to_i, post_width.to_i, post_depth.to_i, "периметральної огорожі")
+        unless validation_result.valid
+          ErrorHandler.handle_error(
+            Validation::ValidationError.new("Помилка валідації периметральної огорожі: #{validation_result.error_messages.join(', ')}"),
+            "UI",
+            "add_fence_perimeter"
+          )
+          return false
+        end
+        
+        # Перевірка через ModelStateManager
+        unless ModelStateManager.can_add_component?(:fence_perimeter)
+          ErrorHandler.handle_error(
+            StandardError.new("Неможливо додати периметральну огорожу"),
+            "UI",
+            "add_fence_perimeter"
+          )
+          return false
+        end
+        
+        # Зберігаємо параметри
+        @fence_perimeter_params = {
+          post_height: post_height.to_i,
+          post_width: post_width.to_i,
+          post_depth: post_depth.to_i,
+          intermediate_count: intermediate_count.to_i,
+          decorative_height: decorative_height.to_i,
+          decorative_thickness: decorative_thickness.to_i
+        }
+        
+        # Створюємо периметральну огорожу
+        success = ProGran3::FenceBuilder.create_perimeter_fence(
+          post_height.to_i, post_width.to_i, post_depth.to_i,
+          intermediate_count.to_i, decorative_height.to_i, decorative_thickness.to_i
+        )
+        
+        if success
+          # Оновлення стану через ModelStateManager
+          ModelStateManager.component_added(:fence_perimeter, @fence_perimeter_params)
+        end
+        
+        success
+      rescue => e
+        ErrorHandler.handle_error(e, "UI", "add_fence_perimeter")
+        false
+      end
+    end
+    
+    # Отримання параметрів огорожі
+    def get_fence_corner_params
+      @fence_corner_params || {}
+    end
+    
+    def get_fence_perimeter_params
+      @fence_perimeter_params || {}
+    end
+    
     # Очищення параметрів
     def clear_params
       @foundation_params = nil
@@ -277,6 +393,8 @@ module ProGran3
       @flowerbed_params = nil
       @gravestone_params = nil
       @lamp_params = nil
+      @fence_corner_params = nil
+      @fence_perimeter_params = nil
     end
   end
 end

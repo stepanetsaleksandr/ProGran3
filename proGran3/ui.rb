@@ -65,9 +65,18 @@ module ProGran3
          CallbackManager.add_model_callback(dialog, category, filename)
        end
        
-       @dialog.add_action_callback("add_lamp") do |dialog, category, filename, position|
-         CallbackManager.add_lamp_callback(dialog, category, filename, position)
-       end
+      # Callback'и для огорожі
+      @dialog.add_action_callback("add_fence_corner") do |dialog, post_height, post_width, post_depth, side_height, side_length, side_thickness, decorative_size|
+        CallbackManager.add_fence_corner_callback(dialog, post_height, post_width, post_depth, side_height, side_length, side_thickness, decorative_size)
+      end
+      
+      @dialog.add_action_callback("add_fence_perimeter") do |dialog, post_height, post_width, post_depth, intermediate_count, decorative_height, decorative_thickness|
+        CallbackManager.add_fence_perimeter_callback(dialog, post_height, post_width, post_depth, intermediate_count, decorative_height, decorative_thickness)
+      end
+      
+      @dialog.add_action_callback("add_lamp") do |dialog, category, filename, position|
+        CallbackManager.add_lamp_callback(dialog, category, filename, position)
+      end
 
              # Старі callback'и для сумісності (делегування до CallbackManager)
        @dialog.add_action_callback("insert_foundation") do |dialog, params_json|

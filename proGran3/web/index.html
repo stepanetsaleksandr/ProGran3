@@ -292,10 +292,89 @@
 
     <!-- Таб "Огорожа" -->
     <div class="tab-content" id="fence-tab">
-      <div class="empty-tab-message">
-        <p>Розділ "Огорожа" знаходиться в розробці</p>
-        <p>Тут будуть доступні елементи огорожі та огородження</p>
-      </div>
+      <section class="panel">
+        <div class="panel-header" onclick="togglePanel(this)">
+          <h2 class="panel-title">Кутова огорожа</h2>
+          <span class="chevron"></span>
+          <span id="fence-corner-dimensions-display" class="header-dimensions"></span>
+        </div>
+        <div class="panel-content">
+          <div class="input-row">
+            <div class="input-wrapper">
+              <label id="fence-corner-post-height-label" for="fence-corner-post-height">Висота стовпа (мм)</label>
+              <input type="number" id="fence-corner-post-height" value="250" min="150" max="500" oninput="updateFenceCornerDisplay()">
+            </div>
+            <div class="input-wrapper">
+              <label id="fence-corner-post-width-label" for="fence-corner-post-width">Ширина стовпа (мм)</label>
+              <input type="number" id="fence-corner-post-width" value="150" min="100" max="300" oninput="updateFenceCornerDisplay()">
+            </div>
+            <div class="input-wrapper">
+              <label id="fence-corner-post-depth-label" for="fence-corner-post-depth">Глибина стовпа (мм)</label>
+              <input type="number" id="fence-corner-post-depth" value="150" min="100" max="300" oninput="updateFenceCornerDisplay()">
+            </div>
+          </div>
+          <div class="input-row">
+            <div class="input-wrapper">
+              <label id="fence-corner-side-height-label" for="fence-corner-side-height">Висота панелі (мм)</label>
+              <input type="number" id="fence-corner-side-height" value="150" min="100" max="300" oninput="updateFenceCornerDisplay()">
+            </div>
+            <div class="input-wrapper">
+              <label id="fence-corner-side-length-label" for="fence-corner-side-length">Довжина панелі (мм)</label>
+              <input type="number" id="fence-corner-side-length" value="500" min="200" max="600" oninput="updateFenceCornerDisplay()">
+            </div>
+            <div class="input-wrapper">
+              <label id="fence-corner-side-thickness-label" for="fence-corner-side-thickness">Товщина панелі (мм)</label>
+              <input type="number" id="fence-corner-side-thickness" value="50" min="30" max="150" oninput="updateFenceCornerDisplay()">
+            </div>
+          </div>
+          <div class="input-row">
+            <div class="input-wrapper">
+              <label id="fence-corner-decorative-size-label" for="fence-corner-decorative-size">Розмір декора (мм)</label>
+              <input type="number" id="fence-corner-decorative-size" value="100" min="80" max="200" oninput="updateFenceCornerDisplay()">
+            </div>
+          </div>
+          <button onclick="addFenceCorner(); advanceToNextPanel(this);">Створити кутову огорожу</button>
+        </div>
+      </section>
+      
+      <section class="panel collapsed">
+        <div class="panel-header" onclick="togglePanel(this)">
+          <h2 class="panel-title">Периметральна огорожа</h2>
+          <span class="chevron"></span>
+          <span id="fence-perimeter-dimensions-display" class="header-dimensions"></span>
+        </div>
+        <div class="panel-content">
+          <div class="input-row">
+            <div class="input-wrapper">
+              <label id="fence-perimeter-post-height-label" for="fence-perimeter-post-height">Висота стовпа (мм)</label>
+              <input type="number" id="fence-perimeter-post-height" value="250" min="150" max="500" oninput="updateFencePerimeterDisplay()">
+            </div>
+            <div class="input-wrapper">
+              <label id="fence-perimeter-post-width-label" for="fence-perimeter-post-width">Ширина стовпа (мм)</label>
+              <input type="number" id="fence-perimeter-post-width" value="150" min="100" max="300" oninput="updateFencePerimeterDisplay()">
+            </div>
+            <div class="input-wrapper">
+              <label id="fence-perimeter-post-depth-label" for="fence-perimeter-post-depth">Глибина стовпа (мм)</label>
+              <input type="number" id="fence-perimeter-post-depth" value="150" min="100" max="300" oninput="updateFencePerimeterDisplay()">
+            </div>
+          </div>
+          <div class="input-row">
+            <div class="input-wrapper">
+              <label id="fence-perimeter-intermediate-count-label" for="fence-perimeter-intermediate-count">Проміжні стовпи</label>
+              <input type="number" id="fence-perimeter-intermediate-count" value="1" min="0" max="5" oninput="updateFencePerimeterDisplay()">
+            </div>
+            <div class="input-wrapper">
+              <label id="fence-perimeter-decorative-height-label" for="fence-perimeter-decorative-height">Висота декора (мм)</label>
+              <input type="number" id="fence-perimeter-decorative-height" value="100" min="80" max="200" oninput="updateFencePerimeterDisplay()">
+            </div>
+            <div class="input-wrapper">
+              <label id="fence-perimeter-decorative-thickness-label" for="fence-perimeter-decorative-thickness">Товщина декора (мм)</label>
+              <input type="number" id="fence-perimeter-decorative-thickness" value="100" min="80" max="200" oninput="updateFencePerimeterDisplay()">
+            </div>
+          </div>
+          <button onclick="addFencePerimeter(); advanceToNextPanel(this);">Створити периметральну огорожу</button>
+        </div>
+      </section>
     </div>
 
     <!-- Таб "Додаткові елементи" -->
@@ -325,6 +404,8 @@
           <tr> <td>Квітник:</td> <td id="summary-flowerbed">--</td> </tr>
           <tr> <td>Надгробна плита:</td> <td id="summary-gravestone">--</td> </tr>
           <tr> <td>Стела:</td> <td id="summary-stele">--</td> </tr>
+          <tr> <td>Кутова огорожа:</td> <td id="summary-fence-corner">--</td> </tr>
+          <tr> <td>Периметральна огорожа:</td> <td id="summary-fence-perimeter">--</td> </tr>
         </table>
         <button onclick="refreshSpecification()" class="refresh-button">Оновити</button>
       </div>

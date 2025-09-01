@@ -242,7 +242,9 @@ let addedElements = {
   stands: false,
   flowerbeds: false,
   gravestones: false,
-  steles: false
+  steles: false,
+  fence_corner: false,
+  fence_perimeter: false
 };
 
 // Поточна одиниця вимірювання
@@ -1262,6 +1264,10 @@ function updateAllDisplays() {
   // Оновлення відображення вибраних моделей
   updateModelDisplays();
   
+  // Оновлення відображення огорожі
+  updateFenceCornerDisplay();
+  updateFencePerimeterDisplay();
+  
   // Оновлення підсумкової таблиці
   updateSummaryTable();
 }
@@ -1396,6 +1402,21 @@ function updateSummaryTable() {
       steleFilename ? steleFilename.replace('.skp', '') : '--';
   } else {
     document.getElementById('summary-stele').textContent = '--';
+  }
+  
+  // Кутова огорожа
+  if (addedElements.fence_corner) {
+    const postHeight = document.getElementById('fence-corner-post-height').value;
+    const postWidth = document.getElementById('fence-corner-post-width').value;
+    const postDepth = document.getElementById('fence-corner-post-depth').value;
+    const sideHeight = document.getElementById('fence-corner-side-height').value;
+    const sideLength = document.getElementById('fence-corner-side-length').value;
+    const decorativeSize = document.getElementById('fence-corner-decorative-size').value;
+    
+    document.getElementById('summary-fence-corner').textContent = 
+      `Стовп: ${postHeight}×${postWidth}×${postDepth}${unitText}, Панель: ${sideHeight}×${sideLength}${unitText}, Декор: ${decorativeSize}${unitText}`;
+  } else {
+    document.getElementById('summary-fence-corner').textContent = '--';
   }
 }
 
@@ -1568,6 +1589,12 @@ function receiveModelStatus(statusData) {
     if (statusData.steles === true) {
       addedElements.steles = true;
     }
+    if (statusData.fence_corner === true) {
+      addedElements.fence_corner = true;
+    }
+    if (statusData.fence_perimeter === true) {
+      addedElements.fence_perimeter = true;
+    }
     
     debugLog(`📊 Оновлений addedElements: ${JSON.stringify(addedElements)}`, 'info');
   } else {
@@ -1640,6 +1667,23 @@ function getAllInputValues() {
     },
     cladding: {
       thickness: document.getElementById('cladding-thickness').value
+    },
+    fenceCorner: {
+      postHeight: document.getElementById('fence-corner-post-height').value,
+      postWidth: document.getElementById('fence-corner-post-width').value,
+      postDepth: document.getElementById('fence-corner-post-depth').value,
+      sideHeight: document.getElementById('fence-corner-side-height').value,
+      sideLength: document.getElementById('fence-corner-side-length').value,
+      sideThickness: document.getElementById('fence-corner-side-thickness').value,
+      decorativeSize: document.getElementById('fence-corner-decorative-size').value
+    },
+    fencePerimeter: {
+      postHeight: document.getElementById('fence-perimeter-post-height').value,
+      postWidth: document.getElementById('fence-perimeter-post-width').value,
+      postDepth: document.getElementById('fence-perimeter-post-depth').value,
+      intermediateCount: document.getElementById('fence-perimeter-intermediate-count').value,
+      decorativeHeight: document.getElementById('fence-perimeter-decorative-height').value,
+      decorativeThickness: document.getElementById('fence-perimeter-decorative-thickness').value
     }
   };
 }
@@ -1674,6 +1718,32 @@ function convertAllValues(oldValues, oldUnit, newUnit) {
     document.getElementById('modular-thickness').value = convertValue(oldValues.tiles.modularThickness, oldUnit, newUnit);
     document.getElementById('modular-overhang').value = convertValue(oldValues.tiles.modularOverhang, oldUnit, newUnit);
     // Шви не конвертуються - залишаються в мм
+  }
+  
+  // Конвертуємо значення облицювання
+  if (oldValues.cladding) {
+    document.getElementById('cladding-thickness').value = convertValue(oldValues.cladding.thickness, oldUnit, newUnit);
+  }
+  
+  // Конвертуємо значення кутової огорожі
+  if (oldValues.fenceCorner) {
+    document.getElementById('fence-corner-post-height').value = convertValue(oldValues.fenceCorner.postHeight, oldUnit, newUnit);
+    document.getElementById('fence-corner-post-width').value = convertValue(oldValues.fenceCorner.postWidth, oldUnit, newUnit);
+    document.getElementById('fence-corner-post-depth').value = convertValue(oldValues.fenceCorner.postDepth, oldUnit, newUnit);
+    document.getElementById('fence-corner-side-height').value = convertValue(oldValues.fenceCorner.sideHeight, oldUnit, newUnit);
+    document.getElementById('fence-corner-side-length').value = convertValue(oldValues.fenceCorner.sideLength, oldUnit, newUnit);
+    document.getElementById('fence-corner-side-thickness').value = convertValue(oldValues.fenceCorner.sideThickness, oldUnit, newUnit);
+    document.getElementById('fence-corner-decorative-size').value = convertValue(oldValues.fenceCorner.decorativeSize, oldUnit, newUnit);
+  }
+  
+  // Конвертуємо значення периметральної огорожі
+  if (oldValues.fencePerimeter) {
+    document.getElementById('fence-perimeter-post-height').value = convertValue(oldValues.fencePerimeter.postHeight, oldUnit, newUnit);
+    document.getElementById('fence-perimeter-post-width').value = convertValue(oldValues.fencePerimeter.postWidth, oldUnit, newUnit);
+    document.getElementById('fence-perimeter-post-depth').value = convertValue(oldValues.fencePerimeter.postDepth, oldUnit, newUnit);
+    document.getElementById('fence-perimeter-intermediate-count').value = oldValues.fencePerimeter.intermediateCount; // Кількість не конвертується
+    document.getElementById('fence-perimeter-decorative-height').value = convertValue(oldValues.fencePerimeter.decorativeHeight, oldUnit, newUnit);
+    document.getElementById('fence-perimeter-decorative-thickness').value = convertValue(oldValues.fencePerimeter.decorativeThickness, oldUnit, newUnit);
   }
   
   // Конвертуємо значення облицювання
@@ -1733,6 +1803,22 @@ function updateUnitLabels() {
   
   // Облицювання
   document.getElementById('cladding-thickness-label').textContent = `Товщина (${unitText})`;
+  
+  // Кутова огорожа
+  document.getElementById('fence-corner-post-height-label').textContent = `Висота стовпа (${unitText})`;
+  document.getElementById('fence-corner-post-width-label').textContent = `Ширина стовпа (${unitText})`;
+  document.getElementById('fence-corner-post-depth-label').textContent = `Глибина стовпа (${unitText})`;
+  document.getElementById('fence-corner-side-height-label').textContent = `Висота панелі (${unitText})`;
+  document.getElementById('fence-corner-side-length-label').textContent = `Довжина панелі (${unitText})`;
+  document.getElementById('fence-corner-side-thickness-label').textContent = `Товщина панелі (${unitText})`;
+  document.getElementById('fence-corner-decorative-size-label').textContent = `Розмір декора (${unitText})`;
+  
+  // Периметральна огорожа
+  document.getElementById('fence-perimeter-post-height-label').textContent = `Висота стовпа (${unitText})`;
+  document.getElementById('fence-perimeter-post-width-label').textContent = `Ширина стовпа (${unitText})`;
+  document.getElementById('fence-perimeter-post-depth-label').textContent = `Глибина стовпа (${unitText})`;
+  document.getElementById('fence-perimeter-decorative-height-label').textContent = `Висота декора (${unitText})`;
+  document.getElementById('fence-perimeter-decorative-thickness-label').textContent = `Товщина декора (${unitText})`;
 }
 
 // Форматування значення для відображення
@@ -2109,5 +2195,194 @@ function addGravestone() {
     debugLog(`✅ Надгробна плита додана: ${filename}`, 'success');
   } else {
     debugLog(`❌ window.sketchup.add_model не доступний`, 'error');
+  }
+}
+
+// --- FENCE ФУНКЦІЇ ---
+
+// Оновлення відображення кутової огорожі
+function updateFenceCornerDisplay() {
+  const postHeight = document.getElementById('fence-corner-post-height').value;
+  const postWidth = document.getElementById('fence-corner-post-width').value;
+  const postDepth = document.getElementById('fence-corner-post-depth').value;
+  const sideHeight = document.getElementById('fence-corner-side-height').value;
+  const sideLength = document.getElementById('fence-corner-side-length').value;
+  const sideThickness = document.getElementById('fence-corner-side-thickness').value;
+  const decorativeSize = document.getElementById('fence-corner-decorative-size').value;
+  
+  const display = document.getElementById('fence-corner-dimensions-display');
+  if (display) {
+    const unit = getCurrentUnit();
+    const unitText = unit === 'cm' ? 'см' : 'мм';
+    
+    // Конвертуємо значення для відображення
+    const postHeightDisplay = unit === 'cm' ? (postHeight / 10).toFixed(0) : postHeight;
+    const postWidthDisplay = unit === 'cm' ? (postWidth / 10).toFixed(0) : postWidth;
+    const postDepthDisplay = unit === 'cm' ? (postDepth / 10).toFixed(0) : postDepth;
+    const sideHeightDisplay = unit === 'cm' ? (sideHeight / 10).toFixed(0) : sideHeight;
+    const sideLengthDisplay = unit === 'cm' ? (sideLength / 10).toFixed(0) : sideLength;
+    const sideThicknessDisplay = unit === 'cm' ? (sideThickness / 10).toFixed(0) : sideThickness;
+    const decorativeSizeDisplay = unit === 'cm' ? (decorativeSize / 10).toFixed(0) : decorativeSize;
+    
+    const dimensions = [
+      `Стовп: ${postHeightDisplay}×${postWidthDisplay}×${postDepthDisplay}${unitText}`,
+      `Панель: ${sideLengthDisplay}×${sideHeightDisplay}×${sideThicknessDisplay}${unitText}`,
+      `Декор: ${decorativeSizeDisplay}${unitText}`
+    ];
+    
+    display.textContent = dimensions.join(' | ');
+  }
+}
+
+// Оновлення відображення периметральної огорожі
+function updateFencePerimeterDisplay() {
+  const postHeight = document.getElementById('fence-perimeter-post-height').value;
+  const postWidth = document.getElementById('fence-perimeter-post-width').value;
+  const postDepth = document.getElementById('fence-perimeter-post-depth').value;
+  const intermediateCount = document.getElementById('fence-perimeter-intermediate-count').value;
+  const decorativeHeight = document.getElementById('fence-perimeter-decorative-height').value;
+  const decorativeThickness = document.getElementById('fence-perimeter-decorative-thickness').value;
+  
+  const display = document.getElementById('fence-perimeter-dimensions-display');
+  if (display) {
+    const unit = getCurrentUnit();
+    const unitText = unit === 'cm' ? 'см' : 'мм';
+    
+    // Конвертуємо значення для відображення
+    const postHeightDisplay = unit === 'cm' ? (postHeight / 10).toFixed(0) : postHeight;
+    const postWidthDisplay = unit === 'cm' ? (postWidth / 10).toFixed(0) : postWidth;
+    const postDepthDisplay = unit === 'cm' ? (postDepth / 10).toFixed(0) : postDepth;
+    const decorativeHeightDisplay = unit === 'cm' ? (decorativeHeight / 10).toFixed(0) : decorativeHeight;
+    const decorativeThicknessDisplay = unit === 'cm' ? (decorativeThickness / 10).toFixed(0) : decorativeThickness;
+    
+    const dimensions = [
+      `Стовпи: ${postHeightDisplay}×${postWidthDisplay}×${postDepthDisplay}${unitText}`,
+      `Проміжні: ${intermediateCount}`,
+      `Декор: ${decorativeHeightDisplay}×${decorativeThicknessDisplay}${unitText}`
+    ];
+    
+    display.textContent = dimensions.join(' | ');
+  }
+}
+
+// Додавання кутової огорожі
+function addFenceCorner() {
+  try {
+    const postHeight = parseInt(document.getElementById('fence-corner-post-height').value);
+    const postWidth = parseInt(document.getElementById('fence-corner-post-width').value);
+    const postDepth = parseInt(document.getElementById('fence-corner-post-depth').value);
+    const sideHeight = parseInt(document.getElementById('fence-corner-side-height').value);
+    const sideLength = parseInt(document.getElementById('fence-corner-side-length').value);
+    const sideThickness = parseInt(document.getElementById('fence-corner-side-thickness').value);
+    const decorativeSize = parseInt(document.getElementById('fence-corner-decorative-size').value);
+    
+    debugLog(`🏗️ Створення кутової огорожі: ${postHeight}×${postWidth}×${postDepth}см`, 'info');
+    debugLog(`🔍 Перевірка доступності функцій:`, 'info');
+    debugLog(`   - window.sketchup: ${typeof window.sketchup}`, 'info');
+    debugLog(`   - window.sketchup?.add_fence_corner: ${typeof window.sketchup?.add_fence_corner}`, 'info');
+    
+    if (window.sketchup && window.sketchup.add_fence_corner) {
+      try {
+        debugLog(`📞 Виклик window.sketchup.add_fence_corner з параметрами:`, 'info');
+        debugLog(`   - postHeight: ${postHeight}`, 'info');
+        debugLog(`   - postWidth: ${postWidth}`, 'info');
+        debugLog(`   - postDepth: ${postDepth}`, 'info');
+        debugLog(`   - sideHeight: ${sideHeight}`, 'info');
+        debugLog(`   - sideLength: ${sideLength}`, 'info');
+        debugLog(`   - sideThickness: ${sideThickness}`, 'info');
+        debugLog(`   - decorativeSize: ${decorativeSize}`, 'info');
+        
+        // Конвертуємо в мм перед відправкою в Ruby
+        const postHeightMm = convertToMm(postHeight);
+        const postWidthMm = convertToMm(postWidth);
+        const postDepthMm = convertToMm(postDepth);
+        const sideHeightMm = convertToMm(sideHeight);
+        const sideLengthMm = convertToMm(sideLength);
+        const sideThicknessMm = convertToMm(sideThickness);
+        const decorativeSizeMm = convertToMm(decorativeSize);
+        
+        const result = window.sketchup.add_fence_corner(postHeightMm, postWidthMm, postDepthMm, sideHeightMm, sideLengthMm, sideThicknessMm, decorativeSizeMm);
+        debugLog(`📤 Результат виклику: ${result}`, 'info');
+        
+        addedElements['fence_corner'] = true;
+        updateSummaryTable();
+        debugLog(`✅ Кутова огорожа створена успішно`, 'success');
+      } catch (error) {
+        debugLog(`❌ Помилка створення кутової огорожі: ${error.message}`, 'error');
+        debugLog(`❌ Stack trace: ${error.stack}`, 'error');
+      }
+    } else {
+      debugLog(`❌ window.sketchup.add_fence_corner не доступний`, 'error');
+      debugLog(`🔍 Доступні функції в window.sketchup:`, 'info');
+      if (window.sketchup) {
+        Object.keys(window.sketchup).forEach(key => {
+          if (key.includes('fence') || key.includes('Fence')) {
+            debugLog(`   - ${key}: ${typeof window.sketchup[key]}`, 'info');
+          }
+        });
+      }
+    }
+  } catch (error) {
+    debugLog(`❌ Критична помилка в addFenceCorner: ${error.message}`, 'error');
+    debugLog(`❌ Stack trace: ${error.stack}`, 'error');
+  }
+}
+
+// Додавання периметральної огорожі
+function addFencePerimeter() {
+  try {
+    const postHeight = parseInt(document.getElementById('fence-perimeter-post-height').value);
+    const postWidth = parseInt(document.getElementById('fence-perimeter-post-width').value);
+    const postDepth = parseInt(document.getElementById('fence-perimeter-post-depth').value);
+    const intermediateCount = parseInt(document.getElementById('fence-perimeter-intermediate-count').value);
+    const decorativeHeight = parseInt(document.getElementById('fence-perimeter-decorative-height').value);
+    const decorativeThickness = parseInt(document.getElementById('fence-perimeter-decorative-thickness').value);
+    
+    debugLog(`🏗️ Створення периметральної огорожі: ${postHeight}×${postWidth}×${postDepth}см`, 'info');
+    debugLog(`🔍 Перевірка доступності функцій:`, 'info');
+    debugLog(`   - window.sketchup: ${typeof window.sketchup}`, 'info');
+    debugLog(`   - window.sketchup?.add_fence_perimeter: ${typeof window.sketchup?.add_fence_perimeter}`, 'info');
+    
+    if (window.sketchup && window.sketchup.add_fence_perimeter) {
+      try {
+        debugLog(`📞 Виклик window.sketchup.add_fence_perimeter з параметрами:`, 'info');
+        debugLog(`   - postHeight: ${postHeight}`, 'info');
+        debugLog(`   - postWidth: ${postWidth}`, 'info');
+        debugLog(`   - postDepth: ${postDepth}`, 'info');
+        debugLog(`   - intermediateCount: ${intermediateCount}`, 'info');
+        debugLog(`   - decorativeHeight: ${decorativeHeight}`, 'info');
+        debugLog(`   - decorativeThickness: ${decorativeThickness}`, 'info');
+        
+        // Конвертуємо в мм перед відправкою в Ruby
+        const postHeightMm = convertToMm(postHeight);
+        const postWidthMm = convertToMm(postWidth);
+        const postDepthMm = convertToMm(postDepth);
+        const decorativeHeightMm = convertToMm(decorativeHeight);
+        const decorativeThicknessMm = convertToMm(decorativeThickness);
+        
+        const result = window.sketchup.add_fence_perimeter(postHeightMm, postWidthMm, postDepthMm, intermediateCount, decorativeHeightMm, decorativeThicknessMm);
+        debugLog(`📤 Результат виклику: ${result}`, 'info');
+        
+        addedElements['fence_perimeter'] = true;
+        updateSummaryTable();
+        debugLog(`✅ Периметральна огорожа створена успішно`, 'success');
+      } catch (error) {
+        debugLog(`❌ Помилка створення периметральної огорожі: ${error.message}`, 'error');
+        debugLog(`❌ Stack trace: ${error.stack}`, 'error');
+      }
+    } else {
+      debugLog(`❌ window.sketchup.add_fence_perimeter не доступний`, 'error');
+      debugLog(`🔍 Доступні функції в window.sketchup:`, 'info');
+      if (window.sketchup) {
+        Object.keys(window.sketchup).forEach(key => {
+          if (key.includes('fence') || key.includes('Fence')) {
+            debugLog(`   - ${key}: ${typeof window.sketchup[key]}`, 'info');
+          }
+        });
+      }
+    }
+  } catch (error) {
+    debugLog(`❌ Критична помилка в addFencePerimeter: ${error.message}`, 'error');
+    debugLog(`❌ Stack trace: ${error.stack}`, 'error');
   }
 }

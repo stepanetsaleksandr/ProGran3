@@ -151,8 +151,8 @@
 
 ### Для огорожі (fence):
 1. [x] Додав fence_corner та fence_perimeter в ModelStateManager
-2. [ ] Додав callback'и для fence
-3. [ ] Додав UI для fence
+2. [x] Додав callback'и для fence
+3. [x] Додав UI для fence
 4. [ ] Додав тести для fence
 5. [x] Оновив архітектурну документацію
 
