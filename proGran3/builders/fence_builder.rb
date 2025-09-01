@@ -188,6 +188,14 @@ module ProGran3
       # Видаляємо старі компоненти периметральної огорожі
       model.active_entities.grep(Sketchup::ComponentInstance).select { |c| c.definition.name == "PerimeterFence" }.each(&:erase!)
       
+      # Видаляємо старі компоненти кутової огорожі та їх підкомпоненти
+      old_corner_fences = model.active_entities.grep(Sketchup::ComponentInstance).select { |c| c.definition.name == "CornerFence" }
+      old_corner_fences.each(&:erase!)
+      
+      # Видаляємо старі визначення компонентів кутової огорожі
+      old_corner_defs = defs.select { |definition| definition.name.start_with?("CornerFence") }
+      old_corner_defs.each { |definition| defs.remove(definition) }
+      
       # Створюємо новий компонент периметральної огорожі
       comp_def = defs.add("PerimeterFence")
       
