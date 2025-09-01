@@ -36,7 +36,8 @@ ProGran3/
 │   ├── steles/                    # Стели
 │   ├── flowerbeds/                # Квітники
 │   ├── gravestones/               # Надгробні плити
-│   └── lamps/                     # Лампадки
+│   ├── lamps/                     # Лампадки
+│   └── fence/                     # Огорожа (кутова та по периметру)
 ├── web/                           # Frontend (JavaScript)
 │   ├── index.html                 # Головна сторінка
 │   ├── script.js                  # Основний скрипт
@@ -298,6 +299,8 @@ Foundation
 | Flowerbeds | Stands | ❌ | 1 |
 | Gravestones | Stands | ❌ | 1 |
 | Lamps | Gravestones | ❌ | 1 |
+| Fence Corner | Foundation | ❌ | 1 |
+| Fence Perimeter | Foundation | ❌ | 1 |
 
 ---
 
@@ -345,6 +348,35 @@ ModelState = {
       y: Float,
       z: Float,
       relative_to: String
+    }
+  },
+  fence_corner: {
+    exists: Boolean,
+    filename: String,
+    position: {},
+    bounds: {},
+    settings: {
+      post_height: Integer,
+      post_width: Integer,
+      post_depth: Integer,
+      side_height: Integer,
+      side_length: Integer,
+      side_thickness: Integer,
+      decorative_size: Integer
+    }
+  },
+  fence_perimeter: {
+    exists: Boolean,
+    filename: String,
+    position: {},
+    bounds: {},
+    settings: {
+      post_height: Integer,
+      post_width: Integer,
+      post_depth: Integer,
+      intermediate_count: Integer,
+      decorative_height: Integer,
+      decorative_thickness: Integer
     }
   }
 }

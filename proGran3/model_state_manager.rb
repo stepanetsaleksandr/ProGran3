@@ -103,6 +103,35 @@ class ModelStateManager
         z: 0,
         relative_to: 'gravestones'
       }
+    },
+    fence_corner: {
+      exists: false,
+      filename: nil,
+      position: {},
+      bounds: {},
+      settings: {
+        post_height: 25,
+        post_width: 15,
+        post_depth: 15,
+        side_height: 15,
+        side_length: 35,
+        side_thickness: 5,
+        decorative_size: 12
+      }
+    },
+    fence_perimeter: {
+      exists: false,
+      filename: nil,
+      position: {},
+      bounds: {},
+      settings: {
+        post_height: 25,
+        post_width: 15,
+        post_depth: 15,
+        intermediate_count: 1,
+        decorative_height: 150,
+        decorative_thickness: 50
+      }
     }
   }
   
@@ -115,7 +144,9 @@ class ModelStateManager
     second_stele: [:stele_block],
     flowerbeds: [:stands],
     gravestones: [:stands],
-    lamps: [:gravestones]
+    lamps: [:gravestones],
+    fence_corner: [:foundation],
+    fence_perimeter: [:foundation]
   }
   
   # Валідаційні правила
@@ -128,7 +159,9 @@ class ModelStateManager
     second_stele: { required: false, depends_on: [:stele_block] },
     flowerbeds: { required: false, max_count: 1 },
     gravestones: { required: false, max_count: 1 },
-    lamps: { required: false, max_count: 1, depends_on: [:gravestones] }
+    lamps: { required: false, max_count: 1, depends_on: [:gravestones] },
+    fence_corner: { required: false, max_count: 1, depends_on: [:foundation] },
+    fence_perimeter: { required: false, max_count: 1, depends_on: [:foundation] }
   }
   
   # Історія змін

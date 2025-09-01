@@ -104,9 +104,14 @@ BrassDecor Columns BrassDecor Columns   │
     │         │    │         │           │
     └─────────┴────┴─────────┴───────────┘
                          │
-                    Gravestones
-                         │
-                      Lamps
+                                         Gravestones
+                          │
+                       Lamps
+                          │
+                       Fence
+                    ┌────┴────┐
+                    │         │
+              Corner    Perimeter
 ```
 
 ## 4. ModelStateManager структура (РЕАЛІЗОВАНО)
@@ -121,7 +126,9 @@ ModelStateManager
 │   ├── second_stele: { exists, filename, position, decorations }
 │   ├── flowerbeds: { exists, filename, position }
 │   ├── gravestones: { exists, filename, position }
-│   └── lamps: { exists, filename, position }
+│   ├── lamps: { exists, filename, position }
+│   ├── fence_corner: { exists, filename, position, settings }
+│   └── fence_perimeter: { exists, filename, position, settings }
 │
 ├── @dependencies
 │   ├── stands: [:foundation]
@@ -130,7 +137,9 @@ ModelStateManager
 │   ├── second_stele: [:stele_block]
 │   ├── flowerbeds: [:stands]
 │   ├── gravestones: [:stands]
-│   └── lamps: [:gravestones]
+│   ├── lamps: [:gravestones]
+│   ├── fence_corner: [:foundation]
+│   └── fence_perimeter: [:foundation]
 │
 ├── @validation_rules
 │   ├── foundation: { required: true, max_count: 1 }

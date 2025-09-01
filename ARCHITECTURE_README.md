@@ -49,6 +49,7 @@
 - Foundation → Stands → SteleBlock → (FirstStele, SecondStele)
 - Stands → (Flowerbeds, Gravestones)
 - Gravestones → Lamps
+- Foundation → (Fence Corner, Fence Perimeter)
 
 ## 📊 Статус реалізації
 
