@@ -199,57 +199,113 @@ module ProGran3
       old_corner_defs = defs.select { |definition| definition.name.start_with?("CornerFence") }
       old_corner_defs.each { |definition| defs.remove(definition) }
       
-      # Створюємо новий компонент периметральної огорожі
-      comp_def = defs.add("PerimeterFence")
+      # Отримуємо розміри фундаменту для позиціонування
+      foundation = model.entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name == "Foundation" }
+      unless foundation
+        ErrorHandler.handle_error(
+          Validation::ValidationError.new("Фундамент не знайдено для створення периметральної огорожі"),
+          "FenceBuilder",
+          "create_perimeter_fence"
+        )
+        return false
+      end
+      
+      foundation_bounds = foundation.bounds
+      foundation_min_x = foundation_bounds.min.x
+      foundation_max_x = foundation_bounds.max.x
+      foundation_min_y = foundation_bounds.min.y
+      foundation_max_y = foundation_bounds.max.y
       
       # Визначаємо базову висоту для огорожі
       base_height = calculate_fence_base_height
       
-      # Створюємо геометрію периметральної огорожі
-      # Основний стовп
-      main_post_points = [
-        Geom::Point3d.new(0, 0, base_height),
-        Geom::Point3d.new(post_depth.mm, 0, base_height),
-        Geom::Point3d.new(post_depth.mm, post_width.mm, base_height),
-        Geom::Point3d.new(0, post_width.mm, base_height)
+      # Створюємо компонент стовпа
+      post_def = defs.add("PerimeterFence_Post")
+      post_points = [
+        Geom::Point3d.new(0, 0, 0),
+        Geom::Point3d.new(post_depth.mm, 0, 0),
+        Geom::Point3d.new(post_depth.mm, post_width.mm, 0),
+        Geom::Point3d.new(0, post_width.mm, 0)
       ]
+      post_face = post_def.entities.add_face(post_points)
+      post_face.reverse! if post_face.normal.z < 0
+      post_face.pushpull(post_height.mm)
       
-      main_post_face = comp_def.entities.add_face(main_post_points)
-      main_post_face.reverse! if main_post_face.normal.z < 0
-      main_post_face.pushpull(post_height.mm)
-      
-      # Проміжні стовпи
-      if intermediate_count > 0
-        spacing = 1000.mm # 1 метр між стовпами
-        intermediate_count.times do |i|
-          x_pos = (i + 1) * spacing
-          intermediate_post_points = [
-            Geom::Point3d.new(x_pos, 0, base_height),
-            Geom::Point3d.new(x_pos + post_depth.mm, 0, base_height),
-            Geom::Point3d.new(x_pos + post_depth.mm, post_width.mm, base_height),
-            Geom::Point3d.new(x_pos, post_width.mm, base_height)
-          ]
-          
-          intermediate_post_face = comp_def.entities.add_face(intermediate_post_points)
-          intermediate_post_face.reverse! if intermediate_post_face.normal.z < 0
-          intermediate_post_face.pushpull(post_height.mm)
-        end
-      end
-      
-      # Декор
+      # Створюємо компонент декоративного елемента
+      decor_def = defs.add("PerimeterFence_Decor")
+      decor_half_width = post_width.mm / 2.0
       decor_points = [
-        Geom::Point3d.new(0, 0, base_height + post_height.mm),
-        Geom::Point3d.new((intermediate_count + 1) * 1000.mm, 0, base_height + post_height.mm),
-        Geom::Point3d.new((intermediate_count + 1) * 1000.mm, decorative_thickness.mm, base_height + post_height.mm),
-        Geom::Point3d.new(0, decorative_thickness.mm, base_height + post_height.mm)
+        Geom::Point3d.new(-decor_half_width, -decor_half_width, 0),
+        Geom::Point3d.new(decor_half_width, -decor_half_width, 0),
+        Geom::Point3d.new(decor_half_width, decor_half_width, 0),
+        Geom::Point3d.new(-decor_half_width, decor_half_width, 0)
       ]
-      
-      decor_face = comp_def.entities.add_face(decor_points)
+      decor_face = decor_def.entities.add_face(decor_points)
       decor_face.reverse! if decor_face.normal.z < 0
       decor_face.pushpull(decorative_height.mm)
       
-      # Додаємо екземпляр компонента до моделі
-      entities.add_instance(comp_def, Geom::Transformation.new)
+      # Створюємо головний компонент периметральної огорожі
+      perimeter_fence_def = defs.add("PerimeterFence")
+      
+      # Додаємо стовп
+      post_transform = Geom::Transformation.new([0, 0, base_height])
+      perimeter_fence_def.entities.add_instance(post_def, post_transform)
+      
+      # Додаємо декоративний елемент (по центру стовпа)
+      decor_center_x = post_depth.mm / 2.0
+      decor_center_y = post_width.mm / 2.0
+      decor_transform = Geom::Transformation.new([decor_center_x, decor_center_y, base_height + post_height.mm])
+      perimeter_fence_def.entities.add_instance(decor_def, decor_transform)
+      
+      # Створюємо 4 кутові стовпчики на кожному куті фундаменту
+      
+      # Кут 1: Південно-західний (нижній лівий)
+      sw_transform = Geom::Transformation.new([foundation_min_x, foundation_min_y, 0])
+      entities.add_instance(perimeter_fence_def, sw_transform)
+      
+      # Кут 2: Південно-східний (нижній правий)
+      se_transform = Geom::Transformation.new([foundation_max_x - post_depth.mm, foundation_min_y, 0])
+      entities.add_instance(perimeter_fence_def, se_transform)
+      
+      # Кут 3: Північно-східний (верхній правий)
+      ne_transform = Geom::Transformation.new([foundation_max_x - post_depth.mm, foundation_max_y - post_width.mm, 0])
+      entities.add_instance(perimeter_fence_def, ne_transform)
+      
+      # Кут 4: Північно-західний (верхній лівий)
+      nw_transform = Geom::Transformation.new([foundation_min_x, foundation_max_y - post_width.mm, 0])
+      entities.add_instance(perimeter_fence_def, nw_transform)
+      
+      # Додаємо проміжні стовпчики по центру кожної сторони
+      if intermediate_count > 0
+        # Південна сторона (східна/права) - 2 стовпчики
+        foundation_height = foundation_max_y - foundation_min_y
+        south_spacing = foundation_height / 3.0  # Розділяємо на 3 частини для 2 стовпчиків
+        
+        # Перший південний стовпчик
+        south1_y = foundation_min_y + south_spacing - post_width.mm / 2.0
+        south1_transform = Geom::Transformation.new([foundation_max_x - post_depth.mm, south1_y, 0])
+        entities.add_instance(perimeter_fence_def, south1_transform)
+        
+        # Другий південний стовпчик
+        south2_y = foundation_min_y + south_spacing * 2 - post_width.mm / 2.0
+        south2_transform = Geom::Transformation.new([foundation_max_x - post_depth.mm, south2_y, 0])
+        entities.add_instance(perimeter_fence_def, south2_transform)
+        
+        # Північна сторона (західна/ліва)
+        north_center_y = (foundation_min_y + foundation_max_y) / 2.0 - post_width.mm / 2.0
+        north_transform = Geom::Transformation.new([foundation_min_x, north_center_y, 0])
+        entities.add_instance(perimeter_fence_def, north_transform)
+        
+        # Східна сторона (північна/верхня)
+        east_center_x = (foundation_min_x + foundation_max_x) / 2.0 - post_depth.mm / 2.0
+        east_transform = Geom::Transformation.new([east_center_x, foundation_max_y - post_width.mm, 0])
+        entities.add_instance(perimeter_fence_def, east_transform)
+        
+        # Західна сторона (південна/нижня)
+        west_center_x = (foundation_min_x + foundation_max_x) / 2.0 - post_depth.mm / 2.0
+        west_transform = Geom::Transformation.new([west_center_x, foundation_min_y, 0])
+        entities.add_instance(perimeter_fence_def, west_transform)
+      end
       
       true
     end
