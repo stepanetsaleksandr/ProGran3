@@ -47,6 +47,9 @@ module ProGran3
       entities = model.active_entities
       defs = model.definitions
       
+      # Видаляємо старі компоненти периметральної огорожі
+      model.active_entities.grep(Sketchup::ComponentInstance).select { |c| c.definition.name == "PerimeterFence" }.each(&:erase!)
+      
       # Видаляємо старі компоненти кутової огорожі та їх підкомпоненти
       old_corner_fences = model.active_entities.grep(Sketchup::ComponentInstance).select { |c| c.definition.name == "CornerFence" }
       old_corner_fences.each(&:erase!)

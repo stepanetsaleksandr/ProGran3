@@ -310,6 +310,11 @@ module ProGran3
         )
         
         if success
+          # Видаляємо периметральну огорожу зі стану (взаємне виключення)
+          if ModelStateManager.model_state[:fence_perimeter][:exists]
+            ModelStateManager.component_removed(:fence_perimeter)
+          end
+          
           # Оновлення стану через ModelStateManager
           ModelStateManager.component_added(:fence_corner, @fence_corner_params)
         end
@@ -362,6 +367,11 @@ module ProGran3
         )
         
         if success
+          # Видаляємо кутову огорожу зі стану (взаємне виключення)
+          if ModelStateManager.model_state[:fence_corner][:exists]
+            ModelStateManager.component_removed(:fence_corner)
+          end
+          
           # Оновлення стану через ModelStateManager
           ModelStateManager.component_added(:fence_perimeter, @fence_perimeter_params)
         end
