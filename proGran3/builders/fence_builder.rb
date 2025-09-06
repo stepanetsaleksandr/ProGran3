@@ -172,7 +172,7 @@ module ProGran3
       true
     end
     
-    def create_perimeter_fence(post_height, post_width, post_depth, intermediate_count, decorative_height, decorative_thickness)
+    def create_perimeter_fence(post_height, post_width, post_depth, north_count, south_count, east_west_count, decorative_height, decorative_thickness)
       # Валідація вхідних параметрів
       validation_result = Validation.validate_dimensions(post_height, post_width, post_depth, "FenceBuilder.perimeter_fence")
       unless validation_result.valid
@@ -275,36 +275,48 @@ module ProGran3
       nw_transform = Geom::Transformation.new([foundation_min_x, foundation_max_y - post_width.mm, 0])
       entities.add_instance(perimeter_fence_def, nw_transform)
       
-      # Додаємо проміжні стовпчики по центру кожної сторони
-      if intermediate_count > 0
-        # Південна сторона (східна/права) - 2 стовпчики
+      # Додаємо проміжні стовпчики на кожній стороні відповідно до параметрів
+      
+      # Північна сторона (західна/ліва) - задня сторона
+      if north_count > 0
         foundation_height = foundation_max_y - foundation_min_y
-        south_spacing = foundation_height / 3.0  # Розділяємо на 3 частини для 2 стовпчиків
+        north_spacing = foundation_height / (north_count + 1.0)
         
-        # Перший південний стовпчик
-        south1_y = foundation_min_y + south_spacing - post_width.mm / 2.0
-        south1_transform = Geom::Transformation.new([foundation_max_x - post_depth.mm, south1_y, 0])
-        entities.add_instance(perimeter_fence_def, south1_transform)
+        north_count.times do |i|
+          post_y = foundation_min_y + north_spacing * (i + 1) - post_width.mm / 2.0
+          north_transform = Geom::Transformation.new([foundation_min_x, post_y, 0])
+          entities.add_instance(perimeter_fence_def, north_transform)
+        end
+      end
+      
+      # Південна сторона (східна/права) - вхід
+      if south_count > 0
+        foundation_height = foundation_max_y - foundation_min_y
+        south_spacing = foundation_height / (south_count + 1.0)
         
-        # Другий південний стовпчик
-        south2_y = foundation_min_y + south_spacing * 2 - post_width.mm / 2.0
-        south2_transform = Geom::Transformation.new([foundation_max_x - post_depth.mm, south2_y, 0])
-        entities.add_instance(perimeter_fence_def, south2_transform)
+        south_count.times do |i|
+          post_y = foundation_min_y + south_spacing * (i + 1) - post_width.mm / 2.0
+          south_transform = Geom::Transformation.new([foundation_max_x - post_depth.mm, post_y, 0])
+          entities.add_instance(perimeter_fence_def, south_transform)
+        end
+      end
+      
+      # Східна та західна сторони (бокові сторони)
+      if east_west_count > 0
+        foundation_width = foundation_max_x - foundation_min_x
+        spacing = foundation_width / (east_west_count + 1.0)
         
-        # Північна сторона (західна/ліва)
-        north_center_y = (foundation_min_y + foundation_max_y) / 2.0 - post_width.mm / 2.0
-        north_transform = Geom::Transformation.new([foundation_min_x, north_center_y, 0])
-        entities.add_instance(perimeter_fence_def, north_transform)
-        
-        # Східна сторона (північна/верхня)
-        east_center_x = (foundation_min_x + foundation_max_x) / 2.0 - post_depth.mm / 2.0
-        east_transform = Geom::Transformation.new([east_center_x, foundation_max_y - post_width.mm, 0])
-        entities.add_instance(perimeter_fence_def, east_transform)
-        
-        # Західна сторона (південна/нижня)
-        west_center_x = (foundation_min_x + foundation_max_x) / 2.0 - post_depth.mm / 2.0
-        west_transform = Geom::Transformation.new([west_center_x, foundation_min_y, 0])
-        entities.add_instance(perimeter_fence_def, west_transform)
+        east_west_count.times do |i|
+          post_x = foundation_min_x + spacing * (i + 1) - post_depth.mm / 2.0
+          
+          # Східна сторона (північна/верхня)
+          east_transform = Geom::Transformation.new([post_x, foundation_max_y - post_width.mm, 0])
+          entities.add_instance(perimeter_fence_def, east_transform)
+          
+          # Західна сторона (південна/нижня)
+          west_transform = Geom::Transformation.new([post_x, foundation_min_y, 0])
+          entities.add_instance(perimeter_fence_def, west_transform)
+        end
       end
       
       true

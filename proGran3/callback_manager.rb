@@ -327,7 +327,7 @@ module ProGran3
     end
     
     # Callback для периметральної огорожі
-    def add_fence_perimeter_callback(dialog, post_height, post_width, post_depth, intermediate_count, decorative_height, decorative_thickness)
+    def add_fence_perimeter_callback(dialog, post_height, post_width, post_depth, north_count, south_count, east_west_count, decorative_height, decorative_thickness)
       begin
         # Валідація розмірів
         validation_result = Validation.validate_dimensions(post_height.to_i, post_width.to_i, post_depth.to_i, "периметральної огорожі")
@@ -355,7 +355,9 @@ module ProGran3
           post_height: post_height.to_i,
           post_width: post_width.to_i,
           post_depth: post_depth.to_i,
-          intermediate_count: intermediate_count.to_i,
+          north_count: north_count.to_i,
+          south_count: south_count.to_i,
+          east_west_count: east_west_count.to_i,
           decorative_height: decorative_height.to_i,
           decorative_thickness: decorative_thickness.to_i
         }
@@ -363,7 +365,8 @@ module ProGran3
         # Створюємо периметральну огорожу
         success = ProGran3::FenceBuilder.create_perimeter_fence(
           post_height.to_i, post_width.to_i, post_depth.to_i,
-          intermediate_count.to_i, decorative_height.to_i, decorative_thickness.to_i
+          north_count.to_i, south_count.to_i, east_west_count.to_i,
+          decorative_height.to_i, decorative_thickness.to_i
         )
         
         if success

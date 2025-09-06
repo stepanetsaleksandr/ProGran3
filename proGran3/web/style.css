@@ -7,6 +7,33 @@
 
 /* ========== SPECIFIC STYLES ========== */
 
+/* Input Group Styles */
+.input-group {
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin: var(--spacing-lg) 0;
+  background: var(--background-secondary);
+}
+
+.input-group-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-md) 0;
+  text-align: center;
+}
+
+/* Dark theme support for input groups */
+[data-theme="dark"] .input-group {
+  border-color: var(--border-color-dark);
+  background: var(--background-secondary-dark);
+}
+
+[data-theme="dark"] .input-group-title {
+  color: var(--text-primary-dark);
+}
+
 /* Blind Area Panel Specific Styles */
 #blind-area-panel .panel-content {
   display: flex;

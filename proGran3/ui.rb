@@ -70,8 +70,8 @@ module ProGran3
         CallbackManager.add_fence_corner_callback(dialog, post_height, post_width, post_depth, side_height, side_length, side_thickness, decorative_size)
       end
       
-      @dialog.add_action_callback("add_fence_perimeter") do |dialog, post_height, post_width, post_depth, intermediate_count, decorative_height, decorative_thickness|
-        CallbackManager.add_fence_perimeter_callback(dialog, post_height, post_width, post_depth, intermediate_count, decorative_height, decorative_thickness)
+      @dialog.add_action_callback("add_fence_perimeter") do |dialog, post_height, post_width, post_depth, north_count, south_count, east_west_count, decorative_height, decorative_thickness|
+        CallbackManager.add_fence_perimeter_callback(dialog, post_height, post_width, post_depth, north_count, south_count, east_west_count, decorative_height, decorative_thickness)
       end
       
       @dialog.add_action_callback("add_lamp") do |dialog, category, filename, position|

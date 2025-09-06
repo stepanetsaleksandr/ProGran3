@@ -2239,7 +2239,9 @@ function updateFencePerimeterDisplay() {
   const postHeight = document.getElementById('fence-perimeter-post-height').value;
   const postWidth = document.getElementById('fence-perimeter-post-width').value;
   const postDepth = document.getElementById('fence-perimeter-post-depth').value;
-  const intermediateCount = document.getElementById('fence-perimeter-intermediate-count').value;
+  const northCount = document.getElementById('fence-perimeter-north-count').value;
+  const southCount = document.getElementById('fence-perimeter-south-count').value;
+  const eastWestCount = document.getElementById('fence-perimeter-east-west-count').value;
   const decorativeHeight = document.getElementById('fence-perimeter-decorative-height').value;
   const decorativeThickness = document.getElementById('fence-perimeter-decorative-thickness').value;
   
@@ -2257,7 +2259,7 @@ function updateFencePerimeterDisplay() {
     
     const dimensions = [
       `Стовпи: ${postHeightDisplay}×${postWidthDisplay}×${postDepthDisplay}${unitText}`,
-      `Проміжні: ${intermediateCount}`,
+      `Сторони: З${northCount} В${southCount} Б${eastWestCount}`,
       `Декор: ${decorativeHeightDisplay}×${decorativeThicknessDisplay}${unitText}`
     ];
     
@@ -2334,7 +2336,9 @@ function addFencePerimeter() {
     const postHeight = parseInt(document.getElementById('fence-perimeter-post-height').value);
     const postWidth = parseInt(document.getElementById('fence-perimeter-post-width').value);
     const postDepth = parseInt(document.getElementById('fence-perimeter-post-depth').value);
-    const intermediateCount = parseInt(document.getElementById('fence-perimeter-intermediate-count').value);
+    const northCount = parseInt(document.getElementById('fence-perimeter-north-count').value);
+    const southCount = parseInt(document.getElementById('fence-perimeter-south-count').value);
+    const eastWestCount = parseInt(document.getElementById('fence-perimeter-east-west-count').value);
     const decorativeHeight = parseInt(document.getElementById('fence-perimeter-decorative-height').value);
     const decorativeThickness = parseInt(document.getElementById('fence-perimeter-decorative-thickness').value);
     
@@ -2349,7 +2353,9 @@ function addFencePerimeter() {
         debugLog(`   - postHeight: ${postHeight}`, 'info');
         debugLog(`   - postWidth: ${postWidth}`, 'info');
         debugLog(`   - postDepth: ${postDepth}`, 'info');
-        debugLog(`   - intermediateCount: ${intermediateCount}`, 'info');
+        debugLog(`   - northCount: ${northCount}`, 'info');
+        debugLog(`   - southCount: ${southCount}`, 'info');
+        debugLog(`   - eastWestCount: ${eastWestCount}`, 'info');
         debugLog(`   - decorativeHeight: ${decorativeHeight}`, 'info');
         debugLog(`   - decorativeThickness: ${decorativeThickness}`, 'info');
         
@@ -2360,7 +2366,7 @@ function addFencePerimeter() {
         const decorativeHeightMm = convertToMm(decorativeHeight);
         const decorativeThicknessMm = convertToMm(decorativeThickness);
         
-        const result = window.sketchup.add_fence_perimeter(postHeightMm, postWidthMm, postDepthMm, intermediateCount, decorativeHeightMm, decorativeThicknessMm);
+        const result = window.sketchup.add_fence_perimeter(postHeightMm, postWidthMm, postDepthMm, northCount, southCount, eastWestCount, decorativeHeightMm, decorativeThicknessMm);
         debugLog(`📤 Результат виклику: ${result}`, 'info');
         
         addedElements['fence_perimeter'] = true;
