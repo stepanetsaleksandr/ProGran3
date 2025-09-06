@@ -143,7 +143,9 @@ let addedElements = {
   stands: false,
   flowerbeds: false,
   gravestones: false,
-  steles: false
+  steles: false,
+  fence_corner: false,
+  fence_perimeter: false
 };
 
 // Експорт глобальних змінних для зворотної сумісності

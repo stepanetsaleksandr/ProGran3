@@ -329,8 +329,13 @@ module ProGran3
     # Callback для периметральної огорожі
     def add_fence_perimeter_callback(dialog, post_height, post_width, post_depth, north_count, south_count, east_west_count, decorative_height, decorative_thickness)
       begin
-        # Валідація розмірів
-        validation_result = Validation.validate_dimensions(post_height.to_i, post_width.to_i, post_depth.to_i, "периметральної огорожі")
+        # Валідація периметральної огорожі (дозволяє 0 для кількості стовпів)
+        validation_result = Validation.validate_fence_perimeter(
+          post_height.to_i, post_width.to_i, post_depth.to_i, 
+          north_count.to_i, south_count.to_i, east_west_count.to_i,
+          decorative_height.to_i, decorative_thickness.to_i, 
+          "периметральної огорожі"
+        )
         unless validation_result.valid
           ErrorHandler.handle_error(
             Validation::ValidationError.new("Помилка валідації периметральної огорожі: #{validation_result.error_messages.join(', ')}"),
@@ -341,9 +346,16 @@ module ProGran3
         end
         
         # Перевірка через ModelStateManager
-        unless ModelStateManager.can_add_component?(:fence_perimeter)
+        can_add = ModelStateManager.can_add_component?(:fence_perimeter)
+        ProGran3::Logger.info("Перевірка ModelStateManager.can_add_component?(:fence_perimeter): #{can_add}", "CallbackManager")
+        
+        unless can_add
+          ProGran3::Logger.warn("ModelStateManager заблокував створення периметральної огорожі", "CallbackManager")
+          ProGran3::Logger.info("Поточний стан fence_perimeter: #{ModelStateManager.model_state[:fence_perimeter].inspect}", "CallbackManager")
+          ProGran3::Logger.info("Поточний стан foundation: #{ModelStateManager.model_state[:foundation].inspect}", "CallbackManager")
+          
           ErrorHandler.handle_error(
-            StandardError.new("Неможливо додати периметральну огорожу"),
+            StandardError.new("Неможливо додати периметральну огорожу - ModelStateManager заблокував"),
             "UI",
             "add_fence_perimeter"
           )
@@ -370,13 +382,21 @@ module ProGran3
         )
         
         if success
+          ProGran3::Logger.info("Периметральна огорожа створена успішно, оновлюємо стан", "CallbackManager")
+          
           # Видаляємо кутову огорожу зі стану (взаємне виключення)
           if ModelStateManager.model_state[:fence_corner][:exists]
+            ProGran3::Logger.info("Видаляємо кутову огорожу зі стану", "CallbackManager")
             ModelStateManager.component_removed(:fence_corner)
           end
           
           # Оновлення стану через ModelStateManager
+          ProGran3::Logger.info("Додаємо периметральну огорожу до стану", "CallbackManager")
           ModelStateManager.component_added(:fence_perimeter, @fence_perimeter_params)
+          
+          ProGran3::Logger.info("Стан після створення: fence_perimeter.exists = #{ModelStateManager.model_state[:fence_perimeter][:exists]}", "CallbackManager")
+        else
+          ProGran3::Logger.error("Не вдалося створити периметральну огорожу", "CallbackManager")
         end
         
         success

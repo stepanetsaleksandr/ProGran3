@@ -173,8 +173,13 @@ module ProGran3
     end
     
     def create_perimeter_fence(post_height, post_width, post_depth, north_count, south_count, east_west_count, decorative_height, decorative_thickness)
-      # Валідація вхідних параметрів
-      validation_result = Validation.validate_dimensions(post_height, post_width, post_depth, "FenceBuilder.perimeter_fence")
+      # Валідація вхідних параметрів (дозволяє 0 для кількості стовпів)
+      validation_result = Validation.validate_fence_perimeter(
+        post_height, post_width, post_depth, 
+        north_count, south_count, east_west_count,
+        decorative_height, decorative_thickness, 
+        "FenceBuilder.perimeter_fence"
+      )
       unless validation_result.valid
         ErrorHandler.handle_error(
           Validation::ValidationError.new("Помилка валідації периметральної огорожі: #{validation_result.error_messages.join(', ')}"),
@@ -188,16 +193,47 @@ module ProGran3
       entities = model.active_entities
       defs = model.definitions
       
-      # Видаляємо старі компоненти периметральної огорожі
-      model.active_entities.grep(Sketchup::ComponentInstance).select { |c| c.definition.name == "PerimeterFence" }.each(&:erase!)
+      # Логуємо параметри створення огорожі
+      ProGran3::Logger.info("Створення периметральної огорожі з параметрами:", "FenceBuilder")
+      ProGran3::Logger.info("  - north_count: #{north_count}", "FenceBuilder")
+      ProGran3::Logger.info("  - south_count: #{south_count}", "FenceBuilder")
+      ProGran3::Logger.info("  - east_west_count: #{east_west_count}", "FenceBuilder")
       
-      # Видаляємо старі компоненти кутової огорожі та їх підкомпоненти
-      old_corner_fences = model.active_entities.grep(Sketchup::ComponentInstance).select { |c| c.definition.name == "CornerFence" }
-      old_corner_fences.each(&:erase!)
+      # Видаляємо ВСІ старі компоненти периметральної огорожі
+      all_components = model.active_entities.grep(Sketchup::ComponentInstance)
+      ProGran3::Logger.info("Всі компоненти в моделі: #{all_components.map { |c| c.definition.name }.join(', ')}", "FenceBuilder")
       
-      # Видаляємо старі визначення компонентів кутової огорожі
-      old_corner_defs = defs.select { |definition| definition.name.start_with?("CornerFence") }
-      old_corner_defs.each { |definition| defs.remove(definition) }
+      # Видаляємо всі компоненти, пов'язані з периметральною огорожею
+      fence_components = all_components.select { |c| 
+        c.definition.name.include?("PerimeterFence") || 
+        c.definition.name.include?("Fence") ||
+        c.definition.name.include?("Post") ||
+        c.definition.name.include?("Decor")
+      }
+      ProGran3::Logger.info("Видаляємо всі компоненти огорожі: #{fence_components.length} компонентів", "FenceBuilder")
+      fence_components.each(&:erase!)
+      
+      # Видаляємо старі визначення компонентів
+      old_fence_defs = defs.select { |definition| 
+        definition.name.include?("PerimeterFence") || 
+        definition.name.include?("Fence") ||
+        definition.name.include?("Post") ||
+        definition.name.include?("Decor")
+      }
+      ProGran3::Logger.info("Видаляємо старі визначення компонентів: #{old_fence_defs.length} визначень", "FenceBuilder")
+      old_fence_defs.each { |definition| defs.remove(definition) }
+      
+      # Видаляємо ВСІ компоненти, крім фундаменту
+      all_remaining_components = model.active_entities.grep(Sketchup::ComponentInstance)
+      non_foundation_components = all_remaining_components.select { |c| c.definition.name != "Foundation" }
+      ProGran3::Logger.info("Видаляємо всі компоненти крім фундаменту: #{non_foundation_components.length} компонентів", "FenceBuilder")
+      non_foundation_components.each(&:erase!)
+      
+      # Видаляємо ВСІ визначення компонентів, крім фундаменту
+      all_definitions = model.definitions.to_a
+      non_foundation_defs = all_definitions.select { |definition| definition.name != "Foundation" }
+      ProGran3::Logger.info("Видаляємо всі визначення крім фундаменту: #{non_foundation_defs.length} визначень", "FenceBuilder")
+      non_foundation_defs.each { |definition| defs.remove(definition) }
       
       # Отримуємо розміри фундаменту для позиціонування
       foundation = model.entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name == "Foundation" }
@@ -276,8 +312,10 @@ module ProGran3
       entities.add_instance(perimeter_fence_def, nw_transform)
       
       # Додаємо проміжні стовпчики на кожній стороні відповідно до параметрів
+      ProGran3::Logger.info("Додавання проміжних стовпів:", "FenceBuilder")
       
       # Північна сторона (західна/ліва) - задня сторона
+      ProGran3::Logger.info("  - Північна сторона: #{north_count} стовпів", "FenceBuilder")
       if north_count > 0
         foundation_height = foundation_max_y - foundation_min_y
         north_spacing = foundation_height / (north_count + 1.0)
@@ -290,6 +328,7 @@ module ProGran3
       end
       
       # Південна сторона (східна/права) - вхід
+      ProGran3::Logger.info("  - Південна сторона: #{south_count} стовпів", "FenceBuilder")
       if south_count > 0
         foundation_height = foundation_max_y - foundation_min_y
         south_spacing = foundation_height / (south_count + 1.0)
@@ -302,6 +341,7 @@ module ProGran3
       end
       
       # Східна та західна сторони (бокові сторони)
+      ProGran3::Logger.info("  - Бокові сторони: #{east_west_count} стовпів", "FenceBuilder")
       if east_west_count > 0
         foundation_width = foundation_max_x - foundation_min_x
         spacing = foundation_width / (east_west_count + 1.0)
@@ -319,6 +359,7 @@ module ProGran3
         end
       end
       
+      ProGran3::Logger.info("Периметральна огорожа створена успішно", "FenceBuilder")
       true
     end
   end

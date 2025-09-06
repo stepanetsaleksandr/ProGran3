@@ -1418,6 +1418,23 @@ function updateSummaryTable() {
   } else {
     document.getElementById('summary-fence-corner').textContent = '--';
   }
+  
+  // Периметральна огорожа
+  if (addedElements.fence_perimeter) {
+    const postHeight = document.getElementById('fence-perimeter-post-height').value;
+    const postWidth = document.getElementById('fence-perimeter-post-width').value;
+    const postDepth = document.getElementById('fence-perimeter-post-depth').value;
+    const northCount = document.getElementById('fence-perimeter-north-count').value;
+    const southCount = document.getElementById('fence-perimeter-south-count').value;
+    const eastWestCount = document.getElementById('fence-perimeter-east-west-count').value;
+    const decorativeHeight = document.getElementById('fence-perimeter-decorative-height').value;
+    const decorativeThickness = document.getElementById('fence-perimeter-decorative-thickness').value;
+    
+    document.getElementById('summary-fence-perimeter').textContent = 
+      `Стовп: ${postHeight}×${postWidth}×${postDepth}${unitText}, Сторони: З${northCount} В${southCount} Б${eastWestCount}, Декор: ${decorativeHeight}×${decorativeThickness}${unitText}`;
+  } else {
+    document.getElementById('summary-fence-perimeter').textContent = '--';
+  }
 }
 
 // Функції для додавання елементів
@@ -2336,6 +2353,9 @@ function addFenceCorner() {
 
 // Додавання периметральної огорожі
 function addFencePerimeter() {
+  console.log('🚀 addFencePerimeter() викликано!');
+  debugLog('🚀 addFencePerimeter() викликано!', 'info');
+  
   try {
     const postHeight = parseInt(document.getElementById('fence-perimeter-post-height').value);
     const postWidth = parseInt(document.getElementById('fence-perimeter-post-width').value);
@@ -2347,9 +2367,21 @@ function addFencePerimeter() {
     const decorativeThickness = parseInt(document.getElementById('fence-perimeter-decorative-thickness').value);
     
     debugLog(`🏗️ Створення периметральної огорожі: ${postHeight}×${postWidth}×${postDepth}см`, 'info');
+    debugLog(`🔍 Детальна діагностика параметрів:`, 'info');
+    debugLog(`   - postHeight: ${postHeight} (тип: ${typeof postHeight})`, 'info');
+    debugLog(`   - postWidth: ${postWidth} (тип: ${typeof postWidth})`, 'info');
+    debugLog(`   - postDepth: ${postDepth} (тип: ${typeof postDepth})`, 'info');
+    debugLog(`   - northCount: ${northCount} (тип: ${typeof northCount})`, 'info');
+    debugLog(`   - southCount: ${southCount} (тип: ${typeof southCount})`, 'info');
+    debugLog(`   - eastWestCount: ${eastWestCount} (тип: ${typeof eastWestCount})`, 'info');
+    debugLog(`   - decorativeHeight: ${decorativeHeight} (тип: ${typeof decorativeHeight})`, 'info');
+    debugLog(`   - decorativeThickness: ${decorativeThickness} (тип: ${typeof decorativeThickness})`, 'info');
     debugLog(`🔍 Перевірка доступності функцій:`, 'info');
     debugLog(`   - window.sketchup: ${typeof window.sketchup}`, 'info');
     debugLog(`   - window.sketchup?.add_fence_perimeter: ${typeof window.sketchup?.add_fence_perimeter}`, 'info');
+    debugLog(`🔍 Поточний стан addedElements:`, 'info');
+    debugLog(`   - addedElements.fence_perimeter: ${addedElements.fence_perimeter}`, 'info');
+    debugLog(`   - addedElements.fence_corner: ${addedElements.fence_corner}`, 'info');
     
     if (window.sketchup && window.sketchup.add_fence_perimeter) {
       try {
@@ -2376,6 +2408,9 @@ function addFencePerimeter() {
         addedElements['fence_perimeter'] = true;
         updateSummaryTable();
         debugLog(`✅ Периметральна огорожа створена успішно`, 'success');
+        debugLog(`🔍 Стан після створення:`, 'info');
+        debugLog(`   - addedElements.fence_perimeter: ${addedElements.fence_perimeter}`, 'info');
+        debugLog(`   - addedElements.fence_corner: ${addedElements.fence_corner}`, 'info');
       } catch (error) {
         debugLog(`❌ Помилка створення периметральної огорожі: ${error.message}`, 'error');
         debugLog(`❌ Stack trace: ${error.stack}`, 'error');
@@ -2395,4 +2430,7 @@ function addFencePerimeter() {
     debugLog(`❌ Критична помилка в addFencePerimeter: ${error.message}`, 'error');
     debugLog(`❌ Stack trace: ${error.stack}`, 'error');
   }
+  
+  console.log('🏁 addFencePerimeter() завершено!');
+  debugLog('🏁 addFencePerimeter() завершено!', 'info');
 }

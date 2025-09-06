@@ -80,6 +80,71 @@ module ProGran3
       result
     end
     
+    # Валідація периметральної огорожі (дозволяє 0 для кількості стовпів)
+    def validate_fence_perimeter(post_height, post_width, post_depth, north_count, south_count, east_west_count, decorative_height, decorative_thickness, context = "FencePerimeter")
+      result = ValidationResult.new
+      
+      # Валідація розмірів стовпів (мають бути > 0)
+      if !(post_height.is_a?(Numeric) && post_height > 0)
+        result.add_error("Висота стовпа повинна бути додатним числом", :post_height)
+      elsif post_height < Constants::MIN_DIMENSION || post_height > Constants::MAX_DIMENSION
+        result.add_error("Висота стовпа повинна бути від #{Constants::MIN_DIMENSION} до #{Constants::MAX_DIMENSION}", :post_height)
+      end
+      
+      if !(post_width.is_a?(Numeric) && post_width > 0)
+        result.add_error("Ширина стовпа повинна бути додатним числом", :post_width)
+      elsif post_width < Constants::MIN_DIMENSION || post_width > Constants::MAX_DIMENSION
+        result.add_error("Ширина стовпа повинна бути від #{Constants::MIN_DIMENSION} до #{Constants::MAX_DIMENSION}", :post_width)
+      end
+      
+      if !(post_depth.is_a?(Numeric) && post_depth > 0)
+        result.add_error("Глибина стовпа повинна бути додатним числом", :post_depth)
+      elsif post_depth < Constants::MIN_DIMENSION || post_depth > Constants::MAX_DIMENSION
+        result.add_error("Глибина стовпа повинна бути від #{Constants::MIN_DIMENSION} до #{Constants::MAX_DIMENSION}", :post_depth)
+      end
+      
+      # Валідація кількості стовпів (може бути 0)
+      if !(north_count.is_a?(Numeric) && north_count >= 0)
+        result.add_error("Кількість північних стовпів повинна бути невід'ємним числом", :north_count)
+      elsif north_count > 10
+        result.add_error("Кількість північних стовпів не може перевищувати 10", :north_count)
+      end
+      
+      if !(south_count.is_a?(Numeric) && south_count >= 0)
+        result.add_error("Кількість південних стовпів повинна бути невід'ємним числом", :south_count)
+      elsif south_count > 10
+        result.add_error("Кількість південних стовпів не може перевищувати 10", :south_count)
+      end
+      
+      if !(east_west_count.is_a?(Numeric) && east_west_count >= 0)
+        result.add_error("Кількість східно-західних стовпів повинна бути невід'ємним числом", :east_west_count)
+      elsif east_west_count > 10
+        result.add_error("Кількість східно-західних стовпів не може перевищувати 10", :east_west_count)
+      end
+      
+      # Валідація декоративних елементів (мають бути > 0)
+      if !(decorative_height.is_a?(Numeric) && decorative_height > 0)
+        result.add_error("Висота декора повинна бути додатним числом", :decorative_height)
+      elsif decorative_height < Constants::MIN_DIMENSION || decorative_height > Constants::MAX_DIMENSION
+        result.add_error("Висота декора повинна бути від #{Constants::MIN_DIMENSION} до #{Constants::MAX_DIMENSION}", :decorative_height)
+      end
+      
+      if !(decorative_thickness.is_a?(Numeric) && decorative_thickness > 0)
+        result.add_error("Товщина декора повинна бути додатним числом", :decorative_thickness)
+      elsif decorative_thickness < Constants::MIN_THICKNESS || decorative_thickness > Constants::MAX_THICKNESS
+        result.add_error("Товщина декора повинна бути від #{Constants::MIN_THICKNESS} до #{Constants::MAX_THICKNESS}", :decorative_thickness)
+      end
+      
+      # Логуємо результат
+      if result.valid
+        Logger.debug("Валідація периметральної огорожі пройшла успішно", context)
+      else
+        Logger.warn("Помилки валідації периметральної огорожі: #{result.error_messages.join(', ')}", context)
+      end
+      
+      result
+    end
+    
     # Валідація файлів
     def validate_file_path(file_path, context = "FileValidation")
       result = ValidationResult.new
