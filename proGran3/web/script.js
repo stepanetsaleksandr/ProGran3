@@ -1407,14 +1407,13 @@ function updateSummaryTable() {
   // Кутова огорожа
   if (addedElements.fence_corner) {
     const postHeight = document.getElementById('fence-corner-post-height').value;
-    const postWidth = document.getElementById('fence-corner-post-width').value;
-    const postDepth = document.getElementById('fence-corner-post-depth').value;
+    const postSize = document.getElementById('fence-corner-post-size').value;
     const sideHeight = document.getElementById('fence-corner-side-height').value;
     const sideLength = document.getElementById('fence-corner-side-length').value;
-    const decorativeSize = document.getElementById('fence-corner-decorative-size').value;
+    const decorativeSize = 100; // Фіксоване значення
     
     document.getElementById('summary-fence-corner').textContent = 
-      `Стовп: ${postHeight}×${postWidth}×${postDepth}${unitText}, Панель: ${sideHeight}×${sideLength}${unitText}, Декор: ${decorativeSize}${unitText}`;
+      `Стовп: ${postHeight}×${postSize}×${postSize}${unitText}, Панель: ${sideHeight}×${sideLength}${unitText}, Декор: ${decorativeSize}${unitText}`;
   } else {
     document.getElementById('summary-fence-corner').textContent = '--';
   }
@@ -1686,12 +1685,11 @@ function getAllInputValues() {
     },
     fenceCorner: {
       postHeight: document.getElementById('fence-corner-post-height').value,
-      postWidth: document.getElementById('fence-corner-post-width').value,
-      postDepth: document.getElementById('fence-corner-post-depth').value,
+      postSize: document.getElementById('fence-corner-post-size').value,
       sideHeight: document.getElementById('fence-corner-side-height').value,
       sideLength: document.getElementById('fence-corner-side-length').value,
       sideThickness: document.getElementById('fence-corner-side-thickness').value,
-      decorativeSize: document.getElementById('fence-corner-decorative-size').value
+      decorativeSize: 100 // Фіксоване значення
     },
     fencePerimeter: {
       postHeight: document.getElementById('fence-perimeter-post-height').value,
@@ -1745,12 +1743,11 @@ function convertAllValues(oldValues, oldUnit, newUnit) {
   // Конвертуємо значення кутової огорожі
   if (oldValues.fenceCorner) {
     document.getElementById('fence-corner-post-height').value = convertValue(oldValues.fenceCorner.postHeight, oldUnit, newUnit);
-    document.getElementById('fence-corner-post-width').value = convertValue(oldValues.fenceCorner.postWidth, oldUnit, newUnit);
-    document.getElementById('fence-corner-post-depth').value = convertValue(oldValues.fenceCorner.postDepth, oldUnit, newUnit);
+    document.getElementById('fence-corner-post-size').value = convertValue(oldValues.fenceCorner.postSize, oldUnit, newUnit);
     document.getElementById('fence-corner-side-height').value = convertValue(oldValues.fenceCorner.sideHeight, oldUnit, newUnit);
     document.getElementById('fence-corner-side-length').value = convertValue(oldValues.fenceCorner.sideLength, oldUnit, newUnit);
     document.getElementById('fence-corner-side-thickness').value = convertValue(oldValues.fenceCorner.sideThickness, oldUnit, newUnit);
-    document.getElementById('fence-corner-decorative-size').value = convertValue(oldValues.fenceCorner.decorativeSize, oldUnit, newUnit);
+    // decorativeSize - фіксоване значення, не конвертується
   }
   
   // Конвертуємо значення периметральної огорожі
@@ -1823,12 +1820,10 @@ function updateUnitLabels() {
   
   // Кутова огорожа
   document.getElementById('fence-corner-post-height-label').textContent = `Висота стовпа (${unitText})`;
-  document.getElementById('fence-corner-post-width-label').textContent = `Ширина стовпа (${unitText})`;
-  document.getElementById('fence-corner-post-depth-label').textContent = `Глибина стовпа (${unitText})`;
+  document.getElementById('fence-corner-post-size-label').textContent = `Розмір стовпа (${unitText})`;
   document.getElementById('fence-corner-side-height-label').textContent = `Висота панелі (${unitText})`;
   document.getElementById('fence-corner-side-length-label').textContent = `Довжина панелі (${unitText})`;
   document.getElementById('fence-corner-side-thickness-label').textContent = `Товщина панелі (${unitText})`;
-  document.getElementById('fence-corner-decorative-size-label').textContent = `Розмір декора (${unitText})`;
   
   // Периметральна огорожа
   document.getElementById('fence-perimeter-post-height-label').textContent = `Висота стовпа (${unitText})`;
@@ -2217,12 +2212,11 @@ function addGravestone() {
 // Оновлення відображення кутової огорожі
 function updateFenceCornerDisplay() {
   const postHeight = document.getElementById('fence-corner-post-height').value;
-  const postWidth = document.getElementById('fence-corner-post-width').value;
-  const postDepth = document.getElementById('fence-corner-post-depth').value;
+  const postSize = document.getElementById('fence-corner-post-size').value;
   const sideHeight = document.getElementById('fence-corner-side-height').value;
   const sideLength = document.getElementById('fence-corner-side-length').value;
   const sideThickness = document.getElementById('fence-corner-side-thickness').value;
-  const decorativeSize = document.getElementById('fence-corner-decorative-size').value;
+  const decorativeSize = 100; // Фіксоване значення
   
   const display = document.getElementById('fence-corner-dimensions-display');
   if (display) {
@@ -2231,15 +2225,14 @@ function updateFenceCornerDisplay() {
     
     // Конвертуємо значення для відображення
     const postHeightDisplay = unit === 'cm' ? (postHeight / 10).toFixed(0) : postHeight;
-    const postWidthDisplay = unit === 'cm' ? (postWidth / 10).toFixed(0) : postWidth;
-    const postDepthDisplay = unit === 'cm' ? (postDepth / 10).toFixed(0) : postDepth;
+    const postSizeDisplay = unit === 'cm' ? (postSize / 10).toFixed(0) : postSize;
     const sideHeightDisplay = unit === 'cm' ? (sideHeight / 10).toFixed(0) : sideHeight;
     const sideLengthDisplay = unit === 'cm' ? (sideLength / 10).toFixed(0) : sideLength;
     const sideThicknessDisplay = unit === 'cm' ? (sideThickness / 10).toFixed(0) : sideThickness;
     const decorativeSizeDisplay = unit === 'cm' ? (decorativeSize / 10).toFixed(0) : decorativeSize;
     
     const dimensions = [
-      `Стовп: ${postHeightDisplay}×${postWidthDisplay}×${postDepthDisplay}${unitText}`,
+      `Стовп: ${postHeightDisplay}×${postSizeDisplay}×${postSizeDisplay}${unitText}`,
       `Панель: ${sideLengthDisplay}×${sideHeightDisplay}×${sideThicknessDisplay}${unitText}`,
       `Декор: ${decorativeSizeDisplay}${unitText}`
     ];
@@ -2283,14 +2276,13 @@ function updateFencePerimeterDisplay() {
 function addFenceCorner() {
   try {
     const postHeight = parseInt(document.getElementById('fence-corner-post-height').value);
-    const postWidth = parseInt(document.getElementById('fence-corner-post-width').value);
-    const postDepth = parseInt(document.getElementById('fence-corner-post-depth').value);
+    const postSize = parseInt(document.getElementById('fence-corner-post-size').value);
     const sideHeight = parseInt(document.getElementById('fence-corner-side-height').value);
     const sideLength = parseInt(document.getElementById('fence-corner-side-length').value);
     const sideThickness = parseInt(document.getElementById('fence-corner-side-thickness').value);
-    const decorativeSize = parseInt(document.getElementById('fence-corner-decorative-size').value);
+    const decorativeSize = 100; // Фіксоване значення
     
-    debugLog(`🏗️ Створення кутової огорожі: ${postHeight}×${postWidth}×${postDepth}см`, 'info');
+    debugLog(`🏗️ Створення кутової огорожі: ${postHeight}×${postSize}×${postSize}см`, 'info');
     debugLog(`🔍 Перевірка доступності функцій:`, 'info');
     debugLog(`   - window.sketchup: ${typeof window.sketchup}`, 'info');
     debugLog(`   - window.sketchup?.add_fence_corner: ${typeof window.sketchup?.add_fence_corner}`, 'info');
@@ -2299,23 +2291,21 @@ function addFenceCorner() {
       try {
         debugLog(`📞 Виклик window.sketchup.add_fence_corner з параметрами:`, 'info');
         debugLog(`   - postHeight: ${postHeight}`, 'info');
-        debugLog(`   - postWidth: ${postWidth}`, 'info');
-        debugLog(`   - postDepth: ${postDepth}`, 'info');
+        debugLog(`   - postSize: ${postSize}`, 'info');
         debugLog(`   - sideHeight: ${sideHeight}`, 'info');
         debugLog(`   - sideLength: ${sideLength}`, 'info');
         debugLog(`   - sideThickness: ${sideThickness}`, 'info');
-        debugLog(`   - decorativeSize: ${decorativeSize}`, 'info');
+        debugLog(`   - decorativeSize: ${decorativeSize} (фіксоване)`, 'info');
         
         // Конвертуємо в мм перед відправкою в Ruby
         const postHeightMm = convertToMm(postHeight);
-        const postWidthMm = convertToMm(postWidth);
-        const postDepthMm = convertToMm(postDepth);
+        const postSizeMm = convertToMm(postSize);
         const sideHeightMm = convertToMm(sideHeight);
         const sideLengthMm = convertToMm(sideLength);
         const sideThicknessMm = convertToMm(sideThickness);
         const decorativeSizeMm = convertToMm(decorativeSize);
         
-        const result = window.sketchup.add_fence_corner(postHeightMm, postWidthMm, postDepthMm, sideHeightMm, sideLengthMm, sideThicknessMm, decorativeSizeMm);
+        const result = window.sketchup.add_fence_corner(postHeightMm, postSizeMm, postSizeMm, sideHeightMm, sideLengthMm, sideThicknessMm, decorativeSizeMm);
         debugLog(`📤 Результат виклику: ${result}`, 'info');
         
         addedElements['fence_corner'] = true;
