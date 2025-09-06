@@ -364,6 +364,22 @@
           <button onclick="addFencePerimeter(); advanceToNextPanel(this);">Створити периметральну огорожу</button>
         </div>
       </section>
+      
+      <section class="panel collapsed">
+        <div class="panel-header" onclick="togglePanel(this)">
+          <h2 class="panel-title">Декор огорожі</h2>
+          <span class="chevron"></span>
+          <span id="fence-decor-dimensions-display" class="header-dimensions"></span>
+        </div>
+        <div class="panel-content">
+          <div class="carousel-container">
+            <div class="carousel-viewport" id="fence-decor-carousel-viewport">
+              <div class="carousel-track" id="fence-decor-carousel-track"></div>
+            </div>
+          </div>
+          <button onclick="addFenceDecor(); advanceToNextPanel(this);">Додати декор</button>
+        </div>
+      </section>
     </div>
 
     <!-- Таб "Додаткові елементи" -->
@@ -395,6 +411,7 @@
           <tr> <td>Стела:</td> <td id="summary-stele">--</td> </tr>
           <tr> <td>Кутова огорожа:</td> <td id="summary-fence-corner">--</td> </tr>
           <tr> <td>Периметральна огорожа:</td> <td id="summary-fence-perimeter">--</td> </tr>
+          <tr> <td>Декор огорожі:</td> <td id="summary-fence-decor">--</td> </tr>
         </table>
         <button onclick="refreshSpecification()" class="refresh-button">Оновити</button>
       </div>

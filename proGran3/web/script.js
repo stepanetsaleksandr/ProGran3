@@ -6,7 +6,8 @@ let carouselState = {
   stands: { index: 0 },
   steles: { index: 0 },
   flowerbeds: { index: 0 },
-  gravestones: { index: 0 }
+  gravestones: { index: 0 },
+  fence_decor: { index: 0 }
 };
 
 // --- СИСТЕМА ТАБІВ ---
@@ -66,6 +67,26 @@ function switchTab(tabName) {
       }
     }, 300);
   }
+  
+  // Спеціальна обробка для таба fence
+  if (tabName === 'fence') {
+    setTimeout(() => {
+      debugLog(`🎠 Спеціальна ініціалізація каруселі fence_decor для таба fence`, 'info');
+      if (CarouselManager.hasCarousel('fence_decor') && modelLists['fence_decor']) {
+        const trackElement = document.getElementById(CarouselManager.getCarouselElementId('fence_decor', 'track'));
+        const viewportElement = document.getElementById(CarouselManager.getCarouselElementId('fence_decor', 'viewport'));
+        
+        if (trackElement && viewportElement) {
+          debugLog(`✅ Спеціально ініціалізуємо карусель fence_decor для таба fence`, 'success');
+          CarouselManager.initialize('fence_decor');
+        } else {
+          debugLog(`❌ Не знайдено елементи каруселі fence_decor для таба fence`, 'error');
+        }
+      } else {
+        debugLog(`⚠️ Карусель fence_decor не доступна або немає моделей для таба fence`, 'warning');
+      }
+    }, 300);
+  }
     }, 100);
     
     
@@ -99,7 +120,7 @@ function initializeCarouselsForTab(tabName) {
     'monument': ['stands', 'steles'],
     'gravestone': ['flowerbeds', 'gravestones'],
     'elements': ['steles'],
-    'finishing': []
+    'fence': ['fence_decor']
   };
   
   const carouselTypes = tabCarousels[tabName] || [];
@@ -107,8 +128,8 @@ function initializeCarouselsForTab(tabName) {
     debugLog(`🔍 Перевіряємо карусель ${category} для таба ${tabName}`, 'info');
     
     if (CarouselManager.hasCarousel(category) && modelLists[category]) {
-      const trackElement = document.getElementById(`${category}-carousel-track`);
-      const viewportElement = document.getElementById(`${category}-carousel-viewport`);
+      const trackElement = document.getElementById(CarouselManager.getCarouselElementId(category, 'track'));
+      const viewportElement = document.getElementById(CarouselManager.getCarouselElementId(category, 'viewport'));
       
       if (trackElement && viewportElement) {
         debugLog(`✅ Ініціалізуємо карусель ${category} для таба ${tabName}`, 'success');
@@ -244,7 +265,8 @@ let addedElements = {
   gravestones: false,
   steles: false,
   fence_corner: false,
-  fence_perimeter: false
+  fence_perimeter: false,
+  fence_decor: false
 };
 
 // Поточна одиниця вимірювання
@@ -255,6 +277,15 @@ let currentUnit = 'mm';
 
 // Універсальна система каруселей
 const CarouselManager = {
+  // Функція для отримання правильного ID елемента каруселі
+  getCarouselElementId(category, elementType) {
+    // Спеціальна обробка для fence_decor (використовує дефіси замість підкреслень)
+    if (category === 'fence_decor') {
+      return `fence-decor-carousel-${elementType}`;
+    }
+    return `${category}-carousel-${elementType}`;
+  },
+  
   // Розширена конфігурація каруселей
   carousels: {
     'stands': { 
@@ -272,6 +303,13 @@ const CarouselManager = {
       maxItems: 10
     },
     'gravestones': { 
+      hasPreview: true, 
+      previewMode: 'dynamic',
+      autoLoad: true,
+      design: 'default',
+      maxItems: 10
+    },
+    'fence_decor': { 
       hasPreview: true, 
       previewMode: 'dynamic',
       autoLoad: true,
@@ -309,8 +347,8 @@ const CarouselManager = {
     debugLog(`🚀 CarouselManager.initialize викликано для ${category}`, 'info');
     
     const config = { ...this.carousels[category], ...options };
-    const track = document.getElementById(`${category}-carousel-track`);
-    const viewport = document.getElementById(`${category}-carousel-viewport`);
+    const track = document.getElementById(this.getCarouselElementId(category, 'track'));
+    const viewport = document.getElementById(this.getCarouselElementId(category, 'viewport'));
     
     if (!track || !viewport || !modelLists[category] || modelLists[category].length === 0) {
       debugLog(`❌ Не вдалося ініціалізувати карусель ${category}: track=${!!track}, viewport=${!!viewport}, моделі=${!!modelLists[category]}, кількість=${modelLists[category]?.length || 0}`, 'error');
@@ -372,8 +410,8 @@ const CarouselManager = {
   showCarouselItem(category, index) {
     debugLog(`🎯 CarouselManager.showCarouselItem викликано для ${category}[${index}]`, 'info');
     
-    const track = document.getElementById(`${category}-carousel-track`);
-    const viewport = document.getElementById(`${category}-carousel-viewport`);
+    const track = document.getElementById(this.getCarouselElementId(category, 'track'));
+    const viewport = document.getElementById(this.getCarouselElementId(category, 'viewport'));
     const items = track.querySelectorAll('.carousel-item');
     
     if (!track || items.length === 0 || !items[index]) {
@@ -407,7 +445,7 @@ const CarouselManager = {
   loadOrGeneratePreview(category, index) {
     debugLog(`🔍 CarouselManager.loadOrGeneratePreview викликано для ${category}[${index}]`, 'info');
     
-    const track = document.getElementById(`${category}-carousel-track`);
+    const track = document.getElementById(this.getCarouselElementId(category, 'track'));
     if (!track) {
       debugLog(`❌ Не знайдено track для категорії: ${category}`, 'error');
       return;
@@ -509,7 +547,7 @@ const CarouselManager = {
   moveCarousel(category, direction) {
     const state = carouselState[category];
     const newIndex = state.index + direction;
-    const track = document.getElementById(`${category}-carousel-track`);
+    const track = document.getElementById(this.getCarouselElementId(category, 'track'));
     const items = track.querySelectorAll('.carousel-item');
     
     if (newIndex >= 0 && newIndex < items.length) {
@@ -564,8 +602,8 @@ const CarouselManager = {
     Object.keys(this.carousels).forEach(category => {
       debugLog(`🔍 Перевіряємо карусель: ${category}`, 'info');
       
-      const trackElement = document.getElementById(`${category}-carousel-track`);
-      const viewportElement = document.getElementById(`${category}-carousel-viewport`);
+      const trackElement = document.getElementById(this.getCarouselElementId(category, 'track'));
+      const viewportElement = document.getElementById(this.getCarouselElementId(category, 'viewport'));
       
       debugLog(`🔍 Перевірка каруселі ${category}: моделі=${!!modelLists[category]}, кількість=${modelLists[category]?.length || 0}, track=${!!trackElement}, viewport=${!!viewportElement}`, 'info');
       
@@ -575,6 +613,18 @@ const CarouselManager = {
         debugLog(`   - trackElement: ${!!trackElement}`, 'info');
         debugLog(`   - viewportElement: ${!!viewportElement}`, 'info');
         debugLog(`   - modelLists[gravestones]: ${!!modelLists[category]}`, 'info');
+        debugLog(`   - кількість моделей: ${modelLists[category]?.length || 0}`, 'info');
+        if (modelLists[category]) {
+          debugLog(`   - моделі: ${modelLists[category].join(', ')}`, 'info');
+        }
+      }
+      
+      // Додаткова перевірка для fence_decor
+      if (category === 'fence_decor') {
+        debugLog(`🎯 Спеціальна перевірка для fence_decor:`, 'info');
+        debugLog(`   - trackElement: ${!!trackElement}`, 'info');
+        debugLog(`   - viewportElement: ${!!viewportElement}`, 'info');
+        debugLog(`   - modelLists[fence_decor]: ${!!modelLists[category]}`, 'info');
         debugLog(`   - кількість моделей: ${modelLists[category]?.length || 0}`, 'info');
         if (modelLists[category]) {
           debugLog(`   - моделі: ${modelLists[category].join(', ')}`, 'info');
@@ -817,6 +867,24 @@ function loadModelLists(data) {
       debugLog(`⚠️ Карусель gravestones не доступна або немає моделей для примусової ініціалізації`, 'warning');
     }
   }, 500);
+  
+  // Примусово ініціалізуємо карусель fence_decor
+  setTimeout(() => {
+    debugLog(`🎠 Примусова ініціалізація каруселі fence_decor`, 'info');
+    if (CarouselManager.hasCarousel('fence_decor') && modelLists['fence_decor']) {
+      const trackElement = document.getElementById(CarouselManager.getCarouselElementId('fence_decor', 'track'));
+      const viewportElement = document.getElementById(CarouselManager.getCarouselElementId('fence_decor', 'viewport'));
+      
+      if (trackElement && viewportElement) {
+        debugLog(`✅ Примусово ініціалізуємо карусель fence_decor`, 'success');
+        CarouselManager.initialize('fence_decor');
+      } else {
+        debugLog(`❌ Не знайдено елементи каруселі fence_decor для примусової ініціалізації`, 'error');
+      }
+    } else {
+      debugLog(`⚠️ Карусель fence_decor не доступна або немає моделей для примусової ініціалізації`, 'warning');
+    }
+  }, 600);
   
   
   
@@ -1312,6 +1380,16 @@ function updateModelDisplays() {
         gravestoneFilename.replace('.skp', '');
     }
   }
+  
+  // Оновлення відображення декору огорожі
+  if (carouselState.fence_decor && modelLists.fence_decor) {
+    const fenceDecorIndex = carouselState.fence_decor.index;
+    const fenceDecorFilename = modelLists.fence_decor[fenceDecorIndex];
+    if (fenceDecorFilename) {
+      document.getElementById('fence-decor-dimensions-display').textContent = 
+        fenceDecorFilename.replace('.skp', '');
+    }
+  }
 }
 
 function updateSummaryTable() {
@@ -1432,6 +1510,15 @@ function updateSummaryTable() {
       `Стовп: ${postHeight}×${postSize}×${postSize}${unitText}, Сторони: З${northCount} В${southCount} Б${eastWestCount}, Декор: ${decorativeHeight}×${decorativeThickness}${unitText}`;
   } else {
     document.getElementById('summary-fence-perimeter').textContent = '--';
+  }
+  
+  // Декор огорожі
+  if (addedElements.fence_decor && carouselState.fence_decor && modelLists.fence_decor) {
+    const fenceDecorFilename = modelLists.fence_decor[carouselState.fence_decor.index];
+    document.getElementById('summary-fence-decor').textContent = 
+      fenceDecorFilename ? fenceDecorFilename.replace('.skp', '') : '--';
+  } else {
+    document.getElementById('summary-fence-decor').textContent = '--';
   }
 }
 
@@ -1609,6 +1696,9 @@ function receiveModelStatus(statusData) {
     }
     if (statusData.fence_perimeter === true) {
       addedElements.fence_perimeter = true;
+    }
+    if (statusData.fence_decor === true) {
+      addedElements.fence_decor = true;
     }
     
     debugLog(`📊 Оновлений addedElements: ${JSON.stringify(addedElements)}`, 'info');
@@ -2202,6 +2292,29 @@ function addGravestone() {
     addedElements[category] = true;
     updateSummaryTable();
     debugLog(`✅ Надгробна плита додана: ${filename}`, 'success');
+  } else {
+    debugLog(`❌ window.sketchup.add_model не доступний`, 'error');
+  }
+}
+
+// Додавання вибраного декору огорожі до моделі
+function addFenceDecor() {
+  const category = 'fence_decor';
+  const state = carouselState[category];
+  
+  if (!state || !modelLists[category] || !modelLists[category][state.index]) {
+    debugLog(`❌ Не вдалося додати декор огорожі: немає вибраного елемента`, 'error');
+    return;
+  }
+  
+  const filename = modelLists[category][state.index];
+  debugLog(`🏗️ Додавання декору огорожі: ${filename}`, 'info');
+  
+  if (window.sketchup && window.sketchup.add_model) {
+    window.sketchup.add_model(category, filename);
+    addedElements[category] = true;
+    updateSummaryTable();
+    debugLog(`✅ Декор огорожі додано: ${filename}`, 'success');
   } else {
     debugLog(`❌ window.sketchup.add_model не доступний`, 'error');
   }

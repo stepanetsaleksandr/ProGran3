@@ -14,6 +14,7 @@ module ProGran3
         flowerbeds: Dir.glob(File.join(ProGran3::ASSETS_PATH, "flowerbeds", "*.skp")).map { |f| File.basename(f) },
         gravestones: Dir.glob(File.join(ProGran3::ASSETS_PATH, "gravestones", "*.skp")).map { |f| File.basename(f) },
         pavement_tiles: Dir.glob(File.join(ProGran3::ASSETS_PATH, "pavement_tiles", "*.skp")).map { |f| File.basename(f) },
+        fence_decor: Dir.glob(File.join(ProGran3::ASSETS_PATH, "fence_decor", "*.skp")).map { |f| File.basename(f) },
       }
 
       if @dialog && @dialog.visible?
