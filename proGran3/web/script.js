@@ -1681,7 +1681,9 @@ function getAllInputValues() {
       postHeight: document.getElementById('fence-perimeter-post-height').value,
       postWidth: document.getElementById('fence-perimeter-post-width').value,
       postDepth: document.getElementById('fence-perimeter-post-depth').value,
-      intermediateCount: document.getElementById('fence-perimeter-intermediate-count').value,
+      northCount: document.getElementById('fence-perimeter-north-count').value,
+      southCount: document.getElementById('fence-perimeter-south-count').value,
+      eastWestCount: document.getElementById('fence-perimeter-east-west-count').value,
       decorativeHeight: document.getElementById('fence-perimeter-decorative-height').value,
       decorativeThickness: document.getElementById('fence-perimeter-decorative-thickness').value
     }
@@ -1741,7 +1743,9 @@ function convertAllValues(oldValues, oldUnit, newUnit) {
     document.getElementById('fence-perimeter-post-height').value = convertValue(oldValues.fencePerimeter.postHeight, oldUnit, newUnit);
     document.getElementById('fence-perimeter-post-width').value = convertValue(oldValues.fencePerimeter.postWidth, oldUnit, newUnit);
     document.getElementById('fence-perimeter-post-depth').value = convertValue(oldValues.fencePerimeter.postDepth, oldUnit, newUnit);
-    document.getElementById('fence-perimeter-intermediate-count').value = oldValues.fencePerimeter.intermediateCount; // Кількість не конвертується
+    document.getElementById('fence-perimeter-north-count').value = oldValues.fencePerimeter.northCount; // Кількість не конвертується
+    document.getElementById('fence-perimeter-south-count').value = oldValues.fencePerimeter.southCount; // Кількість не конвертується
+    document.getElementById('fence-perimeter-east-west-count').value = oldValues.fencePerimeter.eastWestCount; // Кількість не конвертується
     document.getElementById('fence-perimeter-decorative-height').value = convertValue(oldValues.fencePerimeter.decorativeHeight, oldUnit, newUnit);
     document.getElementById('fence-perimeter-decorative-thickness').value = convertValue(oldValues.fencePerimeter.decorativeThickness, oldUnit, newUnit);
   }
