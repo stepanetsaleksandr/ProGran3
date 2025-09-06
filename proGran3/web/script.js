@@ -2437,6 +2437,10 @@ function addFenceCorner() {
     
     // Отримуємо вибраний декор з каруселі
     let selectedDecor = null;
+    debugLog(`🔍 Діагностика каруселі декору:`, 'info');
+    debugLog(`   - carouselState.fence_decor: ${JSON.stringify(carouselState.fence_decor)}`, 'info');
+    debugLog(`   - modelLists.fence_decor: ${JSON.stringify(modelLists.fence_decor)}`, 'info');
+    
     if (carouselState.fence_decor && modelLists.fence_decor && modelLists.fence_decor[carouselState.fence_decor.index]) {
       selectedDecor = modelLists.fence_decor[carouselState.fence_decor.index];
       debugLog(`🎨 Вибраний декор для кутової огорожі: ${selectedDecor}`, 'info');
@@ -2472,9 +2476,13 @@ function addFenceCorner() {
         
         // Додаємо декор, якщо він вибраний
         if (selectedDecor && window.sketchup.add_model) {
-          debugLog(`🎨 Додаємо декор на стовпчики огорожі: ${selectedDecor}`, 'info');
-          window.sketchup.add_model('fence_decor', selectedDecor);
+          debugLog(`🎨 Додаємо декор на всі стовпчики огорожі: ${selectedDecor}`, 'info');
+          debugLog(`🔍 Викликаємо window.sketchup.add_model('fence_decor', '${selectedDecor}')`, 'info');
+          const decorResult = window.sketchup.add_model('fence_decor', selectedDecor);
+          debugLog(`📤 Результат додавання декору: ${decorResult}`, 'info');
           addedElements['fence_decor'] = true;
+        } else {
+          debugLog(`⚠️ Не можу додати декор: selectedDecor=${selectedDecor}, add_model=${typeof window.sketchup?.add_model}`, 'warning');
         }
         
         addedElements['fence_corner'] = true;
@@ -2517,6 +2525,10 @@ function addFencePerimeter() {
     
     // Отримуємо вибраний декор з каруселі
     let selectedDecor = null;
+    debugLog(`🔍 Діагностика каруселі декору (периметральна):`, 'info');
+    debugLog(`   - carouselState.fence_decor: ${JSON.stringify(carouselState.fence_decor)}`, 'info');
+    debugLog(`   - modelLists.fence_decor: ${JSON.stringify(modelLists.fence_decor)}`, 'info');
+    
     if (carouselState.fence_decor && modelLists.fence_decor && modelLists.fence_decor[carouselState.fence_decor.index]) {
       selectedDecor = modelLists.fence_decor[carouselState.fence_decor.index];
       debugLog(`🎨 Вибраний декор для периметральної огорожі: ${selectedDecor}`, 'info');
@@ -2562,9 +2574,13 @@ function addFencePerimeter() {
         
         // Додаємо декор, якщо він вибраний
         if (selectedDecor && window.sketchup.add_model) {
-          debugLog(`🎨 Додаємо декор на стовпчики периметральної огорожі: ${selectedDecor}`, 'info');
-          window.sketchup.add_model('fence_decor', selectedDecor);
+          debugLog(`🎨 Додаємо декор на всі стовпчики периметральної огорожі: ${selectedDecor}`, 'info');
+          debugLog(`🔍 Викликаємо window.sketchup.add_model('fence_decor', '${selectedDecor}')`, 'info');
+          const decorResult = window.sketchup.add_model('fence_decor', selectedDecor);
+          debugLog(`📤 Результат додавання декору: ${decorResult}`, 'info');
           addedElements['fence_decor'] = true;
+        } else {
+          debugLog(`⚠️ Не можу додати декор: selectedDecor=${selectedDecor}, add_model=${typeof window.sketchup?.add_model}`, 'warning');
         }
         
         addedElements['fence_perimeter'] = true;

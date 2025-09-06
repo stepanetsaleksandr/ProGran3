@@ -133,6 +133,26 @@ module ProGran3
       true
     end
 
+    # Callback для додавання декору огорожі на всі стовпчики
+    def add_fence_decor_callback(dialog, model_name)
+      begin
+        ProGran3::Logger.info("Додавання декору огорожі на всі стовпчики: #{model_name}", "UI")
+        
+        # Додаємо декор на всі стовпчики огорожі
+        success = ProGran3.add_fence_decor_to_all_posts(model_name)
+        
+        if success
+          # Оновлення стану через ModelStateManager
+          ModelStateManager.component_added(:fence_decor, { filename: model_name })
+        end
+        
+        success
+      rescue => e
+        ErrorHandler.handle_error(e, "UI", "add_fence_decor")
+        false
+      end
+    end
+
     # Callback для додавання моделей
     def add_model_callback(dialog, category, model_name)
       begin

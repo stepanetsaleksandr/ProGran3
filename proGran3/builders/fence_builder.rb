@@ -54,6 +54,16 @@ module ProGran3
       old_corner_fences = model.active_entities.grep(Sketchup::ComponentInstance).select { |c| c.definition.name == "CornerFence" }
       old_corner_fences.each(&:erase!)
       
+      # Видаляємо старі декоративні елементи
+      old_decor_components = model.active_entities.grep(Sketchup::ComponentInstance).find_all { |c| 
+        c.definition.name.include?('ball') || c.definition.name.include?('pancake') || c.definition.name.include?('fence_decor')
+      }
+      old_decor_components.each do |decor|
+        if decor && decor.valid?
+          decor.erase!
+        end
+      end
+      
       # Видаляємо старі визначення компонентів кутової огорожі
       old_defs = defs.select { |definition| definition.name.start_with?("CornerFence") }
       old_defs.each { |definition| defs.remove(definition) }
@@ -193,6 +203,17 @@ module ProGran3
       }
       ProGran3::Logger.info("Видаляємо всі компоненти огорожі: #{fence_components.length} компонентів", "FenceBuilder")
       fence_components.each(&:erase!)
+      
+      # Видаляємо старі декоративні елементи
+      old_decor_components = model.active_entities.grep(Sketchup::ComponentInstance).find_all { |c| 
+        c.definition.name.include?('ball') || c.definition.name.include?('pancake') || c.definition.name.include?('fence_decor')
+      }
+      ProGran3::Logger.info("Видаляємо старі декоративні елементи: #{old_decor_components.length} компонентів", "FenceBuilder")
+      old_decor_components.each do |decor|
+        if decor && decor.valid?
+          decor.erase!
+        end
+      end
       
       # Видаляємо старі визначення компонентів
       old_fence_defs = defs.select { |definition| 

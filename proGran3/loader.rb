@@ -47,6 +47,46 @@ module ProGran3
     all_instances_by_category("stands").last
   end
 
+  # Спеціальна функція для додавання декору на всі стовпчики огорожі
+  def add_fence_decor_to_all_posts(filename)
+    ProGran3::Logger.info("Додавання декору на всі стовпчики огорожі: #{filename}", "Loader")
+    
+    model = Sketchup.active_model
+    entities = model.active_entities
+    
+    # Завантажуємо компонент декору
+    comp_def = load_component('fence_decor', filename)
+    return false unless comp_def
+    
+    # Знаходимо всі стовпчики огорожі
+    fence_posts = entities.grep(Sketchup::ComponentInstance).find_all { |c| 
+      c.definition.name.include?('Fence') && c.definition.name.include?('Post')
+    }
+    
+    if fence_posts.empty?
+      ProGran3::Logger.warn("Не знайдено стовпчиків огорожі для додавання декору", "Loader")
+      return false
+    end
+    
+    ProGran3::Logger.info("Знайдено #{fence_posts.length} стовпчиків огорожі", "Loader")
+    
+    # Додаємо декор на кожен стовпчик
+    fence_posts.each_with_index do |post, index|
+      post_bounds = post.bounds
+      decor_x = post_bounds.center.x - comp_def.bounds.center.x
+      decor_y = post_bounds.center.y - comp_def.bounds.center.y
+      decor_z = post_bounds.max.z - comp_def.bounds.min.z
+      
+      decor_trans = Geom::Transformation.new([decor_x, decor_y, decor_z])
+      decor_instance = entities.add_instance(comp_def, decor_trans)
+      
+      ProGran3::Logger.info("Декор додано на стовпчик #{index + 1}: x=#{decor_x}, y=#{decor_y}, z=#{decor_z}", "Loader")
+    end
+    
+    ProGran3::Logger.info("Декор успішно додано на #{fence_posts.length} стовпчиків", "Loader")
+    true
+  end
+
   def insert_component(category, filename)
     # Перевірка через ModelStateManager
     unless ModelStateManager.can_add_component?(category.to_sym)
@@ -124,13 +164,13 @@ module ProGran3
             z = stand_bounds.min.z - comp_bounds.min.z  # На тому ж рівні що і підставка (по низу)
           end
         elsif category == "fence_decor"
-          # Для декору огорожі позиціонуємо на стовпчиках огорожі
+          # Для декору огорожі позиціонуємо на всіх стовпчиках огорожі
           # Шукаємо стовпчики огорожі
           fence_posts = entities.grep(Sketchup::ComponentInstance).find_all { |c| 
             c.definition.name.include?('Fence') && c.definition.name.include?('Post')
           }
           if fence_posts.any?
-            # Позиціонуємо на першому знайденому стовпчику
+            # Позиціонуємо на першому знайденому стовпчику (основний екземпляр)
             post = fence_posts.first
             post_bounds = post.bounds
             x = post_bounds.center.x - comp_bounds.center.x
@@ -166,6 +206,109 @@ module ProGran3
     end
     trans = Geom::Transformation.new([x, y, z])
     instance = entities.add_instance(comp_def, trans)
+    
+    # Спеціальна логіка для fence_decor - додаємо декор на всі стовпчики огорожі
+    if category == "fence_decor"
+      ProGran3::Logger.info("Початок додавання декору огорожі", "Loader")
+      
+      # Спочатку видаляємо старі декоративні елементи
+      ProGran3::Logger.info("Видаляємо старі декоративні елементи", "Loader")
+      old_decor_components = entities.grep(Sketchup::ComponentInstance).find_all { |c| 
+        c.definition.name.include?('ball') || c.definition.name.include?('pancake') || c.definition.name.include?('fence_decor')
+      }
+      
+      ProGran3::Logger.info("Знайдено старих декоративних елементів: #{old_decor_components.length}", "Loader")
+      old_decor_components.each do |old_decor|
+        if old_decor && old_decor.valid?
+          ProGran3::Logger.info("Видаляємо старий декор: #{old_decor.definition.name}", "Loader")
+          old_decor.erase!
+        else
+          ProGran3::Logger.info("Старий декор вже видалено або не існує: #{old_decor.definition.name rescue 'unknown'}", "Loader")
+        end
+      end
+      
+      # Спочатку подивимося, які компоненти є в моделі
+      all_components = entities.grep(Sketchup::ComponentInstance)
+      ProGran3::Logger.info("Всього компонентів в моделі після видалення: #{all_components.length}", "Loader")
+      
+      all_components.each_with_index do |comp, index|
+        ProGran3::Logger.info("Компонент #{index + 1}: #{comp.definition.name}", "Loader")
+      end
+      
+      # Шукаємо стовпчики огорожі всередині компонентів огорожі
+      fence_posts = []
+      
+      # Спочатку знаходимо всі компоненти огорожі
+      fence_components = entities.grep(Sketchup::ComponentInstance).find_all { |c| 
+        name = c.definition.name
+        name.include?('CornerFence') || name.include?('PerimeterFence')
+      }
+      
+      ProGran3::Logger.info("Знайдено компонентів огорожі: #{fence_components.length}", "Loader")
+      
+      # Тепер шукаємо стовпчики всередині кожного компонента огорожі
+      fence_components.each_with_index do |fence_comp, fence_index|
+        ProGran3::Logger.info("Перевіряємо компонент огорожі #{fence_index + 1}: #{fence_comp.definition.name}", "Loader")
+        
+        # Шукаємо стовпчики всередині цього компонента
+        fence_comp.definition.entities.grep(Sketchup::ComponentInstance).each do |inner_comp|
+          if inner_comp.definition.name.include?('Post')
+            ProGran3::Logger.info("  Знайдено стовпчик: #{inner_comp.definition.name}", "Loader")
+            # Зберігаємо стовпчик разом з батьківським компонентом
+            fence_posts << { post: inner_comp, fence_comp: fence_comp }
+          end
+        end
+      end
+      
+      ProGran3::Logger.info("Знайдено стовпчиків огорожі: #{fence_posts.length}", "Loader")
+      
+      # Діагностика знайдених стовпчиків
+      fence_posts.each_with_index do |post_data, index|
+        ProGran3::Logger.info("Стовпчик #{index + 1}: #{post_data[:post].definition.name} (в компоненті #{post_data[:fence_comp].definition.name})", "Loader")
+      end
+      
+      if fence_posts.any?
+        ProGran3::Logger.info("Додаємо декор на #{fence_posts.length} стовпчиків огорожі", "Loader")
+        
+        fence_posts.each_with_index do |post_data, index|
+          post = post_data[:post]
+          fence_comp = post_data[:fence_comp]
+          
+          # Обчислюємо позицію стовпчика в глобальних координатах
+          post_local_bounds = post.bounds
+          fence_transform = fence_comp.transformation
+          
+          # Трансформуємо локальні координати стовпчика в глобальні
+          post_global_center = fence_transform * post_local_bounds.center
+          post_global_max_z = fence_transform * Geom::Point3d.new(post_local_bounds.center.x, post_local_bounds.center.y, post_local_bounds.max.z)
+          
+          decor_x = post_global_center.x - comp_def.bounds.center.x
+          decor_y = post_global_center.y - comp_def.bounds.center.y
+          decor_z = post_global_max_z.z - comp_def.bounds.min.z
+          
+          ProGran3::Logger.info("Позиціонування декору на стовпчик #{index + 1}:", "Loader")
+          ProGran3::Logger.info("  - post_local_bounds: #{post_local_bounds}", "Loader")
+          ProGran3::Logger.info("  - fence_transform: #{fence_transform}", "Loader")
+          ProGran3::Logger.info("  - post_global_center: #{post_global_center}", "Loader")
+          ProGran3::Logger.info("  - decor_x: #{decor_x}, decor_y: #{decor_y}, decor_z: #{decor_z}", "Loader")
+          
+          decor_trans = Geom::Transformation.new([decor_x, decor_y, decor_z])
+          decor_instance = entities.add_instance(comp_def, decor_trans)
+          
+          ProGran3::Logger.info("✅ Декор додано на стовпчик #{index + 1}: x=#{decor_x}, y=#{decor_y}, z=#{decor_z}", "Loader")
+        end
+        
+        # Видаляємо основний екземпляр, оскільки ми створили окремі екземпляри на кожному стовпчику
+        if instance && instance.valid?
+          instance.erase!
+          ProGran3::Logger.info("Основний екземпляр декору видалено, створено #{fence_posts.length} екземплярів на стовпчиках", "Loader")
+        else
+          ProGran3::Logger.info("Основний екземпляр декору вже видалено або не існує, створено #{fence_posts.length} екземплярів на стовпчиках", "Loader")
+        end
+      else
+        ProGran3::Logger.warn("Не знайдено стовпчиків огорожі для додавання декору", "Loader")
+      end
+    end
     
     # Діагностика для надгробної плити
     if category == "gravestones"

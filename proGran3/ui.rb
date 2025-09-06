@@ -62,9 +62,13 @@ module ProGran3
        end
 
 
-             @dialog.add_action_callback("add_model") do |dialog, category, filename|
-         CallbackManager.add_model_callback(dialog, category, filename)
-       end
+      @dialog.add_action_callback("add_model") do |dialog, category, filename|
+        CallbackManager.add_model_callback(dialog, category, filename)
+      end
+      
+      @dialog.add_action_callback("add_fence_decor") do |dialog, filename|
+        CallbackManager.add_fence_decor_callback(dialog, filename)
+      end
        
       # Callback'и для огорожі
       @dialog.add_action_callback("add_fence_corner") do |dialog, post_height, post_width, post_depth, side_height, side_length, side_thickness, decorative_size|
