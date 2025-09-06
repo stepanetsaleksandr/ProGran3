@@ -72,9 +72,20 @@ function switchTab(tabName) {
   if (tabName === 'fence') {
     setTimeout(() => {
       debugLog(`🎠 Спеціальна ініціалізація каруселі fence_decor для таба fence`, 'info');
+      debugLog(`🔍 Діагностика для таба fence:`, 'info');
+      debugLog(`   - hasCarousel: ${CarouselManager.hasCarousel('fence_decor')}`, 'info');
+      debugLog(`   - modelLists['fence_decor']: ${!!modelLists['fence_decor']}`, 'info');
+      debugLog(`   - кількість моделей: ${modelLists['fence_decor']?.length || 0}`, 'info');
+      debugLog(`   - моделі: ${modelLists['fence_decor']?.join(', ') || 'немає'}`, 'info');
+      
       if (CarouselManager.hasCarousel('fence_decor') && modelLists['fence_decor']) {
         const trackElement = document.getElementById(CarouselManager.getCarouselElementId('fence_decor', 'track'));
         const viewportElement = document.getElementById(CarouselManager.getCarouselElementId('fence_decor', 'viewport'));
+        
+        debugLog(`   - trackElement: ${!!trackElement}`, 'info');
+        debugLog(`   - viewportElement: ${!!viewportElement}`, 'info');
+        debugLog(`   - trackId: ${CarouselManager.getCarouselElementId('fence_decor', 'track')}`, 'info');
+        debugLog(`   - viewportId: ${CarouselManager.getCarouselElementId('fence_decor', 'viewport')}`, 'info');
         
         if (trackElement && viewportElement) {
           debugLog(`✅ Спеціально ініціалізуємо карусель fence_decor для таба fence`, 'success');
@@ -130,6 +141,18 @@ function initializeCarouselsForTab(tabName) {
     if (CarouselManager.hasCarousel(category) && modelLists[category]) {
       const trackElement = document.getElementById(CarouselManager.getCarouselElementId(category, 'track'));
       const viewportElement = document.getElementById(CarouselManager.getCarouselElementId(category, 'viewport'));
+      
+      // Додаткова діагностика для fence_decor
+      if (category === 'fence_decor') {
+        debugLog(`🎯 Спеціальна діагностика для fence_decor:`, 'info');
+        debugLog(`   - hasCarousel: ${CarouselManager.hasCarousel(category)}`, 'info');
+        debugLog(`   - modelLists[category]: ${!!modelLists[category]}`, 'info');
+        debugLog(`   - кількість моделей: ${modelLists[category]?.length || 0}`, 'info');
+        debugLog(`   - trackElement: ${!!trackElement}`, 'info');
+        debugLog(`   - viewportElement: ${!!viewportElement}`, 'info');
+        debugLog(`   - trackId: ${CarouselManager.getCarouselElementId(category, 'track')}`, 'info');
+        debugLog(`   - viewportId: ${CarouselManager.getCarouselElementId(category, 'viewport')}`, 'info');
+      }
       
       if (trackElement && viewportElement) {
         debugLog(`✅ Ініціалізуємо карусель ${category} для таба ${tabName}`, 'success');
@@ -349,6 +372,18 @@ const CarouselManager = {
     const config = { ...this.carousels[category], ...options };
     const track = document.getElementById(this.getCarouselElementId(category, 'track'));
     const viewport = document.getElementById(this.getCarouselElementId(category, 'viewport'));
+    
+    // Додаткова діагностика для fence_decor
+    if (category === 'fence_decor') {
+      debugLog(`🎯 Діагностика fence_decor в initialize:`, 'info');
+      debugLog(`   - config: ${JSON.stringify(config)}`, 'info');
+      debugLog(`   - track: ${!!track}`, 'info');
+      debugLog(`   - viewport: ${!!viewport}`, 'info');
+      debugLog(`   - modelLists[category]: ${!!modelLists[category]}`, 'info');
+      debugLog(`   - кількість моделей: ${modelLists[category]?.length || 0}`, 'info');
+      debugLog(`   - trackId: ${this.getCarouselElementId(category, 'track')}`, 'info');
+      debugLog(`   - viewportId: ${this.getCarouselElementId(category, 'viewport')}`, 'info');
+    }
     
     if (!track || !viewport || !modelLists[category] || modelLists[category].length === 0) {
       debugLog(`❌ Не вдалося ініціалізувати карусель ${category}: track=${!!track}, viewport=${!!viewport}, моделі=${!!modelLists[category]}, кількість=${modelLists[category]?.length || 0}`, 'error');
@@ -599,6 +634,13 @@ const CarouselManager = {
       debugLog(`❌ Карусель gravestones не знайдена в конфігурації`, 'error');
     }
     
+    // Додаткова перевірка для fence_decor
+    if (this.carousels.fence_decor) {
+      debugLog(`✅ Карусель fence_decor знайдена в конфігурації`, 'success');
+    } else {
+      debugLog(`❌ Карусель fence_decor не знайдена в конфігурації`, 'error');
+    }
+    
     Object.keys(this.carousels).forEach(category => {
       debugLog(`🔍 Перевіряємо карусель: ${category}`, 'info');
       
@@ -839,6 +881,14 @@ function loadModelLists(data) {
     debugLog(`❌ Категорія gravestones не знайдена в даних`, 'error');
   }
   
+  // Додаткова перевірка для fence_decor
+  if (data.fence_decor) {
+    debugLog(`✅ Категорія fence_decor знайдена з ${data.fence_decor.length} моделями`, 'success');
+    debugLog(`📋 Моделі fence_decor: ${data.fence_decor.join(', ')}`, 'info');
+  } else {
+    debugLog(`❌ Категорія fence_decor не знайдена в даних`, 'error');
+  }
+  
   modelLists = data;
   
   // Використовуємо автоматичну ініціалізацію всіх каруселей
@@ -871,9 +921,20 @@ function loadModelLists(data) {
   // Примусово ініціалізуємо карусель fence_decor
   setTimeout(() => {
     debugLog(`🎠 Примусова ініціалізація каруселі fence_decor`, 'info');
+    debugLog(`🔍 Діагностика примусової ініціалізації fence_decor:`, 'info');
+    debugLog(`   - hasCarousel: ${CarouselManager.hasCarousel('fence_decor')}`, 'info');
+    debugLog(`   - modelLists['fence_decor']: ${!!modelLists['fence_decor']}`, 'info');
+    debugLog(`   - кількість моделей: ${modelLists['fence_decor']?.length || 0}`, 'info');
+    debugLog(`   - моделі: ${modelLists['fence_decor']?.join(', ') || 'немає'}`, 'info');
+    
     if (CarouselManager.hasCarousel('fence_decor') && modelLists['fence_decor']) {
       const trackElement = document.getElementById(CarouselManager.getCarouselElementId('fence_decor', 'track'));
       const viewportElement = document.getElementById(CarouselManager.getCarouselElementId('fence_decor', 'viewport'));
+      
+      debugLog(`   - trackElement: ${!!trackElement}`, 'info');
+      debugLog(`   - viewportElement: ${!!viewportElement}`, 'info');
+      debugLog(`   - trackId: ${CarouselManager.getCarouselElementId('fence_decor', 'track')}`, 'info');
+      debugLog(`   - viewportId: ${CarouselManager.getCarouselElementId('fence_decor', 'viewport')}`, 'info');
       
       if (trackElement && viewportElement) {
         debugLog(`✅ Примусово ініціалізуємо карусель fence_decor`, 'success');
@@ -2298,27 +2359,6 @@ function addGravestone() {
 }
 
 // Додавання вибраного декору огорожі до моделі
-function addFenceDecor() {
-  const category = 'fence_decor';
-  const state = carouselState[category];
-  
-  if (!state || !modelLists[category] || !modelLists[category][state.index]) {
-    debugLog(`❌ Не вдалося додати декор огорожі: немає вибраного елемента`, 'error');
-    return;
-  }
-  
-  const filename = modelLists[category][state.index];
-  debugLog(`🏗️ Додавання декору огорожі: ${filename}`, 'info');
-  
-  if (window.sketchup && window.sketchup.add_model) {
-    window.sketchup.add_model(category, filename);
-    addedElements[category] = true;
-    updateSummaryTable();
-    debugLog(`✅ Декор огорожі додано: ${filename}`, 'success');
-  } else {
-    debugLog(`❌ window.sketchup.add_model не доступний`, 'error');
-  }
-}
 
 // --- FENCE ФУНКЦІЇ ---
 
@@ -2395,6 +2435,15 @@ function addFenceCorner() {
     const sideThickness = parseInt(document.getElementById('fence-corner-side-thickness').value);
     const decorativeSize = 100; // Фіксоване значення
     
+    // Отримуємо вибраний декор з каруселі
+    let selectedDecor = null;
+    if (carouselState.fence_decor && modelLists.fence_decor && modelLists.fence_decor[carouselState.fence_decor.index]) {
+      selectedDecor = modelLists.fence_decor[carouselState.fence_decor.index];
+      debugLog(`🎨 Вибраний декор для кутової огорожі: ${selectedDecor}`, 'info');
+    } else {
+      debugLog(`⚠️ Декор не вибрано, створюємо огорожу без декору`, 'warning');
+    }
+    
     debugLog(`🏗️ Створення кутової огорожі: ${postHeight}×${postSize}×${postSize}см`, 'info');
     debugLog(`🔍 Перевірка доступності функцій:`, 'info');
     debugLog(`   - window.sketchup: ${typeof window.sketchup}`, 'info');
@@ -2420,6 +2469,13 @@ function addFenceCorner() {
         
         const result = window.sketchup.add_fence_corner(postHeightMm, postSizeMm, postSizeMm, sideHeightMm, sideLengthMm, sideThicknessMm, decorativeSizeMm);
         debugLog(`📤 Результат виклику: ${result}`, 'info');
+        
+        // Додаємо декор, якщо він вибраний
+        if (selectedDecor && window.sketchup.add_model) {
+          debugLog(`🎨 Додаємо декор на стовпчики огорожі: ${selectedDecor}`, 'info');
+          window.sketchup.add_model('fence_decor', selectedDecor);
+          addedElements['fence_decor'] = true;
+        }
         
         addedElements['fence_corner'] = true;
         updateSummaryTable();
@@ -2459,6 +2515,15 @@ function addFencePerimeter() {
     const decorativeHeight = 100; // Фіксоване значення
     const decorativeThickness = 100; // Фіксоване значення
     
+    // Отримуємо вибраний декор з каруселі
+    let selectedDecor = null;
+    if (carouselState.fence_decor && modelLists.fence_decor && modelLists.fence_decor[carouselState.fence_decor.index]) {
+      selectedDecor = modelLists.fence_decor[carouselState.fence_decor.index];
+      debugLog(`🎨 Вибраний декор для периметральної огорожі: ${selectedDecor}`, 'info');
+    } else {
+      debugLog(`⚠️ Декор не вибрано, створюємо огорожу без декору`, 'warning');
+    }
+    
     debugLog(`🏗️ Створення периметральної огорожі: ${postHeight}×${postSize}×${postSize}см`, 'info');
     debugLog(`🔍 Детальна діагностика параметрів:`, 'info');
     debugLog(`   - postHeight: ${postHeight} (тип: ${typeof postHeight})`, 'info');
@@ -2494,6 +2559,13 @@ function addFencePerimeter() {
         
         const result = window.sketchup.add_fence_perimeter(postHeightMm, postSizeMm, postSizeMm, northCount, southCount, eastWestCount, decorativeHeightMm, decorativeThicknessMm);
         debugLog(`📤 Результат виклику: ${result}`, 'info');
+        
+        // Додаємо декор, якщо він вибраний
+        if (selectedDecor && window.sketchup.add_model) {
+          debugLog(`🎨 Додаємо декор на стовпчики периметральної огорожі: ${selectedDecor}`, 'info');
+          window.sketchup.add_model('fence_decor', selectedDecor);
+          addedElements['fence_decor'] = true;
+        }
         
         addedElements['fence_perimeter'] = true;
         updateSummaryTable();

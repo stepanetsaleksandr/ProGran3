@@ -167,6 +167,8 @@ module ProGran3
           @flowerbed_params = { category: category, filename: model_name }
         when :gravestones
           @gravestone_params = { category: category, filename: model_name }
+        when :fence_decor
+          @fence_decor_params = { category: category, filename: model_name }
         end
         
         # Додаємо модель

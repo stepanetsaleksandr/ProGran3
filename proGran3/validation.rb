@@ -7,6 +7,17 @@ module ProGran3
   module Validation
     extend self
     
+    # Клас для помилок валідації
+    class ValidationError < StandardError
+      attr_reader :context, :field
+      
+      def initialize(message, context = nil, field = nil)
+        super(message)
+        @context = context
+        @field = field
+      end
+    end
+    
     # Клас для результатів валідації
     class ValidationResult
       attr_reader :valid, :errors, :warnings

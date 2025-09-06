@@ -323,6 +323,14 @@
               <input type="number" id="fence-corner-side-thickness" value="50" min="30" max="150" oninput="updateFenceCornerDisplay()">
             </div>
           </div>
+          
+          <!-- Карусель декору огорожі -->
+          <div class="carousel-container">
+            <div class="carousel-viewport" id="fence-decor-carousel-viewport">
+              <div class="carousel-track" id="fence-decor-carousel-track"></div>
+            </div>
+          </div>
+          
           <button onclick="addFenceCorner(); advanceToNextPanel(this);">Створити кутову огорожу</button>
         </div>
       </section>
@@ -365,21 +373,6 @@
         </div>
       </section>
       
-      <section class="panel collapsed">
-        <div class="panel-header" onclick="togglePanel(this)">
-          <h2 class="panel-title">Декор огорожі</h2>
-          <span class="chevron"></span>
-          <span id="fence-decor-dimensions-display" class="header-dimensions"></span>
-        </div>
-        <div class="panel-content">
-          <div class="carousel-container">
-            <div class="carousel-viewport" id="fence-decor-carousel-viewport">
-              <div class="carousel-track" id="fence-decor-carousel-track"></div>
-            </div>
-          </div>
-          <button onclick="addFenceDecor(); advanceToNextPanel(this);">Додати декор</button>
-        </div>
-      </section>
     </div>
 
     <!-- Таб "Додаткові елементи" -->

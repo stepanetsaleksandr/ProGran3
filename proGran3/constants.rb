@@ -32,7 +32,8 @@ module ProGran3
       :steles, 
       :flowerbeds,
       :gravestones,
-      :pavement_tiles
+      :pavement_tiles,
+      :fence_decor
     ]
     
     # Налаштування деплою

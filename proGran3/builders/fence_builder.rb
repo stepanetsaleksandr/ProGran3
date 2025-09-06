@@ -114,20 +114,7 @@ module ProGran3
       side_y_face.reverse! if side_y_face.normal.z < 0
       side_y_face.pushpull(side_height.mm)
       
-      # 4. Створюємо компонент декоративного елемента
-      decor_def = defs.add("CornerFence_Decor")
-      decor_half_size = decorative_size.mm / 2.0
-      decor_points = [
-        Geom::Point3d.new(-decor_half_size, -decor_half_size, 0),
-        Geom::Point3d.new(decor_half_size, -decor_half_size, 0),
-        Geom::Point3d.new(decor_half_size, decor_half_size, 0),
-        Geom::Point3d.new(-decor_half_size, decor_half_size, 0)
-      ]
-      decor_face = decor_def.entities.add_face(decor_points)
-      decor_face.reverse! if decor_face.normal.z < 0
-      decor_face.pushpull(decorative_size.mm)
-      
-      # 5. Створюємо головний компонент кутової огорожі
+      # 4. Створюємо головний компонент кутової огорожі
       corner_fence_def = defs.add("CornerFence")
       
       # Додаємо стовп
@@ -141,12 +128,6 @@ module ProGran3
       # Додаємо панель по осі Y
       panel_y_transform = Geom::Transformation.new([0, post_width.mm, base_height])
       corner_fence_def.entities.add_instance(panel_y_def, panel_y_transform)
-      
-      # Додаємо декоративний елемент (по центру стовпа)
-      decor_center_x = post_depth.mm / 2.0
-      decor_center_y = post_width.mm / 2.0
-      decor_transform = Geom::Transformation.new([decor_center_x, decor_center_y, base_height + post_height.mm])
-      corner_fence_def.entities.add_instance(decor_def, decor_transform)
       
       # Створюємо 4 кутові елементи на кожному куті фундаменту
       
@@ -267,31 +248,12 @@ module ProGran3
       post_face.reverse! if post_face.normal.z < 0
       post_face.pushpull(post_height.mm)
       
-      # Створюємо компонент декоративного елемента
-      decor_def = defs.add("PerimeterFence_Decor")
-      decor_half_width = post_width.mm / 2.0
-      decor_points = [
-        Geom::Point3d.new(-decor_half_width, -decor_half_width, 0),
-        Geom::Point3d.new(decor_half_width, -decor_half_width, 0),
-        Geom::Point3d.new(decor_half_width, decor_half_width, 0),
-        Geom::Point3d.new(-decor_half_width, decor_half_width, 0)
-      ]
-      decor_face = decor_def.entities.add_face(decor_points)
-      decor_face.reverse! if decor_face.normal.z < 0
-      decor_face.pushpull(decorative_height.mm)
-      
       # Створюємо головний компонент периметральної огорожі
       perimeter_fence_def = defs.add("PerimeterFence")
       
       # Додаємо стовп
       post_transform = Geom::Transformation.new([0, 0, base_height])
       perimeter_fence_def.entities.add_instance(post_def, post_transform)
-      
-      # Додаємо декоративний елемент (по центру стовпа)
-      decor_center_x = post_depth.mm / 2.0
-      decor_center_y = post_width.mm / 2.0
-      decor_transform = Geom::Transformation.new([decor_center_x, decor_center_y, base_height + post_height.mm])
-      perimeter_fence_def.entities.add_instance(decor_def, decor_transform)
       
       # Створюємо 4 кутові стовпчики на кожному куті фундаменту
       

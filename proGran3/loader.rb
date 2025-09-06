@@ -123,8 +123,37 @@ module ProGran3
             y = stand_bounds.center.y - comp_bounds.center.y  # По центру підставки відносно ЗХ-СХ
             z = stand_bounds.min.z - comp_bounds.min.z  # На тому ж рівні що і підставка (по низу)
           end
+        elsif category == "fence_decor"
+          # Для декору огорожі позиціонуємо на стовпчиках огорожі
+          # Шукаємо стовпчики огорожі
+          fence_posts = entities.grep(Sketchup::ComponentInstance).find_all { |c| 
+            c.definition.name.include?('Fence') && c.definition.name.include?('Post')
+          }
+          if fence_posts.any?
+            # Позиціонуємо на першому знайденому стовпчику
+            post = fence_posts.first
+            post_bounds = post.bounds
+            x = post_bounds.center.x - comp_bounds.center.x
+            y = post_bounds.center.y - comp_bounds.center.y
+            z = post_bounds.max.z - comp_bounds.min.z  # На верхній частині стовпчика
+          else
+            # Якщо немає стовпчиків, розміщуємо в центрі фундаменту
+            if foundation
+              x = foundation_bounds.center.x - comp_bounds.center.x
+              y = foundation_bounds.center.y - comp_bounds.center.y
+              z = foundation_bounds.max.z - comp_bounds.min.z
+            end
+          end
         end
       elsif category == "gravestones"
+        # Якщо немає підставки, розміщуємо на фундаменті
+        if foundation
+          x = foundation_bounds.center.x - comp_def.bounds.center.x
+          y = foundation_bounds.center.y - comp_def.bounds.center.y
+          z = foundation_bounds.max.z - comp_def.bounds.min.z
+        end
+        # Якщо немає фундаменту, координати вже встановлені вище
+      elsif category == "fence_decor"
         # Якщо немає підставки, розміщуємо на фундаменті
         if foundation
           x = foundation_bounds.center.x - comp_def.bounds.center.x

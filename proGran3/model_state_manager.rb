@@ -132,6 +132,12 @@ class ModelStateManager
         decorative_height: 150,
         decorative_thickness: 50
       }
+    },
+    fence_decor: {
+      exists: false,
+      filename: nil,
+      position: {},
+      bounds: {}
     }
   }
   
@@ -146,7 +152,8 @@ class ModelStateManager
     gravestones: [:stands],
     lamps: [:gravestones],
     fence_corner: [:foundation],
-    fence_perimeter: [:foundation]
+    fence_perimeter: [:foundation],
+    fence_decor: [:fence_corner, :fence_perimeter]
   }
   
   # Валідаційні правила
@@ -161,7 +168,8 @@ class ModelStateManager
     gravestones: { required: false, max_count: 1 },
     lamps: { required: false, max_count: 1, depends_on: [:gravestones] },
     fence_corner: { required: false, max_count: 1, depends_on: [:foundation] },
-    fence_perimeter: { required: false, max_count: 1, depends_on: [:foundation] }
+    fence_perimeter: { required: false, max_count: 1, depends_on: [:foundation] },
+    fence_decor: { required: false, max_count: 1, depends_on: [:fence_corner, :fence_perimeter] }
   }
   
   # Історія змін
@@ -181,10 +189,22 @@ class ModelStateManager
       # Перевірка залежностей
       required_dependencies = @dependencies[category]
       if required_dependencies
-        required_dependencies.each do |dependency|
-          unless @model_state[dependency][:exists]
-            ProGran3::Logger.warn("Відсутня залежність: #{dependency} для #{category}", "ModelState")
+        # Спеціальна логіка для fence_decor - потрібна хоча б одна з залежностей
+        if category == :fence_decor
+          has_any_dependency = required_dependencies.any? do |dependency|
+            @model_state[dependency][:exists]
+          end
+          unless has_any_dependency
+            ProGran3::Logger.warn("Відсутні залежності для #{category}: потрібна хоча б одна з #{required_dependencies.join(', ')}", "ModelState")
             return false
+          end
+        else
+          # Стандартна логіка - всі залежності обов'язкові
+          required_dependencies.each do |dependency|
+            unless @model_state[dependency][:exists]
+              ProGran3::Logger.warn("Відсутня залежність: #{dependency} для #{category}", "ModelState")
+              return false
+            end
           end
         end
       end
