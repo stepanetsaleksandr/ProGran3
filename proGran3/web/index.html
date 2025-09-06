@@ -324,13 +324,6 @@
             </div>
           </div>
           
-          <!-- Карусель декору огорожі -->
-          <div class="carousel-container">
-            <div class="carousel-viewport" id="fence-decor-carousel-viewport">
-              <div class="carousel-track" id="fence-decor-carousel-track"></div>
-            </div>
-          </div>
-          
           <button onclick="addFenceCorner(); advanceToNextPanel(this);">Створити кутову огорожу</button>
         </div>
       </section>
@@ -370,6 +363,26 @@
             </div>
           </div>
           <button onclick="addFencePerimeter(); advanceToNextPanel(this);">Створити периметральну огорожу</button>
+        </div>
+      </section>
+      
+      <section class="panel collapsed">
+        <div class="panel-header" onclick="togglePanel(this)">
+          <h2 class="panel-title">Декор огорожі</h2>
+          <span class="chevron"></span>
+          <span id="fence-decor-dimensions-display" class="header-dimensions"></span>
+        </div>
+        <div class="panel-content">
+          <p class="panel-description">Виберіть декор для стовпчиків огорожі. Декор буде автоматично додано на всі стовпчики існуючої огорожі.</p>
+          
+          <!-- Карусель декору огорожі -->
+          <div class="carousel-container">
+            <div class="carousel-viewport" id="fence-decor-carousel-viewport">
+              <div class="carousel-track" id="fence-decor-carousel-track"></div>
+            </div>
+          </div>
+          
+          <button onclick="addFenceDecor(); advanceToNextPanel(this);">Додати декор на огорожу</button>
         </div>
       </section>
       

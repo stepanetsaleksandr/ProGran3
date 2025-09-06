@@ -1454,36 +1454,59 @@ function updateModelDisplays() {
 }
 
 function updateSummaryTable() {
-  const unitText = currentUnit === 'mm' ? 'мм' : 'см';
-  
-  // Фундамент
-  if (addedElements.foundation) {
-    const foundationDepth = document.getElementById('foundation-depth').value;
-    const foundationWidth = document.getElementById('foundation-width').value;
-    const foundationHeight = document.getElementById('foundation-height').value;
-    document.getElementById('summary-foundation').textContent = 
-      `${foundationDepth}×${foundationWidth}×${foundationHeight} ${unitText}`;
+  try {
+    debugLog(`🔍 updateSummaryTable() викликано`, 'info');
+    const unitText = currentUnit === 'mm' ? 'мм' : 'см';
+    
+    // Фундамент
+    if (addedElements.foundation) {
+    const foundationDepthEl = document.getElementById('foundation-depth');
+    const foundationWidthEl = document.getElementById('foundation-width');
+    const foundationHeightEl = document.getElementById('foundation-height');
+    const summaryFoundationEl = document.getElementById('summary-foundation');
+    
+    if (foundationDepthEl && foundationWidthEl && foundationHeightEl && summaryFoundationEl) {
+      const foundationDepth = foundationDepthEl.value;
+      const foundationWidth = foundationWidthEl.value;
+      const foundationHeight = foundationHeightEl.value;
+      summaryFoundationEl.textContent = 
+        `${foundationDepth}×${foundationWidth}×${foundationHeight} ${unitText}`;
+    }
   } else {
-    document.getElementById('summary-foundation').textContent = '--';
+    const summaryFoundationEl = document.getElementById('summary-foundation');
+    if (summaryFoundationEl) {
+      summaryFoundationEl.textContent = '--';
+    }
   }
   
   // Плитка
   if (addedElements.tiling) {
     const activeButton = document.querySelector('.tiling-mode-btn.active');
-    if (activeButton) {
-      document.getElementById('summary-tiling').textContent = activeButton.textContent;
+    const summaryTilingEl = document.getElementById('summary-tiling');
+    if (activeButton && summaryTilingEl) {
+      summaryTilingEl.textContent = activeButton.textContent;
     }
   } else {
-    document.getElementById('summary-tiling').textContent = '--';
+    const summaryTilingEl = document.getElementById('summary-tiling');
+    if (summaryTilingEl) {
+      summaryTilingEl.textContent = '--';
+    }
   }
   
   // Облицювання
   if (addedElements.cladding) {
-    const claddingThickness = document.getElementById('cladding-thickness').value;
-    document.getElementById('summary-cladding').textContent = 
-      `Товщина: ${claddingThickness} ${unitText}`;
+    const claddingThicknessEl = document.getElementById('cladding-thickness');
+    const summaryCladdingEl = document.getElementById('summary-cladding');
+    if (claddingThicknessEl && summaryCladdingEl) {
+      const claddingThickness = claddingThicknessEl.value;
+      summaryCladdingEl.textContent = 
+        `Товщина: ${claddingThickness} ${unitText}`;
+    }
   } else {
-    document.getElementById('summary-cladding').textContent = '--';
+    const summaryCladdingEl = document.getElementById('summary-cladding');
+    if (summaryCladdingEl) {
+      summaryCladdingEl.textContent = '--';
+    }
   }
   
   // Відмостка
@@ -1545,41 +1568,71 @@ function updateSummaryTable() {
   
   // Кутова огорожа
   if (addedElements.fence_corner) {
-    const postHeight = document.getElementById('fence-corner-post-height').value;
-    const postSize = document.getElementById('fence-corner-post-size').value;
-    const sideHeight = document.getElementById('fence-corner-side-height').value;
-    const sideLength = document.getElementById('fence-corner-side-length').value;
-    const decorativeSize = 100; // Фіксоване значення
+    const postHeightEl = document.getElementById('fence-corner-post-height');
+    const postSizeEl = document.getElementById('fence-corner-post-size');
+    const sideHeightEl = document.getElementById('fence-corner-side-height');
+    const sideLengthEl = document.getElementById('fence-corner-side-length');
+    const summaryFenceCornerEl = document.getElementById('summary-fence-corner');
     
-    document.getElementById('summary-fence-corner').textContent = 
-      `Стовп: ${postHeight}×${postSize}×${postSize}${unitText}, Панель: ${sideHeight}×${sideLength}${unitText}, Декор: ${decorativeSize}${unitText}`;
+    if (postHeightEl && postSizeEl && sideHeightEl && sideLengthEl && summaryFenceCornerEl) {
+      const postHeight = postHeightEl.value;
+      const postSize = postSizeEl.value;
+      const sideHeight = sideHeightEl.value;
+      const sideLength = sideLengthEl.value;
+      const decorativeSize = 100; // Фіксоване значення
+      
+      summaryFenceCornerEl.textContent = 
+        `Стовп: ${postHeight}×${postSize}×${postSize}${unitText}, Панель: ${sideHeight}×${sideLength}${unitText}, Декор: ${decorativeSize}${unitText}`;
+    }
   } else {
-    document.getElementById('summary-fence-corner').textContent = '--';
+    const summaryFenceCornerEl = document.getElementById('summary-fence-corner');
+    if (summaryFenceCornerEl) {
+      summaryFenceCornerEl.textContent = '--';
+    }
   }
   
   // Периметральна огорожа
   if (addedElements.fence_perimeter) {
-    const postHeight = document.getElementById('fence-perimeter-post-height').value;
-    const postSize = document.getElementById('fence-perimeter-post-size').value;
-    const northCount = document.getElementById('fence-perimeter-north-count').value;
-    const southCount = document.getElementById('fence-perimeter-south-count').value;
-    const eastWestCount = document.getElementById('fence-perimeter-east-west-count').value;
-    const decorativeHeight = 100; // Фіксоване значення
-    const decorativeThickness = 100; // Фіксоване значення
+    const postHeightEl = document.getElementById('fence-perimeter-post-height');
+    const postSizeEl = document.getElementById('fence-perimeter-post-size');
+    const northCountEl = document.getElementById('fence-perimeter-north-count');
+    const southCountEl = document.getElementById('fence-perimeter-south-count');
+    const eastWestCountEl = document.getElementById('fence-perimeter-east-west-count');
+    const summaryFencePerimeterEl = document.getElementById('summary-fence-perimeter');
     
-    document.getElementById('summary-fence-perimeter').textContent = 
-      `Стовп: ${postHeight}×${postSize}×${postSize}${unitText}, Сторони: З${northCount} В${southCount} Б${eastWestCount}, Декор: ${decorativeHeight}×${decorativeThickness}${unitText}`;
+    if (postHeightEl && postSizeEl && northCountEl && southCountEl && eastWestCountEl && summaryFencePerimeterEl) {
+      const postHeight = postHeightEl.value;
+      const postSize = postSizeEl.value;
+      const northCount = northCountEl.value;
+      const southCount = southCountEl.value;
+      const eastWestCount = eastWestCountEl.value;
+      const decorativeHeight = 100; // Фіксоване значення
+      const decorativeThickness = 100; // Фіксоване значення
+      
+      summaryFencePerimeterEl.textContent = 
+        `Стовп: ${postHeight}×${postSize}×${postSize}${unitText}, Сторони: З${northCount} В${southCount} Б${eastWestCount}, Декор: ${decorativeHeight}×${decorativeThickness}${unitText}`;
+    }
   } else {
-    document.getElementById('summary-fence-perimeter').textContent = '--';
+    const summaryFencePerimeterEl = document.getElementById('summary-fence-perimeter');
+    if (summaryFencePerimeterEl) {
+      summaryFencePerimeterEl.textContent = '--';
+    }
   }
   
   // Декор огорожі
-  if (addedElements.fence_decor && carouselState.fence_decor && modelLists.fence_decor) {
-    const fenceDecorFilename = modelLists.fence_decor[carouselState.fence_decor.index];
-    document.getElementById('summary-fence-decor').textContent = 
-      fenceDecorFilename ? fenceDecorFilename.replace('.skp', '') : '--';
-  } else {
-    document.getElementById('summary-fence-decor').textContent = '--';
+  const summaryFenceDecor = document.getElementById('summary-fence-decor');
+  if (summaryFenceDecor) {
+    if (addedElements.fence_decor && carouselState.fence_decor && modelLists.fence_decor) {
+      const fenceDecorFilename = modelLists.fence_decor[carouselState.fence_decor.index];
+      summaryFenceDecor.textContent = 
+        fenceDecorFilename ? fenceDecorFilename.replace('.skp', '') : '--';
+    } else {
+      summaryFenceDecor.textContent = '--';
+    }
+  }
+  } catch (error) {
+    debugLog(`❌ Помилка в updateSummaryTable(): ${error.message}`, 'error');
+    debugLog(`❌ Stack trace: ${error.stack}`, 'error');
   }
 }
 
@@ -2435,18 +2488,7 @@ function addFenceCorner() {
     const sideThickness = parseInt(document.getElementById('fence-corner-side-thickness').value);
     const decorativeSize = 100; // Фіксоване значення
     
-    // Отримуємо вибраний декор з каруселі
-    let selectedDecor = null;
-    debugLog(`🔍 Діагностика каруселі декору:`, 'info');
-    debugLog(`   - carouselState.fence_decor: ${JSON.stringify(carouselState.fence_decor)}`, 'info');
-    debugLog(`   - modelLists.fence_decor: ${JSON.stringify(modelLists.fence_decor)}`, 'info');
-    
-    if (carouselState.fence_decor && modelLists.fence_decor && modelLists.fence_decor[carouselState.fence_decor.index]) {
-      selectedDecor = modelLists.fence_decor[carouselState.fence_decor.index];
-      debugLog(`🎨 Вибраний декор для кутової огорожі: ${selectedDecor}`, 'info');
-    } else {
-      debugLog(`⚠️ Декор не вибрано, створюємо огорожу без декору`, 'warning');
-    }
+    // Декор тепер додається окремо через блок "Декор огорожі"
     
     debugLog(`🏗️ Створення кутової огорожі: ${postHeight}×${postSize}×${postSize}см`, 'info');
     debugLog(`🔍 Перевірка доступності функцій:`, 'info');
@@ -2474,16 +2516,7 @@ function addFenceCorner() {
         const result = window.sketchup.add_fence_corner(postHeightMm, postSizeMm, postSizeMm, sideHeightMm, sideLengthMm, sideThicknessMm, decorativeSizeMm);
         debugLog(`📤 Результат виклику: ${result}`, 'info');
         
-        // Додаємо декор, якщо він вибраний
-        if (selectedDecor && window.sketchup.add_model) {
-          debugLog(`🎨 Додаємо декор на всі стовпчики огорожі: ${selectedDecor}`, 'info');
-          debugLog(`🔍 Викликаємо window.sketchup.add_model('fence_decor', '${selectedDecor}')`, 'info');
-          const decorResult = window.sketchup.add_model('fence_decor', selectedDecor);
-          debugLog(`📤 Результат додавання декору: ${decorResult}`, 'info');
-          addedElements['fence_decor'] = true;
-        } else {
-          debugLog(`⚠️ Не можу додати декор: selectedDecor=${selectedDecor}, add_model=${typeof window.sketchup?.add_model}`, 'warning');
-        }
+        // Декор тепер додається окремо через блок "Декор огорожі"
         
         addedElements['fence_corner'] = true;
         updateSummaryTable();
@@ -2523,18 +2556,7 @@ function addFencePerimeter() {
     const decorativeHeight = 100; // Фіксоване значення
     const decorativeThickness = 100; // Фіксоване значення
     
-    // Отримуємо вибраний декор з каруселі
-    let selectedDecor = null;
-    debugLog(`🔍 Діагностика каруселі декору (периметральна):`, 'info');
-    debugLog(`   - carouselState.fence_decor: ${JSON.stringify(carouselState.fence_decor)}`, 'info');
-    debugLog(`   - modelLists.fence_decor: ${JSON.stringify(modelLists.fence_decor)}`, 'info');
-    
-    if (carouselState.fence_decor && modelLists.fence_decor && modelLists.fence_decor[carouselState.fence_decor.index]) {
-      selectedDecor = modelLists.fence_decor[carouselState.fence_decor.index];
-      debugLog(`🎨 Вибраний декор для периметральної огорожі: ${selectedDecor}`, 'info');
-    } else {
-      debugLog(`⚠️ Декор не вибрано, створюємо огорожу без декору`, 'warning');
-    }
+    // Декор тепер додається окремо через блок "Декор огорожі"
     
     debugLog(`🏗️ Створення периметральної огорожі: ${postHeight}×${postSize}×${postSize}см`, 'info');
     debugLog(`🔍 Детальна діагностика параметрів:`, 'info');
@@ -2572,16 +2594,7 @@ function addFencePerimeter() {
         const result = window.sketchup.add_fence_perimeter(postHeightMm, postSizeMm, postSizeMm, northCount, southCount, eastWestCount, decorativeHeightMm, decorativeThicknessMm);
         debugLog(`📤 Результат виклику: ${result}`, 'info');
         
-        // Додаємо декор, якщо він вибраний
-        if (selectedDecor && window.sketchup.add_model) {
-          debugLog(`🎨 Додаємо декор на всі стовпчики периметральної огорожі: ${selectedDecor}`, 'info');
-          debugLog(`🔍 Викликаємо window.sketchup.add_model('fence_decor', '${selectedDecor}')`, 'info');
-          const decorResult = window.sketchup.add_model('fence_decor', selectedDecor);
-          debugLog(`📤 Результат додавання декору: ${decorResult}`, 'info');
-          addedElements['fence_decor'] = true;
-        } else {
-          debugLog(`⚠️ Не можу додати декор: selectedDecor=${selectedDecor}, add_model=${typeof window.sketchup?.add_model}`, 'warning');
-        }
+        // Декор тепер додається окремо через блок "Декор огорожі"
         
         addedElements['fence_perimeter'] = true;
         updateSummaryTable();
@@ -2611,4 +2624,68 @@ function addFencePerimeter() {
   
   console.log('🏁 addFencePerimeter() завершено!');
   debugLog('🏁 addFencePerimeter() завершено!', 'info');
+}
+
+// Додавання декору огорожі
+function addFenceDecor() {
+  console.log('🎨 addFenceDecor() викликано!');
+  debugLog('🎨 addFenceDecor() викликано!', 'info');
+  
+  try {
+    debugLog(`🔍 Крок 1: Перевірка каруселі декору`, 'info');
+    
+    // Отримуємо вибраний декор з каруселі
+    let selectedDecor = null;
+    debugLog(`🔍 Діагностика каруселі декору:`, 'info');
+    debugLog(`   - carouselState.fence_decor: ${JSON.stringify(carouselState.fence_decor)}`, 'info');
+    debugLog(`   - modelLists.fence_decor: ${JSON.stringify(modelLists.fence_decor)}`, 'info');
+    
+    if (carouselState.fence_decor && modelLists.fence_decor && modelLists.fence_decor[carouselState.fence_decor.index]) {
+      selectedDecor = modelLists.fence_decor[carouselState.fence_decor.index];
+      debugLog(`🎨 Вибраний декор для огорожі: ${selectedDecor}`, 'info');
+    } else {
+      debugLog(`⚠️ Декор не вибрано`, 'warning');
+      alert('Будь ласка, виберіть декор з каруселі');
+      return;
+    }
+    
+    debugLog(`🔍 Крок 2: Перевірка наявності огорожі`, 'info');
+    
+    // Перевіряємо, чи є огорожа в моделі
+    if (!addedElements['fence_corner'] && !addedElements['fence_perimeter']) {
+      debugLog(`⚠️ Немає огорожі в моделі`, 'warning');
+      alert('Спочатку створіть огорожу (кутову або периметральну)');
+      return;
+    }
+    
+    debugLog(`🔍 Крок 3: Додавання декору через SketchUp API`, 'info');
+    
+    // Додаємо декор
+    if (window.sketchup.add_model) {
+      debugLog(`🎨 Додаємо декор на всі стовпчики огорожі: ${selectedDecor}`, 'info');
+      debugLog(`🔍 Викликаємо window.sketchup.add_model('fence_decor', '${selectedDecor}')`, 'info');
+      const decorResult = window.sketchup.add_model('fence_decor', selectedDecor);
+      debugLog(`📤 Результат додавання декору: ${decorResult}`, 'info');
+      
+      debugLog(`🔍 Крок 4: Оновлення стану`, 'info');
+      addedElements['fence_decor'] = true;
+      
+      debugLog(`🔍 Крок 5: Оновлення таблиці специфікації`, 'info');
+      updateSummaryTable();
+      
+      debugLog(`✅ Декор успішно додано на огорожу`, 'success');
+    } else {
+      debugLog(`⚠️ window.sketchup.add_model не доступний`, 'warning');
+      alert('Помилка: не вдалося додати декор');
+    }
+    
+  } catch (error) {
+    debugLog(`❌ Помилка в addFenceDecor(): ${error.message}`, 'error');
+    debugLog(`❌ Stack trace: ${error.stack}`, 'error');
+    debugLog(`❌ Помилка на рядку: ${error.lineNumber}`, 'error');
+    alert(`Помилка при додаванні декору: ${error.message}`);
+  }
+  
+  console.log('🏁 addFenceDecor() завершено!');
+  debugLog('🏁 addFenceDecor() завершено!', 'info');
 }
