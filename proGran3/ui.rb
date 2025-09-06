@@ -347,6 +347,11 @@ module ProGran3
 
 
 
+      # Callback для оновлення розміру підставки
+      @dialog.add_action_callback("update_stand_size") do |dialog, height, width, depth|
+        CallbackManager.update_stand_size_callback(dialog, height, width, depth)
+      end
+
       @dialog.show
     end
   end

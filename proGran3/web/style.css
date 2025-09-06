@@ -216,5 +216,36 @@
   box-shadow: var(--shadow-heavy);
 }
 
+/* Button Group Styles */
+.button-group {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
 
+.button-group button {
+  flex: 1;
+}
+
+.secondary-button {
+  background: var(--background-secondary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.secondary-button:hover {
+  background: var(--background-hover) !important;
+  border-color: var(--border-color-hover) !important;
+}
+
+[data-theme="dark"] .secondary-button {
+  background: var(--background-secondary-dark) !important;
+  color: var(--text-primary-dark) !important;
+  border-color: var(--border-color-dark) !important;
+}
+
+[data-theme="dark"] .secondary-button:hover {
+  background: var(--background-hover-dark) !important;
+  border-color: var(--border-color-hover-dark) !important;
+}
 

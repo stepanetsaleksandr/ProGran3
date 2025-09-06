@@ -351,4 +351,102 @@ module ProGran3
     
     instance
   end
+
+  # Оновлення розміру підставки
+  def update_stand_size(height, width, depth)
+    begin
+      ProGran3::Logger.info("Оновлення розміру підставки: #{height}×#{width}×#{depth} мм", "Loader")
+      
+      model = Sketchup.active_model
+      entities = model.active_entities
+      
+      # Знаходимо всі підставки в моделі
+      stand_instances = entities.grep(Sketchup::ComponentInstance).find_all { |c| 
+        c.definition.name.downcase.include?('stand')
+      }
+      
+      if stand_instances.empty?
+        ProGran3::Logger.warn("Не знайдено підставок для оновлення розміру", "Loader")
+        return false
+      end
+      
+      ProGran3::Logger.info("Знайдено підставок: #{stand_instances.length}", "Loader")
+      
+      # Альтернативний підхід: видаляємо старі підставки та створюємо нові з правильними розмірами
+      ProGran3::Logger.info("Використовуємо альтернативний підхід: видалення + створення нових", "Loader")
+      
+      # Зберігаємо позиції та типи підставок
+      stand_data = []
+      stand_instances.each do |stand_instance|
+        if stand_instance && stand_instance.valid?
+          stand_data << {
+            position: stand_instance.transformation.origin,
+            definition_name: stand_instance.definition.name,
+            bounds: stand_instance.bounds
+          }
+          stand_instance.erase!
+        end
+      end
+      
+      ProGran3::Logger.info("Видалено старих підставок: #{stand_data.length}", "Loader")
+      
+      # Створюємо нові підставки з правильними розмірами
+      stand_data.each_with_index do |data, index|
+        ProGran3::Logger.info("Створюємо нову підставку #{index + 1} з розмірами #{height}×#{width}×#{depth} мм (В×Ш×Д)", "Loader")
+        
+        # Створюємо простий блок з правильними розмірами
+        # Конвертуємо мм в дюйми для SketchUp
+        height_inches = height / 25.4
+        width_inches = width / 25.4
+        depth_inches = depth / 25.4
+        
+        ProGran3::Logger.info("Розміри в дюймах: #{height_inches.round(3)}×#{width_inches.round(3)}×#{depth_inches.round(3)} (В×Ш×Д)", "Loader")
+        
+        # Створюємо новий компонент
+        new_comp = model.definitions.add("Stand_#{index + 1}_#{height}x#{width}x#{depth}")
+        
+        # Додаємо геометрію (простий блок)
+        points = [
+          [0, 0, 0],
+          [width_inches, 0, 0],
+          [width_inches, depth_inches, 0],
+          [0, depth_inches, 0],
+          [0, 0, height_inches],
+          [width_inches, 0, height_inches],
+          [width_inches, depth_inches, height_inches],
+          [0, depth_inches, height_inches]
+        ]
+        
+        faces = [
+          [0, 1, 2, 3], # низ
+          [4, 7, 6, 5], # верх
+          [0, 4, 5, 1], # перед
+          [2, 6, 7, 3], # зад
+          [0, 3, 7, 4], # лівий
+          [1, 5, 6, 2]  # правий
+        ]
+        
+        # Створюємо грані
+        faces.each do |face_points|
+          face = new_comp.entities.add_face(
+            face_points.map { |i| points[i] }
+          )
+        end
+        
+        # Розміщуємо нову підставку в тій же позиції
+        transformation = Geom::Transformation.new(data[:position])
+        entities.add_instance(new_comp, transformation)
+        
+        ProGran3::Logger.info("Підставка #{index + 1} створена успішно", "Loader")
+      end
+      
+      ProGran3::Logger.info("Всі підставки оновлені успішно", "Loader")
+      true
+      
+    rescue => e
+      ProGran3::Logger.error("Помилка при оновленні розміру підставки: #{e.message}", "Loader")
+      ProGran3::Logger.error("Stack trace: #{e.backtrace.join('\n')}", "Loader")
+      false
+    end
+  end
 end

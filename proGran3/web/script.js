@@ -466,6 +466,11 @@ const CarouselManager = {
     carouselState[category].index = index;
     track.style.transform = `translateX(${newTransform}px)`;
     
+    // Автоматичне заповнення полів розмірів для підставки
+    if (category === 'stands') {
+      fillStandSizeFields();
+    }
+    
     debugLog(`🔄 Запуск завантаження для ${category}[${index}] та сусідів`, 'info');
     
     // Ледаче завантаження для активного елемента та сусідів (як у тестовій логіці)
@@ -1397,6 +1402,9 @@ function updateAllDisplays() {
   updateFenceCornerDisplay();
   updateFencePerimeterDisplay();
   
+  // Оновлення відображення підставки
+  updateStandsDisplay();
+  
   // Оновлення підсумкової таблиці
   updateSummaryTable();
 }
@@ -1628,6 +1636,27 @@ function updateSummaryTable() {
         fenceDecorFilename ? fenceDecorFilename.replace('.skp', '') : '--';
     } else {
       summaryFenceDecor.textContent = '--';
+    }
+  }
+  
+  // Підставка
+  const summaryStands = document.getElementById('summary-stands');
+  if (summaryStands) {
+    if (addedElements.stands) {
+      const heightEl = document.getElementById('stands-height');
+      const widthEl = document.getElementById('stands-width');
+      const depthEl = document.getElementById('stands-depth');
+      
+      if (heightEl && widthEl && depthEl) {
+        const height = heightEl.value;
+        const width = widthEl.value;
+        const depth = depthEl.value;
+        summaryStands.textContent = `${height}×${width}×${depth} ${unitText}`;
+      } else {
+        summaryStands.textContent = 'Додано';
+      }
+    } else {
+      summaryStands.textContent = '--';
     }
   }
   } catch (error) {
@@ -2032,6 +2061,11 @@ function updateUnitLabels() {
   // Периметральна огорожа
   document.getElementById('fence-perimeter-post-height-label').textContent = `Висота стовпа (${unitText})`;
   document.getElementById('fence-perimeter-post-size-label').textContent = `Розмір стовпа (${unitText})`;
+  
+  // Підставка
+  document.getElementById('stands-height-label').textContent = `Висота (${unitText})`;
+  document.getElementById('stands-width-label').textContent = `Ширина (${unitText})`;
+  document.getElementById('stands-depth-label').textContent = `Довжина (${unitText})`;
 }
 
 // Форматування значення для відображення
@@ -2447,6 +2481,26 @@ function updateFenceCornerDisplay() {
   }
 }
 
+// Оновлення відображення розмірів підставки
+function updateStandsDisplay() {
+  const height = document.getElementById('stands-height').value;
+  const width = document.getElementById('stands-width').value;
+  const depth = document.getElementById('stands-depth').value;
+  
+  const display = document.getElementById('stands-dimensions-display');
+  if (display) {
+    const unit = getCurrentUnit();
+    const unitText = unit === 'cm' ? 'см' : 'мм';
+    
+    // Конвертуємо значення для відображення
+    const heightDisplay = unit === 'cm' ? (height / 10).toFixed(0) : height;
+    const widthDisplay = unit === 'cm' ? (width / 10).toFixed(0) : width;
+    const depthDisplay = unit === 'cm' ? (depth / 10).toFixed(0) : depth;
+    
+    display.textContent = `${heightDisplay}×${widthDisplay}×${depthDisplay} ${unitText}`;
+  }
+}
+
 // Оновлення відображення периметральної огорожі
 function updateFencePerimeterDisplay() {
   const postHeight = document.getElementById('fence-perimeter-post-height').value;
@@ -2688,4 +2742,156 @@ function addFenceDecor() {
   
   console.log('🏁 addFenceDecor() завершено!');
   debugLog('🏁 addFenceDecor() завершено!', 'info');
+}
+
+// Додавання підставки з кастомними розмірами
+function addStandWithCustomSize() {
+  console.log('🏗️ addStandWithCustomSize() викликано!');
+  debugLog('🏗️ addStandWithCustomSize() викликано!', 'info');
+  
+  try {
+    // Отримуємо вибрану підставку з каруселі
+    let selectedStand = null;
+    if (carouselState.stands && modelLists.stands && modelLists.stands[carouselState.stands.index]) {
+      selectedStand = modelLists.stands[carouselState.stands.index];
+      debugLog(`🏗️ Вибрана підставка: ${selectedStand}`, 'info');
+    } else {
+      debugLog(`⚠️ Підставка не вибрана`, 'warning');
+      alert('Будь ласка, виберіть підставку з каруселі');
+      return;
+    }
+    
+    // Отримуємо розміри з полів вводу
+    const height = parseInt(document.getElementById('stands-height').value);
+    const width = parseInt(document.getElementById('stands-width').value);
+    const depth = parseInt(document.getElementById('stands-depth').value);
+    
+    debugLog(`📏 Розміри підставки: ${height}×${width}×${depth} мм (В×Ш×Д)`, 'info');
+    
+    // Додаємо підставку через SketchUp API
+    if (window.sketchup.add_model) {
+      debugLog(`🏗️ Додаємо підставку: ${selectedStand}`, 'info');
+      const result = window.sketchup.add_model('stands', selectedStand);
+      debugLog(`📤 Результат додавання підставки: ${result}`, 'info');
+      
+      // Зберігаємо інформацію про розміри для майбутнього оновлення
+      if (!window.standCustomSizes) {
+        window.standCustomSizes = {};
+      }
+      window.standCustomSizes[selectedStand] = { height, width, depth };
+      
+      addedElements['stands'] = true;
+      updateSummaryTable();
+      debugLog(`✅ Підставка успішно додана`, 'success');
+    } else {
+      debugLog(`⚠️ window.sketchup.add_model не доступний`, 'warning');
+      alert('Помилка: не вдалося додати підставку');
+    }
+    
+  } catch (error) {
+    debugLog(`❌ Помилка в addStandWithCustomSize(): ${error.message}`, 'error');
+    debugLog(`❌ Stack trace: ${error.stack}`, 'error');
+    alert(`Помилка при додаванні підставки: ${error.message}`);
+  }
+  
+  console.log('🏁 addStandWithCustomSize() завершено!');
+  debugLog('🏁 addStandWithCustomSize() завершено!', 'info');
+}
+
+// Оновлення розміру підставки
+function updateStandSize() {
+  console.log('📏 updateStandSize() викликано!');
+  debugLog('📏 updateStandSize() викликано!', 'info');
+  
+  try {
+    // Перевіряємо, чи є підставка в моделі
+    if (!addedElements['stands']) {
+      debugLog(`⚠️ Немає підставки в моделі`, 'warning');
+      alert('Спочатку додайте підставку');
+      return;
+    }
+    
+    // Отримуємо нові розміри з полів вводу
+    const height = parseInt(document.getElementById('stands-height').value);
+    const width = parseInt(document.getElementById('stands-width').value);
+    const depth = parseInt(document.getElementById('stands-depth').value);
+    
+    debugLog(`📏 Нові розміри підставки: ${height}×${width}×${depth} мм (В×Ш×Д)`, 'info');
+    
+    // Оновлюємо розмір підставки через SketchUp API
+    if (window.sketchup.update_stand_size) {
+      debugLog(`📏 Оновлюємо розмір підставки`, 'info');
+      const result = window.sketchup.update_stand_size(height, width, depth);
+      debugLog(`📤 Результат оновлення розміру: ${result}`, 'info');
+      
+      updateSummaryTable();
+      debugLog(`✅ Розмір підставки успішно оновлено`, 'success');
+    } else {
+      debugLog(`⚠️ window.sketchup.update_stand_size не доступний`, 'warning');
+      alert('Функція оновлення розміру підставки не реалізована в SketchUp API');
+    }
+    
+  } catch (error) {
+    debugLog(`❌ Помилка в updateStandSize(): ${error.message}`, 'error');
+    debugLog(`❌ Stack trace: ${error.stack}`, 'error');
+    alert(`Помилка при оновленні розміру підставки: ${error.message}`);
+  }
+  
+  console.log('🏁 updateStandSize() завершено!');
+  debugLog('🏁 updateStandSize() завершено!', 'info');
+}
+
+// Автоматичне заповнення полів розмірів вибраної підставки
+function fillStandSizeFields() {
+  console.log('📏 fillStandSizeFields() викликано!');
+  debugLog('📏 fillStandSizeFields() викликано!', 'info');
+  
+  try {
+    // Отримуємо вибрану підставку
+    if (!carouselState.stands || !modelLists.stands || !modelLists.stands[carouselState.stands.index]) {
+      debugLog(`⚠️ Немає вибраної підставки`, 'warning');
+      return;
+    }
+    
+    const selectedStand = modelLists.stands[carouselState.stands.index];
+    debugLog(`📏 Заповнюємо поля для підставки: ${selectedStand}`, 'info');
+    
+    // Стандартні розміри для різних типів підставок (в мм: В×Ш×Д)
+    const standDimensions = {
+      'stand1.skp': { height: 200, width: 500, depth: 300 },
+      'stand2.skp': { height: 150, width: 400, depth: 250 },
+      'stand3.skp': { height: 300, width: 600, depth: 400 },
+      'stand4.skp': { height: 180, width: 450, depth: 280 },
+      'stand5.skp': { height: 250, width: 550, depth: 350 },
+      // Додайте інші підставки за потреби
+    };
+    
+    // Отримуємо розміри для вибраної підставки або використовуємо стандартні
+    const dimensions = standDimensions[selectedStand] || { height: 200, width: 500, depth: 300 };
+    
+    // Заповнюємо поля вводу
+    const heightField = document.getElementById('stands-height');
+    const widthField = document.getElementById('stands-width');
+    const depthField = document.getElementById('stands-depth');
+    
+    if (heightField && widthField && depthField) {
+      heightField.value = dimensions.height;
+      widthField.value = dimensions.width;
+      depthField.value = dimensions.depth;
+      
+      debugLog(`📏 Заповнено поля: ${dimensions.height}×${dimensions.width}×${dimensions.depth} мм (В×Ш×Д)`, 'info');
+      
+      // Оновлюємо відображення
+      updateStandsDisplay();
+    } else {
+      debugLog(`⚠️ Не вдалося знайти поля вводу для розмірів підставки`, 'warning');
+    }
+    
+  } catch (error) {
+    debugLog(`❌ Помилка в fillStandSizeFields(): ${error.message}`, 'error');
+    debugLog(`❌ Stack trace: ${error.stack}`, 'error');
+  }
+  
+  console.log('🏁 fillStandSizeFields() завершено!');
+  debugLog('🏁 fillStandSizeFields() завершено!', 'info');
 }

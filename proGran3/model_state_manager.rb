@@ -409,5 +409,25 @@ class ModelStateManager
         @change_history = @change_history.last(500)
       end
     end
+
+    # Оновлення параметрів компонента
+    def self.component_updated(category, params)
+      return false unless @model_state.key?(category)
+      
+      ProGran3::Logger.info("Оновлення параметрів компонента: #{category}", "ModelState")
+      
+      # Оновлюємо параметри компонента
+      if @model_state[category].key?(:params)
+        @model_state[category][:params].merge!(params)
+      else
+        @model_state[category][:params] = params
+      end
+      
+      # Записуємо зміну в історію
+      record_change("update", category, params)
+      
+      ProGran3::Logger.info("Параметри компонента #{category} оновлені: #{params}", "ModelState")
+      true
+    end
   end
 end

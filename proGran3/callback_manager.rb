@@ -437,6 +437,39 @@ module ProGran3
       @fence_perimeter_params || {}
     end
     
+    # Callback для оновлення розміру підставки
+    def update_stand_size_callback(dialog, height, width, depth)
+      begin
+        ProGran3::Logger.info("Оновлення розміру підставки: #{height}×#{width}×#{depth} мм", "UI")
+        
+        # Валідація розмірів
+        unless validate_dimensions_callback(depth, width, height, "підставки")
+          return false
+        end
+        
+        # Оновлюємо розмір підставки в моделі
+        success = ProGran3.update_stand_size(height.to_i, width.to_i, depth.to_i)
+        
+        if success
+          ProGran3::Logger.info("Розмір підставки успішно оновлено", "UI")
+          # Оновлюємо параметри в стані
+          if @stand_params
+            @stand_params[:height] = height.to_i
+            @stand_params[:width] = width.to_i
+            @stand_params[:depth] = depth.to_i
+            ModelStateManager.component_updated(:stands, @stand_params)
+          end
+        else
+          ProGran3::Logger.error("Не вдалося оновити розмір підставки", "UI")
+        end
+        
+        success
+      rescue => e
+        ErrorHandler.handle_error(e, "UI", "update_stand_size")
+        false
+      end
+    end
+
     # Очищення параметрів
     def clear_params
       @foundation_params = nil
