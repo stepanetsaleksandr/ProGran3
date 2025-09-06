@@ -405,25 +405,27 @@ module ProGran3
         # Створюємо новий компонент
         new_comp = model.definitions.add("Stand_#{index + 1}_#{height}x#{width}x#{depth}")
         
-        # Додаємо геометрію (простий блок)
+        # Додаємо геометрію (простий блок з правильною орієнтацією)
+        # В×Ш×Д (Height×Width×Depth) -> Z×X×Y
         points = [
-          [0, 0, 0],
-          [width_inches, 0, 0],
-          [width_inches, depth_inches, 0],
-          [0, depth_inches, 0],
-          [0, 0, height_inches],
-          [width_inches, 0, height_inches],
-          [width_inches, depth_inches, height_inches],
-          [0, depth_inches, height_inches]
+          [0, 0, 0],                    # 0: лівий-передній-нижній
+          [width_inches, 0, 0],         # 1: правий-передній-нижній (X = ширина)
+          [width_inches, depth_inches, 0], # 2: правий-задній-нижній (Y = довжина)
+          [0, depth_inches, 0],         # 3: лівий-задній-нижній
+          [0, 0, height_inches],        # 4: лівий-передній-верхній (Z = висота)
+          [width_inches, 0, height_inches], # 5: правий-передній-верхній
+          [width_inches, depth_inches, height_inches], # 6: правий-задній-верхній
+          [0, depth_inches, height_inches]  # 7: лівий-задній-верхній
         ]
         
+        # Створюємо грані з правильною орієнтацією (за годинниковою стрілкою для зовнішньої сторони)
         faces = [
-          [0, 1, 2, 3], # низ
-          [4, 7, 6, 5], # верх
-          [0, 4, 5, 1], # перед
-          [2, 6, 7, 3], # зад
-          [0, 3, 7, 4], # лівий
-          [1, 5, 6, 2]  # правий
+          [0, 1, 2, 3], # низ (Z=0)
+          [4, 7, 6, 5], # верх (Z=height)
+          [0, 4, 5, 1], # перед (Y=0)
+          [2, 6, 7, 3], # зад (Y=depth)
+          [0, 3, 7, 4], # лівий (X=0)
+          [1, 5, 6, 2]  # правий (X=width)
         ]
         
         # Створюємо грані
@@ -431,6 +433,10 @@ module ProGran3
           face = new_comp.entities.add_face(
             face_points.map { |i| points[i] }
           )
+          # Перевіряємо орієнтацію грані
+          if face && face.normal.z < 0
+            face.reverse!
+          end
         end
         
         # Розміщуємо нову підставку в тій же позиції

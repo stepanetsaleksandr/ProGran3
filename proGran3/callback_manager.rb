@@ -457,7 +457,8 @@ module ProGran3
             @stand_params[:height] = height.to_i
             @stand_params[:width] = width.to_i
             @stand_params[:depth] = depth.to_i
-            ModelStateManager.component_updated(:stands, @stand_params)
+            # Використовуємо component_added для оновлення стану
+            ModelStateManager.component_added(:stands, @stand_params)
           end
         else
           ProGran3::Logger.error("Не вдалося оновити розмір підставки", "UI")

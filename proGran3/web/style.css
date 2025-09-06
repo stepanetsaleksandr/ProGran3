@@ -216,6 +216,19 @@
   box-shadow: var(--shadow-heavy);
 }
 
+/* Carousel item dimensions */
+.carousel-item-dimensions {
+  font-size: 10px;
+  text-align: center;
+  margin-top: 2px;
+  color: #666;
+  font-weight: bold;
+}
+
+.dark .carousel-item-dimensions {
+  color: #ccc;
+}
+
 /* Button Group Styles */
 .button-group {
   display: flex;
@@ -248,4 +261,5 @@
   background: var(--background-hover-dark) !important;
   border-color: var(--border-color-hover-dark) !important;
 }
+
 

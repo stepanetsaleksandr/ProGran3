@@ -351,6 +351,13 @@ module ProGran3
       @dialog.add_action_callback("update_stand_size") do |dialog, height, width, depth|
         CallbackManager.update_stand_size_callback(dialog, height, width, depth)
       end
+      
+      # Callback для отримання списку підставок
+      @dialog.add_action_callback("get_stands_list") do |dialog, _|
+        stands_list = Dir.glob(File.join(ProGran3::ASSETS_PATH, "stands", "*.skp")).map { |f| File.basename(f) }
+        ProGran3::Logger.info("Повертаємо список підставок: #{stands_list.length} елементів", "UI")
+        stands_list
+      end
 
       @dialog.show
     end
