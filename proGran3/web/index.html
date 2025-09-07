@@ -448,7 +448,28 @@
 
   </div>
 
-  <script type="module" src="src/index.js"></script>
+  <!-- ✅ Підключаємо модулі в правильному порядку (Namespace Pattern) -->
+  <!-- 1. Core модулі (залежності) -->
+  <script src="modules/core/Config.js"></script>
+  <script src="modules/core/Logger.js"></script>
+  <script src="modules/core/StateManager.js"></script>
+  
+  <!-- 2. Utils модулі -->
+  <script src="modules/utils/Helpers.js"></script>
+  <script src="modules/utils/Validation.js"></script>
+  <script src="modules/utils/Units.js"></script>
+  
+  <!-- 3. Communication модулі -->
+  <script src="modules/communication/SketchUpBridge.js"></script>
+  
+  <!-- 4. UI модулі -->
+  <script src="modules/ui/Tabs.js"></script>
+  <script src="modules/ui/Panels.js"></script>
+  
+  <!-- 5. Builder модулі -->
+  <script src="modules/builders/FoundationBuilder.js"></script>
+  
+  <!-- 6. Головний файл в кінці -->
   <script src="script.js"></script>
   
   <!-- Debug Log -->
