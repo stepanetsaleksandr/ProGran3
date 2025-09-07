@@ -216,7 +216,9 @@
           border: none;
           font-size: 14px;
           font-weight: 500;
-          min-width: 140px;
+          min-width: 100px;
+          height: 32px;
+        
           outline: none;
         }
         
