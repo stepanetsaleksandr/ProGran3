@@ -2247,13 +2247,13 @@ function getSelectedThickness() {
 // Функція для отримання вибраного способу укладання
 function getSelectedTilingMode() {
   const activeButton = document.querySelector('.tiling-mode-btn.active');
-  return activeButton ? activeButton.dataset.value : 'frame';
+  return activeButton ? activeButton.dataset.value : 'modular';
 }
 
 // Функція для отримання вибраного шву
 function getSelectedSeam() {
   const activeButton = document.querySelector('.seam-btn.active');
-  if (!activeButton) return '5';
+  if (!activeButton) return '2';
   
   // Шви завжди повертаються в мм, незалежно від поточних одиниць
   return activeButton.dataset.value;

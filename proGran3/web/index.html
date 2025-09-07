@@ -142,11 +142,11 @@
           <div>
             <label class="label-left" data-i18n="labels.laying_method">Спосіб укладання:</label>
             <div class="button-group-tiling-mode">
-              <button type="button" class="tiling-mode-btn active" data-value="frame" onclick="selectTilingMode(this)" data-i18n="buttons.frame_4_parts">Рамка з 4 частин</button>
-              <button type="button" class="tiling-mode-btn" data-value="modular" onclick="selectTilingMode(this)" data-i18n="buttons.modular_tiling">Модульне замощення</button>
+              <button type="button" class="tiling-mode-btn active" data-value="modular" onclick="selectTilingMode(this)" data-i18n="buttons.modular_tiling">Модульне замощення</button>
+              <button type="button" class="tiling-mode-btn" data-value="frame" onclick="selectTilingMode(this)" data-i18n="buttons.frame_4_parts">Рамка з 4 частин</button>
             </div>
           </div>
-          <div id="frame-controls">
+          <div id="frame-controls" class="hidden">
             <div class="input-row">
               <div class="input-wrapper">
                 <label id="tile-border-width-label" for="tile-border-width" data-i18n="labels.frame_width_mm">Ширина рамки (мм)</label>
@@ -170,7 +170,7 @@
               </div>
             </div>
           </div>
-          <div id="modular-controls" class="hidden">
+          <div id="modular-controls">
             <div class="input-row">
               <div class="input-wrapper">
                 <label for="modular-tile-size" data-i18n="labels.size_cm">Розмір (см)</label>
@@ -202,10 +202,10 @@
               <div class="input-wrapper">
                 <label id="modular-seam-label" data-i18n="labels.seam">Шов</label>
                 <div class="button-group-seam">
-                  <button type="button" class="seam-btn" data-value="2" onclick="selectSeam(this)" data-i18n="buttons.seam_2mm">2 мм</button>
+                  <button type="button" class="seam-btn active" data-value="2" onclick="selectSeam(this)" data-i18n="buttons.seam_2mm">2 мм</button>
                   <button type="button" class="seam-btn" data-value="3" onclick="selectSeam(this)" data-i18n="buttons.seam_3mm">3 мм</button>
-                  <button type="button" class="seam-btn active" data-value="5" onclick="selectSeam(this)" data-i18n="buttons.seam_5mm">5 мм</button>
                   <button type="button" class="seam-btn" data-value="4" onclick="selectSeam(this)" data-i18n="buttons.seam_4mm">4 мм</button>
+                  <button type="button" class="seam-btn" data-value="5" onclick="selectSeam(this)" data-i18n="buttons.seam_5mm">5 мм</button>
                 </div>
               </div>
             </div>
