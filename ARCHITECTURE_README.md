@@ -39,6 +39,43 @@
 - **Data Access Layer** - Loader, Builders, Preview Extractor
 - **Infrastructure Layer** - Error Handler, Logger, SketchUp API
 
+### ⚠️ **КРИТИЧНЕ ОБМЕЖЕННЯ: ES6 МОДУЛІ В SKETCHUP**
+
+**ПРОБЛЕМА:** SketchUp використовує CEF (Chromium Embedded Framework) з обмеженою підтримкою ES6 модулів через протокол `file://`.
+
+**РІШЕННЯ:** Використання **Namespace Pattern** замість ES6 модулів:
+
+```javascript
+// ❌ НЕ ПРАЦЮЄ в SketchUp:
+import { functionName } from './module.js';
+
+// ✅ ПРАЦЮЄ в SketchUp:
+(function(global) {
+  'use strict';
+  global.ProGran3 = global.ProGran3 || {};
+  global.ProGran3.Core = global.ProGran3.Core || {};
+  
+  function myFunction() { /* ... */ }
+  
+  global.ProGran3.Core.MyModule = { myFunction };
+  global.myFunction = myFunction; // Зворотна сумісність
+})(window);
+```
+
+**ПІДКЛЮЧЕННЯ МОДУЛІВ:**
+```html
+<!-- ✅ Правильний порядок підключення -->
+<script src="modules/core/Config.js"></script>
+<script src="modules/core/Logger.js"></script>
+<script src="modules/core/StateManager.js"></script>
+<script src="modules/utils/Units.js"></script>
+<script src="modules/ui/Tabs.js"></script>
+<script src="modules/ui/Panels.js"></script>
+<script src="modules/ui/Carousel.js"></script>
+<script src="modules/builders/Foundation.js"></script>
+<script src="script.js"></script>  <!-- Головний файл в кінці -->
+```
+
 ### 🎯 Центральні компоненти:
 - **ModelStateManager** - управління станом моделі
 - **CoordinationManager** - координація компонентів
@@ -104,6 +141,7 @@
 - Систему залежностей
 - ModelStateManager як центральний компонент
 - Callback систему
+- **ES6 модулі (НЕ ПРАЦЮЮТЬ в SketchUp!)**
 
 ### ✅ ОБОВ'ЯЗКОВО:
 - Перевіряти залежності
@@ -111,6 +149,8 @@
 - Додавати callback'и через callback_manager.rb
 - Тестувати зміни
 - Оновлювати документацію
+- **Використовувати Namespace Pattern для модуляризації**
+- **Підключати модулі в правильному порядку**
 
 ## 📞 Підтримка
 

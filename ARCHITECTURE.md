@@ -40,27 +40,69 @@ ProGran3/
 │   └── fence/                     # Огорожа (кутова та по периметру)
 ├── web/                           # Frontend (JavaScript)
 │   ├── index.html                 # Головна сторінка
-│   ├── script.js                  # Основний скрипт
+│   ├── script.js                  # Основний скрипт (2800+ рядків)
 │   ├── style.css                  # Стилі
 │   ├── carousel/                  # Карусель система
 │   │   ├── carousel.css
 │   │   └── carousel.js
-│   └── src/                       # Модульна структура
-│       ├── modules/
-│       │   ├── ui/
-│       │   │   ├── CarouselManager.js
-│       │   │   └── Panels.js
-│       │   ├── communication/
-│       │   │   └── SketchUpBridge.js
-│       │   └── utils/
-│       │       └── Logger.js
-│       └── index.js
+│   └── modules/                   # Модульна структура (Namespace Pattern)
+│       ├── core/
+│       │   ├── StateManager.js    # ProGran3.Core.StateManager
+│       │   ├── Logger.js         # ProGran3.Core.Logger
+│       │   └── Config.js         # ProGran3.Core.Config
+│       ├── ui/
+│       │   ├── Tabs.js           # ProGran3.UI.Tabs
+│       │   ├── Panels.js         # ProGran3.UI.Panels
+│       │   └── Carousel.js       # ProGran3.UI.Carousel
+│       ├── builders/
+│       │   ├── Foundation.js     # ProGran3.Builders.Foundation
+│       │   └── Tiling.js        # ProGran3.Builders.Tiling
+│       └── utils/
+│           ├── Units.js          # ProGran3.Utils.Units
+│           └── Helpers.js        # ProGran3.Utils.Helpers
 └── builders/                      # Будівельники компонентів
     ├── foundation_builder.rb
     ├── blind_area_builder.rb
     ├── tiling_builder.rb
     ├── cladding_builder.rb
     └── fence_builder.rb
+```
+
+### ⚠️ **КРИТИЧНЕ ОБМЕЖЕННЯ: ES6 МОДУЛІ В SKETCHUP**
+
+**ПРОБЛЕМА:** SketchUp використовує CEF (Chromium Embedded Framework) з обмеженою підтримкою ES6 модулів через протокол `file://`.
+
+**РІШЕННЯ:** Використання **Namespace Pattern** замість ES6 модулів:
+
+```javascript
+// ❌ НЕ ПРАЦЮЄ в SketchUp:
+import { functionName } from './module.js';
+
+// ✅ ПРАЦЮЄ в SketchUp:
+(function(global) {
+  'use strict';
+  global.ProGran3 = global.ProGran3 || {};
+  global.ProGran3.Core = global.ProGran3.Core || {};
+  
+  function myFunction() { /* ... */ }
+  
+  global.ProGran3.Core.MyModule = { myFunction };
+  global.myFunction = myFunction; // Зворотна сумісність
+})(window);
+```
+
+**ПІДКЛЮЧЕННЯ МОДУЛІВ:**
+```html
+<!-- ✅ Правильний порядок підключення -->
+<script src="modules/core/Config.js"></script>
+<script src="modules/core/Logger.js"></script>
+<script src="modules/core/StateManager.js"></script>
+<script src="modules/utils/Units.js"></script>
+<script src="modules/ui/Tabs.js"></script>
+<script src="modules/ui/Panels.js"></script>
+<script src="modules/ui/Carousel.js"></script>
+<script src="modules/builders/Foundation.js"></script>
+<script src="script.js"></script>  <!-- Головний файл в кінці -->
 ```
 
 ---
@@ -72,6 +114,7 @@ ProGran3/
 - **Carousel System** - система каруселей для компонентів
 - **UI Components** - панелі, кнопки, форми
 - **State Management** - управління станом UI
+- **Namespace Pattern** - модульна архітектура (НЕ ES6 модулі!)
 
 ### Communication Layer
 - **SketchUpBridge** - зв'язок між JavaScript і Ruby
@@ -633,6 +676,12 @@ require 'extensions'
 - Всі принципи SOLID дотримуються
 - Код легко тестувати і підтримувати
 
+### 7. ⚠️ **КРИТИЧНЕ ПРАВИЛО: ОБМЕЖЕННЯ SKETCHUP**
+- **НЕ ВИКОРИСТОВУВАТИ ES6 модулі** - не працюють в CEF
+- **ВИКОРИСТОВУВАТИ Namespace Pattern** - IIFE з глобальними об'єктами
+- **ЗБЕРІГАТИ зворотну сумісність** - функції доступні глобально
+- **ПІДКЛЮЧАТИ модулі в правильному порядку** - залежності спочатку
+
 ---
 
 ## Контрольний список
@@ -668,6 +717,9 @@ require 'extensions'
 - [ ] Тести покривають основні сценарії
 - [ ] UI відповідає архітектурі
 - [ ] Документація оновлена
+- [ ] **НЕ використовуються ES6 модулі (не працюють в SketchUp)**
+- [ ] **Використовується Namespace Pattern для модуляризації**
+- [ ] **Модулі підключені в правильному порядку**
 
 ---
 
