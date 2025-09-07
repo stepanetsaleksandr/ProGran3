@@ -211,10 +211,11 @@
     const pendingData = pendingPreviews[componentPath];
     if (!pendingData) {
       logBridgeAction(`Не знайдено pending дані для: ${componentPath}`, 'error');
+      logBridgeAction(`Доступні pending: ${Object.keys(pendingPreviews).join(', ')}`, 'error');
       return;
     }
     
-    const { filename, source, item } = pendingData;
+    const { filename, source, item, loadingDiv } = pendingData;
     logBridgeAction(`Знайдено pending дані для: ${filename} (${source})`, 'success');
     
     try {
@@ -222,22 +223,48 @@
       const img = new Image();
       img.onload = function() {
         // Видаляємо loading indicator
-        const loadingDiv = item.querySelector('.loading-indicator');
-        if (loadingDiv) {
-          loadingDiv.remove();
+        if (loadingDiv && loadingDiv.parentNode) {
+          loadingDiv.parentNode.removeChild(loadingDiv);
           logBridgeAction(`Видалено loading indicator для: ${filename}`, 'info');
         }
         
         // Додаємо зображення
-        item.appendChild(img);
-        logBridgeAction(`Зображення додано для: ${filename}`, 'success');
+        if (item) {
+          item.appendChild(img);
+          item.dataset.status = 'loaded';
+          logBridgeAction(`Зображення додано для: ${filename}`, 'success');
+        }
       };
       
       img.onerror = function() {
         logBridgeAction(`Помилка: base64 дані не є валідним зображенням для: ${filename}`, 'error');
+        
+        // Показуємо повідомлення про помилку
+        if (loadingDiv) {
+          loadingDiv.textContent = `Помилка завантаження\n${filename}`;
+          loadingDiv.className = 'loading-indicator error';
+        }
+        
+        // Очищуємо pending
+        delete pendingPreviews[componentPath];
       };
       
-      img.src = `data:image/png;base64,${base64Data}`;
+      // Перевіряємо чи base64 дані вже містять префікс
+      let imageSrc;
+      if (base64Data.startsWith('data:image/')) {
+        imageSrc = base64Data;
+      } else {
+        // Додаємо префікс та перевіряємо чи це валідний base64
+        const base64Pattern = /^[A-Za-z0-9+/]*={0,2}$/;
+        if (base64Pattern.test(base64Data)) {
+          imageSrc = `data:image/png;base64,${base64Data}`;
+        } else {
+          logBridgeAction(`Невалідний base64 формат для: ${filename}`, 'error');
+          throw new Error('Invalid base64 format');
+        }
+      }
+      
+      img.src = imageSrc;
       img.className = 'carousel-preview';
       
     } catch (error) {
@@ -254,10 +281,9 @@
     
     const pendingData = pendingPreviews[componentPath];
     if (pendingData) {
-      const { filename, item } = pendingData;
+      const { filename, item, loadingDiv } = pendingData;
       
       // Показуємо повідомлення про помилку
-      const loadingDiv = item.querySelector('.loading-indicator');
       if (loadingDiv) {
         loadingDiv.textContent = `Помилка: ${errorMessage}`;
         loadingDiv.className = 'loading-indicator error';
@@ -268,15 +294,17 @@
     }
   }
   
-  function addPendingPreview(componentPath, filename, source, item) {
+  function addPendingPreview(componentPath, filename, source, item, loadingDiv) {
     pendingPreviews[componentPath] = {
       filename: filename,
       source: source,
       item: item,
+      loadingDiv: loadingDiv,
       timestamp: new Date().toISOString()
     };
     
     logBridgeAction(`Додано до pending: ${componentPath} (${source})`, 'info');
+    logBridgeAction(`Загальна кількість pending: ${Object.keys(pendingPreviews).length}`, 'info');
   }
   
   function getConnectionStatus() {
@@ -285,6 +313,25 @@
       availableMethods: [...availableMethods],
       pendingPreviews: Object.keys(pendingPreviews).length
     };
+  }
+  
+  function cleanupOldPendingPreviews() {
+    const now = new Date();
+    const maxAge = 5 * 60 * 1000; // 5 хвилин
+    
+    let cleanedCount = 0;
+    for (const [path, data] of Object.entries(pendingPreviews)) {
+      const age = now - new Date(data.timestamp);
+      if (age > maxAge) {
+        delete pendingPreviews[path];
+        cleanedCount++;
+        logBridgeAction(`Очищено старий pending: ${path} (вік: ${Math.round(age/1000)}с)`, 'info');
+      }
+    }
+    
+    if (cleanedCount > 0) {
+      logBridgeAction(`Очищено ${cleanedCount} старих pending записів`, 'info');
+    }
   }
   
   function resetSketchUpBridge() {
@@ -330,6 +377,7 @@
     addPendingPreview: addPendingPreview,
     getConnectionStatus: getConnectionStatus,
     resetSketchUpBridge: resetSketchUpBridge,
+    cleanupOldPendingPreviews: cleanupOldPendingPreviews,
     isMethodAvailable: isMethodAvailable,
     getAvailableMethods: getAvailableMethods
   };
@@ -342,5 +390,8 @@
   if (global.ProGran3.Core.Logger) {
     global.ProGran3.Core.Logger.debugLog('SketchUpBridge модуль завантажено', 'info', 'SketchUpBridge');
   }
+  
+  // Очищуємо старі pending записи при завантаженні
+  cleanupOldPendingPreviews();
   
 })(window);

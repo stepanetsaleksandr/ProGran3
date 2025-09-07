@@ -427,27 +427,49 @@ const CarouselManager = {
 
   // Ледаче завантаження превью (уніфікована логіка як у стел)
   loadOrGeneratePreview(category, index) {
+    debugLog(`🔍 loadOrGeneratePreview викликано для ${category}[${index}]`, 'info');
+    
     const track = document.getElementById(this.getCarouselElementId(category, 'track'));
-    if (!track) return;
+    if (!track) {
+      debugLog(`❌ Не знайдено track для ${category}`, 'error');
+      return;
+    }
+    
     const items = track.querySelectorAll('.carousel-item');
+    debugLog(`📋 Знайдено ${items.length} елементів в каруселі ${category}`, 'info');
+    
     const item = items[index];
-    if (!item) return;
+    if (!item) {
+      debugLog(`❌ Не знайдено елемент ${index} в каруселі ${category}`, 'error');
+      return;
+    }
 
     const currentStatus = item.dataset.status;
-    if (currentStatus === 'loaded' || currentStatus === 'pending') return;
+    if (currentStatus === 'loaded' || currentStatus === 'pending') {
+      debugLog(`⏭️ Пропускаємо ${category}[${index}] - статус: ${currentStatus}`, 'info');
+      return;
+    }
 
     const filename = item.dataset.filename || (modelLists[category] && modelLists[category][index]);
-    if (!filename) return;
+    if (!filename) {
+      debugLog(`❌ Не знайдено filename для ${category}[${index}]`, 'error');
+      debugLog(`❌ modelLists[${category}]: ${JSON.stringify(modelLists[category])}`, 'error');
+      return;
+    }
+    
+    debugLog(`✅ Знайдено filename: ${filename} для ${category}[${index}]`, 'success');
 
     let loadingDiv = item.querySelector('.loading-indicator');
     if (!loadingDiv) {
       loadingDiv = document.createElement('div');
       loadingDiv.className = 'loading-indicator';
       item.appendChild(loadingDiv);
+      debugLog(`➕ Створено loading indicator для ${filename}`, 'info');
     }
     loadingDiv.textContent = 'Генерація превью...';
 
     item.dataset.status = 'pending';
+    debugLog(`🔄 Встановлено статус 'pending' для ${filename}`, 'info');
 
     // Відразу запускаємо генерацію превью
     this.autoGeneratePreview(category, filename, item, loadingDiv);
@@ -455,7 +477,10 @@ const CarouselManager = {
 
   // Автоматична генерація превью (уніфікована логіка як у стел)
   autoGeneratePreview(category, filename, item, loadingDiv) {
+    debugLog(`🔧 autoGeneratePreview викликано для ${category}/${filename}`, 'info');
+    
     if (!window.sketchup) {
+      debugLog(`❌ window.sketchup не доступний для ${filename}`, 'error');
       createPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
       return;
     }
@@ -465,10 +490,18 @@ const CarouselManager = {
     
     // Генеруємо веб-превью через SketchUp
     window.sketchup.generate_web_preview(componentPath);
+    debugLog(`📡 Викликано window.sketchup.generate_web_preview(${componentPath})`, 'info');
     
-    // Зберігаємо посилання на елементи для callback
+  // Зберігаємо посилання на елементи для callback через SketchUpBridge
+  if (window.ProGran3 && window.ProGran3.Communication && window.ProGran3.Communication.SketchUpBridge) {
+    debugLog(`✅ Використовуємо SketchUpBridge для pending: ${componentPath}`, 'success');
+    window.ProGran3.Communication.SketchUpBridge.addPendingPreview(componentPath, filename, 'CarouselManager', item, loadingDiv);
+  } else {
+    debugLog(`⚠️ Використовуємо fallback для pending: ${componentPath}`, 'warning');
+    // Fallback для зворотної сумісності
     window.pendingPreviews = window.pendingPreviews || {};
     window.pendingPreviews[componentPath] = { item, loadingDiv, filename, source: 'CarouselManager' };
+  }
     
     debugLog(`📝 Додано до pending: ${componentPath} (CarouselManager)`, 'info');
   },
@@ -889,6 +922,18 @@ function togglePanel(headerElement) {
 }
 
 function advanceToNextPanel(buttonElement) {
+  // Використовуємо модуль Panels якщо доступний
+  if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.Panels) {
+    const result = window.ProGran3.UI.Panels.advanceToNextPanel(buttonElement);
+    if (result) {
+      debugLog(`✅ advanceToNextPanel виконано через модуль Panels`, 'success');
+    } else {
+      debugLog(`⚠️ advanceToNextPanel не вдався через модуль Panels`, 'warning');
+    }
+    return;
+  }
+  
+  // Fallback для зворотної сумісності
   // Знаходимо батьківську панель кнопки
   const currentPanel = buttonElement.closest('.panel');
   
@@ -1001,9 +1046,14 @@ function autoGenerateMainStelesPreview(category, filename, item, loadingDiv) {
   // Генеруємо веб-превью через SketchUp
   window.sketchup.generate_web_preview(componentPath);
   
-  // Зберігаємо посилання на елементи для callback
-  window.pendingPreviews = window.pendingPreviews || {};
-  window.pendingPreviews[componentPath] = { item, loadingDiv, filename, source: 'MainSteles' };
+  // Зберігаємо посилання на елементи для callback через SketchUpBridge
+  if (window.ProGran3 && window.ProGran3.Communication && window.ProGran3.Communication.SketchUpBridge) {
+    window.ProGran3.Communication.SketchUpBridge.addPendingPreview(componentPath, filename, 'MainSteles', item, loadingDiv);
+  } else {
+    // Fallback для зворотної сумісності
+    window.pendingPreviews = window.pendingPreviews || {};
+    window.pendingPreviews[componentPath] = { item, loadingDiv, filename, source: 'MainSteles' };
+  }
   
   debugLog(`📝 Додано до pending: ${componentPath} (MainSteles)`, 'info');
 }
@@ -1037,6 +1087,13 @@ function receiveWebPreview(componentPath, base64Data) {
   debugLog(`📊 Розмір base64 даних: ${base64Data ? base64Data.length : 0} символів`, 'info');
   debugLog(`🔍 Перші 50 символів base64: ${base64Data ? base64Data.substring(0, 50) : 'null'}`, 'info');
   
+  // Використовуємо SketchUpBridge якщо доступний
+  if (window.ProGran3 && window.ProGran3.Communication && window.ProGran3.Communication.SketchUpBridge) {
+    window.ProGran3.Communication.SketchUpBridge.receiveWebPreview(componentPath, base64Data);
+    return;
+  }
+  
+  // Fallback для зворотної сумісності
   const pendingData = window.pendingPreviews && window.pendingPreviews[componentPath];
   if (!pendingData) {
     debugLog(`❌ Не знайдено pending дані для: ${componentPath}`, 'error');
@@ -1080,6 +1137,13 @@ function receiveWebPreview(componentPath, base64Data) {
 
 // Функція для обробки помилки генерації превью
 function handlePreviewError(componentPath, errorMessage) {
+  // Використовуємо SketchUpBridge якщо доступний
+  if (window.ProGran3 && window.ProGran3.Communication && window.ProGran3.Communication.SketchUpBridge) {
+    window.ProGran3.Communication.SketchUpBridge.handlePreviewError(componentPath, errorMessage);
+    return;
+  }
+  
+  // Fallback для зворотної сумісності
   const pendingData = window.pendingPreviews && window.pendingPreviews[componentPath];
   if (!pendingData) return;
   
@@ -1422,59 +1486,102 @@ function updateSummaryTable() {
   
   // Відмостка
   if (addedElements.blindArea) {
-    const blindAreaThickness = document.getElementById('blind-area-thickness').value;
-    const blindAreaMode = document.getElementById('blind-area-mode').value;
+    const blindAreaThicknessEl = document.getElementById('blind-area-thickness');
+    const blindAreaModeEl = document.getElementById('blind-area-mode');
+    const summaryBlindAreaEl = document.getElementById('summary-blind-area');
     
-    if (blindAreaMode === 'uniform') {
-      const uniformWidth = document.getElementById('blind-area-uniform-width').value;
-      document.getElementById('summary-blind-area').textContent = 
-        `Ширина: ${uniformWidth} ${unitText}, Товщина: ${blindAreaThickness} ${unitText}`;
-    } else {
-      const blindAreaNorth = document.getElementById('blind-area-north').value;
-      const blindAreaSouth = document.getElementById('blind-area-south').value;
-      const blindAreaEast = document.getElementById('blind-area-east').value;
-      const blindAreaWest = document.getElementById('blind-area-west').value;
-      document.getElementById('summary-blind-area').textContent = 
-        `П:${blindAreaNorth} Пд:${blindAreaSouth} С:${blindAreaEast} З:${blindAreaWest} ${unitText}, Т:${blindAreaThickness} ${unitText}`;
+    if (blindAreaThicknessEl && blindAreaModeEl && summaryBlindAreaEl) {
+      const blindAreaThickness = blindAreaThicknessEl.value;
+      const blindAreaMode = blindAreaModeEl.value;
+      
+      if (blindAreaMode === 'uniform') {
+        const uniformWidthEl = document.getElementById('blind-area-uniform-width');
+        if (uniformWidthEl) {
+          const uniformWidth = uniformWidthEl.value;
+          summaryBlindAreaEl.textContent = 
+            `Ширина: ${uniformWidth} ${unitText}, Товщина: ${blindAreaThickness} ${unitText}`;
+        }
+      } else {
+        const blindAreaNorthEl = document.getElementById('blind-area-north');
+        const blindAreaSouthEl = document.getElementById('blind-area-south');
+        const blindAreaEastEl = document.getElementById('blind-area-east');
+        const blindAreaWestEl = document.getElementById('blind-area-west');
+        
+        if (blindAreaNorthEl && blindAreaSouthEl && blindAreaEastEl && blindAreaWestEl) {
+          const blindAreaNorth = blindAreaNorthEl.value;
+          const blindAreaSouth = blindAreaSouthEl.value;
+          const blindAreaEast = blindAreaEastEl.value;
+          const blindAreaWest = blindAreaWestEl.value;
+          summaryBlindAreaEl.textContent = 
+            `П:${blindAreaNorth} Пд:${blindAreaSouth} С:${blindAreaEast} З:${blindAreaWest} ${unitText}, Т:${blindAreaThickness} ${unitText}`;
+        }
+      }
     }
   } else {
-    document.getElementById('summary-blind-area').textContent = '--';
+    const summaryBlindAreaEl = document.getElementById('summary-blind-area');
+    if (summaryBlindAreaEl) {
+      summaryBlindAreaEl.textContent = '--';
+    }
   }
   
   // Підставка
   if (addedElements.stands && carouselState.stands && modelLists.stands) {
     const standFilename = modelLists.stands[carouselState.stands.index];
-    document.getElementById('summary-stand').textContent = 
-      standFilename ? standFilename.replace('.skp', '') : '--';
+    const summaryStandEl = document.getElementById('summary-stand');
+    if (summaryStandEl) {
+      summaryStandEl.textContent = 
+        standFilename ? standFilename.replace('.skp', '') : '--';
+    }
   } else {
-    document.getElementById('summary-stand').textContent = '--';
+    const summaryStandEl = document.getElementById('summary-stand');
+    if (summaryStandEl) {
+      summaryStandEl.textContent = '--';
+    }
   }
   
   // Квітник
   if (addedElements.flowerbeds && carouselState.flowerbeds && modelLists.flowerbeds) {
     const flowerbedFilename = modelLists.flowerbeds[carouselState.flowerbeds.index];
-    document.getElementById('summary-flowerbed').textContent = 
-      flowerbedFilename ? flowerbedFilename.replace('.skp', '') : '--';
+    const summaryFlowerbedEl = document.getElementById('summary-flowerbed');
+    if (summaryFlowerbedEl) {
+      summaryFlowerbedEl.textContent = 
+        flowerbedFilename ? flowerbedFilename.replace('.skp', '') : '--';
+    }
   } else {
-    document.getElementById('summary-flowerbed').textContent = '--';
+    const summaryFlowerbedEl = document.getElementById('summary-flowerbed');
+    if (summaryFlowerbedEl) {
+      summaryFlowerbedEl.textContent = '--';
+    }
   }
   
   // Надгробна плита
   if (addedElements.gravestones && carouselState.gravestones && modelLists.gravestones) {
     const gravestoneFilename = modelLists.gravestones[carouselState.gravestones.index];
-    document.getElementById('summary-gravestone').textContent = 
-      gravestoneFilename ? gravestoneFilename.replace('.skp', '') : '--';
+    const summaryGravestoneEl = document.getElementById('summary-gravestone');
+    if (summaryGravestoneEl) {
+      summaryGravestoneEl.textContent = 
+        gravestoneFilename ? gravestoneFilename.replace('.skp', '') : '--';
+    }
   } else {
-    document.getElementById('summary-gravestone').textContent = '--';
+    const summaryGravestoneEl = document.getElementById('summary-gravestone');
+    if (summaryGravestoneEl) {
+      summaryGravestoneEl.textContent = '--';
+    }
   }
   
   // Стела
   if (addedElements.steles && carouselState.steles && modelLists.steles) {
     const steleFilename = modelLists.steles[carouselState.steles.index];
-    document.getElementById('summary-stele').textContent = 
-      steleFilename ? steleFilename.replace('.skp', '') : '--';
+    const summarySteleEl = document.getElementById('summary-stele');
+    if (summarySteleEl) {
+      summarySteleEl.textContent = 
+        steleFilename ? steleFilename.replace('.skp', '') : '--';
+    }
   } else {
-    document.getElementById('summary-stele').textContent = '--';
+    const summarySteleEl = document.getElementById('summary-stele');
+    if (summarySteleEl) {
+      summarySteleEl.textContent = '--';
+    }
   }
   
   // Кутова огорожа
@@ -2792,9 +2899,20 @@ function refreshStandsCarousel() {
         // Оновлюємо modelLists
         modelLists.stands = newStandsList;
         
-        // Перезапускаємо карусель
+        // Оновлюємо StateManager якщо доступний
+        if (window.ProGran3 && window.ProGran3.Core && window.ProGran3.Core.StateManager) {
+          window.ProGran3.Core.StateManager.setModelLists(modelLists);
+        }
+        
+        // Перезапускаємо карусель через CarouselManager
         debugLog('🔄 Перезапускаємо карусель підставок', 'info');
-        initializeStandsCarousel();
+        if (CarouselManager && CarouselManager.initialize) {
+          CarouselManager.initialize('stands');
+        } else if (typeof initializeStandsCarousel === 'function') {
+          initializeStandsCarousel();
+        } else {
+          debugLog('⚠️ Не знайдено функцію для ініціалізації каруселі підставок', 'warning');
+        }
         
         debugLog('✅ Карусель підставок оновлена успішно', 'success');
       } else {

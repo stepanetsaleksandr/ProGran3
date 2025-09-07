@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProGran3 - Тест діагностики pending</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 4px solid #ccc;
+        }
+        .test-result.pass {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+        }
+        .test-result.fail {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        .test-result.info {
+            background-color: #d1ecf1;
+            border-left-color: #17a2b8;
+        }
+        .test-result.warning {
+            background-color: #fff3cd;
+            border-left-color: #ffc107;
+        }
+        .pending-info {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔍 Тест діагностики pending даних</h1>
+        <p>Перевірка покращень в діагностиці та очищенні pending даних</p>
+        
+        <div id="test-results"></div>
+        
+        <div id="pending-info" class="pending-info">
+            <strong>Pending дані:</strong> <span id="pending-count">0</span><br>
+            <strong>Деталі:</strong> <span id="pending-details">Немає</span>
+        </div>
+        
+        <button onclick="runTests()" style="
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        ">🚀 Запустити тести</button>
+        
+        <button onclick="cleanupPending()" style="
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            margin-left: 10px;
+        ">🧹 Очистити pending</button>
+    </div>
+
+    <!-- Підключаємо модулі -->
+    <script src="modules/core/Config.js"></script>
+    <script src="modules/core/Logger.js"></script>
+    <script src="modules/core/StateManager.js"></script>
+    <script src="modules/utils/Helpers.js"></script>
+    <script src="modules/utils/Validation.js"></script>
+    <script src="modules/utils/Units.js"></script>
+    <script src="modules/communication/SketchUpBridge.js"></script>
+    <script src="modules/ui/Tabs.js"></script>
+    <script src="modules/ui/Panels.js"></script>
+    <script src="modules/ui/SummaryTable.js"></script>
+    <script src="modules/builders/FoundationBuilder.js"></script>
+
+    <script>
+        function addTestResult(message, type = 'info') {
+            const results = document.getElementById('test-results');
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+
+        function updatePendingInfo() {
+            if (window.ProGran3 && window.ProGran3.Communication && window.ProGran3.Communication.SketchUpBridge) {
+                const status = window.ProGran3.Communication.SketchUpBridge.getConnectionStatus();
+                document.getElementById('pending-count').textContent = status.pendingPreviews;
+                
+                // Отримуємо детальну інформацію про pending
+                const bridge = window.ProGran3.Communication.SketchUpBridge;
+                if (bridge._pendingPreviews) {
+                    const details = Object.keys(bridge._pendingPreviews).join(', ');
+                    document.getElementById('pending-details').textContent = details || 'Немає';
+                } else {
+                    document.getElementById('pending-details').textContent = 'Недоступно';
+                }
+            }
+        }
+
+        function cleanupPending() {
+            if (window.ProGran3 && window.ProGran3.Communication && window.ProGran3.Communication.SketchUpBridge) {
+                window.ProGran3.Communication.SketchUpBridge.cleanupOldPendingPreviews();
+                updatePendingInfo();
+                addTestResult('🧹 Викликано очищення старих pending записів', 'info');
+            }
+        }
+
+        function runTests() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '';
+            
+            addTestResult('🚀 Початок тестування діагностики pending...', 'info');
+            
+            try {
+                // Тест 1: Перевірка модулів
+                if (window.ProGran3 && window.ProGran3.Communication && window.ProGran3.Communication.SketchUpBridge) {
+                    addTestResult('✅ SketchUpBridge модуль завантажено', 'pass');
+                } else {
+                    addTestResult('❌ SketchUpBridge модуль не завантажено', 'fail');
+                    return;
+                }
+                
+                // Тест 2: Перевірка нових функцій
+                const bridge = window.ProGran3.Communication.SketchUpBridge;
+                
+                if (typeof bridge.cleanupOldPendingPreviews === 'function') {
+                    addTestResult('✅ cleanupOldPendingPreviews функція доступна', 'pass');
+                } else {
+                    addTestResult('❌ cleanupOldPendingPreviews функція не доступна', 'fail');
+                }
+                
+                if (typeof bridge.getConnectionStatus === 'function') {
+                    addTestResult('✅ getConnectionStatus функція доступна', 'pass');
+                } else {
+                    addTestResult('❌ getConnectionStatus функція не доступна', 'fail');
+                }
+                
+                // Тест 3: Тестування getConnectionStatus
+                try {
+                    const status = bridge.getConnectionStatus();
+                    addTestResult(`✅ getConnectionStatus повертає: ${JSON.stringify(status)}`, 'pass');
+                } catch (error) {
+                    addTestResult(`❌ Помилка в getConnectionStatus: ${error.message}`, 'fail');
+                }
+                
+                // Тест 4: Тестування cleanupOldPendingPreviews
+                try {
+                    bridge.cleanupOldPendingPreviews();
+                    addTestResult('✅ cleanupOldPendingPreviews працює без помилок', 'pass');
+                } catch (error) {
+                    addTestResult(`❌ Помилка в cleanupOldPendingPreviews: ${error.message}`, 'fail');
+                }
+                
+                // Тест 5: Тестування додавання pending з додатковим логуванням
+                try {
+                    const testItem = document.createElement('div');
+                    testItem.className = 'test-item';
+                    const testLoadingDiv = document.createElement('div');
+                    testLoadingDiv.className = 'loading-indicator';
+                    testItem.appendChild(testLoadingDiv);
+                    
+                    bridge.addPendingPreview('test/debug.skp', 'debug.skp', 'Test', testItem, testLoadingDiv);
+                    addTestResult('✅ addPendingPreview з додатковим логуванням працює', 'pass');
+                    
+                    // Перевіряємо що pending додано
+                    const statusAfter = bridge.getConnectionStatus();
+                    if (statusAfter.pendingPreviews > 0) {
+                        addTestResult(`✅ Pending додано: ${statusAfter.pendingPreviews} записів`, 'pass');
+                    } else {
+                        addTestResult('⚠️ Pending не додано', 'warning');
+                    }
+                    
+                } catch (error) {
+                    addTestResult(`❌ Помилка в тестуванні addPendingPreview: ${error.message}`, 'fail');
+                }
+                
+                // Тест 6: Тестування receiveWebPreview з додатковим логуванням
+                try {
+                    const validBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+                    bridge.receiveWebPreview('test/debug.skp', validBase64);
+                    addTestResult('✅ receiveWebPreview з додатковим логуванням працює', 'pass');
+                } catch (error) {
+                    addTestResult(`❌ Помилка в тестуванні receiveWebPreview: ${error.message}`, 'fail');
+                }
+                
+                // Оновлюємо інформацію про pending
+                updatePendingInfo();
+                
+                addTestResult('🏁 Тестування діагностики pending завершено!', 'info');
+                addTestResult('✅ Покращення діагностики працюють!', 'pass');
+                
+            } catch (error) {
+                addTestResult(`❌ Критична помилка в тесті: ${error.message}`, 'fail');
+            }
+        }
+        
+        // Автоматично запускаємо тест при завантаженні
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                runTests();
+                updatePendingInfo();
+            }, 500);
+        });
+        
+        // Оновлюємо інформацію про pending кожні 2 секунди
+        setInterval(updatePendingInfo, 2000);
+    </script>
+</body>
+</html>

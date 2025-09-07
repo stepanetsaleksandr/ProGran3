@@ -54,9 +54,14 @@ module ProGran3
       old_corner_fences = model.active_entities.grep(Sketchup::ComponentInstance).select { |c| c.definition.name == "CornerFence" }
       old_corner_fences.each(&:erase!)
       
-      # Видаляємо старі декоративні елементи
+      # Видаляємо тільки старі декоративні елементи огорожі
       old_decor_components = model.active_entities.grep(Sketchup::ComponentInstance).find_all { |c| 
-        c.definition.name.include?('ball') || c.definition.name.include?('pancake') || c.definition.name.include?('fence_decor')
+        name = c.definition.name
+        # Видаляємо тільки декоративні елементи огорожі
+        name.include?('fence_decor') || 
+        name.include?('FenceDecor') ||
+        (name.include?('ball') && name.include?('fence')) ||
+        (name.include?('pancake') && name.include?('fence'))
       }
       old_decor_components.each do |decor|
         if decor && decor.valid?
@@ -194,48 +199,52 @@ module ProGran3
       all_components = model.active_entities.grep(Sketchup::ComponentInstance)
       ProGran3::Logger.info("Всі компоненти в моделі: #{all_components.map { |c| c.definition.name }.join(', ')}", "FenceBuilder")
       
-      # Видаляємо всі компоненти, пов'язані з периметральною огорожею
+      # Видаляємо тільки компоненти огорожі (не всі компоненти з "Fence" в назві)
       fence_components = all_components.select { |c| 
-        c.definition.name.include?("PerimeterFence") || 
-        c.definition.name.include?("Fence") ||
-        c.definition.name.include?("Post") ||
-        c.definition.name.include?("Decor")
+        name = c.definition.name
+        # Видаляємо тільки специфічні компоненти огорожі
+        name.include?("PerimeterFence") || 
+        name.include?("CornerFence") ||
+        name.include?("FencePost") ||
+        name.include?("FencePanel") ||
+        name.include?("FenceDecor") ||
+        name.include?("fence_decor") ||
+        name.include?("fence_corner") ||
+        name.include?("fence_perimeter")
       }
-      ProGran3::Logger.info("Видаляємо всі компоненти огорожі: #{fence_components.length} компонентів", "FenceBuilder")
+      ProGran3::Logger.info("Видаляємо тільки компоненти огорожі: #{fence_components.length} компонентів", "FenceBuilder")
       fence_components.each(&:erase!)
       
-      # Видаляємо старі декоративні елементи
+      # Видаляємо тільки старі декоративні елементи огорожі
       old_decor_components = model.active_entities.grep(Sketchup::ComponentInstance).find_all { |c| 
-        c.definition.name.include?('ball') || c.definition.name.include?('pancake') || c.definition.name.include?('fence_decor')
+        name = c.definition.name
+        # Видаляємо тільки декоративні елементи огорожі
+        name.include?('fence_decor') || 
+        name.include?('FenceDecor') ||
+        (name.include?('ball') && name.include?('fence')) ||
+        (name.include?('pancake') && name.include?('fence'))
       }
-      ProGran3::Logger.info("Видаляємо старі декоративні елементи: #{old_decor_components.length} компонентів", "FenceBuilder")
+      ProGran3::Logger.info("Видаляємо тільки декоративні елементи огорожі: #{old_decor_components.length} компонентів", "FenceBuilder")
       old_decor_components.each do |decor|
         if decor && decor.valid?
           decor.erase!
         end
       end
       
-      # Видаляємо старі визначення компонентів
-      old_fence_defs = defs.select { |definition| 
-        definition.name.include?("PerimeterFence") || 
-        definition.name.include?("Fence") ||
-        definition.name.include?("Post") ||
-        definition.name.include?("Decor")
+      # Видаляємо тільки визначення компонентів огорожі (не всі визначення)
+      fence_definitions = model.definitions.to_a.select { |definition| 
+        name = definition.name
+        name.include?("PerimeterFence") || 
+        name.include?("CornerFence") ||
+        name.include?("FencePost") ||
+        name.include?("FencePanel") ||
+        name.include?("FenceDecor") ||
+        name.include?("fence_decor") ||
+        name.include?("fence_corner") ||
+        name.include?("fence_perimeter")
       }
-      ProGran3::Logger.info("Видаляємо старі визначення компонентів: #{old_fence_defs.length} визначень", "FenceBuilder")
-      old_fence_defs.each { |definition| defs.remove(definition) }
-      
-      # Видаляємо ВСІ компоненти, крім фундаменту
-      all_remaining_components = model.active_entities.grep(Sketchup::ComponentInstance)
-      non_foundation_components = all_remaining_components.select { |c| c.definition.name != "Foundation" }
-      ProGran3::Logger.info("Видаляємо всі компоненти крім фундаменту: #{non_foundation_components.length} компонентів", "FenceBuilder")
-      non_foundation_components.each(&:erase!)
-      
-      # Видаляємо ВСІ визначення компонентів, крім фундаменту
-      all_definitions = model.definitions.to_a
-      non_foundation_defs = all_definitions.select { |definition| definition.name != "Foundation" }
-      ProGran3::Logger.info("Видаляємо всі визначення крім фундаменту: #{non_foundation_defs.length} визначень", "FenceBuilder")
-      non_foundation_defs.each { |definition| defs.remove(definition) }
+      ProGran3::Logger.info("Видаляємо тільки визначення огорожі: #{fence_definitions.length} визначень", "FenceBuilder")
+      fence_definitions.each { |definition| defs.remove(definition) }
       
       # Отримуємо розміри фундаменту для позиціонування
       foundation = model.entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name == "Foundation" }

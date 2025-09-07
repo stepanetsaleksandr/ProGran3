@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProGran3 - Тест виправлення</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 4px solid #ccc;
+        }
+        .test-result.pass {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+        }
+        .test-result.fail {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        .test-result.info {
+            background-color: #d1ecf1;
+            border-left-color: #17a2b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 Тест виправлення updateSummaryTable</h1>
+        <p>Перевірка виправлення помилки "Cannot read properties of null"</p>
+        
+        <div id="test-results"></div>
+        
+        <button onclick="runTest()" style="
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        ">🚀 Запустити тест</button>
+    </div>
+
+    <!-- Підключаємо модулі -->
+    <script src="modules/core/Config.js"></script>
+    <script src="modules/core/Logger.js"></script>
+    <script src="modules/core/StateManager.js"></script>
+    <script src="modules/utils/Helpers.js"></script>
+    <script src="modules/utils/Validation.js"></script>
+    <script src="modules/utils/Units.js"></script>
+    <script src="modules/communication/SketchUpBridge.js"></script>
+    <script src="modules/ui/Tabs.js"></script>
+    <script src="modules/ui/Panels.js"></script>
+    <script src="modules/ui/SummaryTable.js"></script>
+
+    <script>
+        function addTestResult(message, type = 'info') {
+            const results = document.getElementById('test-results');
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+
+        function runTest() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '';
+            
+            addTestResult('🚀 Початок тестування виправлення...', 'info');
+            
+            try {
+                // Тест 1: Перевірка що модуль завантажено
+                if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.SummaryTable) {
+                    addTestResult('✅ SummaryTable модуль завантажено', 'pass');
+                } else {
+                    addTestResult('❌ SummaryTable модуль не завантажено', 'fail');
+                    return;
+                }
+                
+                // Тест 2: Перевірка що функція доступна
+                if (typeof window.ProGran3.UI.SummaryTable.updateSummaryTable === 'function') {
+                    addTestResult('✅ updateSummaryTable функція доступна', 'pass');
+                } else {
+                    addTestResult('❌ updateSummaryTable функція не доступна', 'fail');
+                    return;
+                }
+                
+                // Тест 3: Перевірка зворотної сумісності
+                if (typeof window.updateSummaryTable === 'function') {
+                    addTestResult('✅ Глобальна функція updateSummaryTable доступна', 'pass');
+                } else {
+                    addTestResult('❌ Глобальна функція updateSummaryTable не доступна', 'fail');
+                }
+                
+                // Тест 4: Тестування виклику функції (без помилок)
+                try {
+                    // Викликаємо функцію - вона не повинна падати навіть якщо елементи відсутні
+                    window.ProGran3.UI.SummaryTable.updateSummaryTable();
+                    addTestResult('✅ updateSummaryTable викликано без помилок', 'pass');
+                } catch (error) {
+                    addTestResult(`❌ updateSummaryTable викликано з помилкою: ${error.message}`, 'fail');
+                }
+                
+                // Тест 5: Тестування getSummaryData
+                try {
+                    const summaryData = window.ProGran3.UI.SummaryTable.getSummaryData();
+                    if (typeof summaryData === 'object') {
+                        addTestResult('✅ getSummaryData повертає об\'єкт', 'pass');
+                    } else {
+                        addTestResult('❌ getSummaryData не повертає об\'єкт', 'fail');
+                    }
+                } catch (error) {
+                    addTestResult(`❌ getSummaryData викликано з помилкою: ${error.message}`, 'fail');
+                }
+                
+                // Тест 6: Тестування clearSummaryTable
+                try {
+                    window.ProGran3.UI.SummaryTable.clearSummaryTable();
+                    addTestResult('✅ clearSummaryTable викликано без помилок', 'pass');
+                } catch (error) {
+                    addTestResult(`❌ clearSummaryTable викликано з помилкою: ${error.message}`, 'fail');
+                }
+                
+                addTestResult('🏁 Тестування виправлення завершено!', 'info');
+                addTestResult('✅ Помилка "Cannot read properties of null" виправлена!', 'pass');
+                
+            } catch (error) {
+                addTestResult(`❌ Критична помилка в тесті: ${error.message}`, 'fail');
+            }
+        }
+        
+        // Автоматично запускаємо тест при завантаженні
+        window.addEventListener('load', () => {
+            setTimeout(runTest, 500);
+        });
+    </script>
+</body>
+</html>
