@@ -68,36 +68,6 @@ function switchTab(tabName) {
     }, 300);
   }
   
-  // Спеціальна обробка для таба fence
-  if (tabName === 'fence') {
-    setTimeout(() => {
-      debugLog(`🎠 Спеціальна ініціалізація каруселі fence_decor для таба fence`, 'info');
-      debugLog(`🔍 Діагностика для таба fence:`, 'info');
-      debugLog(`   - hasCarousel: ${CarouselManager.hasCarousel('fence_decor')}`, 'info');
-      debugLog(`   - modelLists['fence_decor']: ${!!modelLists['fence_decor']}`, 'info');
-      debugLog(`   - кількість моделей: ${modelLists['fence_decor']?.length || 0}`, 'info');
-      debugLog(`   - моделі: ${modelLists['fence_decor']?.join(', ') || 'немає'}`, 'info');
-      
-      if (CarouselManager.hasCarousel('fence_decor') && modelLists['fence_decor']) {
-        const trackElement = document.getElementById(CarouselManager.getCarouselElementId('fence_decor', 'track'));
-        const viewportElement = document.getElementById(CarouselManager.getCarouselElementId('fence_decor', 'viewport'));
-        
-        debugLog(`   - trackElement: ${!!trackElement}`, 'info');
-        debugLog(`   - viewportElement: ${!!viewportElement}`, 'info');
-        debugLog(`   - trackId: ${CarouselManager.getCarouselElementId('fence_decor', 'track')}`, 'info');
-        debugLog(`   - viewportId: ${CarouselManager.getCarouselElementId('fence_decor', 'viewport')}`, 'info');
-        
-        if (trackElement && viewportElement) {
-          debugLog(`✅ Спеціально ініціалізуємо карусель fence_decor для таба fence`, 'success');
-          CarouselManager.initialize('fence_decor');
-        } else {
-          debugLog(`❌ Не знайдено елементи каруселі fence_decor для таба fence`, 'error');
-        }
-      } else {
-        debugLog(`⚠️ Карусель fence_decor не доступна або немає моделей для таба fence`, 'warning');
-      }
-    }, 300);
-  }
     }, 100);
     
     
@@ -142,27 +112,10 @@ function initializeCarouselsForTab(tabName) {
       const trackElement = document.getElementById(CarouselManager.getCarouselElementId(category, 'track'));
       const viewportElement = document.getElementById(CarouselManager.getCarouselElementId(category, 'viewport'));
       
-      // Додаткова діагностика для fence_decor
-      if (category === 'fence_decor') {
-        debugLog(`🎯 Спеціальна діагностика для fence_decor:`, 'info');
-        debugLog(`   - hasCarousel: ${CarouselManager.hasCarousel(category)}`, 'info');
-        debugLog(`   - modelLists[category]: ${!!modelLists[category]}`, 'info');
-        debugLog(`   - кількість моделей: ${modelLists[category]?.length || 0}`, 'info');
-        debugLog(`   - trackElement: ${!!trackElement}`, 'info');
-        debugLog(`   - viewportElement: ${!!viewportElement}`, 'info');
-        debugLog(`   - trackId: ${CarouselManager.getCarouselElementId(category, 'track')}`, 'info');
-        debugLog(`   - viewportId: ${CarouselManager.getCarouselElementId(category, 'viewport')}`, 'info');
-      }
       
       if (trackElement && viewportElement) {
         debugLog(`✅ Ініціалізуємо карусель ${category} для таба ${tabName}`, 'success');
-        
-        // Спеціальна обробка для gravestones з превью
-        if (category === 'gravestones') {
-          initializeGravestonesCarousel(category);
-        } else {
-          CarouselManager.initialize(category);
-        }
+        CarouselManager.initialize(category);
       } else {
         debugLog(`❌ Не знайдено елементи каруселі ${category} для таба ${tabName}`, 'error');
       }
@@ -365,27 +318,22 @@ const CarouselManager = {
     return category in this.carousels;
   },
 
-  // Ініціалізація каруселі
+  // Ініціалізація каруселі (уніфікована логіка як у стел)
   initialize(category, options = {}) {
     debugLog(`🚀 CarouselManager.initialize викликано для ${category}`, 'info');
     
-    const config = { ...this.carousels[category], ...options };
     const track = document.getElementById(this.getCarouselElementId(category, 'track'));
     const viewport = document.getElementById(this.getCarouselElementId(category, 'viewport'));
     
-    // Додаткова діагностика для fence_decor та stands
-    if (category === 'fence_decor' || category === 'stands') {
-      debugLog(`🎯 Діагностика ${category} в initialize:`, 'info');
-      debugLog(`   - config: ${JSON.stringify(config)}`, 'info');
+    // Додаткова діагностика для fence_decor
+    if (category === 'fence_decor') {
+      debugLog(`🎯 Діагностика fence_decor в initialize:`, 'info');
       debugLog(`   - track: ${!!track}`, 'info');
       debugLog(`   - viewport: ${!!viewport}`, 'info');
-      debugLog(`   - modelLists[category]: ${!!modelLists[category]}`, 'info');
-      debugLog(`   - кількість моделей: ${modelLists[category]?.length || 0}`, 'info');
       debugLog(`   - trackId: ${this.getCarouselElementId(category, 'track')}`, 'info');
       debugLog(`   - viewportId: ${this.getCarouselElementId(category, 'viewport')}`, 'info');
-      if (modelLists[category]) {
-        debugLog(`   - список моделей: ${JSON.stringify(modelLists[category])}`, 'info');
-      }
+      debugLog(`   - modelLists[category]: ${!!modelLists[category]}`, 'info');
+      debugLog(`   - кількість моделей: ${modelLists[category]?.length || 0}`, 'info');
     }
     
     if (!track || !viewport || !modelLists[category] || modelLists[category].length === 0) {
@@ -393,115 +341,28 @@ const CarouselManager = {
       return;
     }
     
-    debugLog(`✅ Створюємо ${modelLists[category].length} елементів для ${category}`, 'success');
-    debugLog(`📋 Список моделей для ${category}: ${JSON.stringify(modelLists[category])}`, 'info');
+    // Створюємо стан каруселі, якщо не існує
+    if (!carouselState[category]) {
+      carouselState[category] = { index: 0 };
+    }
     
     track.innerHTML = '';
-    
-    modelLists[category].forEach((filename, index) => {
-      debugLog(`🔨 Створюємо елемент каруселі ${index}: ${filename}`, 'info');
-      const item = this.createCarouselItem(category, filename, config);
-      if (item) {
-        // Додаємо індекс до dataset
-        item.dataset.index = index;
-        track.appendChild(item);
-        debugLog(`✅ Елемент ${index} додано до track`, 'success');
-      } else {
-        debugLog(`❌ Не вдалося створити елемент ${index}`, 'error');
-      }
+
+    modelLists[category].forEach(filename => {
+      const item = document.createElement('div');
+      item.className = 'carousel-item';
+      // Стан ледачого завантаження
+      item.dataset.status = 'idle';
+      item.dataset.filename = filename;
+      // Початковий індикатор
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'loading-indicator';
+      loadingDiv.textContent = 'Готово до завантаження';
+      item.appendChild(loadingDiv);
+      track.appendChild(item);
     });
     
-    // Додаткова діагностика для всіх каруселей
-    setTimeout(() => {
-      const items = track.querySelectorAll('.carousel-item');
-      debugLog(`🔍 Діагностика каруселі ${category}: створено ${items.length} елементів`, 'info');
-      
-      items.forEach((item, index) => {
-        const isVisible = item.offsetWidth > 0 && item.offsetHeight > 0;
-        const hasContent = item.innerHTML.trim().length > 0;
-        const isActive = item.classList.contains('active');
-        const dataset = item.dataset;
-        const computedStyle = window.getComputedStyle(item);
-        debugLog(`🔍 Елемент ${index}: видимий=${isVisible}, має контент=${hasContent}, активний=${isActive}`, 'info');
-        debugLog(`   - класи: ${item.className}`, 'info');
-        debugLog(`   - dataset: ${JSON.stringify(dataset)}`, 'info');
-        debugLog(`   - offsetWidth: ${item.offsetWidth}, offsetHeight: ${item.offsetHeight}`, 'info');
-        debugLog(`   - display: ${computedStyle.display}, visibility: ${computedStyle.visibility}`, 'info');
-        debugLog(`   - opacity: ${computedStyle.opacity}, pointer-events: ${computedStyle.pointerEvents}`, 'info');
-      });
-    }, 50);
-    
-    this.setupCarouselEvents(category, viewport);
-    
-    // Додаткова діагностика для перевірки event listeners
-    debugLog(`🔍 Налаштовано event listeners для каруселі ${category}`, 'info');
-    
-    debugLog(`⏰ Запускаємо showCarouselItem для ${category}[0] через 100мс`, 'info');
-    
-    setTimeout(() => {
-      this.showCarouselItem(category, 0);
-      // Ледаче завантаження для першого елемента (як у тестовій логіці)
-      this.loadOrGeneratePreview(category, 0);
-      
-      // Діагностика стану каруселі
-      debugLog(`🔍 Діагностика стану каруселі ${category}:`, 'info');
-      debugLog(`   - carouselState[${category}]: ${JSON.stringify(carouselState[category])}`, 'info');
-      debugLog(`   - modelLists[${category}]: ${JSON.stringify(modelLists[category])}`, 'info');
-      
-      // Додаткова діагностика для проблемних каруселей
-      if (category === 'flowerbeds' || category === 'fence_decor' || category === 'stands') {
-        const items = track.querySelectorAll('.carousel-item');
-        debugLog(`🔍 Детальна діагностика каруселі ${category}:`, 'info');
-        items.forEach((item, index) => {
-          const isActive = item.classList.contains('active');
-          const isVisible = item.offsetWidth > 0 && item.offsetHeight > 0;
-          const datasetIndex = item.dataset.index;
-          const filename = item.dataset.filename;
-          const computedStyle = window.getComputedStyle(item);
-          debugLog(`   - Елемент ${index}: активний=${isActive}, видимий=${isVisible}`, 'info');
-          debugLog(`     dataset.index=${datasetIndex}, filename=${filename}`, 'info');
-          debugLog(`     display=${computedStyle.display}, visibility=${computedStyle.visibility}`, 'info');
-          debugLog(`     opacity=${computedStyle.opacity}, pointer-events=${computedStyle.pointerEvents}`, 'info');
-          debugLog(`     position=${computedStyle.position}, z-index=${computedStyle.zIndex}`, 'info');
-        });
-      }
-    }, 100);
-  },
-
-  // Створення елемента каруселі - з підтримкою дизайнів
-  createCarouselItem(category, filename, config) {
-    const item = document.createElement('div');
-    item.className = 'carousel-item';
-    
-    // Додаємо CSS клас для дизайну
-    const design = config.design || 'default';
-    item.classList.add(`design-${design}`);
-    
-    // Всі елементи використовують динамічне превью з ледачим завантаженням
-    item.dataset.status = 'idle';
-    item.dataset.filename = filename;
-    item.dataset.category = category;
-    item.dataset.design = design;
-    
-    const loadingDiv = document.createElement('div');
-    loadingDiv.className = 'loading-indicator';
-    loadingDiv.textContent = 'Готово до завантаження';
-    item.appendChild(loadingDiv);
-    
-    debugLog(`🔨 Створено елемент каруселі ${category}: ${filename}`, 'info');
-    debugLog(`   - className: ${item.className}`, 'info');
-    debugLog(`   - dataset: ${JSON.stringify(item.dataset)}`, 'info');
-    
-    return item;
-  },
-
-  // Налаштування подій каруселі
-  setupCarouselEvents(category, viewport) {
-    debugLog(`🎯 setupCarouselEvents викликано для ${category}`, 'info');
-    debugLog(`   - viewport: ${!!viewport}`, 'info');
-    debugLog(`   - viewport.id: ${viewport?.id}`, 'info');
-    
-    // Додаємо прокрутку колесом миші БЕЗ debouncing (для тестування)
+    // Додаємо прокрутку колесом миші БЕЗ debouncing (як у стел)
     viewport.addEventListener('wheel', (event) => {
       event.preventDefault();
       
@@ -509,29 +370,20 @@ const CarouselManager = {
       debugLog(`🎯 Подія wheel в каруселі ${category}: direction=${direction}`, 'info');
       this.moveCarousel(category, direction);
     });
+
+    setTimeout(() => {
+      this.showCarouselItem(category, 0);
+      // Ледаче завантаження для першого елемента (як у стел)
+      this.loadOrGeneratePreview(category, 0);
+    }, 100);
     
-    debugLog(`✅ Wheel listener додано для каруселі ${category}`, 'success');
-    
-    // Додаємо клік для вибору елементів
-    viewport.addEventListener('click', (event) => {
-      const item = event.target.closest('.carousel-item');
-      if (item) {
-        const index = parseInt(item.dataset.index || item.getAttribute('data-index'));
-        if (!isNaN(index)) {
-          debugLog(`🖱️ Клік по елементу ${index} в каруселі ${category}`, 'info');
-          this.showCarouselItem(category, index);
-        } else {
-          debugLog(`❌ Не вдалося отримати індекс з клікнутого елемента в каруселі ${category}`, 'error');
-        }
-      }
-    });
-    
-    debugLog(`✅ Event listeners налаштовано для каруселі ${category}`, 'success');
+    debugLog(`✅ Карусель ${category} ініціалізована`, 'success');
   },
 
-  // Показ елемента каруселі
+
+  // Показ елемента каруселі (уніфікована логіка як у стел)
   showCarouselItem(category, index) {
-    debugLog(`🎯 CarouselManager.showCarouselItem викликано для ${category}[${index}]`, 'info');
+    debugLog(`🎯 showCarouselItem викликано для ${category}[${index}]`, 'info');
     
     const track = document.getElementById(this.getCarouselElementId(category, 'track'));
     const viewport = document.getElementById(this.getCarouselElementId(category, 'viewport'));
@@ -539,74 +391,11 @@ const CarouselManager = {
     
     if (!track || items.length === 0 || !items[index]) {
       debugLog(`❌ Не вдалося знайти елементи для ${category}[${index}]`, 'error');
-      debugLog(`   - track: ${!!track}`, 'error');
-      debugLog(`   - items.length: ${items.length}`, 'error');
-      debugLog(`   - items[${index}]: ${!!items[index]}`, 'error');
       return;
     }
-    
-    debugLog(`🎯 Показуємо елемент ${index} в каруселі ${category}`, 'info');
-    debugLog(`   - Всього елементів: ${items.length}`, 'info');
-    debugLog(`   - Цільовий елемент: ${items[index].dataset.filename}`, 'info');
-    
-    // Додаткова діагностика для fence_decor
-    if (category === 'fence_decor') {
-      debugLog(`🎯 Спеціальна діагностика showCarouselItem для fence_decor:`, 'info');
-      debugLog(`   - track.id: ${track?.id}`, 'info');
-      debugLog(`   - viewport.id: ${viewport?.id}`, 'info');
-      debugLog(`   - items.length: ${items.length}`, 'info');
-      debugLog(`   - index: ${index}`, 'info');
-    }
-    
-    // Діагностика: перевіряємо поточний стан всіх елементів
-    debugLog(`🔍 Поточний стан елементів перед оновленням:`, 'info');
-    items.forEach((item, i) => {
-      const isActive = item.classList.contains('active');
-      debugLog(`  - Елемент ${i} (${item.dataset.filename}): ${isActive ? 'активний' : 'неактивний'}`, 'info');
-    });
 
     items.forEach((item, i) => {
-      const wasActive = item.classList.contains('active');
       item.classList.toggle('active', i === index);
-      const isActive = item.classList.contains('active');
-      
-      // Діагностичний лог (можна видалити після тестування)
-      // debugLog(`🔍 Елемент ${i} (${item.dataset.filename}): був=${wasActive}, став=${isActive}, повинен=${i === index}`, 'info');
-      
-      if (wasActive !== isActive) {
-        debugLog(`🔄 Елемент ${i} (${item.dataset.filename}): ${wasActive ? 'неактивний' : 'активний'} → ${isActive ? 'активний' : 'неактивний'}`, 'info');
-      }
-      
-      // Додаткова діагностика для неактивних елементів
-      if (!isActive && i === index) {
-        debugLog(`❌ ПРОБЛЕМА: Елемент ${i} повинен бути активним, але не є!`, 'error');
-        debugLog(`   - item.classList: ${item.className}`, 'error');
-        debugLog(`   - item.offsetWidth: ${item.offsetWidth}`, 'error');
-        debugLog(`   - item.offsetHeight: ${item.offsetHeight}`, 'error');
-        debugLog(`   - item.style.display: ${item.style.display}`, 'error');
-        debugLog(`   - item.style.visibility: ${item.style.visibility}`, 'error');
-        debugLog(`   - item.dataset.filename: ${item.dataset.filename}`, 'error');
-        debugLog(`   - item.dataset.index: ${item.dataset.index}`, 'error');
-      }
-      
-      // Діагностика для всіх елементів
-      if (i === index) {
-        debugLog(`🎯 Цільовий елемент ${i}:`, 'info');
-        debugLog(`   - filename: ${item.dataset.filename}`, 'info');
-        debugLog(`   - index: ${item.dataset.index}`, 'info');
-        debugLog(`   - classList: ${item.className}`, 'info');
-        debugLog(`   - offsetWidth: ${item.offsetWidth}`, 'info');
-        debugLog(`   - offsetHeight: ${item.offsetHeight}`, 'info');
-        debugLog(`   - computedStyle.display: ${getComputedStyle(item).display}`, 'info');
-        debugLog(`   - computedStyle.visibility: ${getComputedStyle(item).visibility}`, 'info');
-      }
-    });
-    
-    // Діагностика: перевіряємо стан після оновлення
-    debugLog(`🔍 Стан елементів після оновлення:`, 'info');
-    items.forEach((item, i) => {
-      const isActive = item.classList.contains('active');
-      debugLog(`  - Елемент ${i} (${item.dataset.filename}): ${isActive ? 'активний' : 'неактивний'}`, 'info');
     });
     
     const viewportCenter = viewport.offsetWidth / 2;
@@ -621,74 +410,34 @@ const CarouselManager = {
     carouselState[category].index = index;
     track.style.transform = `translateX(${newTransform}px)`;
     
+    debugLog(`✅ Показано елемент ${index} в каруселі ${category}`, 'success');
+    
     // Автоматичне заповнення полів розмірів для підставки
     if (category === 'stands') {
-      debugLog(`📏 Викликаємо fillStandSizeFields() для ${category}`, 'info');
-    fillStandSizeFields();
+      fillStandSizeFields();
     }
     
-    debugLog(`🔄 Запуск завантаження для ${category}[${index}] та сусідів`, 'info');
-    
-    // Ледаче завантаження для активного елемента та сусідів (як у тестовій логіці)
-    debugLog(`🔄 Завантаження превью для ${category}[${index}]`, 'info');
+    // Ледаче завантаження для активного елемента та сусідів (як у стел)
     this.loadOrGeneratePreview(category, index);
-    if (index + 1 < items.length) {
-      debugLog(`🔄 Завантаження превью для ${category}[${index + 1}] (наступний)`, 'info');
-      this.loadOrGeneratePreview(category, index + 1);
-    }
-    if (index - 1 >= 0) {
-      debugLog(`🔄 Завантаження превью для ${category}[${index - 1}] (попередній)`, 'info');
-      this.loadOrGeneratePreview(category, index - 1);
-    }
+    if (index + 1 < items.length) this.loadOrGeneratePreview(category, index + 1);
+    if (index - 1 >= 0) this.loadOrGeneratePreview(category, index - 1);
     
     updateAllDisplays();
   },
 
-  // Ледаче завантаження превью - тепер тільки генерація
+  // Ледаче завантаження превью (уніфікована логіка як у стел)
   loadOrGeneratePreview(category, index) {
-    debugLog(`🔍 CarouselManager.loadOrGeneratePreview викликано для ${category}[${index}]`, 'info');
-    
     const track = document.getElementById(this.getCarouselElementId(category, 'track'));
-    if (!track) {
-      debugLog(`❌ Не знайдено track для категорії: ${category}`, 'error');
-      return;
-    }
-    
+    if (!track) return;
     const items = track.querySelectorAll('.carousel-item');
     const item = items[index];
-    if (!item) {
-      debugLog(`❌ Не знайдено item з індексом ${index} для категорії: ${category}`, 'error');
-      debugLog(`   - Всього елементів: ${items.length}`, 'error');
-      debugLog(`   - Запитуваний індекс: ${index}`, 'error');
-      return;
-    }
-    
-    debugLog(`   - filename: ${item.dataset.filename}`, 'info');
-    debugLog(`   - item.classList: ${item.className}`, 'info');
+    if (!item) return;
 
     const currentStatus = item.dataset.status;
-    debugLog(`📊 Статус елемента ${category}[${index}]: ${currentStatus}`, 'info');
-    
-    if (currentStatus === 'loaded' || currentStatus === 'pending') {
-      debugLog(`⏭️ Пропущено завантаження для ${category}[${index}] - статус: ${currentStatus}`, 'warning');
-      return;
-    }
+    if (currentStatus === 'loaded' || currentStatus === 'pending') return;
 
     const filename = item.dataset.filename || (modelLists[category] && modelLists[category][index]);
-    if (!filename) {
-      debugLog(`❌ Не знайдено filename для ${category}[${index}]`, 'error');
-      return;
-    }
-
-    const componentPath = `${category}/${filename}`;
-    
-    // Перевіряємо, чи вже є pending для цього шляху
-    if (window.pendingPreviews && window.pendingPreviews[componentPath]) {
-      debugLog(`⏭️ Пропущено завантаження для ${componentPath} - вже в pending`, 'warning');
-      return;
-    }
-
-    debugLog(`🔄 Завантаження превью для ${componentPath} (індекс: ${index})`, 'info');
+    if (!filename) return;
 
     let loadingDiv = item.querySelector('.loading-indicator');
     if (!loadingDiv) {
@@ -704,44 +453,24 @@ const CarouselManager = {
     this.autoGeneratePreview(category, filename, item, loadingDiv);
   },
 
-  // Автоматична генерація превью
+  // Автоматична генерація превью (уніфікована логіка як у стел)
   autoGeneratePreview(category, filename, item, loadingDiv) {
     if (!window.sketchup) {
-      debugLog(`❌ window.sketchup не доступний для: ${category}/${filename}`, 'error');
       createPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
       return;
     }
     
     const componentPath = `${category}/${filename}`;
-    debugLog(`🚀 Запуск генерації превью для: ${componentPath}`, 'info');
+    debugLog(`🚀 Запуск генерації превью для: ${componentPath} (CarouselManager)`, 'info');
     
-    try {
-      window.sketchup.generate_web_preview(componentPath);
-      debugLog(`✅ Ruby callback викликано для: ${componentPath}`, 'success');
-    } catch (error) {
-      debugLog(`❌ Помилка виклику Ruby callback: ${error.message}`, 'error');
-      createPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
-      return;
-    }
+    // Генеруємо веб-превью через SketchUp
+    window.sketchup.generate_web_preview(componentPath);
     
+    // Зберігаємо посилання на елементи для callback
     window.pendingPreviews = window.pendingPreviews || {};
     window.pendingPreviews[componentPath] = { item, loadingDiv, filename, source: 'CarouselManager' };
     
     debugLog(`📝 Додано до pending: ${componentPath} (CarouselManager)`, 'info');
-    debugLog(`📋 Всього pending: ${Object.keys(window.pendingPreviews).length}`, 'info');
-    
-    // Таймаут для pending елементів (10 секунд)
-    setTimeout(() => {
-      if (window.pendingPreviews && window.pendingPreviews[componentPath]) {
-        debugLog(`⏰ Таймаут для: ${componentPath}`, 'warning');
-        const pendingData = window.pendingPreviews[componentPath];
-        if (pendingData.item && pendingData.loadingDiv) {
-          createPlaceholder(pendingData.item, pendingData.loadingDiv, `Таймаут генерації\n${filename}`);
-          pendingData.item.dataset.status = 'timeout';
-        }
-        delete window.pendingPreviews[componentPath];
-      }
-    }, 10000);
   },
 
 
@@ -751,43 +480,33 @@ const CarouselManager = {
     createPlaceholder(item, loadingDiv, text);
   },
 
-  // Рух каруселі
+  // Рух каруселі (уніфікована логіка як у стел)
   moveCarousel(category, direction) {
+    debugLog(`🔄 moveCarousel викликано для ${category}, direction=${direction}`, 'info');
+    
     // Перевіряємо і створюємо стан каруселі, якщо не існує
     if (!carouselState[category]) {
       carouselState[category] = { index: 0 };
     }
+    
     const state = carouselState[category];
     const newIndex = state.index + direction;
     const track = document.getElementById(this.getCarouselElementId(category, 'track'));
     const items = track.querySelectorAll('.carousel-item');
     
+    debugLog(`   - Поточний індекс: ${state.index}`, 'info');
+    debugLog(`   - Новий індекс: ${newIndex}`, 'info');
+    debugLog(`   - Всього елементів: ${items.length}`, 'info');
+    
     // Циклічна прокрутка: якщо виходимо за межі, переходимо на протилежний кінець
     let finalIndex = newIndex;
     if (newIndex < 0) {
       finalIndex = items.length - 1; // Переходимо на останній елемент
-      debugLog(`🔄 Циклічна прокрутка: з ${newIndex} на ${finalIndex} (останній елемент)`, 'info');
     } else if (newIndex >= items.length) {
       finalIndex = 0; // Переходимо на перший елемент
-      debugLog(`🔄 Циклічна прокрутка: з ${newIndex} на ${finalIndex} (перший елемент)`, 'info');
     }
     
-    debugLog(`🔄 Переходимо з ${state.index} на ${finalIndex} в каруселі ${category}`, 'info');
-    debugLog(`   - Поточний стан: index=${state.index}`, 'info');
-    debugLog(`   - Новий індекс: ${finalIndex}`, 'info');
-    debugLog(`   - Всього елементів: ${items.length}`, 'info');
-    
-    // Додаткова діагностика для fence_decor
-    if (category === 'fence_decor') {
-      debugLog(`🎯 Спеціальна діагностика для fence_decor:`, 'info');
-      debugLog(`   - track.id: ${track?.id}`, 'info');
-      debugLog(`   - items.length: ${items.length}`, 'info');
-      debugLog(`   - finalIndex: ${finalIndex}`, 'info');
-    }
-    
-    // Оновлюємо стан каруселі перед викликом showCarouselItem
-    carouselState[category].index = finalIndex;
-    debugLog(`📊 Стан каруселі ${category} оновлено: index=${carouselState[category].index}`, 'info');
+    debugLog(`   - Фінальний індекс: ${finalIndex}`, 'info');
     this.showCarouselItem(category, finalIndex);
   },
 
@@ -839,12 +558,6 @@ const CarouselManager = {
       debugLog(`❌ Карусель gravestones не знайдена в конфігурації`, 'error');
     }
     
-    // Додаткова перевірка для fence_decor
-    if (this.carousels.fence_decor) {
-      debugLog(`✅ Карусель fence_decor знайдена в конфігурації`, 'success');
-    } else {
-      debugLog(`❌ Карусель fence_decor не знайдена в конфігурації`, 'error');
-    }
     
     Object.keys(this.carousels).forEach(category => {
       debugLog(`🔍 Перевіряємо карусель: ${category}`, 'info');
@@ -866,17 +579,6 @@ const CarouselManager = {
         }
       }
       
-      // Додаткова перевірка для fence_decor
-      if (category === 'fence_decor') {
-        debugLog(`🎯 Спеціальна перевірка для fence_decor:`, 'info');
-        debugLog(`   - trackElement: ${!!trackElement}`, 'info');
-        debugLog(`   - viewportElement: ${!!viewportElement}`, 'info');
-        debugLog(`   - modelLists[fence_decor]: ${!!modelLists[category]}`, 'info');
-        debugLog(`   - кількість моделей: ${modelLists[category]?.length || 0}`, 'info');
-        if (modelLists[category]) {
-          debugLog(`   - моделі: ${modelLists[category].join(', ')}`, 'info');
-        }
-      }
       
       if (modelLists[category] && trackElement && viewportElement) {
         debugLog(`✅ Умови виконані для ${category}, запускаємо initialize`, 'success');
@@ -1086,13 +788,6 @@ function loadModelLists(data) {
     debugLog(`❌ Категорія gravestones не знайдена в даних`, 'error');
   }
   
-  // Додаткова перевірка для fence_decor
-  if (data.fence_decor) {
-    debugLog(`✅ Категорія fence_decor знайдена з ${data.fence_decor.length} моделями`, 'success');
-    debugLog(`📋 Моделі fence_decor: ${data.fence_decor.join(', ')}`, 'info');
-  } else {
-    debugLog(`❌ Категорія fence_decor не знайдена в даних`, 'error');
-  }
   
   modelLists = data;
   
@@ -1123,34 +818,6 @@ function loadModelLists(data) {
     }
   }, 500);
   
-  // Примусово ініціалізуємо карусель fence_decor
-  setTimeout(() => {
-    debugLog(`🎠 Примусова ініціалізація каруселі fence_decor`, 'info');
-    debugLog(`🔍 Діагностика примусової ініціалізації fence_decor:`, 'info');
-    debugLog(`   - hasCarousel: ${CarouselManager.hasCarousel('fence_decor')}`, 'info');
-    debugLog(`   - modelLists['fence_decor']: ${!!modelLists['fence_decor']}`, 'info');
-    debugLog(`   - кількість моделей: ${modelLists['fence_decor']?.length || 0}`, 'info');
-    debugLog(`   - моделі: ${modelLists['fence_decor']?.join(', ') || 'немає'}`, 'info');
-    
-    if (CarouselManager.hasCarousel('fence_decor') && modelLists['fence_decor']) {
-      const trackElement = document.getElementById(CarouselManager.getCarouselElementId('fence_decor', 'track'));
-      const viewportElement = document.getElementById(CarouselManager.getCarouselElementId('fence_decor', 'viewport'));
-      
-      debugLog(`   - trackElement: ${!!trackElement}`, 'info');
-      debugLog(`   - viewportElement: ${!!viewportElement}`, 'info');
-      debugLog(`   - trackId: ${CarouselManager.getCarouselElementId('fence_decor', 'track')}`, 'info');
-      debugLog(`   - viewportId: ${CarouselManager.getCarouselElementId('fence_decor', 'viewport')}`, 'info');
-      
-      if (trackElement && viewportElement) {
-        debugLog(`✅ Примусово ініціалізуємо карусель fence_decor`, 'success');
-        CarouselManager.initialize('fence_decor');
-      } else {
-        debugLog(`❌ Не знайдено елементи каруселі fence_decor для примусової ініціалізації`, 'error');
-      }
-    } else {
-      debugLog(`⚠️ Карусель fence_decor не доступна або немає моделей для примусової ініціалізації`, 'warning');
-    }
-  }, 600);
   
   
   
@@ -1158,6 +825,12 @@ function loadModelLists(data) {
   if (modelLists['steles'] && document.getElementById('steles-carousel-track')) {
     debugLog(`🏛️ Ініціалізуємо основну карусель стел (копія тестової)`, 'info');
     initializeMainStelesCarousel('steles');
+  }
+  
+  // Примусово ініціалізуємо карусель fence_decor
+  if (modelLists['fence_decor'] && document.getElementById('fence-decor-carousel-track')) {
+    debugLog(`🎠 Примусово ініціалізуємо карусель fence_decor`, 'info');
+    CarouselManager.initialize('fence_decor');
   }
   
   // Виводимо статистику каруселей
@@ -2523,184 +2196,8 @@ function initializeTheme() {
 // ========== GRAVESTONES CAROUSEL FUNCTIONS ==========
 
 // Ініціалізація каруселі надгробних плит з превью
-function initializeGravestonesCarousel(category) {
-  const track = document.getElementById(`${category}-carousel-track`);
-  const viewport = document.getElementById(`${category}-carousel-viewport`);
-  if (!track || !viewport || !modelLists[category] || modelLists[category].length === 0) return;
-  
-  track.innerHTML = '';
 
-  modelLists[category].forEach((filename, index) => {
-    const item = document.createElement('div');
-    item.className = 'carousel-item';
-    // Стан ледачого завантаження
-    item.dataset.status = 'idle';
-    item.dataset.filename = filename;
-    item.dataset.index = index;
-    // Початковий індикатор
-    const loadingDiv = document.createElement('div');
-    loadingDiv.className = 'loading-indicator';
-    loadingDiv.textContent = 'Готово до завантаження';
-    item.appendChild(loadingDiv);
-    
-    // Додаємо обробник кліків для вибору елемента
-    item.addEventListener('click', () => {
-      showGravestonesCarouselItem(category, index);
-    });
-    
-    track.appendChild(item);
-  });
-  
-  // Додаємо прокрутку колесом миші БЕЗ debouncing (тільки один раз)
-  if (!viewport.dataset.wheelListenerAdded) {
-    viewport.addEventListener('wheel', (event) => {
-      event.preventDefault();
-      
-      const direction = event.deltaY > 0 ? 1 : -1;
-      debugLog(`🎯 Подія wheel в каруселі ${category}: direction=${direction}`, 'info');
-      moveGravestonesCarousel(category, direction);
-    });
-    
-    // Позначаємо, що подія вже додана
-    viewport.dataset.wheelListenerAdded = 'true';
-    debugLog(`✅ Додано wheel listener для каруселі ${category}`, 'success');
-  }
 
-  setTimeout(() => {
-    showGravestonesCarouselItem(category, 0);
-    // Ледаче завантаження для першого елемента
-    loadOrGenerateGravestonesPreview(category, 0);
-  }, 100); 
-}
-
-// Ледаче завантаження превью для каруселі надгробних плит
-function loadOrGenerateGravestonesPreview(category, index) {
-  const track = document.getElementById(`${category}-carousel-track`);
-  if (!track) return;
-  const items = track.querySelectorAll('.carousel-item');
-  const item = items[index];
-  if (!item) return;
-
-  const currentStatus = item.dataset.status;
-  if (currentStatus === 'loaded' || currentStatus === 'pending') return;
-
-  const filename = item.dataset.filename || (modelLists[category] && modelLists[category][index]);
-  if (!filename) return;
-
-  let loadingDiv = item.querySelector('.loading-indicator');
-  if (!loadingDiv) {
-    loadingDiv = document.createElement('div');
-    loadingDiv.className = 'loading-indicator';
-    item.appendChild(loadingDiv);
-  }
-  loadingDiv.textContent = 'Генерація превью...';
-
-  item.dataset.status = 'pending';
-
-  // Відразу запускаємо генерацію превью
-  autoGenerateGravestonesPreview(category, filename, item, loadingDiv);
-}
-
-// Автоматична генерація превью для каруселі надгробних плит
-function autoGenerateGravestonesPreview(category, filename, item, loadingDiv) {
-  if (!window.sketchup) {
-    createPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
-    return;
-  }
-  
-  const componentPath = `${category}/${filename}`;
-  debugLog(`🚀 Запуск генерації превью для: ${componentPath} (Gravestones)`, 'info');
-  
-  // Генеруємо веб-превью через SketchUp
-  window.sketchup.generate_web_preview(componentPath);
-  
-  // Зберігаємо посилання на елементи для callback
-  window.pendingPreviews = window.pendingPreviews || {};
-  window.pendingPreviews[componentPath] = { item, loadingDiv, filename, source: 'Gravestones' };
-  
-  debugLog(`📝 Додано до pending: ${componentPath} (Gravestones)`, 'info');
-}
-
-// Переміщення каруселі надгробних плит
-function moveGravestonesCarousel(category, direction) {
-  debugLog(`🔄 moveGravestonesCarousel викликано для ${category}, direction=${direction}`, 'info');
-  
-  const state = carouselState[category];
-  if (!state) {
-    debugLog(`❌ Немає стану для каруселі ${category}`, 'error');
-    return;
-  }
-  
-  const newIndex = state.index + direction;
-  const track = document.getElementById(`${category}-carousel-track`);
-  const items = track.querySelectorAll('.carousel-item');
-  
-  debugLog(`   - Поточний індекс: ${state.index}`, 'info');
-  debugLog(`   - Новий індекс: ${newIndex}`, 'info');
-  debugLog(`   - Всього елементів: ${items.length}`, 'info');
-  
-  // Циклічна прокрутка: якщо виходимо за межі, переходимо на протилежний кінець
-  let finalIndex = newIndex;
-  if (newIndex < 0) {
-    finalIndex = items.length - 1; // Переходимо на останній елемент
-    debugLog(`🔄 Циклічна прокрутка: з ${newIndex} на ${finalIndex} (останній елемент)`, 'info');
-  } else if (newIndex >= items.length) {
-    finalIndex = 0; // Переходимо на перший елемент
-    debugLog(`🔄 Циклічна прокрутка: з ${newIndex} на ${finalIndex} (перший елемент)`, 'info');
-  }
-  
-  debugLog(`🔄 Переходимо на індекс ${finalIndex} в каруселі ${category}`, 'info');
-  showGravestonesCarouselItem(category, finalIndex);
-}
-
-// Показ елемента каруселі надгробних плит
-function showGravestonesCarouselItem(category, index) {
-  debugLog(`🎯 showGravestonesCarouselItem викликано для ${category}[${index}]`, 'info');
-  
-  const track = document.getElementById(`${category}-carousel-track`);
-  const viewport = document.getElementById(`${category}-carousel-viewport`);
-  const items = track.querySelectorAll('.carousel-item');
-  
-  if (!track || items.length === 0 || !items[index]) {
-    debugLog(`❌ Не вдалося знайти елементи для ${category}[${index}]`, 'error');
-    debugLog(`   - track: ${!!track}`, 'error');
-    debugLog(`   - items.length: ${items.length}`, 'error');
-    debugLog(`   - items[${index}]: ${!!items[index]}`, 'error');
-    return;
-  }
-  
-  debugLog(`🎯 Показуємо елемент ${index} в каруселі ${category}`, 'info');
-  debugLog(`   - Всього елементів: ${items.length}`, 'info');
-  debugLog(`   - Цільовий елемент: ${items[index].dataset.filename}`, 'info');
-
-  // Оновлюємо активний елемент
-  items.forEach((item, i) => {
-    const wasActive = item.classList.contains('active');
-    item.classList.toggle('active', i === index);
-    const isActive = item.classList.contains('active');
-    
-    if (wasActive !== isActive) {
-      debugLog(`🔄 Елемент ${i} (${item.dataset.filename}): ${wasActive ? 'неактивний' : 'активний'} → ${isActive ? 'активний' : 'неактивний'}`, 'info');
-    }
-  });
-  
-  const viewportCenter = viewport.offsetWidth / 2;
-  const itemCenter = items[index].offsetLeft + items[index].offsetWidth / 2;
-  const scrollLeft = itemCenter - viewportCenter;
-  
-  track.style.transform = `translateX(-${scrollLeft}px)`;
-  
-  carouselState[category].index = index;
-  debugLog(`📊 Стан каруселі ${category} оновлено: index=${carouselState[category].index}`, 'info');
-  
-  // Ледаче завантаження для поточного та сусідніх елементів
-  loadOrGenerateGravestonesPreview(category, index);
-  if (index + 1 < items.length) loadOrGenerateGravestonesPreview(category, index + 1);
-  if (index - 1 >= 0) loadOrGenerateGravestonesPreview(category, index - 1);
-  
-  // Оновлюємо відображення
-  updateAllDisplays();
-}
 
 // Додавання вибраної надгробної плити до моделі
 function addGravestone() {
@@ -3275,152 +2772,7 @@ function fillStandSizeFields() {
 }
 
 // Спеціальна ініціалізація каруселі підставок
-function initializeStandsCarousel() {
-  console.log('🎠 initializeStandsCarousel() викликано!');
-  debugLog('🎠 initializeStandsCarousel() викликано!', 'info');
-  
-  try {
-    const track = document.getElementById('stands-carousel-track');
-    const viewport = document.getElementById('stands-carousel-viewport');
-    
-    if (!track || !viewport) {
-      debugLog('❌ Не знайдено елементи каруселі підставок', 'error');
-      return;
-    }
-    
-    // Очищаємо track
-    track.innerHTML = '';
-    
-    // Отримуємо список підставок
-    const stands = modelLists.stands;
-    if (!stands || stands.length === 0) {
-      debugLog('⚠️ Немає підставок для відображення', 'warning');
-      return;
-    }
-    
-    debugLog(`📋 Створюємо ${stands.length} елементів каруселі підставок`, 'info');
-    
-    // Створюємо елементи каруселі
-    stands.forEach((filename, index) => {
-      const item = document.createElement('div');
-      item.className = 'carousel-item';
-      item.dataset.filename = filename;
-      item.dataset.index = index;
-      
-      // Додаємо контент
-      const content = document.createElement('div');
-      content.className = 'carousel-item-content';
-      
-      // Отримуємо розміри для цієї підставки
-      const standDimensions = {
-        'stand1.skp': { height: 200, width: 150, depth: 500 },
-        'stand2.skp': { height: 150, width: 120, depth: 400 },
-        'stand3.skp': { height: 300, width: 200, depth: 600 },
-        'stand4.skp': { height: 180, width: 140, depth: 450 },
-        'stand5.skp': { height: 250, width: 180, depth: 550 },
-      };
-      
-      const dimensions = standDimensions[filename] || { height: 200, width: 150, depth: 500 };
-      const dimensionsText = `${dimensions.height}×${dimensions.width}×${dimensions.depth}`;
-      
-      content.innerHTML = `
-        <div class="carousel-item-preview">
-          <div class="loading-indicator">Завантаження...</div>
-        </div>
-        <div class="carousel-item-name">${filename.replace('.skp', '')}</div>
-        <div class="carousel-item-dimensions">${dimensionsText} мм</div>
-      `;
-      
-      item.appendChild(content);
-      track.appendChild(item);
-      
-      debugLog(`✅ Створено елемент ${index}: ${filename}`, 'success');
-    });
-    
-    // Налаштовуємо події
-    setupStandsCarouselEvents(viewport);
-    
-    // Показуємо перший елемент
-    setTimeout(() => {
-      showStandsCarouselItem(0);
-      debugLog('✅ Показано перший елемент каруселі підставок', 'success');
-    }, 100);
-    
-  } catch (error) {
-    debugLog(`❌ Помилка в initializeStandsCarousel(): ${error.message}`, 'error');
-    debugLog(`❌ Stack trace: ${error.stack}`, 'error');
-  }
-  
-  console.log('🏁 initializeStandsCarousel() завершено!');
-  debugLog('🏁 initializeStandsCarousel() завершено!', 'info');
-}
 
-// Показ елемента каруселі підставок
-function showStandsCarouselItem(index) {
-  const track = document.getElementById('stands-carousel-track');
-  const viewport = document.getElementById('stands-carousel-viewport');
-  const items = track.querySelectorAll('.carousel-item');
-  
-  if (!items[index]) {
-    debugLog(`❌ Елемент ${index} не знайдено в каруселі підставок`, 'error');
-    return;
-  }
-  
-  // Оновлюємо активний стан
-  items.forEach((item, i) => {
-    item.classList.toggle('active', i === index);
-  });
-  
-  // Центруємо елемент
-  const viewportCenter = viewport.offsetWidth / 2;
-  const targetItem = items[index];
-  const itemCenter = targetItem.offsetLeft + targetItem.offsetWidth / 2;
-  const newTransform = viewportCenter - itemCenter;
-  
-  track.style.transform = `translateX(${newTransform}px)`;
-  
-  // Оновлюємо стан
-  if (!carouselState.stands) {
-    carouselState.stands = { index: 0 };
-  }
-  carouselState.stands.index = index;
-  
-  debugLog(`✅ Показано елемент ${index} каруселі підставок`, 'success');
-}
-
-// Налаштування подій каруселі підставок
-function setupStandsCarouselEvents(viewport) {
-  // Клік для вибору елемента
-  viewport.addEventListener('click', (event) => {
-    const item = event.target.closest('.carousel-item');
-    if (item) {
-      const index = parseInt(item.dataset.index);
-      showStandsCarouselItem(index);
-    }
-  });
-  
-  // Прокрутка колесом миші БЕЗ debouncing (для тестування)
-  viewport.addEventListener('wheel', (event) => {
-    event.preventDefault();
-    
-    const currentIndex = carouselState.stands ? carouselState.stands.index : 0;
-    const direction = event.deltaY > 0 ? 1 : -1;
-    const newIndex = currentIndex + direction;
-    const items = viewport.querySelectorAll('.carousel-item');
-    
-    debugLog(`🎯 Подія wheel в каруселі stands: direction=${direction}`, 'info');
-    
-    // Циклічна прокрутка
-    let finalIndex = newIndex;
-    if (newIndex < 0) {
-      finalIndex = items.length - 1;
-    } else if (newIndex >= items.length) {
-      finalIndex = 0;
-    }
-    
-    showStandsCarouselItem(finalIndex);
-  });
-}
 
 // Оновлення списку підставок в каруселі
 function refreshStandsCarousel() {
