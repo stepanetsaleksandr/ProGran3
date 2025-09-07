@@ -1,0 +1,104 @@
+{
+  "ui": {
+    "foundation": "Fundament",
+    "stele": "Stela",
+    "flowerbed": "Kwietnik",
+    "gravestone": "Płyta nagrobna",
+    "fence_corner": "Ogrodzenie narożne",
+    "fence_perimeter": "Ogrodzenie obwodowe",
+    "fence_decor": "Dekoracja ogrodzenia",
+    "stand": "Podstawa",
+    "lamp": "Lampa",
+    "blind_area": "Obrzeże",
+    "tiling": "Płytka",
+    "cladding": "Okładzina"
+  },
+  "buttons": {
+    "create": "Utwórz",
+    "add": "Dodaj",
+    "next": "Dalej",
+    "previous": "Wstecz",
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "apply": "Zastosuj",
+    "reset": "Resetuj",
+    "close": "Zamknij",
+    "open": "Otwórz"
+  },
+  "dimensions": {
+    "height": "Wysokość",
+    "width": "Szerokość",
+    "depth": "Głębokość",
+    "thickness": "Grubość",
+    "length": "Długość",
+    "size": "Rozmiar",
+    "post_height": "Wysokość słupka",
+    "post_size": "Rozmiar słupka",
+    "side_height": "Wysokość panelu",
+    "side_length": "Długość panelu",
+    "side_thickness": "Grubość panelu"
+  },
+  "units": {
+    "mm": "mm",
+    "cm": "cm",
+    "m": "m"
+  },
+  "messages": {
+    "loading": "Ładowanie...",
+    "error": "Błąd",
+    "success": "Sukces",
+    "warning": "Ostrzeżenie",
+    "info": "Informacja",
+    "generating_preview": "Generowanie podglądu...",
+    "preview_error": "Błąd generowania",
+    "component_added": "Komponent dodany",
+    "component_removed": "Komponent usunięty"
+  },
+  "tabs": {
+    "base": "Podstawa",
+    "monument": "Pomnik",
+    "gravestone": "Nagrobek",
+    "elements": "Elementy",
+    "fence": "Ogrodzenie"
+  },
+  "panels": {
+    "foundation": "Fundament",
+    "blind_area": "Obrzeże",
+    "tiling": "Płytka",
+    "cladding": "Okładzina",
+    "stands": "Podstawy",
+    "steles": "Stele",
+    "flowerbeds": "Kwietniki",
+    "gravestones": "Płyty nagrobne",
+    "fence_corner": "Ogrodzenie narożne",
+    "fence_perimeter": "Ogrodzenie obwodowe",
+    "fence_decor": "Dekoracja ogrodzenia",
+    "lamps": "Lampy"
+  },
+  "summary": {
+    "title": "Podsumowanie projektu",
+    "foundation": "Fundament",
+    "blind_area": "Obrzeże",
+    "tiling": "Płytka",
+    "cladding": "Okładzina",
+    "stand": "Podstawa",
+    "stele": "Stela",
+    "flowerbed": "Kwietnik",
+    "gravestone": "Płyta nagrobna",
+    "fence_corner": "Ogrodzenie narożne",
+    "fence_perimeter": "Ogrodzenie obwodowe",
+    "fence_decor": "Dekoracja ogrodzenia",
+    "lamp": "Lampa"
+  },
+  "language": {
+    "ukrainian": "Українська",
+    "polish": "Polski",
+    "english": "English",
+    "switch_language": "Zmień język"
+  },
+  "carousel": {
+    "loading": "Ładowanie...",
+    "error": "Błąd ładowania",
+    "no_items": "Brak elementów"
+  }
+}

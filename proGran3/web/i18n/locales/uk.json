@@ -1,0 +1,104 @@
+{
+  "ui": {
+    "foundation": "Фундамент",
+    "stele": "Стела",
+    "flowerbed": "Квітник",
+    "gravestone": "Надгробна плита",
+    "fence_corner": "Кутова огорожа",
+    "fence_perimeter": "Периметральна огорожа",
+    "fence_decor": "Декор огорожі",
+    "stand": "Підставка",
+    "lamp": "Лампа",
+    "blind_area": "Відмостка",
+    "tiling": "Плитка",
+    "cladding": "Облицювання"
+  },
+  "buttons": {
+    "create": "Створити",
+    "add": "Додати",
+    "next": "Далі",
+    "previous": "Назад",
+    "save": "Зберегти",
+    "cancel": "Скасувати",
+    "apply": "Застосувати",
+    "reset": "Скинути",
+    "close": "Закрити",
+    "open": "Відкрити"
+  },
+  "dimensions": {
+    "height": "Висота",
+    "width": "Ширина",
+    "depth": "Глибина",
+    "thickness": "Товщина",
+    "length": "Довжина",
+    "size": "Розмір",
+    "post_height": "Висота стовпа",
+    "post_size": "Розмір стовпа",
+    "side_height": "Висота панелі",
+    "side_length": "Довжина панелі",
+    "side_thickness": "Товщина панелі"
+  },
+  "units": {
+    "mm": "мм",
+    "cm": "см",
+    "m": "м"
+  },
+  "messages": {
+    "loading": "Завантаження...",
+    "error": "Помилка",
+    "success": "Успішно",
+    "warning": "Попередження",
+    "info": "Інформація",
+    "generating_preview": "Генерація превью...",
+    "preview_error": "Помилка генерації",
+    "component_added": "Компонент додано",
+    "component_removed": "Компонент видалено"
+  },
+  "tabs": {
+    "base": "Основа",
+    "monument": "Пам'ятник",
+    "gravestone": "Надгробок",
+    "elements": "Елементи",
+    "fence": "Огорожа"
+  },
+  "panels": {
+    "foundation": "Фундамент",
+    "blind_area": "Відмостка",
+    "tiling": "Плитка",
+    "cladding": "Облицювання",
+    "stands": "Підставки",
+    "steles": "Стели",
+    "flowerbeds": "Квітники",
+    "gravestones": "Надгробні плити",
+    "fence_corner": "Кутова огорожа",
+    "fence_perimeter": "Периметральна огорожа",
+    "fence_decor": "Декор огорожі",
+    "lamps": "Лампи"
+  },
+  "summary": {
+    "title": "Підсумок проекту",
+    "foundation": "Фундамент",
+    "blind_area": "Відмостка",
+    "tiling": "Плитка",
+    "cladding": "Облицювання",
+    "stand": "Підставка",
+    "stele": "Стела",
+    "flowerbed": "Квітник",
+    "gravestone": "Надгробна плита",
+    "fence_corner": "Кутова огорожа",
+    "fence_perimeter": "Периметральна огорожа",
+    "fence_decor": "Декор огорожі",
+    "lamp": "Лампа"
+  },
+  "language": {
+    "ukrainian": "Українська",
+    "polish": "Polski",
+    "english": "English",
+    "switch_language": "Змінити мову"
+  },
+  "carousel": {
+    "loading": "Завантаження...",
+    "error": "Помилка завантаження",
+    "no_items": "Немає елементів"
+  }
+}

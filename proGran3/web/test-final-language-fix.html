@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Final Language Fix</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f5f5f5;
+    }
+    .test-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .test-button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    .test-button:hover {
+      background: #0056b3;
+    }
+    .test-result {
+      margin: 10px 0;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 3px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .warning { background: #fff3cd; color: #856404; }
+    .info { background: #d1ecf1; color: #0c5460; }
+    
+    /* Стилі для header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: relative;
+    }
+    .unit-switcher {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+    .unit-switcher input[type="radio"] {
+      display: none;
+    }
+    .unit-switcher label {
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: background 0.3s;
+    }
+    .unit-switcher label:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .unit-switcher input[type="radio"]:checked + label {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>🔧 Test Final Language Fix</h1>
+    
+    <!-- Імітація header з перемикачем мов -->
+    <div class="header">
+      <h1>ProGran</h1>
+      <div class="header-controls">
+        <!-- Перемикач мов буде додано через JavaScript -->
+        <div class="unit-switcher">
+          <input type="radio" id="unit-mm" name="unit" value="mm" checked>
+          <label for="unit-mm">мм</label>
+          <input type="radio" id="unit-cm" name="unit" value="cm">
+          <label for="unit-cm">см</label>
+        </div>
+      </div>
+    </div>
+    
+    <div class="test-section">
+      <h2>1. Автоматичний тест</h2>
+      <div id="auto-test-result" class="test-result info">
+        Запуск автоматичного тесту...
+      </div>
+    </div>
+    
+    <div class="test-section">
+      <h2>2. Ручний тест перемикача</h2>
+      <p>Натисніть на перемикач мов вище та перевірте чи показується список з 3 мовами.</p>
+      <div id="manual-test-result" class="test-result info">
+        Натисніть на перемикач мов для тестування...
+      </div>
+    </div>
+    
+    <div class="test-section">
+      <h2>3. Тест перекладів</h2>
+      <div id="translation-test" class="test-result">
+        <p data-i18n="ui.foundation">Фундамент</p>
+        <p data-i18n="ui.stele">Стела</p>
+        <p data-i18n="buttons.create">Створити</p>
+        <p data-i18n="tabs.base">База</p>
+        <p data-i18n="panels.foundation">Фундамент</p>
+      </div>
+    </div>
+    
+    <div class="test-section">
+      <h2>4. Консольні логи</h2>
+      <div id="console-logs" class="test-result" style="height: 200px; overflow-y: auto;">
+        🔍 Очікування логів з консолі...
+      </div>
+    </div>
+  </div>
+
+  <!-- Підключаємо модулі -->
+  <script src="modules/core/Logger.js"></script>
+  <script src="modules/ui/LanguageSwitcher.js"></script>
+  <script src="i18n/I18nManager.js"></script>
+  
+  <script>
+    // Перехоплюємо console.log для відображення в інтерфейсі
+    const originalLog = console.log;
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      
+      const logs = document.getElementById('console-logs');
+      if (logs) {
+        const timestamp = new Date().toLocaleTimeString();
+        const message = args.map(arg => 
+          typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+        ).join(' ');
+        
+        const logEntry = document.createElement('div');
+        logEntry.textContent = `[${timestamp}] ${message}`;
+        logEntry.style.marginBottom = '5px';
+        logEntry.style.fontSize = '12px';
+        logs.appendChild(logEntry);
+        logs.scrollTop = logs.scrollHeight;
+      }
+    };
+    
+    // Автоматичний тест
+    async function runAutoTest() {
+      const result = document.getElementById('auto-test-result');
+      
+      try {
+        // Очищуємо localStorage
+        localStorage.removeItem('progran3_language');
+        
+        // Ініціалізуємо I18nManager
+        if (window.ProGran3 && window.ProGran3.I18n && window.ProGran3.I18n.Manager) {
+          await window.ProGran3.I18n.Manager.init();
+          
+          // Ініціалізуємо LanguageSwitcher
+          if (window.ProGran3.UI && window.ProGran3.UI.LanguageSwitcher) {
+            window.ProGran3.UI.LanguageSwitcher.init();
+            
+            // Перевіряємо результат
+            const switcher = document.getElementById('language-switcher');
+            const dropdown = switcher ? switcher.querySelector('.language-dropdown') : null;
+            const options = dropdown ? dropdown.querySelectorAll('.language-option') : [];
+            const currentLang = window.ProGran3.I18n.Manager.getCurrentLanguage();
+            
+            const info = [
+              `✅ I18nManager ініціалізовано`,
+              `✅ LanguageSwitcher ініціалізовано`,
+              `📍 Поточна мова: ${currentLang}`,
+              `📍 Перемикач знайдено: ${!!switcher}`,
+              `📍 Dropdown знайдено: ${!!dropdown}`,
+              `📍 Опцій мов: ${options.length}`,
+              `📍 Очікувано: 3 опції (uk, pl, en)`,
+              `📍 Стартова мова: ${currentLang === 'uk' ? 'правильно (українська)' : 'неправильно'}`,
+              `📍 Список мов: ${options.length === 3 ? 'правильно' : 'неправильно'}`
+            ];
+            
+            const isSuccess = currentLang === 'uk' && options.length === 3;
+            result.textContent = info.join('\n');
+            result.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+            
+          } else {
+            result.textContent = '❌ LanguageSwitcher не доступний';
+            result.className = 'test-result error';
+          }
+        } else {
+          result.textContent = '❌ I18nManager не доступний';
+          result.className = 'test-result error';
+        }
+      } catch (error) {
+        result.textContent = `❌ Помилка: ${error.message}`;
+        result.className = 'test-result error';
+      }
+    }
+    
+    // Ручний тест
+    function runManualTest() {
+      const result = document.getElementById('manual-test-result');
+      
+      try {
+        const switcher = document.getElementById('language-switcher');
+        if (!switcher) {
+          result.textContent = '❌ Перемикач мов не знайдено';
+          result.className = 'test-result error';
+          return;
+        }
+        
+        const dropdown = switcher.querySelector('.language-dropdown');
+        const options = dropdown ? dropdown.querySelectorAll('.language-option') : [];
+        
+        const info = [
+          `📍 Перемикач знайдено: ✅`,
+          `📍 Dropdown знайдено: ${dropdown ? '✅' : '❌'}`,
+          `📍 Опцій мов: ${options.length}`,
+          `📍 Очікувано: 3 опції`,
+          ``,
+          `📋 Список опцій:`,
+          ...Array.from(options).map((opt, index) => {
+            const lang = opt.dataset.lang;
+            const text = opt.textContent.trim();
+            return `  ${index + 1}. ${lang}: ${text}`;
+          }),
+          ``,
+          `💡 Натисніть на перемикач мов вище щоб перевірити dropdown`
+        ];
+        
+        const isSuccess = options.length === 3;
+        result.textContent = info.join('\n');
+        result.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+        
+      } catch (error) {
+        result.textContent = `❌ Помилка: ${error.message}`;
+        result.className = 'test-result error';
+      }
+    }
+    
+    // Ініціалізація
+    window.onload = async function() {
+      console.log('🚀 Запуск фінального тесту...');
+      
+      // Запускаємо автоматичний тест
+      await runAutoTest();
+      
+      // Запускаємо ручний тест
+      setTimeout(runManualTest, 1000);
+      
+      console.log('✅ Тест завершено');
+    };
+  </script>
+</body>
+</html>

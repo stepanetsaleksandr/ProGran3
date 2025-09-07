@@ -1,0 +1,104 @@
+{
+  "ui": {
+    "foundation": "Foundation",
+    "stele": "Stele",
+    "flowerbed": "Flowerbed",
+    "gravestone": "Gravestone",
+    "fence_corner": "Corner Fence",
+    "fence_perimeter": "Perimeter Fence",
+    "fence_decor": "Fence Decor",
+    "stand": "Stand",
+    "lamp": "Lamp",
+    "blind_area": "Blind Area",
+    "tiling": "Tiling",
+    "cladding": "Cladding"
+  },
+  "buttons": {
+    "create": "Create",
+    "add": "Add",
+    "next": "Next",
+    "previous": "Previous",
+    "save": "Save",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "reset": "Reset",
+    "close": "Close",
+    "open": "Open"
+  },
+  "dimensions": {
+    "height": "Height",
+    "width": "Width",
+    "depth": "Depth",
+    "thickness": "Thickness",
+    "length": "Length",
+    "size": "Size",
+    "post_height": "Post Height",
+    "post_size": "Post Size",
+    "side_height": "Panel Height",
+    "side_length": "Panel Length",
+    "side_thickness": "Panel Thickness"
+  },
+  "units": {
+    "mm": "mm",
+    "cm": "cm",
+    "m": "m"
+  },
+  "messages": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Information",
+    "generating_preview": "Generating preview...",
+    "preview_error": "Preview error",
+    "component_added": "Component added",
+    "component_removed": "Component removed"
+  },
+  "tabs": {
+    "base": "Base",
+    "monument": "Monument",
+    "gravestone": "Gravestone",
+    "elements": "Elements",
+    "fence": "Fence"
+  },
+  "panels": {
+    "foundation": "Foundation",
+    "blind_area": "Blind Area",
+    "tiling": "Tiling",
+    "cladding": "Cladding",
+    "stands": "Stands",
+    "steles": "Steles",
+    "flowerbeds": "Flowerbeds",
+    "gravestones": "Gravestones",
+    "fence_corner": "Corner Fence",
+    "fence_perimeter": "Perimeter Fence",
+    "fence_decor": "Fence Decor",
+    "lamps": "Lamps"
+  },
+  "summary": {
+    "title": "Project Summary",
+    "foundation": "Foundation",
+    "blind_area": "Blind Area",
+    "tiling": "Tiling",
+    "cladding": "Cladding",
+    "stand": "Stand",
+    "stele": "Stele",
+    "flowerbed": "Flowerbed",
+    "gravestone": "Gravestone",
+    "fence_corner": "Corner Fence",
+    "fence_perimeter": "Perimeter Fence",
+    "fence_decor": "Fence Decor",
+    "lamp": "Lamp"
+  },
+  "language": {
+    "ukrainian": "Українська",
+    "polish": "Polski",
+    "english": "English",
+    "switch_language": "Switch Language"
+  },
+  "carousel": {
+    "loading": "Loading...",
+    "error": "Loading error",
+    "no_items": "No items"
+  }
+}

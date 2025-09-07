@@ -10,6 +10,73 @@ let carouselState = {
   fence_decor: { index: 0 }
 };
 
+// --- ІНІЦІАЛІЗАЦІЯ I18N ---
+async function initializeI18n() {
+  try {
+    // Ініціалізуємо I18nManager
+    if (window.ProGran3 && window.ProGran3.I18n && window.ProGran3.I18n.Manager) {
+      await window.ProGran3.I18n.Manager.init();
+      debugLog('I18n ініціалізовано успішно', 'success');
+    }
+    
+    // Ініціалізуємо перемикач мов
+    if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.LanguageSwitcher) {
+      window.ProGran3.UI.LanguageSwitcher.init();
+      debugLog('Перемикач мов ініціалізовано', 'success');
+    }
+  } catch (error) {
+    debugLog(`Помилка ініціалізації i18n: ${error.message}`, 'error');
+  }
+}
+
+// --- ФУНКЦІЇ I18N ---
+// Функція для отримання перекладу
+function t(key, params = {}) {
+  if (window.ProGran3 && window.ProGran3.I18n && window.ProGran3.I18n.Manager) {
+    return window.ProGran3.I18n.Manager.t(key, params);
+  }
+  return key; // Fallback
+}
+
+// Функція для зміни мови
+async function changeLanguage(lang) {
+  if (window.ProGran3 && window.ProGran3.I18n && window.ProGran3.I18n.Manager) {
+    const success = await window.ProGran3.I18n.Manager.changeLanguage(lang);
+    if (success) {
+      debugLog(`Мову змінено на: ${lang}`, 'success');
+      // Оновлюємо динамічний контент
+      updateDynamicContent();
+    }
+    return success;
+  }
+  return false;
+}
+
+// Оновлення динамічного контенту після зміни мови
+function updateDynamicContent() {
+  // Оновлюємо заголовки панелей
+  updatePanelHeaders();
+  
+  // Оновлюємо розміри в заголовках
+  updateAllDisplays();
+  
+  // Оновлюємо специфікацію
+  if (typeof updateSummaryTable === 'function') {
+    updateSummaryTable();
+  }
+}
+
+// Оновлення заголовків панелей
+function updatePanelHeaders() {
+  const panels = document.querySelectorAll('.panel-title');
+  panels.forEach(panel => {
+    const key = panel.getAttribute('data-i18n');
+    if (key) {
+      panel.textContent = t(key);
+    }
+  });
+}
+
 // --- СИСТЕМА ТАБІВ ---
 let activeTab = 'base'; // Активний таб за замовчуванням
 
@@ -683,10 +750,14 @@ function clearDebugLog() {
 }
 
 // --- ІНІЦІАЛІЗАЦІЯ ---
-window.onload = function () {
+window.onload = async function () {
   debugLog(`🚀 window.onload викликано`, 'info');
   
-  // Ініціалізуємо додаток одразу
+  // Ініціалізуємо i18n першим
+  debugLog(`🌍 Ініціалізуємо i18n`, 'info');
+  await initializeI18n();
+  
+  // Ініціалізуємо додаток
   debugLog(`🔄 Викликаємо initializeApp()`, 'info');
   initializeApp();
   

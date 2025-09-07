@@ -11,25 +11,37 @@
 
   <div class="glass-container" id="main-content">
     <header>
-      <h1 onclick="toggleTheme()" style="cursor: pointer;">ProGran</h1>
-      <div class="unit-switcher">
-        <div class="unit-toggle">
-          <input type="radio" id="unit-mm" name="unit" value="mm" checked onchange="changeUnit('mm')">
-          <input type="radio" id="unit-cm" name="unit" value="cm" onchange="changeUnit('cm')">
-          <label for="unit-mm" class="unit-label" onclick="changeUnit('mm')">мм</label>
-          <label for="unit-cm" class="unit-label" onclick="changeUnit('cm')">см</label>
-          <div class="unit-slider"></div>
+      <!-- Лівий верхній кут - вибір одиниць -->
+      <div class="header-left">
+        <div class="unit-switcher">
+          <div class="unit-toggle">
+            <input type="radio" id="unit-mm" name="unit" value="mm" checked onchange="changeUnit('mm')">
+            <input type="radio" id="unit-cm" name="unit" value="cm" onchange="changeUnit('cm')">
+            <label for="unit-mm" class="unit-label" onclick="changeUnit('mm')" data-i18n="units.mm">мм</label>
+            <label for="unit-cm" class="unit-label" onclick="changeUnit('cm')" data-i18n="units.cm">см</label>
+            <div class="unit-slider"></div>
+          </div>
         </div>
+      </div>
+      
+      <!-- Центр - заголовок -->
+      <div class="header-center">
+        <h1 onclick="toggleTheme()" style="cursor: pointer;">ProGran</h1>
+      </div>
+      
+      <!-- Правий верхній кут - вибір мови -->
+      <div class="header-right">
+        <!-- Перемикач мов буде додано через JavaScript -->
       </div>
     </header>
 
     <!-- Навігація табів -->
     <div class="tabs-navigation">
-      <button class="tab-button active" data-tab="base" onclick="switchTab('base')">База</button>
-      <button class="tab-button" data-tab="monument" onclick="switchTab('monument')">Памятник</button>
-      <button class="tab-button" data-tab="gravestone" onclick="switchTab('gravestone')">Надгробна частина</button>
-      <button class="tab-button" data-tab="fence" onclick="switchTab('fence')">Огорожа</button>
-      <button class="tab-button" data-tab="additional" onclick="switchTab('additional')">Додаткові елементи</button>
+      <button class="tab-button active" data-tab="base" onclick="switchTab('base')" data-i18n="tabs.base">База</button>
+      <button class="tab-button" data-tab="monument" onclick="switchTab('monument')" data-i18n="tabs.monument">Памятник</button>
+      <button class="tab-button" data-tab="gravestone" onclick="switchTab('gravestone')" data-i18n="tabs.gravestone">Надгробна частина</button>
+      <button class="tab-button" data-tab="fence" onclick="switchTab('fence')" data-i18n="tabs.fence">Огорожа</button>
+      <button class="tab-button" data-tab="additional" onclick="switchTab('additional')" data-i18n="tabs.elements">Додаткові елементи</button>
 
     </div>
 
@@ -37,32 +49,32 @@
     <div class="tab-content active" id="base-tab">
       <section class="panel">
         <div class="panel-header" onclick="togglePanel(this)">
-          <h2 class="panel-title">Фундамент</h2>
+          <h2 class="panel-title" data-i18n="panels.foundation">Фундамент</h2>
           <span class="chevron"></span>
           <span id="foundation-dimensions-display" class="header-dimensions"></span>
         </div>
         <div class="panel-content">
           <div class="input-row">
             <div class="input-wrapper">
-              <label id="foundation-depth-label" for="foundation-depth">Довжина (мм)</label>
+              <label id="foundation-depth-label" for="foundation-depth" data-i18n="dimensions.length">Довжина (мм)</label>
               <input type="number" id="foundation-depth" value="2000" oninput="updateAllDisplays()">
             </div>
             <div class="input-wrapper">
-              <label id="foundation-width-label" for="foundation-width">Ширина (мм)</label>
+              <label id="foundation-width-label" for="foundation-width" data-i18n="dimensions.width">Ширина (мм)</label>
               <input type="number" id="foundation-width" value="1000" oninput="updateAllDisplays()">
             </div>
             <div class="input-wrapper">
-              <label id="foundation-height-label" for="foundation-height">Висота (мм)</label>
+              <label id="foundation-height-label" for="foundation-height" data-i18n="dimensions.height">Висота (мм)</label>
               <input type="number" id="foundation-height" value="150" oninput="updateAllDisplays()">
             </div>
           </div>
-          <button onclick="addFoundation(); advanceToNextPanel(this);">Створити фундамент</button>
+          <button onclick="addFoundation(); advanceToNextPanel(this);" data-i18n="buttons.create">Створити фундамент</button>
         </div>
       </section>
 
       <section class="panel collapsed">
         <div class="panel-header" onclick="togglePanel(this)">
-          <h2 class="panel-title">Відмостка</h2>
+          <h2 class="panel-title" data-i18n="panels.blind_area">Відмостка</h2>
           <span class="chevron"></span>
           <span id="blind-area-dimensions-display" class="header-dimensions"></span>
         </div>
@@ -116,13 +128,13 @@
             </div>
           </div>
           
-          <button onclick="addBlindArea(); advanceToNextPanel(this);">Створити відмостку</button>
+          <button onclick="addBlindArea(); advanceToNextPanel(this);" data-i18n="buttons.create">Створити відмостку</button>
         </div>
       </section>
 
       <section class="panel collapsed">
         <div class="panel-header" onclick="togglePanel(this)">
-          <h2 class="panel-title">Плитка на фундаменті</h2>
+          <h2 class="panel-title" data-i18n="panels.tiling">Плитка на фундаменті</h2>
           <span class="chevron"></span>
           <span id="tiling-type-display" class="header-dimensions"></span>
         </div>
@@ -198,13 +210,13 @@
               </div>
             </div>
           </div>
-          <button onclick="addTiles(); advanceToNextPanel(this);">Додати плитку</button>
+          <button onclick="addTiles(); advanceToNextPanel(this);" data-i18n="buttons.add">Додати плитку</button>
         </div>
       </section>
 
       <section class="panel collapsed">
         <div class="panel-header" onclick="togglePanel(this)">
-          <h2 class="panel-title">Бокове облицювання</h2>
+          <h2 class="panel-title" data-i18n="panels.cladding">Бокове облицювання</h2>
           <span class="chevron"></span>
           <span id="cladding-dimensions-display" class="header-dimensions"></span>
         </div>
@@ -215,7 +227,7 @@
               <input type="number" id="cladding-thickness" value="20" min="10" oninput="updateAllDisplays()">
             </div>
           </div>
-          <button onclick="addSideCladding(); advanceToNextPanel(this);">Додати</button>
+          <button onclick="addSideCladding(); advanceToNextPanel(this);" data-i18n="buttons.add">Додати</button>
         </div>
       </section>
     </div>
@@ -224,7 +236,7 @@
     <div class="tab-content" id="monument-tab">
       <section class="panel">
         <div class="panel-header" onclick="togglePanel(this)">
-          <h2 class="panel-title">Підставка</h2>
+          <h2 class="panel-title" data-i18n="panels.stands">Підставка</h2>
           <span class="chevron"></span>
           <span id="stands-dimensions-display" class="header-dimensions"></span>
         </div>
@@ -255,15 +267,15 @@
           </div>
           
           <div class="button-group">
-            <button onclick="addStandWithCustomSize(); advanceToNextPanel(this);">Додати підставку</button>
-            <button onclick="updateStandSize();" class="secondary-button">Оновити розмір</button>
+            <button onclick="addStandWithCustomSize(); advanceToNextPanel(this);" data-i18n="buttons.add">Додати підставку</button>
+            <button onclick="updateStandSize();" class="secondary-button" data-i18n="buttons.apply">Оновити розмір</button>
           </div>
         </div>
       </section>
       
       <section class="panel collapsed">
         <div class="panel-header" onclick="togglePanel(this)">
-          <h2 class="panel-title">Стела</h2>
+          <h2 class="panel-title" data-i18n="panels.steles">Стела</h2>
           <span class="chevron"></span>
           <span id="steles-dimensions-display" class="header-dimensions"></span>
         </div>
@@ -273,7 +285,7 @@
               <div class="carousel-track" id="steles-carousel-track"></div>
             </div>
           </div>
-          <button onclick="addModel('steles'); advanceToNextPanel(this);">Додати стелу</button>
+          <button onclick="addModel('steles'); advanceToNextPanel(this);" data-i18n="buttons.add">Додати стелу</button>
         </div>
       </section>
     </div>
@@ -282,7 +294,7 @@
     <div class="tab-content" id="gravestone-tab">
       <section class="panel">
         <div class="panel-header" onclick="togglePanel(this)">
-          <h2 class="panel-title">Квітник</h2>
+          <h2 class="panel-title" data-i18n="panels.flowerbeds">Квітник</h2>
           <span class="chevron"></span>
           <span id="flowerbeds-dimensions-display" class="header-dimensions"></span>
         </div>
@@ -292,13 +304,13 @@
               <div class="carousel-track" id="flowerbeds-carousel-track"></div>
             </div>
           </div>
-          <button onclick="addModel('flowerbeds'); advanceToNextPanel(this);">Додати квітник</button>
+          <button onclick="addModel('flowerbeds'); advanceToNextPanel(this);" data-i18n="buttons.add">Додати квітник</button>
         </div>
       </section>
       
       <section class="panel collapsed">
         <div class="panel-header" onclick="togglePanel(this)">
-          <h2 class="panel-title">Надгробна плита</h2>
+          <h2 class="panel-title" data-i18n="panels.gravestones">Надгробна плита</h2>
           <span class="chevron"></span>
           <span id="gravestones-dimensions-display" class="header-dimensions"></span>
         </div>
@@ -308,7 +320,7 @@
               <div class="carousel-track" id="gravestones-carousel-track"></div>
             </div>
           </div>
-          <button onclick="addModel('gravestones'); advanceToNextPanel(this);">Додати надгробну плиту</button>
+          <button onclick="addModel('gravestones'); advanceToNextPanel(this);" data-i18n="buttons.add">Додати надгробну плиту</button>
         </div>
       </section>
     </div>
@@ -317,7 +329,7 @@
     <div class="tab-content" id="fence-tab">
       <section class="panel">
         <div class="panel-header" onclick="togglePanel(this)">
-          <h2 class="panel-title">Кутова огорожа</h2>
+          <h2 class="panel-title" data-i18n="panels.fence_corner">Кутова огорожа</h2>
           <span class="chevron"></span>
           <span id="fence-corner-dimensions-display" class="header-dimensions"></span>
         </div>
@@ -347,13 +359,13 @@
             </div>
           </div>
           
-          <button onclick="addFenceCorner(); advanceToNextPanel(this);">Створити кутову огорожу</button>
+          <button onclick="addFenceCorner(); advanceToNextPanel(this);" data-i18n="buttons.create">Створити кутову огорожу</button>
         </div>
       </section>
       
       <section class="panel collapsed">
         <div class="panel-header" onclick="togglePanel(this)">
-          <h2 class="panel-title">Периметральна огорожа</h2>
+          <h2 class="panel-title" data-i18n="panels.fence_perimeter">Периметральна огорожа</h2>
           <span class="chevron"></span>
           <span id="fence-perimeter-dimensions-display" class="header-dimensions"></span>
         </div>
@@ -385,13 +397,13 @@
               </div>
             </div>
           </div>
-          <button onclick="addFencePerimeter(); advanceToNextPanel(this);">Створити периметральну огорожу</button>
+          <button onclick="addFencePerimeter(); advanceToNextPanel(this);" data-i18n="buttons.create">Створити периметральну огорожу</button>
         </div>
       </section>
       
       <section class="panel collapsed">
         <div class="panel-header" onclick="togglePanel(this)">
-          <h2 class="panel-title">Декор огорожі</h2>
+          <h2 class="panel-title" data-i18n="panels.fence_decor">Декор огорожі</h2>
           <span class="chevron"></span>
           <span id="fence-decor-dimensions-display" class="header-dimensions"></span>
         </div>
@@ -405,7 +417,7 @@
             </div>
           </div>
           
-          <button onclick="addFenceDecor(); advanceToNextPanel(this);">Додати декор на огорожу</button>
+          <button onclick="addFenceDecor(); advanceToNextPanel(this);" data-i18n="buttons.add">Додати декор на огорожу</button>
         </div>
       </section>
       
@@ -424,25 +436,25 @@
     <!-- Специфікація (залишається поза табами) -->
     <section class="panel collapsed" id="specification-panel">
       <div class="panel-header" onclick="togglePanel(this)">
-        <h2 class="panel-title">Специфікація</h2>
+        <h2 class="panel-title" data-i18n="summary.title">Специфікація</h2>
         <span class="chevron"></span>
         <span class="header-placeholder"></span>
       </div>
       <div class="panel-content">
         <table class="summary-table">
-          <tr> <td>Фундамент:</td> <td id="summary-foundation">--</td> </tr>
-          <tr> <td>Плитка (верх):</td> <td id="summary-tiling">--</td> </tr>
-          <tr> <td>Облицювання (бік):</td> <td id="summary-cladding">--</td> </tr>
-          <tr> <td>Відмостка:</td> <td id="summary-blind-area">--</td> </tr>
-          <tr> <td>Підставка:</td> <td id="summary-stand">--</td> </tr>
-          <tr> <td>Квітник:</td> <td id="summary-flowerbed">--</td> </tr>
-          <tr> <td>Надгробна плита:</td> <td id="summary-gravestone">--</td> </tr>
-          <tr> <td>Стела:</td> <td id="summary-stele">--</td> </tr>
-          <tr> <td>Кутова огорожа:</td> <td id="summary-fence-corner">--</td> </tr>
-          <tr> <td>Периметральна огорожа:</td> <td id="summary-fence-perimeter">--</td> </tr>
-          <tr> <td>Декор огорожі:</td> <td id="summary-fence-decor">--</td> </tr>
+          <tr> <td data-i18n="summary.foundation">Фундамент:</td> <td id="summary-foundation">--</td> </tr>
+          <tr> <td data-i18n="summary.tiling">Плитка (верх):</td> <td id="summary-tiling">--</td> </tr>
+          <tr> <td data-i18n="summary.cladding">Облицювання (бік):</td> <td id="summary-cladding">--</td> </tr>
+          <tr> <td data-i18n="summary.blind_area">Відмостка:</td> <td id="summary-blind-area">--</td> </tr>
+          <tr> <td data-i18n="summary.stand">Підставка:</td> <td id="summary-stand">--</td> </tr>
+          <tr> <td data-i18n="summary.flowerbed">Квітник:</td> <td id="summary-flowerbed">--</td> </tr>
+          <tr> <td data-i18n="summary.gravestone">Надгробна плита:</td> <td id="summary-gravestone">--</td> </tr>
+          <tr> <td data-i18n="summary.stele">Стела:</td> <td id="summary-stele">--</td> </tr>
+          <tr> <td data-i18n="summary.fence_corner">Кутова огорожа:</td> <td id="summary-fence-corner">--</td> </tr>
+          <tr> <td data-i18n="summary.fence_perimeter">Периметральна огорожа:</td> <td id="summary-fence-perimeter">--</td> </tr>
+          <tr> <td data-i18n="summary.fence_decor">Декор огорожі:</td> <td id="summary-fence-decor">--</td> </tr>
         </table>
-        <button onclick="refreshSpecification()" class="refresh-button">Оновити</button>
+        <button onclick="refreshSpecification()" class="refresh-button" data-i18n="buttons.apply">Оновити</button>
       </div>
     </section>
 
@@ -466,11 +478,15 @@
   <script src="modules/ui/Tabs.js"></script>
   <script src="modules/ui/Panels.js"></script>
   <script src="modules/ui/SummaryTable.js"></script>
+  <script src="modules/ui/LanguageSwitcher.js"></script>
   
-  <!-- 5. Builder модулі -->
+  <!-- 5. I18n модулі -->
+  <script src="i18n/I18nManager.js"></script>
+  
+  <!-- 6. Builder модулі -->
   <script src="modules/builders/FoundationBuilder.js"></script>
   
-  <!-- 6. Головний файл в кінці -->
+  <!-- 7. Головний файл в кінці -->
   <script src="script.js"></script>
   
   <!-- Debug Log -->
