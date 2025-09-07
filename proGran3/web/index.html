@@ -68,7 +68,7 @@
               <input type="number" id="foundation-height" value="150" oninput="updateAllDisplays()">
             </div>
           </div>
-          <button onclick="addFoundation(); advanceToNextPanel(this);" data-i18n="buttons.create">Створити фундамент</button>
+          <button onclick="addFoundation(); advanceToNextPanel(this);" data-i18n="buttons.create_foundation">Створити фундамент</button>
         </div>
       </section>
 
@@ -81,21 +81,21 @@
         <div class="panel-content">
           <!-- Режим ширини вгорі -->
           <div>
-            <label>Режим ширини:</label>
+            <label data-i18n="labels.width_mode">Режим ширини:</label>
             <div class="button-group-tiling-mode">
-              <button type="button" class="tiling-mode-btn active" data-value="uniform" onclick="selectBlindAreaMode(this)">Однакова ширина</button>
-              <button type="button" class="tiling-mode-btn" data-value="custom" onclick="selectBlindAreaMode(this)">Різна ширина</button>
+              <button type="button" class="tiling-mode-btn active" data-value="uniform" onclick="selectBlindAreaMode(this)" data-i18n="buttons.uniform_width">Однакова ширина</button>
+              <button type="button" class="tiling-mode-btn" data-value="custom" onclick="selectBlindAreaMode(this)" data-i18n="buttons.custom_width">Різна ширина</button>
             </div>
           </div>
           
           <!-- Ширина і товщина в один ряд -->
           <div class="input-row">
             <div class="input-wrapper">
-              <label id="blind-area-thickness-label">Товщина (мм)</label>
+              <label id="blind-area-thickness-label" data-i18n="labels.thickness_mm">Товщина (мм)</label>
               <input type="number" id="blind-area-thickness" value="50" min="30" max="200" oninput="updateAllDisplays()">
             </div>
             <div class="input-wrapper">
-              <label id="blind-area-uniform-width-label">Ширина (мм)</label>
+              <label id="blind-area-uniform-width-label" data-i18n="labels.width_mm">Ширина (мм)</label>
               <input type="number" id="blind-area-uniform-width" value="300" min="50" max="1000" oninput="updateAllDisplays()">
             </div>
           </div>
@@ -107,28 +107,28 @@
           <div id="custom-controls" class="hidden">
             <div class="input-row">
               <div class="input-wrapper">
-                <label id="blind-area-north-label">Північна сторона (мм)</label>
+                <label id="blind-area-north-label" data-i18n="labels.north_side_mm">Північна сторона (мм)</label>
                 <input type="number" id="blind-area-north" value="300" min="50" max="1000" oninput="updateAllDisplays()">
               </div>
               <div class="input-wrapper">
-                <label id="blind-area-south-label">Південна сторона (мм)</label>
+                <label id="blind-area-south-label" data-i18n="labels.south_side_mm">Південна сторона (мм)</label>
                 <input type="number" id="blind-area-south" value="300" min="50" max="1000" oninput="updateAllDisplays()">
               </div>
             </div>
             
             <div class="input-row">
               <div class="input-wrapper">
-                <label id="blind-area-east-label">Східна сторона (мм)</label>
+                <label id="blind-area-east-label" data-i18n="labels.east_side_mm">Східна сторона (мм)</label>
                 <input type="number" id="blind-area-east" value="300" min="50" max="1000" oninput="updateAllDisplays()">
               </div>
               <div class="input-wrapper">
-                <label id="blind-area-west-label">Західна сторона (мм)</label>
+                <label id="blind-area-west-label" data-i18n="labels.west_side_mm">Західна сторона (мм)</label>
                 <input type="number" id="blind-area-west" value="300" min="50" max="1000" oninput="updateAllDisplays()">
               </div>
             </div>
           </div>
           
-          <button onclick="addBlindArea(); advanceToNextPanel(this);" data-i18n="buttons.create">Створити відмостку</button>
+          <button onclick="addBlindArea(); advanceToNextPanel(this);" data-i18n="buttons.create_blind_area">Створити відмостку</button>
         </div>
       </section>
 
@@ -140,32 +140,32 @@
         </div>
         <div class="panel-content">
           <div>
-            <label class="label-left">Спосіб укладання:</label>
+            <label class="label-left" data-i18n="labels.laying_method">Спосіб укладання:</label>
             <div class="button-group-tiling-mode">
-              <button type="button" class="tiling-mode-btn active" data-value="frame" onclick="selectTilingMode(this)">Рамка з 4 частин</button>
-              <button type="button" class="tiling-mode-btn" data-value="modular" onclick="selectTilingMode(this)">Модульне замощення</button>
+              <button type="button" class="tiling-mode-btn active" data-value="frame" onclick="selectTilingMode(this)" data-i18n="buttons.frame_4_parts">Рамка з 4 частин</button>
+              <button type="button" class="tiling-mode-btn" data-value="modular" onclick="selectTilingMode(this)" data-i18n="buttons.modular_tiling">Модульне замощення</button>
             </div>
           </div>
           <div id="frame-controls">
             <div class="input-row">
               <div class="input-wrapper">
-                <label id="tile-border-width-label" for="tile-border-width">Ширина рамки (мм)</label>
+                <label id="tile-border-width-label" for="tile-border-width" data-i18n="labels.frame_width_mm">Ширина рамки (мм)</label>
                 <input type="number" id="tile-border-width" value="300" min="10" oninput="updateAllDisplays()">
               </div>
               <div class="input-wrapper">
-                <label id="tile-overhang-label" for="tile-overhang">Виступ (мм)</label>
+                <label id="tile-overhang-label" for="tile-overhang" data-i18n="labels.overhang_mm">Виступ (мм)</label>
                 <input type="number" id="tile-overhang" value="50" oninput="updateAllDisplays()">
               </div>
             </div>
             
             <div class="input-row">
               <div class="input-wrapper">
-                <label id="tile-thickness-frame-label">Товщина</label>
+                <label id="tile-thickness-frame-label" data-i18n="labels.thickness">Товщина</label>
                 <div class="button-group-thickness">
-                  <button type="button" class="thickness-btn" data-value="20" onclick="selectThickness(this)">2 см</button>
-                  <button type="button" class="thickness-btn active" data-value="30" onclick="selectThickness(this)">3 см</button>
-                  <button type="button" class="thickness-btn" data-value="40" onclick="selectThickness(this)">4 см</button>
-                  <button type="button" class="thickness-btn" data-value="50" onclick="selectThickness(this)">5 см</button>
+                  <button type="button" class="thickness-btn" data-value="20" onclick="selectThickness(this)" data-i18n="buttons.thickness_2cm">2 см</button>
+                  <button type="button" class="thickness-btn active" data-value="30" onclick="selectThickness(this)" data-i18n="buttons.thickness_3cm">3 см</button>
+                  <button type="button" class="thickness-btn" data-value="40" onclick="selectThickness(this)" data-i18n="buttons.thickness_4cm">4 см</button>
+                  <button type="button" class="thickness-btn" data-value="50" onclick="selectThickness(this)" data-i18n="buttons.thickness_5cm">5 см</button>
                 </div>
               </div>
             </div>
@@ -173,7 +173,7 @@
           <div id="modular-controls" class="hidden">
             <div class="input-row">
               <div class="input-wrapper">
-                <label for="modular-tile-size">Розмір (см)</label>
+                <label for="modular-tile-size" data-i18n="labels.size_cm">Розмір (см)</label>
                 <select id="modular-tile-size" onchange="updateAllDisplays()">
                   <option value="80x40">80 x 40</option>
                   <option value="70x40">70 x 40</option>
@@ -189,28 +189,28 @@
                 </select>
               </div>
               <div class="input-wrapper">
-                <label for="modular-thickness" id="modular-thickness-label">Товщина (мм)</label>
+                <label for="modular-thickness" id="modular-thickness-label" data-i18n="labels.thickness_mm">Товщина (мм)</label>
                 <input type="number" id="modular-thickness" value="30" oninput="updateAllDisplays()">
               </div>
               <div class="input-wrapper">
-                <label for="modular-overhang" id="modular-overhang-label">Виступ (мм)</label>
+                <label for="modular-overhang" id="modular-overhang-label" data-i18n="labels.overhang_mm">Виступ (мм)</label>
                 <input type="number" id="modular-overhang" value="50" oninput="updateAllDisplays()">
               </div>
             </div>
             
             <div class="input-row">
               <div class="input-wrapper">
-                <label id="modular-seam-label">Шов</label>
+                <label id="modular-seam-label" data-i18n="labels.seam">Шов</label>
                 <div class="button-group-seam">
-                  <button type="button" class="seam-btn" data-value="2" onclick="selectSeam(this)">2 мм</button>
-                  <button type="button" class="seam-btn" data-value="3" onclick="selectSeam(this)">3 мм</button>
-                  <button type="button" class="seam-btn active" data-value="5" onclick="selectSeam(this)">5 мм</button>
-                  <button type="button" class="seam-btn" data-value="4" onclick="selectSeam(this)">4 мм</button>
+                  <button type="button" class="seam-btn" data-value="2" onclick="selectSeam(this)" data-i18n="buttons.seam_2mm">2 мм</button>
+                  <button type="button" class="seam-btn" data-value="3" onclick="selectSeam(this)" data-i18n="buttons.seam_3mm">3 мм</button>
+                  <button type="button" class="seam-btn active" data-value="5" onclick="selectSeam(this)" data-i18n="buttons.seam_5mm">5 мм</button>
+                  <button type="button" class="seam-btn" data-value="4" onclick="selectSeam(this)" data-i18n="buttons.seam_4mm">4 мм</button>
                 </div>
               </div>
             </div>
           </div>
-          <button onclick="addTiles(); advanceToNextPanel(this);" data-i18n="buttons.add">Додати плитку</button>
+          <button onclick="addTiles(); advanceToNextPanel(this);" data-i18n="buttons.add_tiles">Додати плитку</button>
         </div>
       </section>
 
@@ -223,11 +223,11 @@
         <div class="panel-content">
           <div class="input-row">
             <div class="input-wrapper">
-              <label id="cladding-thickness-label" for="cladding-thickness">Товщина (мм)</label>
+              <label id="cladding-thickness-label" for="cladding-thickness" data-i18n="labels.thickness_mm">Товщина (мм)</label>
               <input type="number" id="cladding-thickness" value="20" min="10" oninput="updateAllDisplays()">
             </div>
           </div>
-          <button onclick="addSideCladding(); advanceToNextPanel(this);" data-i18n="buttons.add">Додати</button>
+          <button onclick="addSideCladding(); advanceToNextPanel(this);" data-i18n="buttons.add_cladding">Додати</button>
         </div>
       </section>
     </div>
@@ -249,26 +249,26 @@
           
           <!-- Налаштування розмірів підставки -->
           <div class="input-group">
-            <h3>Налаштування розмірів</h3>
+            <h3 data-i18n="labels.size_settings">Налаштування розмірів</h3>
             <div class="input-row">
               <div class="input-wrapper">
-                <label id="stands-height-label" for="stands-height">Висота (мм)</label>
+                <label id="stands-height-label" for="stands-height" data-i18n="labels.height_mm">Висота (мм)</label>
                 <input type="number" id="stands-height" value="200" min="50" max="1000" oninput="updateStandsDisplay()">
               </div>
               <div class="input-wrapper">
-                <label id="stands-width-label" for="stands-width">Ширина (мм)</label>
+                <label id="stands-width-label" for="stands-width" data-i18n="labels.width_mm">Ширина (мм)</label>
                 <input type="number" id="stands-width" value="500" min="100" max="2000" oninput="updateStandsDisplay()">
               </div>
               <div class="input-wrapper">
-                <label id="stands-depth-label" for="stands-depth">Довжина (мм)</label>
+                <label id="stands-depth-label" for="stands-depth" data-i18n="labels.depth_mm">Довжина (мм)</label>
                 <input type="number" id="stands-depth" value="300" min="100" max="1500" oninput="updateStandsDisplay()">
               </div>
             </div>
           </div>
           
           <div class="button-group">
-            <button onclick="addStandWithCustomSize(); advanceToNextPanel(this);" data-i18n="buttons.add">Додати підставку</button>
-            <button onclick="updateStandSize();" class="secondary-button" data-i18n="buttons.apply">Оновити розмір</button>
+            <button onclick="addStandWithCustomSize(); advanceToNextPanel(this);" data-i18n="buttons.add_stand">Додати підставку</button>
+            <button onclick="updateStandSize();" class="secondary-button" data-i18n="buttons.update_size">Оновити розмір</button>
           </div>
         </div>
       </section>
@@ -285,7 +285,7 @@
               <div class="carousel-track" id="steles-carousel-track"></div>
             </div>
           </div>
-          <button onclick="addModel('steles'); advanceToNextPanel(this);" data-i18n="buttons.add">Додати стелу</button>
+          <button onclick="addModel('steles'); advanceToNextPanel(this);" data-i18n="buttons.add_stele">Додати стелу</button>
         </div>
       </section>
     </div>
@@ -304,7 +304,7 @@
               <div class="carousel-track" id="flowerbeds-carousel-track"></div>
             </div>
           </div>
-          <button onclick="addModel('flowerbeds'); advanceToNextPanel(this);" data-i18n="buttons.add">Додати квітник</button>
+          <button onclick="addModel('flowerbeds'); advanceToNextPanel(this);" data-i18n="buttons.add_flowerbed">Додати квітник</button>
         </div>
       </section>
       
@@ -320,7 +320,7 @@
               <div class="carousel-track" id="gravestones-carousel-track"></div>
             </div>
           </div>
-          <button onclick="addModel('gravestones'); advanceToNextPanel(this);" data-i18n="buttons.add">Додати надгробну плиту</button>
+          <button onclick="addModel('gravestones'); advanceToNextPanel(this);" data-i18n="buttons.add_gravestone">Додати надгробну плиту</button>
         </div>
       </section>
     </div>
@@ -336,30 +336,30 @@
         <div class="panel-content">
           <div class="input-row">
             <div class="input-wrapper">
-              <label id="fence-corner-post-height-label" for="fence-corner-post-height">Висота стовпа (мм)</label>
+              <label id="fence-corner-post-height-label" for="fence-corner-post-height" data-i18n="labels.post_height_mm">Висота стовпа (мм)</label>
               <input type="number" id="fence-corner-post-height" value="250" min="150" max="500" oninput="updateFenceCornerDisplay()">
             </div>
             <div class="input-wrapper">
-              <label id="fence-corner-post-size-label" for="fence-corner-post-size">Розмір стовпа (мм)</label>
+              <label id="fence-corner-post-size-label" for="fence-corner-post-size" data-i18n="labels.post_size_mm">Розмір стовпа (мм)</label>
               <input type="number" id="fence-corner-post-size" value="150" min="100" max="300" oninput="updateFenceCornerDisplay()">
             </div>
           </div>
           <div class="input-row">
             <div class="input-wrapper">
-              <label id="fence-corner-side-height-label" for="fence-corner-side-height">Висота панелі (мм)</label>
+              <label id="fence-corner-side-height-label" for="fence-corner-side-height" data-i18n="labels.panel_height_mm">Висота панелі (мм)</label>
               <input type="number" id="fence-corner-side-height" value="150" min="100" max="300" oninput="updateFenceCornerDisplay()">
             </div>
             <div class="input-wrapper">
-              <label id="fence-corner-side-length-label" for="fence-corner-side-length">Довжина панелі (мм)</label>
+              <label id="fence-corner-side-length-label" for="fence-corner-side-length" data-i18n="labels.panel_length_mm">Довжина панелі (мм)</label>
               <input type="number" id="fence-corner-side-length" value="500" min="200" max="600" oninput="updateFenceCornerDisplay()">
             </div>
             <div class="input-wrapper">
-              <label id="fence-corner-side-thickness-label" for="fence-corner-side-thickness">Товщина панелі (мм)</label>
+              <label id="fence-corner-side-thickness-label" for="fence-corner-side-thickness" data-i18n="labels.panel_thickness_mm">Товщина панелі (мм)</label>
               <input type="number" id="fence-corner-side-thickness" value="50" min="30" max="150" oninput="updateFenceCornerDisplay()">
             </div>
           </div>
           
-          <button onclick="addFenceCorner(); advanceToNextPanel(this);" data-i18n="buttons.create">Створити кутову огорожу</button>
+          <button onclick="addFenceCorner(); advanceToNextPanel(this);" data-i18n="buttons.create_corner_fence">Створити кутову огорожу</button>
         </div>
       </section>
       
@@ -372,32 +372,32 @@
         <div class="panel-content">
           <div class="input-row">
             <div class="input-wrapper">
-              <label id="fence-perimeter-post-height-label" for="fence-perimeter-post-height">Висота стовпа (мм)</label>
+              <label id="fence-perimeter-post-height-label" for="fence-perimeter-post-height" data-i18n="labels.post_height_mm">Висота стовпа (мм)</label>
               <input type="number" id="fence-perimeter-post-height" value="250" min="150" max="500" oninput="updateFencePerimeterDisplay()">
             </div>
             <div class="input-wrapper">
-              <label id="fence-perimeter-post-size-label" for="fence-perimeter-post-size">Розмір стовпа (мм)</label>
+              <label id="fence-perimeter-post-size-label" for="fence-perimeter-post-size" data-i18n="labels.post_size_mm">Розмір стовпа (мм)</label>
               <input type="number" id="fence-perimeter-post-size" value="150" min="100" max="300" oninput="updateFencePerimeterDisplay()">
             </div>
           </div>
           <div>
-            <label class="label-left">Кількість проміжних стовпів:</label>
+            <label class="label-left" data-i18n="labels.intermediate_posts_count">Кількість проміжних стовпів:</label>
             <div class="input-row">
               <div class="input-wrapper">
-                <label id="fence-perimeter-north-count-label" for="fence-perimeter-north-count">Задня сторона</label>
+                <label id="fence-perimeter-north-count-label" for="fence-perimeter-north-count" data-i18n="labels.back_side">Задня сторона</label>
                 <input type="number" id="fence-perimeter-north-count" value="1" min="0" max="5" oninput="updateFencePerimeterDisplay()">
               </div>
               <div class="input-wrapper">
-                <label id="fence-perimeter-south-count-label" for="fence-perimeter-south-count">Вхід</label>
+                <label id="fence-perimeter-south-count-label" for="fence-perimeter-south-count" data-i18n="labels.entrance">Вхід</label>
                 <input type="number" id="fence-perimeter-south-count" value="2" min="0" max="5" oninput="updateFencePerimeterDisplay()">
               </div>
               <div class="input-wrapper">
-                <label id="fence-perimeter-east-west-count-label" for="fence-perimeter-east-west-count">Бокові сторони</label>
+                <label id="fence-perimeter-east-west-count-label" for="fence-perimeter-east-west-count" data-i18n="labels.side_sides">Бокові сторони</label>
                 <input type="number" id="fence-perimeter-east-west-count" value="1" min="0" max="5" oninput="updateFencePerimeterDisplay()">
               </div>
             </div>
           </div>
-          <button onclick="addFencePerimeter(); advanceToNextPanel(this);" data-i18n="buttons.create">Створити периметральну огорожу</button>
+          <button onclick="addFencePerimeter(); advanceToNextPanel(this);" data-i18n="buttons.create_perimeter_fence">Створити периметральну огорожу</button>
         </div>
       </section>
       
@@ -417,7 +417,7 @@
             </div>
           </div>
           
-          <button onclick="addFenceDecor(); advanceToNextPanel(this);" data-i18n="buttons.add">Додати декор на огорожу</button>
+          <button onclick="addFenceDecor(); advanceToNextPanel(this);" data-i18n="buttons.add_fence_decor">Додати декор на огорожу</button>
         </div>
       </section>
       
@@ -454,7 +454,7 @@
           <tr> <td data-i18n="summary.fence_perimeter">Периметральна огорожа:</td> <td id="summary-fence-perimeter">--</td> </tr>
           <tr> <td data-i18n="summary.fence_decor">Декор огорожі:</td> <td id="summary-fence-decor">--</td> </tr>
         </table>
-        <button onclick="refreshSpecification()" class="refresh-button" data-i18n="buttons.apply">Оновити</button>
+        <button onclick="refreshSpecification()" class="refresh-button" data-i18n="buttons.refresh">Оновити</button>
       </div>
     </section>
 
