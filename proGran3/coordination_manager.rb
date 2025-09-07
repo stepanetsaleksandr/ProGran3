@@ -170,7 +170,8 @@ module ProGran3
         ProGran3::TilingBuilder.insert_perimeter_tiles(
           tiles_params[:thickness] || 30,
           tiles_params[:border_width] || 300,
-          tiles_params[:overhang] || 50
+          tiles_params[:overhang] || 50,
+          tiles_params[:seam] || 2
         )
       else
         ProGran3::TilingBuilder.insert_modular_tiles(

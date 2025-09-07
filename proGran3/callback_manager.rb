@@ -62,8 +62,8 @@ module ProGran3
     end
 
     # Callback для рамкової плитки
-    def add_tiles_frame_callback(dialog, thickness, borderWidth, overhang)
-      thickness, borderWidth, overhang = [thickness, borderWidth, overhang].map(&:to_i)
+    def add_tiles_frame_callback(dialog, thickness, borderWidth, overhang, seam = 2)
+      thickness, borderWidth, overhang, seam = [thickness, borderWidth, overhang, seam].map(&:to_i)
       
       return false unless validate_dimensions_callback(borderWidth, overhang, thickness, "периметральної плитки")
       
@@ -72,10 +72,11 @@ module ProGran3
         mode: 'frame',
         thickness: thickness,
         border_width: borderWidth,
-        overhang: overhang
+        overhang: overhang,
+        seam: seam
       }
       
-      ProGran3::TilingBuilder.insert_perimeter_tiles(thickness, borderWidth, overhang)
+      ProGran3::TilingBuilder.insert_perimeter_tiles(thickness, borderWidth, overhang, seam)
       true
     end
 

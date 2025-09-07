@@ -6,7 +6,7 @@ module ProGran3
   module TilingBuilder
     extend self
 
-    def insert_perimeter_tiles(thickness, border_width, overhang)
+    def insert_perimeter_tiles(thickness, border_width, overhang, seam = 2)
       # Валідація вхідних параметрів
       validation_result = Validation.validate_dimensions(border_width, overhang, thickness, "TilingBuilder")
       unless validation_result.valid
@@ -31,14 +31,17 @@ module ProGran3
       min_y, max_y = bounds.min.y, bounds.max.y
       bw = border_width.mm
       oh = overhang.mm
+      seam_mm = seam.mm
       outer_min_x, outer_max_x = min_x - oh, max_x + oh
       outer_min_y, outer_max_y = min_y - oh, max_y + oh
       inner_min_x, inner_max_x = outer_min_x + bw, outer_max_x - bw
       inner_min_y, inner_max_y = outer_min_y + bw, outer_max_y - bw
       n_points = [Geom::Point3d.new(outer_min_x, outer_min_y, z), Geom::Point3d.new(inner_min_x, outer_min_y, z), Geom::Point3d.new(inner_min_x, outer_max_y, z), Geom::Point3d.new(outer_min_x, outer_max_y, z)]
       s_points = [Geom::Point3d.new(inner_max_x, outer_min_y, z), Geom::Point3d.new(outer_max_x, outer_min_y, z), Geom::Point3d.new(outer_max_x, outer_max_y, z), Geom::Point3d.new(inner_max_x, outer_max_y, z)]
-      w_points = [Geom::Point3d.new(inner_min_x, outer_min_y, z), Geom::Point3d.new(inner_max_x, outer_min_y, z), Geom::Point3d.new(inner_max_x, inner_min_y, z), Geom::Point3d.new(inner_min_x, inner_min_y, z)]
-      e_points = [Geom::Point3d.new(inner_min_x, inner_max_y, z), Geom::Point3d.new(inner_max_x, inner_max_y, z), Geom::Point3d.new(inner_max_x, outer_max_y, z), Geom::Point3d.new(inner_min_x, outer_max_y, z)]
+      # West плитка - зменшуємо довжину на розмір шва з двох сторін
+      w_points = [Geom::Point3d.new(inner_min_x + seam_mm, outer_min_y, z), Geom::Point3d.new(inner_max_x - seam_mm, outer_min_y, z), Geom::Point3d.new(inner_max_x - seam_mm, inner_min_y, z), Geom::Point3d.new(inner_min_x + seam_mm, inner_min_y, z)]
+      # East плитка - зменшуємо довжину на розмір шва з двох сторін
+      e_points = [Geom::Point3d.new(inner_min_x + seam_mm, inner_max_y, z), Geom::Point3d.new(inner_max_x - seam_mm, inner_max_y, z), Geom::Point3d.new(inner_max_x - seam_mm, outer_max_y, z), Geom::Point3d.new(inner_min_x + seam_mm, outer_max_y, z)]
       tile_thickness = thickness.mm
       south_def = create_tile_component("Perimeter_Tile_South", s_points, tile_thickness)
       north_def = create_tile_component("Perimeter_Tile_North", n_points, tile_thickness)

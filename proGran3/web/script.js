@@ -1787,17 +1787,19 @@ function addTiles() {
       const thickness = getSelectedThickness();
       const borderWidth = borderWidthElement.value;
       const overhang = overhangElement.value;
+      const seam = getSelectedSeam();
       
-      debugLog(` Параметри рамки: товщина=${thickness}, ширина=${borderWidth}, виступ=${overhang}`, 'info');
+      debugLog(` Параметри рамки: товщина=${thickness}, ширина=${borderWidth}, виступ=${overhang}, шов=${seam}`, 'info');
       
       // Конвертуємо в мм
       const thicknessMm = convertToMm(thickness);
       const borderWidthMm = convertToMm(borderWidth);
       const overhangMm = convertToMm(overhang);
+      const seamMm = convertToMm(seam, true); // Шви завжди в мм
       
-      debugLog(` Параметри в мм: товщина=${thicknessMm}, ширина=${borderWidthMm}, виступ=${overhangMm}`, 'info');
+      debugLog(` Параметри в мм: товщина=${thicknessMm}, ширина=${borderWidthMm}, виступ=${overhangMm}, шов=${seamMm}`, 'info');
       
-      window.sketchup.add_tiles('frame', thicknessMm, borderWidthMm, overhangMm);
+      window.sketchup.add_tiles('frame', thicknessMm, borderWidthMm, overhangMm, seamMm);
     } else {
       const sizeElement = document.getElementById('modular-tile-size');
       const thicknessElement = document.getElementById('modular-thickness');
@@ -2125,6 +2127,7 @@ function updateUnitLabels() {
   document.getElementById('tile-thickness-frame-label').textContent = `Товщина`;
   document.getElementById('tile-border-width-label').textContent = `Ширина рамки (${unitText})`;
   document.getElementById('tile-overhang-label').textContent = `Виступ (${unitText})`;
+  document.getElementById('frame-seam-label').textContent = `Шов між плитками (мм)`; // Шви завжди в мм
   document.getElementById('modular-thickness-label').textContent = `Товщина (${unitText}):`;
   document.getElementById('modular-seam-label').textContent = `Шов (мм)`; // Шви завжди в мм
   document.getElementById('modular-overhang-label').textContent = `Виступ (${unitText}):`;

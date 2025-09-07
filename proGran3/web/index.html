@@ -160,6 +160,18 @@
             
             <div class="input-row">
               <div class="input-wrapper">
+                <label id="frame-seam-label" data-i18n="labels.seam">Шов між плитками</label>
+                <div class="button-group-seam">
+                  <button type="button" class="seam-btn active" data-value="2" onclick="selectSeam(this)" data-i18n="buttons.seam_2mm">2 мм</button>
+                  <button type="button" class="seam-btn" data-value="3" onclick="selectSeam(this)" data-i18n="buttons.seam_3mm">3 мм</button>
+                  <button type="button" class="seam-btn" data-value="4" onclick="selectSeam(this)" data-i18n="buttons.seam_4mm">4 мм</button>
+                  <button type="button" class="seam-btn" data-value="5" onclick="selectSeam(this)" data-i18n="buttons.seam_5mm">5 мм</button>
+                </div>
+              </div>
+            </div>
+            
+            <div class="input-row">
+              <div class="input-wrapper">
                 <label id="tile-thickness-frame-label" data-i18n="labels.thickness">Товщина</label>
                 <div class="button-group-thickness">
                   <button type="button" class="thickness-btn" data-value="20" onclick="selectThickness(this)" data-i18n="buttons.thickness_2cm">2 см</button>
