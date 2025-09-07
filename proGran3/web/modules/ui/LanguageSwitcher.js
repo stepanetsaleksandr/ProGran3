@@ -1,17 +1,22 @@
-(function(global) {
+(function() {
   'use strict';
   
-  // Ініціалізуємо namespace
+  // Створюємо глобальний об'єкт якщо не існує
+  if (typeof global === 'undefined') {
+    window.global = window;
+  }
+  
   if (!global.ProGran3) {
     global.ProGran3 = {};
   }
+  
   if (!global.ProGran3.UI) {
     global.ProGran3.UI = {};
   }
   
   const LanguageSwitcher = {
     
-    // Створення перемикача мов
+    // Створення перемикача мов (кнопка)
     createLanguageSwitcher() {
       const switcher = document.createElement('div');
       switcher.id = 'language-switcher';
@@ -21,25 +26,16 @@
       const currentLang = this.getCurrentLanguage();
       const currentLangInfo = this.getLanguageInfo(currentLang);
       
-      // Генеруємо опції мов
-      const languageOptions = this.generateLanguageOptions();
-      
       switcher.innerHTML = `
-        <div class="language-toggle">
-          <span class="language-flag">${currentLangInfo.flag}</span>
+        <button class="language-button" type="button">
           <span class="language-name">${currentLangInfo.name}</span>
-          <span class="language-arrow">▼</span>
-        </div>
-        <div class="language-dropdown">
-          ${languageOptions}
-        </div>
+        </button>
       `;
       
       // Додаємо логування для діагностики
-      console.log('🔧 LanguageSwitcher створено:', {
+      console.log('LanguageSwitcher (кнопка) створено:', {
         currentLang,
         currentLangInfo,
-        languageOptions: languageOptions.length,
         switcherHTML: switcher.innerHTML.length
       });
       
@@ -51,42 +47,149 @@
       if (window.ProGran3 && window.ProGran3.I18n && window.ProGran3.I18n.Manager) {
         return window.ProGran3.I18n.Manager.getCurrentLanguage();
       }
-      return 'uk'; // Fallback
+      return 'uk'; // За замовчуванням українська
     },
     
     // Отримання інформації про мову
     getLanguageInfo(lang) {
       const languages = {
-        'uk': { flag: '🇺🇦', name: 'Українська' },
-        'pl': { flag: '🇵🇱', name: 'Polski' },
-        'en': { flag: '🇬🇧', name: 'English' }
+        'uk': { name: 'Українська' },
+        'pl': { name: 'Polski' },
+        'en': { name: 'English' }
       };
       return languages[lang] || languages['uk'];
     },
     
-    // Генерація опцій мов
-    generateLanguageOptions() {
-      const languages = [
-        { code: 'uk', flag: '🇺🇦', name: 'Українська' },
-        { code: 'pl', flag: '🇵🇱', name: 'Polski' },
-        { code: 'en', flag: '🇬🇧', name: 'English' }
-      ];
+    // Почергове перемикання мов
+    cycleLanguage() {
+      const supportedLanguages = ['uk', 'pl', 'en'];
+      const currentLang = this.getCurrentLanguage();
+      const currentIndex = supportedLanguages.indexOf(currentLang);
+      const nextIndex = (currentIndex + 1) % supportedLanguages.length;
+      const nextLang = supportedLanguages[nextIndex];
       
-      const options = languages.map(lang => `
-        <div class="language-option" data-lang="${lang.code}">
-          <span class="option-flag">${lang.flag}</span>
-          <span class="option-name">${lang.name}</span>
-        </div>
-      `).join('');
-      
-      // Додаємо логування для діагностики
-      console.log('🌍 Генеровано опцій мов:', {
-        languagesCount: languages.length,
-        optionsLength: options.length,
-        options: options.substring(0, 200) + '...'
+      console.log('Почергове перемикання мов:', {
+        currentLang,
+        currentIndex,
+        nextLang,
+        nextIndex,
+        supportedLanguages
       });
       
-      return options;
+      // Змінюємо мову
+      if (window.ProGran3 && window.ProGran3.I18n && window.ProGran3.I18n.Manager) {
+        // Використовуємо правильний метод для зміни мови
+        if (typeof window.ProGran3.I18n.Manager.changeLanguage === 'function') {
+          window.ProGran3.I18n.Manager.changeLanguage(nextLang);
+        } else if (typeof window.ProGran3.I18n.Manager.setLanguage === 'function') {
+          window.ProGran3.I18n.Manager.setLanguage(nextLang);
+        } else {
+          // Якщо немає методів, викликаємо глобальну функцію
+          if (typeof window.changeLanguage === 'function') {
+            window.changeLanguage(nextLang);
+          }
+        }
+      }
+      
+      return nextLang;
+    },
+    
+    // Ініціалізація
+    init() {
+      console.log('Ініціалізація LanguageSwitcher...');
+      this.addStyles();
+      const switcher = this.createLanguageSwitcher();
+      const headerRight = document.querySelector('.header-right');
+      if (headerRight) {
+        console.log('Знайдено header-right, додаємо перемикач мов');
+        headerRight.appendChild(switcher);
+        console.log('Перемикач мов додано в header-right');
+      } else {
+        console.log('header-right не знайдено, додаємо в body');
+        document.body.appendChild(switcher);
+      }
+      this.setupEvents(switcher);
+      console.log('Перевірка кнопки:', {
+        buttonExists: !!switcher.querySelector('.language-button'),
+        buttonHTML: switcher.querySelector('.language-button') ? switcher.querySelector('.language-button').innerHTML.substring(0, 100) + '...' : 'не знайдено'
+      });
+      return switcher;
+    },
+    
+    // Налаштування подій
+    setupEvents(switcher) {
+      const button = switcher.querySelector('.language-button');
+      
+      console.log('Налаштування подій для кнопки:', {
+        buttonExists: !!button
+      });
+      
+      if (button) {
+        // Клік по кнопці - почергове перемикання мов
+        button.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          
+          console.log('Клік по кнопці перемикача мов');
+          
+          try {
+            // Почергове перемикання мов
+            const newLang = this.cycleLanguage();
+            
+            // Оновлюємо кнопку
+            this.updateLanguageSwitcher(switcher, newLang);
+            
+            // Анімація кнопки
+            this.animateButtonClick(button);
+            
+            console.log('Мова змінена на:', newLang);
+          } catch (error) {
+            console.error('Помилка зміни мови:', error);
+          }
+        });
+        
+        // Hover ефекти
+        button.addEventListener('mouseenter', () => {
+          button.style.transform = 'translateY(-2px)';
+        });
+        
+        button.addEventListener('mouseleave', () => {
+          button.style.transform = 'translateY(0)';
+        });
+      }
+    },
+    
+    // Анімація кліку кнопки
+    animateButtonClick(button) {
+      if (button) {
+        // Анімація натискання
+        button.style.transform = 'scale(0.95)';
+        button.style.transition = 'transform 0.1s ease';
+        
+        setTimeout(() => {
+          button.style.transform = 'scale(1)';
+        }, 100);
+        
+        setTimeout(() => {
+          button.style.transition = '';
+        }, 200);
+      }
+    },
+    
+    // Оновлення перемикача мов (кнопка)
+    updateLanguageSwitcher(switcher, newLang) {
+      const button = switcher.querySelector('.language-button');
+      const name = button ? button.querySelector('.language-name') : null;
+      
+      if (button && name) {
+        const langInfo = this.getLanguageInfo(newLang);
+        name.textContent = langInfo.name;
+        
+        console.log('Перемикач мов оновлено:', {
+          newLang,
+          langInfo,
+          name: name.textContent
+        });
+      }
     },
     
     // Додавання стилів для перемикача
@@ -99,7 +202,7 @@
           z-index: 1000;
         }
         
-        .language-toggle {
+        .language-button {
           display: flex;
           align-items: center;
           gap: 8px;
@@ -114,134 +217,64 @@
           font-size: 14px;
           font-weight: 500;
           min-width: 140px;
+          outline: none;
         }
         
-        .language-toggle:hover {
+        .language-button:hover {
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
         
-        .language-toggle:active {
-          transform: translateY(0);
+        .language-button:active {
+          transform: translateY(0) scale(0.95);
         }
         
-        .language-flag {
-          font-size: 18px;
-          line-height: 1;
+        .language-button:focus {
+          outline: 2px solid rgba(255, 255, 255, 0.5);
+          outline-offset: 2px;
         }
         
         .language-name {
           flex: 1;
-          text-align: left;
-        }
-        
-        .language-arrow {
-          font-size: 10px;
-          transition: transform 0.3s ease;
-        }
-        
-        .language-dropdown {
-          position: absolute;
-          top: 100%;
-          left: 0;
-          right: 0;
-          background: white;
-          border-radius: 8px;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-          border: 1px solid #e1e5e9;
-          overflow: hidden;
-          opacity: 0;
-          visibility: hidden;
-          transform: translateY(-10px);
-          transition: all 0.3s ease;
-          z-index: 1001;
-          min-width: 160px;
-        }
-        
-        .language-dropdown.active {
-          opacity: 1;
-          visibility: visible;
-          transform: translateY(0);
-        }
-        
-        .language-dropdown.active ~ .language-toggle .language-arrow,
-        .language-switcher:has(.language-dropdown.active) .language-arrow {
-          transform: rotate(180deg);
-        }
-        
-        .language-option {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 12px 16px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          border-bottom: 1px solid #f1f3f4;
-        }
-        
-        .language-option:last-child {
-          border-bottom: none;
-        }
-        
-        .language-option:hover {
-          background: linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%);
-          color: #667eea;
-        }
-        
-        .language-option.active {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-        }
-        
-        .option-flag {
-          font-size: 16px;
-          line-height: 1;
-        }
-        
-        .option-name {
-          font-size: 14px;
+          text-align: center;
           font-weight: 500;
         }
         
-        /* Анімація для мобільних пристроїв */
-        @media (max-width: 768px) {
-          .language-toggle {
-            min-width: 120px;
+        /* Мобільні стилі */
+        @media (max-width: 480px) {
+          .language-button {
+            min-width: 100px;
             padding: 6px 10px;
             font-size: 13px;
           }
           
-          .language-flag {
-            font-size: 16px;
-          }
-          
-          .language-dropdown {
-            min-width: 140px;
-            left: 50% !important;
-            transform: translateX(-50%) translateY(-10px) !important;
-          }
-          
-          .language-dropdown.active {
-            transform: translateX(-50%) translateY(0) !important;
+          .header-right {
+            padding-right: 10px;
           }
         }
         
         /* Темна тема */
         @media (prefers-color-scheme: dark) {
-          .language-dropdown {
-            background: #2d3748;
-            border-color: #4a5568;
-          }
-          
-          .language-option {
-            color: #e2e8f0;
-            border-bottom-color: #4a5568;
-          }
-          
-          .language-option:hover {
+          .language-button {
             background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
-            color: #90cdf4;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
           }
+          
+          .language-button:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+          }
+        }
+        
+        /* Стилі для інтеграції в header */
+        .header-right .language-switcher {
+          margin: 0;
+          position: relative;
+        }
+        
+        /* Додаткові стилі для правильного позиціонування */
+        .header-right {
+          position: relative;
+          overflow: visible;
         }
         
         /* Плавна анімація зміни мови */
@@ -249,233 +282,25 @@
           transition: all 0.3s ease;
         }
         
-        /* Стилі для інтеграції в header */
-        .header-right .language-switcher {
-          margin: 0;
-        }
-        
-        .header .language-toggle {
+        .header .language-button {
           background: rgba(255, 255, 255, 0.1);
           backdrop-filter: blur(10px);
           border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
-        .header .language-toggle:hover {
+        .header .language-button:hover {
           background: rgba(255, 255, 255, 0.2);
-        }
-        
-        /* Z-index для dropdown щоб не ховався за іншими елементами */
-        .language-dropdown {
-          z-index: 1001;
+          border-color: rgba(255, 255, 255, 0.3);
         }
       `;
       
       document.head.appendChild(style);
-    },
-    
-    // Ініціалізація перемикача
-    init() {
-      console.log('🚀 Ініціалізація LanguageSwitcher...');
-      
-      this.addStyles();
-      
-      // Створюємо перемикач
-      const switcher = this.createLanguageSwitcher();
-      
-      // Додаємо в header-right (правий верхній кут)
-      const headerRight = document.querySelector('.header-right');
-      if (headerRight) {
-        console.log('📍 Знайдено header-right, додаємо перемикач мов');
-        headerRight.appendChild(switcher);
-        console.log('✅ Перемикач мов додано в header-right');
-      } else {
-        console.log('⚠️ header-right не знайдено, використовуємо fallback');
-        // Fallback: додаємо в header
-        const header = document.querySelector('.header') || document.querySelector('header');
-        if (header) {
-          header.appendChild(switcher);
-          console.log('✅ Перемикач додано в header');
-        } else {
-          // Якщо немає header, додаємо в body
-          switcher.style.position = 'fixed';
-          switcher.style.top = '20px';
-          switcher.style.right = '20px';
-          switcher.style.zIndex = '1000';
-          document.body.appendChild(switcher);
-          console.log('✅ Перемикач додано в body (fixed position)');
-        }
-      }
-      
-      // Налаштовуємо події
-      this.setupEvents(switcher);
-      
-      // Перевіряємо що dropdown створено правильно
-      const dropdown = switcher.querySelector('.language-dropdown');
-      const options = dropdown ? dropdown.querySelectorAll('.language-option') : [];
-      console.log('🔍 Перевірка dropdown:', {
-        dropdownExists: !!dropdown,
-        optionsCount: options.length,
-        dropdownHTML: dropdown ? dropdown.innerHTML.substring(0, 100) + '...' : 'не знайдено'
-      });
-      
-      return switcher;
-    },
-    
-    // Налаштування подій
-    setupEvents(switcher) {
-      const dropdown = switcher.querySelector('.language-dropdown');
-      const toggle = switcher.querySelector('.language-toggle');
-      
-      console.log('🔧 Налаштування подій:', {
-        toggleExists: !!toggle,
-        dropdownExists: !!dropdown,
-        optionsCount: dropdown ? dropdown.querySelectorAll('.language-option').length : 0
-      });
-      
-      if (toggle && dropdown) {
-        // Клік по перемикачу
-        toggle.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const wasActive = dropdown.classList.contains('active');
-          dropdown.classList.toggle('active');
-          const isActive = dropdown.classList.contains('active');
-          
-          console.log('🖱️ Клік по перемикачу:', {
-            wasActive,
-            isActive,
-            optionsCount: dropdown.querySelectorAll('.language-option').length
-          });
-          
-          // Позиціонуємо dropdown
-          if (isActive) {
-            this.positionDropdown(toggle, dropdown);
-          }
-        });
-        
-        // Закриття при кліку поза межами
-        document.addEventListener('click', (e) => {
-          if (!switcher.contains(e.target)) {
-            dropdown.classList.remove('active');
-          }
-        });
-        
-        // Обробка вибору мови
-        const options = dropdown.querySelectorAll('.language-option');
-        console.log('🔧 Налаштування подій для опцій:', {
-          optionsCount: options.length,
-          options: Array.from(options).map(opt => ({
-            lang: opt.dataset.lang,
-            text: opt.textContent.trim()
-          }))
-        });
-        
-        options.forEach(option => {
-          option.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const lang = option.dataset.lang;
-            
-            console.log('🖱️ Клік по опції мови:', {
-              lang,
-              optionText: option.textContent.trim(),
-              hasI18nManager: !!(window.ProGran3 && window.ProGran3.I18n && window.ProGran3.I18n.Manager)
-            });
-            
-            if (lang && window.ProGran3 && window.ProGran3.I18n && window.ProGran3.I18n.Manager) {
-              const success = await window.ProGran3.I18n.Manager.changeLanguage(lang);
-              console.log('🌍 Результат зміни мови:', { lang, success });
-              
-              if (success) {
-                // Оновлюємо активний стан
-                options.forEach(opt => opt.classList.remove('active'));
-                option.classList.add('active');
-                
-                // Оновлюємо перемикач з новою мовою
-                this.updateLanguageSwitcher(switcher, lang);
-                
-                // Закриваємо dropdown
-                dropdown.classList.remove('active');
-                
-                // Анімація зміни
-                this.animateLanguageChange(switcher);
-              }
-            } else {
-              console.log('❌ Не вдалося змінити мову:', { lang, hasI18nManager: !!(window.ProGran3 && window.ProGran3.I18n && window.ProGran3.I18n.Manager) });
-            }
-          });
-        });
-      }
-    },
-    
-    // Позиціонування dropdown
-    positionDropdown(toggle, dropdown) {
-      // Оскільки тепер використовуємо position: absolute, 
-      // dropdown автоматично позиціонується відносно .language-switcher
-      // Додаємо тільки логування для діагностики
-      console.log('📍 Позиціонування dropdown:', {
-        toggleRect: toggle.getBoundingClientRect(),
-        dropdownStyle: {
-          position: dropdown.style.position,
-          top: dropdown.style.top,
-          left: dropdown.style.left
-        }
-      });
-    },
-    
-    // Анімація зміни мови
-    animateLanguageChange(switcher) {
-      const toggle = switcher.querySelector('.language-toggle');
-      if (toggle) {
-        toggle.classList.add('language-transition');
-        setTimeout(() => {
-          toggle.classList.remove('language-transition');
-        }, 300);
-      }
-    },
-    
-    // Оновлення перемикача мов (нова функція)
-    updateLanguageSwitcher(switcher, newLang) {
-      const toggle = switcher.querySelector('.language-toggle');
-      const flag = toggle.querySelector('.language-flag');
-      const name = toggle.querySelector('.language-name');
-      
-      if (toggle && flag && name) {
-        const langInfo = this.getLanguageInfo(newLang);
-        flag.textContent = langInfo.flag;
-        name.textContent = langInfo.name;
-      }
-    },
-    
-    // Оновлення перемикача
-    updateSwitcher(currentLang) {
-      const switcher = document.getElementById('language-switcher');
-      if (!switcher) return;
-      
-      const flagElement = switcher.querySelector('.language-flag');
-      const nameElement = switcher.querySelector('.language-name');
-      const options = switcher.querySelectorAll('.language-option');
-      
-      // Оновлюємо поточну мову
-      if (window.ProGran3 && window.ProGran3.I18n && window.ProGran3.I18n.Manager) {
-        const manager = window.ProGran3.I18n.Manager;
-        const currentFlag = manager.languageFlags[currentLang];
-        const currentName = manager.languageNames[currentLang];
-        
-        if (flagElement) flagElement.textContent = currentFlag;
-        if (nameElement) nameElement.textContent = currentName;
-        
-        // Оновлюємо активний стан опцій
-        options.forEach(option => {
-          if (option.dataset.lang === currentLang) {
-            option.classList.add('active');
-          } else {
-            option.classList.remove('active');
-          }
-        });
-      }
     }
   };
   
-  // Експорт
+  // Експортуємо модуль
   global.ProGran3.UI.LanguageSwitcher = LanguageSwitcher;
   
-})(window);
+  console.log('LanguageSwitcher модуль завантажено');
+  
+})();

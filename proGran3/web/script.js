@@ -124,13 +124,13 @@ function switchTab(tabName) {
         const viewportElement = document.getElementById('gravestones-carousel-viewport');
         
         if (trackElement && viewportElement) {
-          debugLog(`✅ Спеціально ініціалізуємо карусель gravestones для таба gravestone`, 'success');
+          debugLog(`Спеціально ініціалізуємо карусель gravestones для таба gravestone`, 'success');
           initializeGravestonesCarousel('gravestones');
         } else {
-          debugLog(`❌ Не знайдено елементи каруселі gravestones для таба gravestone`, 'error');
+          debugLog(`Не знайдено елементи каруселі gravestones для таба gravestone`, 'error');
         }
       } else {
-        debugLog(`⚠️ Карусель gravestones не доступна або немає моделей для таба gravestone`, 'warning');
+        debugLog(`Карусель gravestones не доступна або немає моделей для таба gravestone`, 'warning');
       }
     }, 300);
   }
@@ -173,7 +173,7 @@ function initializeCarouselsForTab(tabName) {
   
   const carouselTypes = tabCarousels[tabName] || [];
   carouselTypes.forEach(category => {
-    debugLog(`🔍 Перевіряємо карусель ${category} для таба ${tabName}`, 'info');
+    debugLog(`Перевіряємо карусель ${category} для таба ${tabName}`, 'info');
     
     if (CarouselManager.hasCarousel(category) && modelLists[category]) {
       const trackElement = document.getElementById(CarouselManager.getCarouselElementId(category, 'track'));
@@ -181,36 +181,36 @@ function initializeCarouselsForTab(tabName) {
       
       
       if (trackElement && viewportElement) {
-        debugLog(`✅ Ініціалізуємо карусель ${category} для таба ${tabName}`, 'success');
+        debugLog(`Ініціалізуємо карусель ${category} для таба ${tabName}`, 'success');
         CarouselManager.initialize(category);
       } else {
-        debugLog(`❌ Не знайдено елементи каруселі ${category} для таба ${tabName}`, 'error');
+        debugLog(`Не знайдено елементи каруселі ${category} для таба ${tabName}`, 'error');
       }
     } else {
-      debugLog(`⚠️ Карусель ${category} не доступна або немає моделей для таба ${tabName}`, 'warning');
+      debugLog(`Карусель ${category} не доступна або немає моделей для таба ${tabName}`, 'warning');
     }
   });
 }
 
 // Ініціалізація табів
 function initializeTabs() {
-  debugLog(`🚀 Ініціалізація табів`, 'info');
+  debugLog(`Ініціалізація табів`, 'info');
   
   // Перевіряємо наявність навігації табів
   const tabsNavigation = document.querySelector('.tabs-navigation');
   if (!tabsNavigation) {
-    debugLog(`❌ Не знайдено навігацію табів`, 'error');
+    debugLog(`Не знайдено навігацію табів`, 'error');
     return;
   }
   
   // Перевіряємо наявність контенту табів
   const tabContents = document.querySelectorAll('.tab-content');
   if (tabContents.length === 0) {
-    debugLog(`❌ Не знайдено контент табів`, 'error');
+    debugLog(`Не знайдено контент табів`, 'error');
     return;
   }
   
-  debugLog(`✅ Знайдено ${tabContents.length} табів`, 'success');
+  debugLog(`Знайдено ${tabContents.length} табів`, 'success');
   
   // Встановлюємо активний таб за замовчуванням
   switchTab('base');
@@ -222,13 +222,13 @@ function initializeTabs() {
       e.preventDefault();
       const tabName = this.getAttribute('data-tab');
       if (tabName) {
-        debugLog(`🔄 Переключення на таб: ${tabName}`, 'info');
+        debugLog(` Переключення на таб: ${tabName}`, 'info');
         switchTab(tabName);
       }
     });
   });
   
-  debugLog(`✅ Таби ініціалізовані успішно`, 'success');
+  debugLog(` Таби ініціалізовані успішно`, 'success');
 }
 
 // Ініціалізація floating labels
@@ -372,7 +372,7 @@ const CarouselManager = {
     };
     
     this.carousels[category] = { ...defaultConfig, ...config };
-    console.log(`🎨 Зареєстровано нову карусель: ${category}`);
+    console.log(` Зареєстровано нову карусель: ${category}`);
   },
 
   // Отримання конфігурації каруселі
@@ -387,7 +387,7 @@ const CarouselManager = {
 
   // Ініціалізація каруселі (уніфікована логіка як у стел)
   initialize(category, options = {}) {
-    debugLog(`🚀 CarouselManager.initialize викликано для ${category}`, 'info');
+    debugLog(` CarouselManager.initialize викликано для ${category}`, 'info');
     
     const track = document.getElementById(this.getCarouselElementId(category, 'track'));
     const viewport = document.getElementById(this.getCarouselElementId(category, 'viewport'));
@@ -404,7 +404,7 @@ const CarouselManager = {
     }
     
     if (!track || !viewport || !modelLists[category] || modelLists[category].length === 0) {
-      debugLog(`❌ Не вдалося ініціалізувати карусель ${category}: track=${!!track}, viewport=${!!viewport}, моделі=${!!modelLists[category]}, кількість=${modelLists[category]?.length || 0}`, 'error');
+      debugLog(` Не вдалося ініціалізувати карусель ${category}: track=${!!track}, viewport=${!!viewport}, моделі=${!!modelLists[category]}, кількість=${modelLists[category]?.length || 0}`, 'error');
       return;
     }
     
@@ -444,7 +444,7 @@ const CarouselManager = {
       this.loadOrGeneratePreview(category, 0);
     }, 100);
     
-    debugLog(`✅ Карусель ${category} ініціалізована`, 'success');
+    debugLog(` Карусель ${category} ініціалізована`, 'success');
   },
 
 
@@ -457,7 +457,7 @@ const CarouselManager = {
     const items = track.querySelectorAll('.carousel-item');
     
     if (!track || items.length === 0 || !items[index]) {
-      debugLog(`❌ Не вдалося знайти елементи для ${category}[${index}]`, 'error');
+      debugLog(` Не вдалося знайти елементи для ${category}[${index}]`, 'error');
       return;
     }
 
@@ -477,7 +477,7 @@ const CarouselManager = {
     carouselState[category].index = index;
     track.style.transform = `translateX(${newTransform}px)`;
     
-    debugLog(`✅ Показано елемент ${index} в каруселі ${category}`, 'success');
+    debugLog(` Показано елемент ${index} в каруселі ${category}`, 'success');
     
     // Автоматичне заповнення полів розмірів для підставки
     if (category === 'stands') {
@@ -494,11 +494,11 @@ const CarouselManager = {
 
   // Ледаче завантаження превью (уніфікована логіка як у стел)
   loadOrGeneratePreview(category, index) {
-    debugLog(`🔍 loadOrGeneratePreview викликано для ${category}[${index}]`, 'info');
+    debugLog(` loadOrGeneratePreview викликано для ${category}[${index}]`, 'info');
     
     const track = document.getElementById(this.getCarouselElementId(category, 'track'));
     if (!track) {
-      debugLog(`❌ Не знайдено track для ${category}`, 'error');
+      debugLog(` Не знайдено track для ${category}`, 'error');
       return;
     }
     
@@ -507,7 +507,7 @@ const CarouselManager = {
     
     const item = items[index];
     if (!item) {
-      debugLog(`❌ Не знайдено елемент ${index} в каруселі ${category}`, 'error');
+      debugLog(` Не знайдено елемент ${index} в каруселі ${category}`, 'error');
       return;
     }
 
@@ -519,12 +519,12 @@ const CarouselManager = {
 
     const filename = item.dataset.filename || (modelLists[category] && modelLists[category][index]);
     if (!filename) {
-      debugLog(`❌ Не знайдено filename для ${category}[${index}]`, 'error');
-      debugLog(`❌ modelLists[${category}]: ${JSON.stringify(modelLists[category])}`, 'error');
+      debugLog(` Не знайдено filename для ${category}[${index}]`, 'error');
+      debugLog(` modelLists[${category}]: ${JSON.stringify(modelLists[category])}`, 'error');
       return;
     }
     
-    debugLog(`✅ Знайдено filename: ${filename} для ${category}[${index}]`, 'success');
+    debugLog(` Знайдено filename: ${filename} для ${category}[${index}]`, 'success');
 
     let loadingDiv = item.querySelector('.loading-indicator');
     if (!loadingDiv) {
@@ -536,7 +536,7 @@ const CarouselManager = {
     loadingDiv.textContent = 'Генерація превью...';
 
     item.dataset.status = 'pending';
-    debugLog(`🔄 Встановлено статус 'pending' для ${filename}`, 'info');
+    debugLog(` Встановлено статус 'pending' для ${filename}`, 'info');
 
     // Відразу запускаємо генерацію превью
     this.autoGeneratePreview(category, filename, item, loadingDiv);
@@ -544,16 +544,16 @@ const CarouselManager = {
 
   // Автоматична генерація превью (уніфікована логіка як у стел)
   autoGeneratePreview(category, filename, item, loadingDiv) {
-    debugLog(`🔧 autoGeneratePreview викликано для ${category}/${filename}`, 'info');
+    debugLog(` autoGeneratePreview викликано для ${category}/${filename}`, 'info');
     
     if (!window.sketchup) {
-      debugLog(`❌ window.sketchup не доступний для ${filename}`, 'error');
+      debugLog(` window.sketchup не доступний для ${filename}`, 'error');
       createPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
       return;
     }
     
     const componentPath = `${category}/${filename}`;
-    debugLog(`🚀 Запуск генерації превью для: ${componentPath} (CarouselManager)`, 'info');
+    debugLog(` Запуск генерації превью для: ${componentPath} (CarouselManager)`, 'info');
     
     // Генеруємо веб-превью через SketchUp
     window.sketchup.generate_web_preview(componentPath);
@@ -561,10 +561,10 @@ const CarouselManager = {
     
   // Зберігаємо посилання на елементи для callback через SketchUpBridge
   if (window.ProGran3 && window.ProGran3.Communication && window.ProGran3.Communication.SketchUpBridge) {
-    debugLog(`✅ Використовуємо SketchUpBridge для pending: ${componentPath}`, 'success');
+    debugLog(` Використовуємо SketchUpBridge для pending: ${componentPath}`, 'success');
     window.ProGran3.Communication.SketchUpBridge.addPendingPreview(componentPath, filename, 'CarouselManager', item, loadingDiv);
   } else {
-    debugLog(`⚠️ Використовуємо fallback для pending: ${componentPath}`, 'warning');
+    debugLog(` Використовуємо fallback для pending: ${componentPath}`, 'warning');
     // Fallback для зворотної сумісності
     window.pendingPreviews = window.pendingPreviews || {};
     window.pendingPreviews[componentPath] = { item, loadingDiv, filename, source: 'CarouselManager' };
@@ -582,7 +582,7 @@ const CarouselManager = {
 
   // Рух каруселі (уніфікована логіка як у стел)
   moveCarousel(category, direction) {
-    debugLog(`🔄 moveCarousel викликано для ${category}, direction=${direction}`, 'info');
+    debugLog(` moveCarousel викликано для ${category}, direction=${direction}`, 'info');
     
     // Перевіряємо і створюємо стан каруселі, якщо не існує
     if (!carouselState[category]) {
@@ -643,29 +643,29 @@ const CarouselManager = {
       carouselState[category] = { index: 0 };
     }
     
-    console.log(`🎨 Зареєстровано нову карусель: ${category}`);
+    console.log(` Зареєстровано нову карусель: ${category}`);
   },
 
   // Автоматична ініціалізація всіх каруселей
   initializeAllCarousels() {
-    debugLog(`🚀 initializeAllCarousels викликано`, 'info');
+    debugLog(` initializeAllCarousels викликано`, 'info');
     debugLog(`📋 Доступні каруселі: ${Object.keys(this.carousels).join(', ')}`, 'info');
     
     // Додаткова перевірка для gravestones
     if (this.carousels.gravestones) {
-      debugLog(`✅ Карусель gravestones знайдена в конфігурації`, 'success');
+      debugLog(` Карусель gravestones знайдена в конфігурації`, 'success');
     } else {
-      debugLog(`❌ Карусель gravestones не знайдена в конфігурації`, 'error');
+      debugLog(` Карусель gravestones не знайдена в конфігурації`, 'error');
     }
     
     
     Object.keys(this.carousels).forEach(category => {
-      debugLog(`🔍 Перевіряємо карусель: ${category}`, 'info');
+      debugLog(` Перевіряємо карусель: ${category}`, 'info');
       
       const trackElement = document.getElementById(this.getCarouselElementId(category, 'track'));
       const viewportElement = document.getElementById(this.getCarouselElementId(category, 'viewport'));
       
-      debugLog(`🔍 Перевірка каруселі ${category}: моделі=${!!modelLists[category]}, кількість=${modelLists[category]?.length || 0}, track=${!!trackElement}, viewport=${!!viewportElement}`, 'info');
+      debugLog(` Перевірка каруселі ${category}: моделі=${!!modelLists[category]}, кількість=${modelLists[category]?.length || 0}, track=${!!trackElement}, viewport=${!!viewportElement}`, 'info');
       
       // Додаткова перевірка для gravestones
       if (category === 'gravestones') {
@@ -681,12 +681,12 @@ const CarouselManager = {
       
       
       if (modelLists[category] && trackElement && viewportElement) {
-        debugLog(`✅ Умови виконані для ${category}, запускаємо initialize`, 'success');
+        debugLog(` Умови виконані для ${category}, запускаємо initialize`, 'success');
         this.initialize(category);
-        debugLog(`✅ Автоматично ініціалізовано карусель: ${category}`, 'success');
+        debugLog(` Автоматично ініціалізовано карусель: ${category}`, 'success');
       } else {
-        debugLog(`❌ Не вдалося ініціалізувати карусель: ${category}`, 'error');
-        debugLog(`❌ Деталі для ${category}: моделі=${!!modelLists[category]}, track=${!!trackElement}, viewport=${!!viewportElement}`, 'error');
+        debugLog(` Не вдалося ініціалізувати карусель: ${category}`, 'error');
+        debugLog(` Деталі для ${category}: моделі=${!!modelLists[category]}, track=${!!trackElement}, viewport=${!!viewportElement}`, 'error');
       }
     });
   },
@@ -745,20 +745,20 @@ function debugLog(message, type = 'info') {
 function clearDebugLog() {
   const debugLog = document.getElementById('debug-log');
   if (debugLog) {
-    debugLog.innerHTML = '<div>🔍 Очікування логів...</div>';
+    debugLog.innerHTML = '<div> Очікування логів...</div>';
   }
 }
 
 // --- ІНІЦІАЛІЗАЦІЯ ---
 window.onload = async function () {
-  debugLog(`🚀 window.onload викликано`, 'info');
+  debugLog(` window.onload викликано`, 'info');
   
   // Ініціалізуємо i18n першим
   debugLog(`🌍 Ініціалізуємо i18n`, 'info');
   await initializeI18n();
   
   // Ініціалізуємо додаток
-  debugLog(`🔄 Викликаємо initializeApp()`, 'info');
+  debugLog(` Викликаємо initializeApp()`, 'info');
   initializeApp();
   
   // Запускаємо готовність
@@ -766,35 +766,35 @@ window.onload = async function () {
     debugLog(`📞 Викликаємо window.sketchup.ready()`, 'info');
     window.sketchup.ready();
   } else {
-    debugLog(`❌ window.sketchup.ready не доступний`, 'error');
+    debugLog(` window.sketchup.ready не доступний`, 'error');
   }
 };
 
 // Ініціалізація додатку
 function initializeApp() {
-  debugLog(`🚀 initializeApp викликано`, 'info');
+  debugLog(` initializeApp викликано`, 'info');
   
   // Ініціалізація табів
   initializeTabs();
   
   // Ініціалізація UI (без повторного виклику ready)
   if(document.querySelector('.tiling-mode-btn')) {
-    debugLog(`✅ Знайдено кнопки способу укладання, оновлюємо контроли`, 'success');
+    debugLog(` Знайдено кнопки способу укладання, оновлюємо контроли`, 'success');
     updateTilingControls();
   } else {
-    debugLog(`❌ Не знайдено кнопки способу укладання`, 'error');
+    debugLog(` Не знайдено кнопки способу укладання`, 'error');
   }
   
   // Ініціалізація контролів відмостки
   if(document.getElementById('blind-area-mode')) {
-    debugLog(`✅ Знайдено blind-area-mode, оновлюємо контроли`, 'success');
+    debugLog(` Знайдено blind-area-mode, оновлюємо контроли`, 'success');
     updateBlindAreaControls();
   } else {
-    debugLog(`❌ Не знайдено blind-area-mode`, 'error');
+    debugLog(` Не знайдено blind-area-mode`, 'error');
   }
   
   // Перевірка полів плитки
-  debugLog(`🔍 Перевірка полів плитки...`, 'info');
+  debugLog(` Перевірка полів плитки...`, 'info');
   const tileBorderWidth = document.getElementById('tile-border-width');
   const tileOverhang = document.getElementById('tile-overhang');
   const modularThickness = document.getElementById('modular-thickness');
@@ -803,47 +803,47 @@ function initializeApp() {
   // Перевіряємо кнопки товщини
   const thicknessButtons = document.querySelectorAll('.thickness-btn');
   if (thicknessButtons.length > 0) {
-    debugLog(`✅ Знайдено ${thicknessButtons.length} кнопок товщини плитки`, 'success');
+    debugLog(` Знайдено ${thicknessButtons.length} кнопок товщини плитки`, 'success');
     updateThicknessButtons(); // Оновлюємо відображення кнопок товщини
     const activeThickness = getSelectedThickness();
-    debugLog(`✅ Активна товщина: ${activeThickness}`, 'success');
+    debugLog(` Активна товщина: ${activeThickness}`, 'success');
   } else {
-    debugLog(`❌ Не знайдено кнопки товщини плитки`, 'error');
+    debugLog(` Не знайдено кнопки товщини плитки`, 'error');
   }
   
   // Перевіряємо кнопки шву
   const seamButtons = document.querySelectorAll('.seam-btn');
   if (seamButtons.length > 0) {
-    debugLog(`✅ Знайдено ${seamButtons.length} кнопок шву`, 'success');
+    debugLog(` Знайдено ${seamButtons.length} кнопок шву`, 'success');
     updateSeamButtons(); // Оновлюємо відображення кнопок шву
     const activeSeam = getSelectedSeam();
-    debugLog(`✅ Активний шов: ${activeSeam} мм`, 'success');
+    debugLog(` Активний шов: ${activeSeam} мм`, 'success');
   } else {
-    debugLog(`❌ Не знайдено кнопки шву`, 'error');
+    debugLog(` Не знайдено кнопки шву`, 'error');
   }
   
   if (tileBorderWidth) {
-    debugLog(`✅ Знайдено поле ширини рамки: ${tileBorderWidth.value}`, 'success');
+    debugLog(` Знайдено поле ширини рамки: ${tileBorderWidth.value}`, 'success');
   } else {
-    debugLog(`❌ Не знайдено поле ширини рамки`, 'error');
+    debugLog(` Не знайдено поле ширини рамки`, 'error');
   }
   
   if (tileOverhang) {
-    debugLog(`✅ Знайдено поле виступу: ${tileOverhang.value}`, 'success');
+    debugLog(` Знайдено поле виступу: ${tileOverhang.value}`, 'success');
   } else {
-    debugLog(`❌ Не знайдено поле виступу`, 'error');
+    debugLog(` Не знайдено поле виступу`, 'error');
   }
   
   if (modularThickness) {
-    debugLog(`✅ Знайдено поле товщини модульної: ${modularThickness.value}`, 'success');
+    debugLog(` Знайдено поле товщини модульної: ${modularThickness.value}`, 'success');
   } else {
-    debugLog(`❌ Не знайдено поле товщини модульної`, 'error');
+    debugLog(` Не знайдено поле товщини модульної`, 'error');
   }
   
   if (modularOverhang) {
-    debugLog(`✅ Знайдено поле виступу модульної: ${modularOverhang.value}`, 'success');
+    debugLog(` Знайдено поле виступу модульної: ${modularOverhang.value}`, 'success');
   } else {
-    debugLog(`❌ Не знайдено поле виступу модульної`, 'error');
+    debugLog(` Не знайдено поле виступу модульної`, 'error');
   }
   
   // Згортаємо всі панелі в кожному табі, крім першої
@@ -863,9 +863,9 @@ function initializeApp() {
   
   // Ініціалізуємо floating labels
   initializeFloatingLabels();
-  debugLog(`✅ Floating labels ініціалізовано`, 'success');
+  debugLog(` Floating labels ініціалізовано`, 'success');
   
-  debugLog(`🔄 Викликаємо updateAllDisplays()`, 'info');
+  debugLog(` Викликаємо updateAllDisplays()`, 'info');
   updateAllDisplays();
   updateUnitLabels();
   updateThicknessButtons();
@@ -875,9 +875,9 @@ function initializeApp() {
   
   // Ініціалізуємо тему
   initializeTheme();
-  debugLog(`✅ Тема ініціалізована`, 'success');
+  debugLog(` Тема ініціалізована`, 'success');
   
-  debugLog(`✅ initializeApp завершено`, 'success');
+  debugLog(` initializeApp завершено`, 'success');
 }
 
 function loadModelLists(data) {
@@ -886,17 +886,17 @@ function loadModelLists(data) {
   
   // Додаткова перевірка для gravestones
   if (data.gravestones) {
-    debugLog(`✅ Категорія gravestones знайдена з ${data.gravestones.length} моделями`, 'success');
+    debugLog(` Категорія gravestones знайдена з ${data.gravestones.length} моделями`, 'success');
     debugLog(`📋 Моделі gravestones: ${data.gravestones.join(', ')}`, 'info');
   } else {
-    debugLog(`❌ Категорія gravestones не знайдена в даних`, 'error');
+    debugLog(` Категорія gravestones не знайдена в даних`, 'error');
   }
   
   
   modelLists = data;
   
   // Використовуємо автоматичну ініціалізацію всіх каруселей
-  debugLog(`🔄 Викликаємо CarouselManager.initializeAllCarousels()`, 'info');
+  debugLog(` Викликаємо CarouselManager.initializeAllCarousels()`, 'info');
   CarouselManager.initializeAllCarousels();
   
   // Додатково ініціалізуємо каруселі для активного таба
@@ -912,13 +912,13 @@ function loadModelLists(data) {
       const viewportElement = document.getElementById('gravestones-carousel-viewport');
       
       if (trackElement && viewportElement) {
-        debugLog(`✅ Примусово ініціалізуємо карусель gravestones`, 'success');
+        debugLog(` Примусово ініціалізуємо карусель gravestones`, 'success');
         initializeGravestonesCarousel('gravestones');
       } else {
-        debugLog(`❌ Не знайдено елементи каруселі gravestones для примусової ініціалізації`, 'error');
+        debugLog(` Не знайдено елементи каруселі gravestones для примусової ініціалізації`, 'error');
       }
     } else {
-      debugLog(`⚠️ Карусель gravestones не доступна або немає моделей для примусової ініціалізації`, 'warning');
+      debugLog(` Карусель gravestones не доступна або немає моделей для примусової ініціалізації`, 'warning');
     }
   }, 500);
   
@@ -997,9 +997,9 @@ function advanceToNextPanel(buttonElement) {
   if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.Panels) {
     const result = window.ProGran3.UI.Panels.advanceToNextPanel(buttonElement);
     if (result) {
-      debugLog(`✅ advanceToNextPanel виконано через модуль Panels`, 'success');
+      debugLog(` advanceToNextPanel виконано через модуль Panels`, 'success');
     } else {
-      debugLog(`⚠️ advanceToNextPanel не вдався через модуль Panels`, 'warning');
+      debugLog(` advanceToNextPanel не вдався через модуль Panels`, 'warning');
     }
     return;
   }
@@ -1011,7 +1011,7 @@ function advanceToNextPanel(buttonElement) {
   // Знаходимо всі панелі в поточному активному табі
   const activeTabContent = document.querySelector('.tab-content.active');
   if (!activeTabContent) {
-    debugLog(`❌ Не знайдено активний таб для advanceToNextPanel`, 'error');
+    debugLog(` Не знайдено активний таб для advanceToNextPanel`, 'error');
     return;
   }
   
@@ -1029,7 +1029,7 @@ function advanceToNextPanel(buttonElement) {
     nextPanel.classList.remove('collapsed');
   }
   
-  debugLog(`🔄 advanceToNextPanel: поточна панель ${currentIndex + 1}/${allPanelsInTab.length} в табі ${activeTab}`, 'info');
+  debugLog(` advanceToNextPanel: поточна панель ${currentIndex + 1}/${allPanelsInTab.length} в табі ${activeTab}`, 'info');
 }
 
 
@@ -1112,7 +1112,7 @@ function autoGenerateMainStelesPreview(category, filename, item, loadingDiv) {
   }
   
   const componentPath = `${category}/${filename}`;
-  debugLog(`🚀 Запуск генерації превью для: ${componentPath} (MainSteles)`, 'info');
+  debugLog(` Запуск генерації превью для: ${componentPath} (MainSteles)`, 'info');
   
   // Генеруємо веб-превью через SketchUp
   window.sketchup.generate_web_preview(componentPath);
@@ -1156,7 +1156,7 @@ function createPlaceholder(item, loadingDiv, text) {
 function receiveWebPreview(componentPath, base64Data) {
   debugLog(`📥 Отримано превью для: ${componentPath}`, 'info');
   debugLog(`📊 Розмір base64 даних: ${base64Data ? base64Data.length : 0} символів`, 'info');
-  debugLog(`🔍 Перші 50 символів base64: ${base64Data ? base64Data.substring(0, 50) : 'null'}`, 'info');
+  debugLog(` Перші 50 символів base64: ${base64Data ? base64Data.substring(0, 50) : 'null'}`, 'info');
   
   // Використовуємо SketchUpBridge якщо доступний
   if (window.ProGran3 && window.ProGran3.Communication && window.ProGran3.Communication.SketchUpBridge) {
@@ -1167,13 +1167,13 @@ function receiveWebPreview(componentPath, base64Data) {
   // Fallback для зворотної сумісності
   const pendingData = window.pendingPreviews && window.pendingPreviews[componentPath];
   if (!pendingData) {
-    debugLog(`❌ Не знайдено pending дані для: ${componentPath}`, 'error');
+    debugLog(` Не знайдено pending дані для: ${componentPath}`, 'error');
     debugLog(`📋 Доступні pending: ${Object.keys(window.pendingPreviews || {}).join(', ')}`, 'error');
     return;
   }
   
   const { item, loadingDiv, filename, source } = pendingData;
-  debugLog(`✅ Знайдено pending дані для: ${filename} (${source})`, 'success');
+  debugLog(` Знайдено pending дані для: ${filename} (${source})`, 'success');
   
   if (base64Data && base64Data.startsWith('data:image/')) {
     debugLog(`🖼️ Створюємо зображення для: ${filename}`, 'info');
@@ -1192,11 +1192,11 @@ function receiveWebPreview(componentPath, base64Data) {
     if (item) {
       item.appendChild(img);
       item.dataset.status = 'loaded';
-      debugLog(`✅ Зображення додано для: ${filename}`, 'success');
+      debugLog(` Зображення додано для: ${filename}`, 'success');
     }
     
   } else {
-    debugLog(`❌ Помилка: base64 дані не є валідним зображенням для: ${filename}`, 'error');
+    debugLog(` Помилка: base64 дані не є валідним зображенням для: ${filename}`, 'error');
     // Якщо не вдалося згенерувати, показуємо заглушку
     if (item && loadingDiv) createPlaceholder(item, loadingDiv, `Помилка генерації\n${filename}`);
   }
@@ -1357,7 +1357,7 @@ function addBlindArea() {
       window.sketchup.add_blind_area_uniform(width, thickness);
       addedElements.blindArea = true;
       updateSummaryTable();
-    } else { debugLog(`❌ window.sketchup.add_blind_area_uniform не доступний`, 'error'); }
+    } else { debugLog(` window.sketchup.add_blind_area_uniform не доступний`, 'error'); }
   } else {
     const north = convertToMm(document.getElementById('blind-area-north').value);
     const south = convertToMm(document.getElementById('blind-area-south').value);
@@ -1368,14 +1368,14 @@ function addBlindArea() {
       window.sketchup.add_blind_area_custom(north, south, east, west, thickness);
       addedElements.blindArea = true;
       updateSummaryTable();
-    } else { debugLog(`❌ window.sketchup.add_blind_area_custom не доступний`, 'error'); }
+    } else { debugLog(` window.sketchup.add_blind_area_custom не доступний`, 'error'); }
   }
 }
 
 
 
 function updateAllDisplays() {
-  debugLog(`🔍 updateAllDisplays() викликано`, 'info');
+  debugLog(` updateAllDisplays() викликано`, 'info');
   const unitText = currentUnit === 'mm' ? 'мм' : 'см';
   
   // Оновлення відображення розмірів фундаменту
@@ -1422,11 +1422,11 @@ function updateAllDisplays() {
     window.standsCarouselInitialized = true;
     setTimeout(() => {
       if (window.sketchup && window.sketchup.get_stands_list) {
-        debugLog('🔄 Автоматичне оновлення каруселі підставок при завантаженні', 'info');
+        debugLog(' Автоматичне оновлення каруселі підставок при завантаженні', 'info');
         refreshStandsCarousel();
       } else {
         // Якщо API недоступний, використовуємо стандартну ініціалізацію
-        debugLog('🔄 Використовуємо стандартну ініціалізацію каруселі підставок', 'info');
+        debugLog(' Використовуємо стандартну ініціалізацію каруселі підставок', 'info');
         initializeStandsCarousel();
       }
     }, 1000);
@@ -1437,14 +1437,14 @@ function updateAllDisplays() {
   updateFencePerimeterDisplay();
   
   // Оновлення відображення підставки
-  debugLog(`🔍 Викликаємо updateStandsDisplay() з updateAllDisplays()`, 'info');
+  debugLog(` Викликаємо updateStandsDisplay() з updateAllDisplays()`, 'info');
   updateStandsDisplay();
   
   // Оновлення підсумкової таблиці
-  debugLog(`🔍 Викликаємо updateSummaryTable() з updateAllDisplays()`, 'info');
+  debugLog(` Викликаємо updateSummaryTable() з updateAllDisplays()`, 'info');
   updateSummaryTable();
   
-  debugLog(`🔍 updateAllDisplays() завершено`, 'info');
+  debugLog(` updateAllDisplays() завершено`, 'info');
 }
 
 function updateModelDisplays() {
@@ -1501,7 +1501,7 @@ function updateModelDisplays() {
 
 function updateSummaryTable() {
   try {
-    debugLog(`🔍 updateSummaryTable() викликано`, 'info');
+    debugLog(` updateSummaryTable() викликано`, 'info');
     const unitText = currentUnit === 'mm' ? 'мм' : 'см';
     
     // Фундамент
@@ -1741,8 +1741,8 @@ function updateSummaryTable() {
     }
   }
   } catch (error) {
-    debugLog(`❌ Помилка в updateSummaryTable(): ${error.message}`, 'error');
-    debugLog(`❌ Stack trace: ${error.stack}`, 'error');
+    debugLog(` Помилка в updateSummaryTable(): ${error.message}`, 'error');
+    debugLog(` Stack trace: ${error.stack}`, 'error');
   }
 }
 
@@ -1761,7 +1761,7 @@ function addFoundation() {
     window.sketchup.add_foundation(depthMm, widthMm, heightMm);
     addedElements.foundation = true;
     updateSummaryTable();
-  } else { debugLog(`❌ window.sketchup.add_foundation не доступний`, 'error'); }
+  } else { debugLog(` window.sketchup.add_foundation не доступний`, 'error'); }
 }
 
 
@@ -1776,11 +1776,11 @@ function addTiles() {
       const overhangElement = document.getElementById('tile-overhang');
       
       if (!borderWidthElement) {
-        debugLog(`❌ Не знайдено поле ширини рамки (tile-border-width)`, 'error');
+        debugLog(` Не знайдено поле ширини рамки (tile-border-width)`, 'error');
         return;
       }
       if (!overhangElement) {
-        debugLog(`❌ Не знайдено поле виступу (tile-overhang)`, 'error');
+        debugLog(` Не знайдено поле виступу (tile-overhang)`, 'error');
         return;
       }
       
@@ -1788,14 +1788,14 @@ function addTiles() {
       const borderWidth = borderWidthElement.value;
       const overhang = overhangElement.value;
       
-      debugLog(`📏 Параметри рамки: товщина=${thickness}, ширина=${borderWidth}, виступ=${overhang}`, 'info');
+      debugLog(` Параметри рамки: товщина=${thickness}, ширина=${borderWidth}, виступ=${overhang}`, 'info');
       
       // Конвертуємо в мм
       const thicknessMm = convertToMm(thickness);
       const borderWidthMm = convertToMm(borderWidth);
       const overhangMm = convertToMm(overhang);
       
-      debugLog(`📏 Параметри в мм: товщина=${thicknessMm}, ширина=${borderWidthMm}, виступ=${overhangMm}`, 'info');
+      debugLog(` Параметри в мм: товщина=${thicknessMm}, ширина=${borderWidthMm}, виступ=${overhangMm}`, 'info');
       
       window.sketchup.add_tiles('frame', thicknessMm, borderWidthMm, overhangMm);
     } else {
@@ -1804,15 +1804,15 @@ function addTiles() {
       const overhangElement = document.getElementById('modular-overhang');
       
       if (!sizeElement) {
-        debugLog(`❌ Не знайдено поле розміру плитки (modular-tile-size)`, 'error');
+        debugLog(` Не знайдено поле розміру плитки (modular-tile-size)`, 'error');
         return;
       }
       if (!thicknessElement) {
-        debugLog(`❌ Не знайдено поле товщини модульної плитки (modular-thickness)`, 'error');
+        debugLog(` Не знайдено поле товщини модульної плитки (modular-thickness)`, 'error');
         return;
       }
       if (!overhangElement) {
-        debugLog(`❌ Не знайдено поле виступу модульної плитки (modular-overhang)`, 'error');
+        debugLog(` Не знайдено поле виступу модульної плитки (modular-overhang)`, 'error');
         return;
       }
       
@@ -1821,22 +1821,22 @@ function addTiles() {
       const seam = getSelectedSeam();
       const overhang = overhangElement.value;
       
-      debugLog(`📏 Параметри модульної: розмір=${size}, товщина=${thickness}, шов=${seam}, виступ=${overhang}`, 'info');
+      debugLog(` Параметри модульної: розмір=${size}, товщина=${thickness}, шов=${seam}, виступ=${overhang}`, 'info');
       
       // Конвертуємо в мм
       const thicknessMm = convertToMm(thickness);
       const seamMm = convertToMm(seam, true); // Шви завжди в мм
       const overhangMm = convertToMm(overhang);
       
-      debugLog(`📏 Параметри в мм: товщина=${thicknessMm}, шов=${seamMm}, виступ=${overhangMm}`, 'info');
+      debugLog(` Параметри в мм: товщина=${thicknessMm}, шов=${seamMm}, виступ=${overhangMm}`, 'info');
       
       window.sketchup.add_tiles('modular', size, thicknessMm, seamMm, overhangMm);
     }
     addedElements.tiling = true;
     updateSummaryTable();
-    debugLog(`✅ Плитка додана успішно`, 'success');
+    debugLog(` Плитка додана успішно`, 'success');
   } else {
-    debugLog(`❌ window.sketchup.add_tiles не доступний`, 'error');
+    debugLog(` window.sketchup.add_tiles не доступний`, 'error');
   }
 }
 
@@ -1858,13 +1858,13 @@ function addSideCladding() {
 
 // Функція для оновлення специфікації з моделі
 function refreshSpecification() {
-  debugLog(`🔄 Оновлення специфікації з моделі`, 'info');
+  debugLog(` Оновлення специфікації з моделі`, 'info');
   
   if (window.sketchup && window.sketchup.get_model_status) {
     // Викликаємо Ruby callback для отримання поточного стану моделі
     window.sketchup.get_model_status();
   } else {
-    debugLog(`❌ window.sketchup.get_model_status не доступний`, 'error');
+    debugLog(` window.sketchup.get_model_status не доступний`, 'error');
     // Якщо callback недоступний, просто очищаємо специфікацію
     clearSpecification();
   }
@@ -1927,19 +1927,19 @@ function receiveModelStatus(statusData) {
     
     debugLog(`📊 Оновлений addedElements: ${JSON.stringify(addedElements)}`, 'info');
   } else {
-    debugLog(`❌ Дані статусу не отримані`, 'error');
+    debugLog(` Дані статусу не отримані`, 'error');
   }
   
   // Оновлюємо таблицю
   updateSummaryTable();
-  debugLog(`✅ Специфікація оновлена`, 'success');
+  debugLog(` Специфікація оновлена`, 'success');
 }
 
 // Функції для створення відмостки
 
 // Функції для роботи з одиницями вимірювання
 function changeUnit(newUnit) {
-  debugLog(`🔄 Зміна одиниці вимірювання: ${currentUnit} -> ${newUnit}`, 'info');
+  debugLog(` Зміна одиниці вимірювання: ${currentUnit} -> ${newUnit}`, 'info');
   
   if (currentUnit === newUnit) {
     debugLog(`ℹ️ Одиниця вже встановлена: ${newUnit}`, 'info');
@@ -1967,7 +1967,7 @@ function changeUnit(newUnit) {
     window.sketchup.change_unit(newUnit);
   }
   
-  debugLog(`✅ Одиниця вимірювання змінена на: ${newUnit}`, 'success');
+  debugLog(` Одиниця вимірювання змінена на: ${newUnit}`, 'success');
 }
 
 // Отримання всіх значень з полів вводу
@@ -2197,7 +2197,7 @@ function selectThickness(button) {
   // Оновлюємо відображення
   updateAllDisplays();
   
-  debugLog(`✅ Вибрано товщину плитки: ${button.dataset.value}`, 'success');
+  debugLog(` Вибрано товщину плитки: ${button.dataset.value}`, 'success');
 }
 
 // Функція для вибору способу укладання
@@ -2212,7 +2212,7 @@ function selectTilingMode(button) {
   // Оновлюємо контроли
   updateTilingControls();
   
-  debugLog(`✅ Вибрано спосіб укладання: ${button.dataset.value}`, 'success');
+  debugLog(` Вибрано спосіб укладання: ${button.dataset.value}`, 'success');
 }
 
 // Функція для вибору шву
@@ -2227,7 +2227,7 @@ function selectSeam(button) {
   // Оновлюємо відображення
   updateAllDisplays();
   
-  debugLog(`✅ Вибрано шов: ${button.dataset.value} мм`, 'success');
+  debugLog(` Вибрано шов: ${button.dataset.value} мм`, 'success');
 }
 
 // Функція для отримання вибраної товщини плитки
@@ -2300,7 +2300,7 @@ function updateSeamButtons() {
 
 // Функція для скидання опцій товщини плитки до початкових значень (для зворотної сумісності)
 function resetTileThicknessOptions() {
-  debugLog(`🔄 Функція resetTileThicknessOptions застаріла, використовуйте кнопки`, 'warning');
+  debugLog(` Функція resetTileThicknessOptions застаріла, використовуйте кнопки`, 'warning');
 }
 
 // Функція для оновлення значення слайдера
@@ -2383,7 +2383,7 @@ function addGravestone() {
   const state = carouselState[category];
   
   if (!state || !modelLists[category] || !modelLists[category][state.index]) {
-    debugLog(`❌ Не вдалося додати надгробну плиту: немає вибраного елемента`, 'error');
+    debugLog(` Не вдалося додати надгробну плиту: немає вибраного елемента`, 'error');
     return;
   }
   
@@ -2394,9 +2394,9 @@ function addGravestone() {
     window.sketchup.add_model(category, filename);
     addedElements[category] = true;
     updateSummaryTable();
-    debugLog(`✅ Надгробна плита додана: ${filename}`, 'success');
+    debugLog(` Надгробна плита додана: ${filename}`, 'success');
   } else {
-    debugLog(`❌ window.sketchup.add_model не доступний`, 'error');
+    debugLog(` window.sketchup.add_model не доступний`, 'error');
   }
 }
 
@@ -2491,7 +2491,7 @@ function updateStandsDisplay() {
   const width = document.getElementById('stands-width').value;
   const depth = document.getElementById('stands-depth').value;
   
-  debugLog(`📏 updateStandsDisplay: отримано значення`, 'info');
+  debugLog(` updateStandsDisplay: отримано значення`, 'info');
   debugLog(`   - Висота: ${height}`, 'info');
   debugLog(`   - Ширина: ${width}`, 'info');
   debugLog(`   - Довжина: ${depth}`, 'info');
@@ -2511,12 +2511,12 @@ function updateStandsDisplay() {
     const displayText = `${heightDisplay}×${widthDisplay}×${depthDisplay} ${unitText}`;
     display.textContent = displayText;
     
-    debugLog(`📏 Відображення оновлено: ${displayText}`, 'info');
+    debugLog(` Відображення оновлено: ${displayText}`, 'info');
     
     // Діагностичне повідомлення (можна видалити після тестування)
     // showDiagnosticMessage(`Відображення: В=${heightDisplay} Ш=${widthDisplay} Д=${depthDisplay} ${unitText}`);
   } else {
-    debugLog(`⚠️ Не знайдено елемент stands-dimensions-display`, 'warning');
+    debugLog(` Не знайдено елемент stands-dimensions-display`, 'warning');
   }
 }
 
@@ -2564,7 +2564,7 @@ function addFenceCorner() {
     // Декор тепер додається окремо через блок "Декор огорожі"
     
     debugLog(`🏗️ Створення кутової огорожі: ${postHeight}×${postSize}×${postSize}см`, 'info');
-    debugLog(`🔍 Перевірка доступності функцій:`, 'info');
+    debugLog(` Перевірка доступності функцій:`, 'info');
     debugLog(`   - window.sketchup: ${typeof window.sketchup}`, 'info');
     debugLog(`   - window.sketchup?.add_fence_corner: ${typeof window.sketchup?.add_fence_corner}`, 'info');
     
@@ -2593,14 +2593,14 @@ function addFenceCorner() {
         
         addedElements['fence_corner'] = true;
         updateSummaryTable();
-        debugLog(`✅ Кутова огорожа створена успішно`, 'success');
+        debugLog(` Кутова огорожа створена успішно`, 'success');
       } catch (error) {
-        debugLog(`❌ Помилка створення кутової огорожі: ${error.message}`, 'error');
-        debugLog(`❌ Stack trace: ${error.stack}`, 'error');
+        debugLog(` Помилка створення кутової огорожі: ${error.message}`, 'error');
+        debugLog(` Stack trace: ${error.stack}`, 'error');
       }
     } else {
-      debugLog(`❌ window.sketchup.add_fence_corner не доступний`, 'error');
-      debugLog(`🔍 Доступні функції в window.sketchup:`, 'info');
+      debugLog(` window.sketchup.add_fence_corner не доступний`, 'error');
+      debugLog(` Доступні функції в window.sketchup:`, 'info');
       if (window.sketchup) {
         Object.keys(window.sketchup).forEach(key => {
           if (key.includes('fence') || key.includes('Fence')) {
@@ -2610,15 +2610,15 @@ function addFenceCorner() {
       }
     }
   } catch (error) {
-    debugLog(`❌ Критична помилка в addFenceCorner: ${error.message}`, 'error');
-    debugLog(`❌ Stack trace: ${error.stack}`, 'error');
+    debugLog(` Критична помилка в addFenceCorner: ${error.message}`, 'error');
+    debugLog(` Stack trace: ${error.stack}`, 'error');
   }
 }
 
 // Додавання периметральної огорожі
 function addFencePerimeter() {
-  console.log('🚀 addFencePerimeter() викликано!');
-  debugLog('🚀 addFencePerimeter() викликано!', 'info');
+  console.log(' addFencePerimeter() викликано!');
+  debugLog(' addFencePerimeter() викликано!', 'info');
   
   try {
     const postHeight = parseInt(document.getElementById('fence-perimeter-post-height').value);
@@ -2632,7 +2632,7 @@ function addFencePerimeter() {
     // Декор тепер додається окремо через блок "Декор огорожі"
     
     debugLog(`🏗️ Створення периметральної огорожі: ${postHeight}×${postSize}×${postSize}см`, 'info');
-    debugLog(`🔍 Детальна діагностика параметрів:`, 'info');
+    debugLog(` Детальна діагностика параметрів:`, 'info');
     debugLog(`   - postHeight: ${postHeight} (тип: ${typeof postHeight})`, 'info');
     debugLog(`   - postSize: ${postSize} (тип: ${typeof postSize})`, 'info');
     debugLog(`   - northCount: ${northCount} (тип: ${typeof northCount})`, 'info');
@@ -2640,10 +2640,10 @@ function addFencePerimeter() {
     debugLog(`   - eastWestCount: ${eastWestCount} (тип: ${typeof eastWestCount})`, 'info');
     debugLog(`   - decorativeHeight: ${decorativeHeight} (тип: ${typeof decorativeHeight})`, 'info');
     debugLog(`   - decorativeThickness: ${decorativeThickness} (тип: ${typeof decorativeThickness})`, 'info');
-    debugLog(`🔍 Перевірка доступності функцій:`, 'info');
+    debugLog(` Перевірка доступності функцій:`, 'info');
     debugLog(`   - window.sketchup: ${typeof window.sketchup}`, 'info');
     debugLog(`   - window.sketchup?.add_fence_perimeter: ${typeof window.sketchup?.add_fence_perimeter}`, 'info');
-    debugLog(`🔍 Поточний стан addedElements:`, 'info');
+    debugLog(` Поточний стан addedElements:`, 'info');
     debugLog(`   - addedElements.fence_perimeter: ${addedElements.fence_perimeter}`, 'info');
     debugLog(`   - addedElements.fence_corner: ${addedElements.fence_corner}`, 'info');
     
@@ -2671,17 +2671,17 @@ function addFencePerimeter() {
         
         addedElements['fence_perimeter'] = true;
         updateSummaryTable();
-        debugLog(`✅ Периметральна огорожа створена успішно`, 'success');
-        debugLog(`🔍 Стан після створення:`, 'info');
+        debugLog(` Периметральна огорожа створена успішно`, 'success');
+        debugLog(` Стан після створення:`, 'info');
         debugLog(`   - addedElements.fence_perimeter: ${addedElements.fence_perimeter}`, 'info');
         debugLog(`   - addedElements.fence_corner: ${addedElements.fence_corner}`, 'info');
       } catch (error) {
-        debugLog(`❌ Помилка створення периметральної огорожі: ${error.message}`, 'error');
-        debugLog(`❌ Stack trace: ${error.stack}`, 'error');
+        debugLog(` Помилка створення периметральної огорожі: ${error.message}`, 'error');
+        debugLog(` Stack trace: ${error.stack}`, 'error');
       }
     } else {
-      debugLog(`❌ window.sketchup.add_fence_perimeter не доступний`, 'error');
-      debugLog(`🔍 Доступні функції в window.sketchup:`, 'info');
+      debugLog(` window.sketchup.add_fence_perimeter не доступний`, 'error');
+      debugLog(` Доступні функції в window.sketchup:`, 'info');
       if (window.sketchup) {
         Object.keys(window.sketchup).forEach(key => {
           if (key.includes('fence') || key.includes('Fence')) {
@@ -2691,8 +2691,8 @@ function addFencePerimeter() {
       }
     }
   } catch (error) {
-    debugLog(`❌ Критична помилка в addFencePerimeter: ${error.message}`, 'error');
-    debugLog(`❌ Stack trace: ${error.stack}`, 'error');
+    debugLog(` Критична помилка в addFencePerimeter: ${error.message}`, 'error');
+    debugLog(` Stack trace: ${error.stack}`, 'error');
   }
   
   console.log('🏁 addFencePerimeter() завершено!');
@@ -2701,61 +2701,61 @@ function addFencePerimeter() {
 
 // Додавання декору огорожі
 function addFenceDecor() {
-  console.log('🎨 addFenceDecor() викликано!');
-  debugLog('🎨 addFenceDecor() викликано!', 'info');
+  console.log(' addFenceDecor() викликано!');
+  debugLog(' addFenceDecor() викликано!', 'info');
   
   try {
-    debugLog(`🔍 Крок 1: Перевірка каруселі декору`, 'info');
+    debugLog(` Крок 1: Перевірка каруселі декору`, 'info');
     
     // Отримуємо вибраний декор з каруселі
     let selectedDecor = null;
-    debugLog(`🔍 Діагностика каруселі декору:`, 'info');
+    debugLog(` Діагностика каруселі декору:`, 'info');
     debugLog(`   - carouselState.fence_decor: ${JSON.stringify(carouselState.fence_decor)}`, 'info');
     debugLog(`   - modelLists.fence_decor: ${JSON.stringify(modelLists.fence_decor)}`, 'info');
     
     if (carouselState.fence_decor && modelLists.fence_decor && modelLists.fence_decor[carouselState.fence_decor.index]) {
       selectedDecor = modelLists.fence_decor[carouselState.fence_decor.index];
-      debugLog(`🎨 Вибраний декор для огорожі: ${selectedDecor}`, 'info');
+      debugLog(` Вибраний декор для огорожі: ${selectedDecor}`, 'info');
     } else {
-      debugLog(`⚠️ Декор не вибрано`, 'warning');
+      debugLog(` Декор не вибрано`, 'warning');
       alert('Будь ласка, виберіть декор з каруселі');
       return;
     }
     
-    debugLog(`🔍 Крок 2: Перевірка наявності огорожі`, 'info');
+    debugLog(` Крок 2: Перевірка наявності огорожі`, 'info');
     
     // Перевіряємо, чи є огорожа в моделі
     if (!addedElements['fence_corner'] && !addedElements['fence_perimeter']) {
-      debugLog(`⚠️ Немає огорожі в моделі`, 'warning');
+      debugLog(` Немає огорожі в моделі`, 'warning');
       alert('Спочатку створіть огорожу (кутову або периметральну)');
       return;
     }
     
-    debugLog(`🔍 Крок 3: Додавання декору через SketchUp API`, 'info');
+    debugLog(` Крок 3: Додавання декору через SketchUp API`, 'info');
     
     // Додаємо декор
     if (window.sketchup.add_model) {
-      debugLog(`🎨 Додаємо декор на всі стовпчики огорожі: ${selectedDecor}`, 'info');
-      debugLog(`🔍 Викликаємо window.sketchup.add_model('fence_decor', '${selectedDecor}')`, 'info');
+      debugLog(` Додаємо декор на всі стовпчики огорожі: ${selectedDecor}`, 'info');
+      debugLog(` Викликаємо window.sketchup.add_model('fence_decor', '${selectedDecor}')`, 'info');
       const decorResult = window.sketchup.add_model('fence_decor', selectedDecor);
       debugLog(`📤 Результат додавання декору: ${decorResult}`, 'info');
       
-      debugLog(`🔍 Крок 4: Оновлення стану`, 'info');
+      debugLog(` Крок 4: Оновлення стану`, 'info');
       addedElements['fence_decor'] = true;
       
-      debugLog(`🔍 Крок 5: Оновлення таблиці специфікації`, 'info');
+      debugLog(` Крок 5: Оновлення таблиці специфікації`, 'info');
       updateSummaryTable();
       
-      debugLog(`✅ Декор успішно додано на огорожу`, 'success');
+      debugLog(` Декор успішно додано на огорожу`, 'success');
     } else {
-      debugLog(`⚠️ window.sketchup.add_model не доступний`, 'warning');
+      debugLog(` window.sketchup.add_model не доступний`, 'warning');
       alert('Помилка: не вдалося додати декор');
     }
     
   } catch (error) {
-    debugLog(`❌ Помилка в addFenceDecor(): ${error.message}`, 'error');
-    debugLog(`❌ Stack trace: ${error.stack}`, 'error');
-    debugLog(`❌ Помилка на рядку: ${error.lineNumber}`, 'error');
+    debugLog(` Помилка в addFenceDecor(): ${error.message}`, 'error');
+    debugLog(` Stack trace: ${error.stack}`, 'error');
+    debugLog(` Помилка на рядку: ${error.lineNumber}`, 'error');
     alert(`Помилка при додаванні декору: ${error.message}`);
   }
   
@@ -2775,7 +2775,7 @@ function addStandWithCustomSize() {
       selectedStand = modelLists.stands[carouselState.stands.index];
       debugLog(`🏗️ Вибрана підставка: ${selectedStand}`, 'info');
     } else {
-      debugLog(`⚠️ Підставка не вибрана`, 'warning');
+      debugLog(` Підставка не вибрана`, 'warning');
       alert('Будь ласка, виберіть підставку з каруселі');
       return;
     }
@@ -2785,11 +2785,11 @@ function addStandWithCustomSize() {
     const width = parseInt(document.getElementById('stands-width').value);
     const depth = parseInt(document.getElementById('stands-depth').value);
     
-    debugLog(`📏 Отримано розміри з полів:`, 'info');
+    debugLog(` Отримано розміри з полів:`, 'info');
     debugLog(`   - Висота (stands-height): ${height}`, 'info');
     debugLog(`   - Ширина (stands-width): ${width}`, 'info');
     debugLog(`   - Довжина (stands-depth): ${depth}`, 'info');
-    debugLog(`📏 Розміри підставки: ${height}×${width}×${depth} мм (В×Ш×Д)`, 'info');
+    debugLog(` Розміри підставки: ${height}×${width}×${depth} мм (В×Ш×Д)`, 'info');
     
     // Діагностичне повідомлення (можна видалити після тестування)
     // showDiagnosticMessage(`Додаємо: В=${height} Ш=${width} Д=${depth} мм`);
@@ -2808,15 +2808,15 @@ function addStandWithCustomSize() {
       
       addedElements['stands'] = true;
       updateSummaryTable();
-      debugLog(`✅ Підставка успішно додана`, 'success');
+      debugLog(` Підставка успішно додана`, 'success');
     } else {
-      debugLog(`⚠️ window.sketchup.add_model не доступний`, 'warning');
+      debugLog(` window.sketchup.add_model не доступний`, 'warning');
       alert('Помилка: не вдалося додати підставку');
     }
     
   } catch (error) {
-    debugLog(`❌ Помилка в addStandWithCustomSize(): ${error.message}`, 'error');
-    debugLog(`❌ Stack trace: ${error.stack}`, 'error');
+    debugLog(` Помилка в addStandWithCustomSize(): ${error.message}`, 'error');
+    debugLog(` Stack trace: ${error.stack}`, 'error');
     alert(`Помилка при додаванні підставки: ${error.message}`);
   }
   
@@ -2826,13 +2826,13 @@ function addStandWithCustomSize() {
 
 // Оновлення розміру підставки
 function updateStandSize() {
-  console.log('📏 updateStandSize() викликано!');
-  debugLog('📏 updateStandSize() викликано!', 'info');
+  console.log(' updateStandSize() викликано!');
+  debugLog(' updateStandSize() викликано!', 'info');
   
   try {
     // Перевіряємо, чи є підставка в моделі
     if (!addedElements['stands']) {
-      debugLog(`⚠️ Немає підставки в моделі`, 'warning');
+      debugLog(` Немає підставки в моделі`, 'warning');
       alert('Спочатку додайте підставку');
       return;
     }
@@ -2842,31 +2842,31 @@ function updateStandSize() {
     const width = parseInt(document.getElementById('stands-width').value);
     const depth = parseInt(document.getElementById('stands-depth').value);
     
-    debugLog(`📏 Отримано нові розміри з полів:`, 'info');
+    debugLog(` Отримано нові розміри з полів:`, 'info');
     debugLog(`   - Висота (stands-height): ${height}`, 'info');
     debugLog(`   - Ширина (stands-width): ${width}`, 'info');
     debugLog(`   - Довжина (stands-depth): ${depth}`, 'info');
-    debugLog(`📏 Нові розміри підставки: ${height}×${width}×${depth} мм (В×Ш×Д)`, 'info');
+    debugLog(` Нові розміри підставки: ${height}×${width}×${depth} мм (В×Ш×Д)`, 'info');
     
     // Діагностичне повідомлення (можна видалити після тестування)
     // showDiagnosticMessage(`Оновлюємо: В=${height} Ш=${width} Д=${depth} мм`);
     
     // Оновлюємо розмір підставки через SketchUp API
     if (window.sketchup.update_stand_size) {
-      debugLog(`📏 Оновлюємо розмір підставки`, 'info');
+      debugLog(` Оновлюємо розмір підставки`, 'info');
       const result = window.sketchup.update_stand_size(height, width, depth);
       debugLog(`📤 Результат оновлення розміру: ${result}`, 'info');
       
       updateSummaryTable();
-      debugLog(`✅ Розмір підставки успішно оновлено`, 'success');
+      debugLog(` Розмір підставки успішно оновлено`, 'success');
     } else {
-      debugLog(`⚠️ window.sketchup.update_stand_size не доступний`, 'warning');
+      debugLog(` window.sketchup.update_stand_size не доступний`, 'warning');
       alert('Функція оновлення розміру підставки не реалізована в SketchUp API');
     }
     
   } catch (error) {
-    debugLog(`❌ Помилка в updateStandSize(): ${error.message}`, 'error');
-    debugLog(`❌ Stack trace: ${error.stack}`, 'error');
+    debugLog(` Помилка в updateStandSize(): ${error.message}`, 'error');
+    debugLog(` Stack trace: ${error.stack}`, 'error');
     alert(`Помилка при оновленні розміру підставки: ${error.message}`);
   }
   
@@ -2876,13 +2876,13 @@ function updateStandSize() {
 
 // Автоматичне заповнення полів розмірів вибраної підставки
 function fillStandSizeFields() {
-  console.log('📏 fillStandSizeFields() викликано!');
-  debugLog('📏 fillStandSizeFields() викликано!', 'info');
+  console.log(' fillStandSizeFields() викликано!');
+  debugLog(' fillStandSizeFields() викликано!', 'info');
   
   try {
     // Отримуємо вибрану підставку
     if (!carouselState.stands || !modelLists.stands || !modelLists.stands[carouselState.stands.index]) {
-      debugLog(`⚠️ Немає вибраної підставки`, 'warning');
+      debugLog(` Немає вибраної підставки`, 'warning');
       debugLog(`   - carouselState.stands: ${!!carouselState.stands}`, 'warning');
       debugLog(`   - modelLists.stands: ${!!modelLists.stands}`, 'warning');
       debugLog(`   - carouselState.stands.index: ${carouselState.stands?.index}`, 'warning');
@@ -2891,7 +2891,7 @@ function fillStandSizeFields() {
     }
     
     const selectedStand = modelLists.stands[carouselState.stands.index];
-    debugLog(`📏 Заповнюємо поля для підставки: ${selectedStand}`, 'info');
+    debugLog(` Заповнюємо поля для підставки: ${selectedStand}`, 'info');
     debugLog(`   - carouselState.stands.index: ${carouselState.stands.index}`, 'info');
     debugLog(`   - modelLists.stands.length: ${modelLists.stands.length}`, 'info');
     
@@ -2915,7 +2915,7 @@ function fillStandSizeFields() {
     const depthField = document.getElementById('stands-depth');
     
     if (heightField && widthField && depthField) {
-      debugLog(`📏 Заповнюємо поля:`, 'info');
+      debugLog(` Заповнюємо поля:`, 'info');
       debugLog(`   - Висота (stands-height): ${dimensions.height}`, 'info');
       debugLog(`   - Ширина (stands-width): ${dimensions.width}`, 'info');
       debugLog(`   - Довжина (stands-depth): ${dimensions.depth}`, 'info');
@@ -2924,7 +2924,7 @@ function fillStandSizeFields() {
       widthField.value = dimensions.width;
       depthField.value = dimensions.depth;
       
-      debugLog(`📏 Поля заповнено: ${dimensions.height}×${dimensions.width}×${dimensions.depth} мм (В×Ш×Д)`, 'info');
+      debugLog(` Поля заповнено: ${dimensions.height}×${dimensions.width}×${dimensions.depth} мм (В×Ш×Д)`, 'info');
       
       // Діагностичне повідомлення (можна видалити після тестування)
       // showDiagnosticMessage(`Заповнено поля: В=${dimensions.height} Ш=${dimensions.width} Д=${dimensions.depth} мм`);
@@ -2932,7 +2932,7 @@ function fillStandSizeFields() {
       // Оновлюємо відображення
       updateStandsDisplay();
     } else {
-      debugLog(`⚠️ Не вдалося знайти поля вводу для розмірів підставки`, 'warning');
+      debugLog(` Не вдалося знайти поля вводу для розмірів підставки`, 'warning');
       debugLog(`   - heightField: ${!!heightField}`, 'warning');
       debugLog(`   - widthField: ${!!widthField}`, 'warning');
       debugLog(`   - depthField: ${!!depthField}`, 'warning');
@@ -2941,8 +2941,8 @@ function fillStandSizeFields() {
     }
     
   } catch (error) {
-    debugLog(`❌ Помилка в fillStandSizeFields(): ${error.message}`, 'error');
-    debugLog(`❌ Stack trace: ${error.stack}`, 'error');
+    debugLog(` Помилка в fillStandSizeFields(): ${error.message}`, 'error');
+    debugLog(` Stack trace: ${error.stack}`, 'error');
   }
   
   console.log('🏁 fillStandSizeFields() завершено!');
@@ -2954,8 +2954,8 @@ function fillStandSizeFields() {
 
 // Оновлення списку підставок в каруселі
 function refreshStandsCarousel() {
-  console.log('🔄 refreshStandsCarousel() викликано!');
-  debugLog('🔄 refreshStandsCarousel() викликано!', 'info');
+  console.log(' refreshStandsCarousel() викликано!');
+  debugLog(' refreshStandsCarousel() викликано!', 'info');
   
   try {
     // Запитуємо оновлений список підставок з сервера
@@ -2976,26 +2976,26 @@ function refreshStandsCarousel() {
         }
         
         // Перезапускаємо карусель через CarouselManager
-        debugLog('🔄 Перезапускаємо карусель підставок', 'info');
+        debugLog(' Перезапускаємо карусель підставок', 'info');
         if (CarouselManager && CarouselManager.initialize) {
           CarouselManager.initialize('stands');
         } else if (typeof initializeStandsCarousel === 'function') {
           initializeStandsCarousel();
         } else {
-          debugLog('⚠️ Не знайдено функцію для ініціалізації каруселі підставок', 'warning');
+          debugLog(' Не знайдено функцію для ініціалізації каруселі підставок', 'warning');
         }
         
-        debugLog('✅ Карусель підставок оновлена успішно', 'success');
+        debugLog(' Карусель підставок оновлена успішно', 'success');
       } else {
-        debugLog('⚠️ Не вдалося отримати оновлений список підставок', 'warning');
+        debugLog(' Не вдалося отримати оновлений список підставок', 'warning');
       }
     } else {
-      debugLog('⚠️ window.sketchup.get_stands_list не доступний', 'warning');
+      debugLog(' window.sketchup.get_stands_list не доступний', 'warning');
     }
     
   } catch (error) {
-    debugLog(`❌ Помилка в refreshStandsCarousel(): ${error.message}`, 'error');
-    debugLog(`❌ Stack trace: ${error.stack}`, 'error');
+    debugLog(` Помилка в refreshStandsCarousel(): ${error.message}`, 'error');
+    debugLog(` Stack trace: ${error.stack}`, 'error');
   }
   
   console.log('🏁 refreshStandsCarousel() завершено!');

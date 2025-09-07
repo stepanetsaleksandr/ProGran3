@@ -13,11 +13,13 @@ header {
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  max-width: 100%; /* Обмежуємо максимальну ширину */
   position: relative;
   z-index: 10; /* Забезпечуємо що header поверх інших елементів */
   padding: 0 20px;
   flex-direction: row; /* Явно вказуємо горизонтальний layout */
   min-height: 60px; /* Мінімальна висота для header */
+  box-sizing: border-box; /* Включаємо padding в ширину */
 }
 
 /* Лівий верхній кут - вибір одиниць */
@@ -52,6 +54,7 @@ header {
   justify-content: flex-end;
   flex: 0 0 auto;
   min-width: 120px; /* Мінімальна ширина для стабільності */
+  padding-right: 20px; /* Відступ від правого краю */
 }
 
 /* Застарілі стилі - видаляємо */

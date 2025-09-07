@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Language Button</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f5f5f5;
+    }
+    .test-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .test-button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    .test-button:hover {
+      background: #0056b3;
+    }
+    .test-result {
+      margin: 10px 0;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 3px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .warning { background: #fff3cd; color: #856404; }
+    .info { background: #d1ecf1; color: #0c5460; }
+    
+    /* Стилі для header (копіюємо з основного файлу) */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 100%;
+      position: relative;
+      z-index: 10;
+      padding: 0 20px;
+      flex-direction: row;
+      min-height: 60px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-sizing: border-box;
+    }
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+      flex: 0 0 auto;
+      min-width: 120px;
+    }
+    
+    .header-center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+    }
+    
+    .header-center h1 {
+      margin: 0;
+      text-align: center;
+    }
+    
+    .header-right {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex: 0 0 auto;
+      min-width: 120px;
+      padding-right: 20px;
+    }
+    
+    .unit-switcher {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+    
+    .unit-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .unit-toggle input[type="radio"] {
+      display: none;
+    }
+    
+    .unit-toggle label {
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: background 0.3s;
+    }
+    
+    .unit-toggle label:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .unit-toggle input[type="radio"]:checked + label {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    /* Мобільні стилі */
+    @media (max-width: 480px) {
+      header {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+      }
+      
+      .header-left,
+      .header-right {
+        width: 100%;
+        justify-content: center;
+        min-width: auto;
+      }
+      
+      .header-center {
+        order: -1;
+      }
+      
+      .header-right {
+        padding-right: 10px;
+      }
+    }
+    
+    .viewport-info {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    
+    .button-demo {
+      background: #e9ecef;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border: 2px dashed #6c757d;
+    }
+    
+    .demo-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 10px 0;
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>🔄 Test Language Button</h1>
+    
+    <!-- Інформація про viewport -->
+    <div class="viewport-info">
+      <strong>Viewport Info:</strong>
+      <div id="viewport-info">Завантаження...</div>
+    </div>
+    
+    <!-- Тестовий header з новим layout -->
+    <header>
+      <!-- Лівий верхній кут - вибір одиниць -->
+      <div class="header-left">
+        <div class="unit-switcher">
+          <div class="unit-toggle">
+            <input type="radio" id="unit-mm" name="unit" value="mm" checked>
+            <input type="radio" id="unit-cm" name="unit" value="cm">
+            <label for="unit-mm" class="unit-label">мм</label>
+            <label for="unit-cm" class="unit-label">см</label>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Центр - заголовок -->
+      <div class="header-center">
+        <h1>ProGran</h1>
+      </div>
+      
+      <!-- Правий верхній кут - вибір мови -->
+      <div class="header-right">
+        <!-- Перемикач мов буде додано через JavaScript -->
+      </div>
+    </header>
+    
+    <div class="test-section">
+      <h2>1. Автоматичний тест кнопки мов</h2>
+      <div id="auto-test-result" class="test-result info">
+        Запуск автоматичного тесту...
+      </div>
+    </div>
+    
+    <div class="test-section">
+      <h2>2. Тест функціональності кнопки</h2>
+      <button class="test-button" onclick="testButtonFunctionality()">Тестувати функціональність</button>
+      <div id="functionality-test-result" class="test-result info">
+        Натисніть кнопку для тестування...
+      </div>
+    </div>
+    
+    <div class="test-section">
+      <h2>3. Тест почергового перемикання</h2>
+      <button class="test-button" onclick="testLanguageCycling()">Тестувати перемикання мов</button>
+      <div id="cycling-test-result" class="test-result info">
+        Натисніть кнопку для тестування...
+      </div>
+    </div>
+    
+    <div class="test-section">
+      <h2>4. Демонстрація кнопки</h2>
+      <div class="button-demo">
+        <h3>🔄 Тестування кнопки перемикача мов:</h3>
+        <p>Натисніть на кнопку мов в header вище, щоб протестувати почергове перемикання:</p>
+        <ul>
+          <li>🇺🇦 Українська → 🇵🇱 Polski → 🇺🇸 English → 🇺🇦 Українська...</li>
+          <li>Кожен клік перемикає на наступну мову</li>
+          <li>Після останньої мови повертається до першої</li>
+        </ul>
+        <div id="button-demo-result" class="test-result info">
+          Натисніть кнопку мов в header для тестування...
+        </div>
+      </div>
+    </div>
+    
+    <div class="test-section">
+      <h2>5. Консольні логи</h2>
+      <div id="console-logs" class="test-result" style="height: 200px; overflow-y: auto;">
+        🔍 Очікування логів з консолі...
+      </div>
+    </div>
+  </div>
+
+  <!-- Підключаємо модулі -->
+  <script src="modules/core/Logger.js"></script>
+  <script src="modules/ui/LanguageSwitcher.js"></script>
+  <script src="i18n/I18nManager.js"></script>
+  
+  <script>
+    // Перехоплюємо console.log для відображення в інтерфейсі
+    const originalLog = console.log;
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      
+      const logs = document.getElementById('console-logs');
+      if (logs) {
+        const timestamp = new Date().toLocaleTimeString();
+        const message = args.map(arg => 
+          typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+        ).join(' ');
+        
+        const logEntry = document.createElement('div');
+        logEntry.textContent = `[${timestamp}] ${message}`;
+        logEntry.style.marginBottom = '5px';
+        logEntry.style.fontSize = '12px';
+        logs.appendChild(logEntry);
+        logs.scrollTop = logs.scrollHeight;
+      }
+    };
+    
+    // Оновлюємо інформацію про viewport
+    function updateViewportInfo() {
+      const viewportInfo = document.getElementById('viewport-info');
+      if (viewportInfo) {
+        viewportInfo.innerHTML = `
+          Width: ${window.innerWidth}px<br>
+          Height: ${window.innerHeight}px<br>
+          Device Pixel Ratio: ${window.devicePixelRatio}<br>
+          Media Query (max-width: 480px): ${window.matchMedia('(max-width: 480px)').matches ? '✅ Active' : '❌ Inactive'}
+        `;
+      }
+    }
+    
+    // Автоматичний тест
+    async function runAutoTest() {
+      const result = document.getElementById('auto-test-result');
+      
+      try {
+        // Очищуємо localStorage
+        localStorage.removeItem('progran3_language');
+        
+        // Ініціалізуємо I18nManager
+        if (window.ProGran3 && window.ProGran3.I18n && window.ProGran3.I18n.Manager) {
+          await window.ProGran3.I18n.Manager.init();
+          
+          // Ініціалізуємо LanguageSwitcher
+          if (window.ProGran3.UI && window.ProGran3.UI.LanguageSwitcher) {
+            window.ProGran3.UI.LanguageSwitcher.init();
+            
+            // Перевіряємо результат
+            const header = document.querySelector('header');
+            const headerRight = document.querySelector('.header-right');
+            const languageSwitcher = document.querySelector('.language-switcher');
+            const languageButton = document.querySelector('.language-button');
+            
+            const headerStyles = getComputedStyle(header);
+            const headerRightStyles = getComputedStyle(headerRight);
+            
+            const info = [
+              `✅ I18nManager ініціалізовано`,
+              `✅ LanguageSwitcher ініціалізовано`,
+              ``,
+              `📍 Структура header:`,
+              `  - header: ${header ? 'знайдено' : 'не знайдено'}`,
+              `  - header-right: ${headerRight ? 'знайдено' : 'не знайдено'}`,
+              `  - language-switcher: ${languageSwitcher ? 'знайдено' : 'не знайдено'}`,
+              `  - language-button: ${languageButton ? 'знайдено' : 'не знайдено'}`,
+              ``,
+              `📍 Стилі header:`,
+              `  - width: ${headerStyles.width}`,
+              `  - max-width: ${headerStyles.maxWidth}`,
+              `  - box-sizing: ${headerStyles.boxSizing}`,
+              `  - padding: ${headerStyles.padding}`,
+              ``,
+              `📍 Стилі header-right:`,
+              `  - padding-right: ${headerRightStyles.paddingRight}`,
+              `  - justify-content: ${headerRightStyles.justifyContent}`,
+              `  - min-width: ${headerRightStyles.minWidth}`,
+              ``,
+              `📍 Перевірка кнопки:`,
+              `  - Кнопка створена: ${languageButton ? '✅' : '❌'}`,
+              `  - Кнопка в правильному місці: ${headerRight && languageButton ? '✅' : '❌'}`,
+              `  - Кнопка має правильний текст: ${languageButton ? languageButton.textContent.trim() : 'не знайдено'}`,
+              `  - Кнопка має іконку: ${languageButton && languageButton.querySelector('.language-arrow') ? '✅' : '❌'}`
+            ];
+            
+            const isSuccess = headerRight && languageSwitcher && languageButton && 
+                            headerStyles.maxWidth === '100%' &&
+                            headerStyles.boxSizing === 'border-box' &&
+                            headerRightStyles.paddingRight === '20px';
+            result.textContent = info.join('\n');
+            result.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+            
+          } else {
+            result.textContent = '❌ LanguageSwitcher не доступний';
+            result.className = 'test-result error';
+          }
+        } else {
+          result.textContent = '❌ I18nManager не доступний';
+          result.className = 'test-result error';
+        }
+      } catch (error) {
+        result.textContent = `❌ Помилка: ${error.message}`;
+        result.className = 'test-result error';
+      }
+    }
+    
+    // Тест функціональності кнопки
+    function testButtonFunctionality() {
+      const result = document.getElementById('functionality-test-result');
+      
+      try {
+        const languageButton = document.querySelector('.language-button');
+        const languageSwitcher = document.querySelector('.language-switcher');
+        
+        if (!languageButton || !languageSwitcher) {
+          result.textContent = '❌ Кнопка мов не знайдена';
+          result.className = 'test-result error';
+          return;
+        }
+        
+        const buttonStyles = getComputedStyle(languageButton);
+        const buttonRect = languageButton.getBoundingClientRect();
+        
+        const info = [
+          `✅ Кнопка мов знайдена`,
+          ``,
+          `📏 Розміри кнопки:`,
+          `  - width: ${Math.round(buttonRect.width)}px`,
+          `  - height: ${Math.round(buttonRect.height)}px`,
+          `  - min-width: ${buttonStyles.minWidth}`,
+          ``,
+          `🎨 Стилі кнопки:`,
+          `  - background: ${buttonStyles.background}`,
+          `  - border-radius: ${buttonStyles.borderRadius}`,
+          `  - box-shadow: ${buttonStyles.boxShadow}`,
+          `  - font-size: ${buttonStyles.fontSize}`,
+          `  - font-weight: ${buttonStyles.fontWeight}`,
+          ``,
+          `🔍 Перевірка функціональності:`,
+          `  - Кнопка клікабельна: ${languageButton.type === 'button' ? '✅' : '❌'}`,
+          `  - Кнопка має правильний тип: ${languageButton.type === 'button' ? '✅' : '❌'}`,
+          `  - Кнопка має outline: none: ${buttonStyles.outline === 'none' ? '✅' : '❌'}`,
+          `  - Кнопка має cursor: pointer: ${buttonStyles.cursor === 'pointer' ? '✅' : '❌'}`,
+          `  - Кнопка має transition: ${buttonStyles.transition.includes('0.3s') ? '✅' : '❌'}`,
+          ``,
+          `📱 Responsive:`,
+          `  - Мобільний режим: ${window.matchMedia('(max-width: 480px)').matches ? '✅ Active' : '❌ Inactive'}`,
+          `  - Адаптивні стилі: ${buttonStyles.minWidth === '120px' || buttonStyles.minWidth === '140px' ? '✅' : '❌'}`
+        ];
+        
+        const isCorrect = languageButton.type === 'button' &&
+                         buttonStyles.outline === 'none' &&
+                         buttonStyles.cursor === 'pointer' &&
+                         buttonStyles.transition.includes('0.3s');
+        
+        result.textContent = info.join('\n');
+        result.className = `test-result ${isCorrect ? 'success' : 'warning'}`;
+        
+      } catch (error) {
+        result.textContent = `❌ Помилка: ${error.message}`;
+        result.className = 'test-result error';
+      }
+    }
+    
+    // Тест почергового перемикання
+    function testLanguageCycling() {
+      const result = document.getElementById('cycling-test-result');
+      
+      try {
+        const languageButton = document.querySelector('.language-button');
+        
+        if (!languageButton) {
+          result.textContent = '❌ Кнопка мов не знайдена';
+          result.className = 'test-result error';
+          return;
+        }
+        
+        // Отримуємо поточну мову
+        const currentLang = window.ProGran3 && window.ProGran3.I18n && window.ProGran3.I18n.Manager ? 
+                           window.ProGran3.I18n.Manager.getCurrentLanguage() : 'uk';
+        
+        const supportedLanguages = ['uk', 'pl', 'en'];
+        const currentIndex = supportedLanguages.indexOf(currentLang);
+        const nextIndex = (currentIndex + 1) % supportedLanguages.length;
+        const nextLang = supportedLanguages[nextIndex];
+        
+        const info = [
+          `✅ Кнопка мов знайдена`,
+          ``,
+          `🌍 Поточний стан:`,
+          `  - Поточна мова: ${currentLang}`,
+          `  - Поточний індекс: ${currentIndex}`,
+          `  - Наступна мова: ${nextLang}`,
+          `  - Наступний індекс: ${nextIndex}`,
+          ``,
+          `🔄 Логіка перемикання:`,
+          `  - Підтримувані мови: ${supportedLanguages.join(', ')}`,
+          `  - Циклічне перемикання: ${(currentIndex + 1) % supportedLanguages.length === nextIndex ? '✅' : '❌'}`,
+          `  - Повернення до початку: ${nextIndex === 0 && currentIndex === supportedLanguages.length - 1 ? '✅' : '❌'}`,
+          ``,
+          `🔍 Перевірка:`,
+          `  - LanguageSwitcher доступний: ${window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.LanguageSwitcher ? '✅' : '❌'}`,
+          `  - I18nManager доступний: ${window.ProGran3 && window.ProGran3.I18n && window.ProGran3.I18n.Manager ? '✅' : '❌'}`,
+          `  - Функція cycleLanguage: ${window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.LanguageSwitcher && typeof window.ProGran3.UI.LanguageSwitcher.cycleLanguage === 'function' ? '✅' : '❌'}`,
+          ``,
+          `💡 Натисніть кнопку мов в header для тестування перемикання`
+        ];
+        
+        const isCorrect = window.ProGran3 && 
+                         window.ProGran3.UI && 
+                         window.ProGran3.UI.LanguageSwitcher &&
+                         window.ProGran3.I18n && 
+                         window.ProGran3.I18n.Manager &&
+                         typeof window.ProGran3.UI.LanguageSwitcher.cycleLanguage === 'function';
+        
+        result.textContent = info.join('\n');
+        result.className = `test-result ${isCorrect ? 'success' : 'warning'}`;
+        
+      } catch (error) {
+        result.textContent = `❌ Помилка: ${error.message}`;
+        result.className = 'test-result error';
+      }
+    }
+    
+    // Ініціалізація
+    window.onload = async function() {
+      console.log('🚀 Запуск тесту кнопки мов...');
+      
+      // Оновлюємо інформацію про viewport
+      updateViewportInfo();
+      
+      // Запускаємо автоматичний тест
+      await runAutoTest();
+      
+      // Запускаємо інші тести
+      setTimeout(testButtonFunctionality, 1000);
+      setTimeout(testLanguageCycling, 1500);
+      
+      console.log('✅ Тест завершено');
+    };
+    
+    // Оновлюємо інформацію про viewport при зміні розміру
+    window.addEventListener('resize', updateViewportInfo);
+  </script>
+</body>
+</html>
