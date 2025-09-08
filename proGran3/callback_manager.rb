@@ -44,6 +44,28 @@ module ProGran3
       success
     end
 
+    # Callback для підставки
+    def add_stand_callback(dialog, height, width, depth)
+      return false unless validate_dimensions_callback(depth, width, height, "підставки")
+      
+      # Зберігаємо параметри підставки
+      @stand_params = {
+        height: height.to_i,
+        width: width.to_i,
+        depth: depth.to_i
+      }
+      
+      # Створюємо підставку з правильним позиціонуванням
+      success = ProGran3.create_stand_with_dimensions(@stand_params[:height], @stand_params[:width], @stand_params[:depth])
+      
+      if success
+        # Оновлення стану через ModelStateManager
+        ModelStateManager.component_added(:stands, @stand_params)
+      end
+      
+      success
+    end
+
     # Callback для плитки
     def add_tiles_callback(dialog, type, *params)
       case type

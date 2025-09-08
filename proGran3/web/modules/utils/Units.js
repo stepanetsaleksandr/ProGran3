@@ -161,6 +161,11 @@
       },
       cladding: {
         thickness: document.getElementById('cladding-thickness')?.value || '0'
+      },
+      stands: {
+        height: document.getElementById('stands-height')?.value || '0',
+        width: document.getElementById('stands-width')?.value || '0',
+        depth: document.getElementById('stands-depth')?.value || '0'
       }
     };
     

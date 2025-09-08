@@ -253,34 +253,27 @@
           <span id="stands-dimensions-display" class="header-dimensions"></span>
         </div>
         <div class="panel-content">
-          <div class="carousel-container">
-            <div class="carousel-viewport" id="stands-carousel-viewport">
-              <div class="carousel-track" id="stands-carousel-track"></div>
-            </div>
-          </div>
-          
           <!-- Налаштування розмірів підставки -->
           <div class="input-group">
-            <h3 data-i18n="labels.size_settings">Налаштування розмірів</h3>
+            
             <div class="input-row">
               <div class="input-wrapper">
-                <label id="stands-height-label" for="stands-height" data-i18n="labels.height_mm">Висота (мм)</label>
-                <input type="number" id="stands-height" value="200" min="50" max="1000" oninput="updateStandsDisplay()">
+                <label id="stands-depth-label" for="stands-depth" data-i18n="labels.depth_mm">Довжина (мм)</label>
+                <input type="number" id="stands-depth" value="600" min="100" max="2000" oninput="updateStandsDisplay()">
               </div>
               <div class="input-wrapper">
                 <label id="stands-width-label" for="stands-width" data-i18n="labels.width_mm">Ширина (мм)</label>
-                <input type="number" id="stands-width" value="500" min="100" max="2000" oninput="updateStandsDisplay()">
+                <input type="number" id="stands-width" value="150" min="100" max="1500" oninput="updateStandsDisplay()">
               </div>
               <div class="input-wrapper">
-                <label id="stands-depth-label" for="stands-depth" data-i18n="labels.depth_mm">Довжина (мм)</label>
-                <input type="number" id="stands-depth" value="300" min="100" max="1500" oninput="updateStandsDisplay()">
+                <label id="stands-height-label" for="stands-height" data-i18n="labels.height_mm">Висота (мм)</label>
+                <input type="number" id="stands-height" value="200" min="50" max="1000" oninput="updateStandsDisplay()">
               </div>
             </div>
           </div>
           
           <div class="button-group">
             <button onclick="addStandWithCustomSize(); advanceToNextPanel(this);" data-i18n="buttons.add_stand">Додати підставку</button>
-            <button onclick="updateStandSize();" class="secondary-button" data-i18n="buttons.update_size">Оновити розмір</button>
           </div>
         </div>
       </section>

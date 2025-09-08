@@ -455,4 +455,78 @@ module ProGran3
       false
     end
   end
+
+  # Створення підставки з кастомними розмірами
+  def create_stand_with_dimensions(height, width, depth)
+    begin
+      ProGran3::Logger.info("Створення підставки з розмірами: #{height}×#{width}×#{depth} мм", "Loader")
+      
+      model = Sketchup.active_model
+      entities = model.active_entities
+      defs = model.definitions
+      
+      # Видаляємо старі компоненти підставки
+      entities.grep(Sketchup::ComponentInstance).select { |c| c.definition.name == "Stand" }.each(&:erase!)
+      
+      # Очищаємо невикористані визначення
+      defs.purge_unused
+      
+      # Створюємо новий компонент підставки
+      comp_def = defs.add("Stand")
+      
+      # Створюємо геометрію підставки
+      # Довжина (depth) по осі Y, ширина (width) по осі X
+      points = [
+        Geom::Point3d.new(0, 0, 0),
+        Geom::Point3d.new(width.mm, 0, 0),
+        Geom::Point3d.new(width.mm, depth.mm, 0),
+        Geom::Point3d.new(0, depth.mm, 0)
+      ]
+      
+      face = comp_def.entities.add_face(points)
+      face.reverse! if face.normal.z < 0
+      face.pushpull(height.mm)
+      
+      # Позиціонування підставки (як в insert_component)
+      foundation = entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name == "Foundation" }
+      x, y, z = 0, 0, 0
+      foundation_z = 0
+      foundation_bounds = nil
+      
+      if foundation
+        foundation_bounds = foundation.bounds
+        foundation_z = foundation_bounds.max.z
+        
+        # Позиціонування підставки відносно фундаменту та плитки
+        placement_z = foundation_z
+        tile_instance = entities.grep(Sketchup::ComponentInstance).find { |inst| 
+          inst.definition.name.start_with?("Perimeter_Tile_") || inst.definition.name.start_with?("Modular_Tile") 
+        }
+        if tile_instance
+          placement_z = tile_instance.bounds.max.z
+        end
+        
+        x = (foundation_bounds.min.x + 300.mm) - comp_def.bounds.min.x
+        y = foundation_bounds.center.y - comp_def.bounds.center.y
+        z = placement_z - comp_def.bounds.min.z
+      else
+        # Якщо немає фундаменту, розміщуємо в центрі
+        x = 0 - comp_def.bounds.center.x
+        y = 0 - comp_def.bounds.center.y
+        z = 0 - comp_def.bounds.min.z
+      end
+      
+      # Додаємо екземпляр компонента до моделі з правильним позиціонуванням
+      transform = Geom::Transformation.new([x, y, z])
+      entities.add_instance(comp_def, transform)
+      
+      ProGran3::Logger.success("Підставка створена з розмірами #{height}×#{width}×#{depth} мм", "Loader")
+      true
+      
+    rescue => e
+      ProGran3::Logger.error("Помилка при створенні підставки: #{e.message}", "Loader")
+      ProGran3::Logger.error("Stack trace: #{e.backtrace.join('\n')}", "Loader")
+      false
+    end
+  end
 end

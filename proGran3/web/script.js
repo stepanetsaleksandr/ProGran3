@@ -479,10 +479,6 @@ const CarouselManager = {
     
     debugLog(` Показано елемент ${index} в каруселі ${category}`, 'success');
     
-    // Автоматичне заповнення полів розмірів для підставки
-    if (category === 'stands') {
-      fillStandSizeFields();
-    }
     
     // Ледаче завантаження для активного елемента та сусідів (як у стел)
     this.loadOrGeneratePreview(category, index);
@@ -1417,20 +1413,6 @@ function updateAllDisplays() {
   // Оновлення відображення вибраних моделей
   updateModelDisplays();
   
-  // Автоматичне оновлення каруселі підставок тільки один раз при завантаженні
-  if (!window.standsCarouselInitialized) {
-    window.standsCarouselInitialized = true;
-    setTimeout(() => {
-      if (window.sketchup && window.sketchup.get_stands_list) {
-        debugLog(' Автоматичне оновлення каруселі підставок при завантаженні', 'info');
-        refreshStandsCarousel();
-      } else {
-        // Якщо API недоступний, використовуємо стандартну ініціалізацію
-        debugLog(' Використовуємо стандартну ініціалізацію каруселі підставок', 'info');
-        initializeStandsCarousel();
-      }
-    }, 1000);
-  }
   
   // Оновлення відображення огорожі
   updateFenceCornerDisplay();
@@ -1448,15 +1430,8 @@ function updateAllDisplays() {
 }
 
 function updateModelDisplays() {
-  // Оновлення відображення підставки
-  if (carouselState.stands && modelLists.stands) {
-    const standIndex = carouselState.stands.index;
-    const standFilename = modelLists.stands[standIndex];
-    if (standFilename) {
-      document.getElementById('stands-dimensions-display').textContent = 
-        standFilename.replace('.skp', '');
-    }
-  }
+  // Оновлення відображення підставки - тепер використовуємо updateStandsDisplay
+  updateStandsDisplay();
   
   // Оновлення відображення квітника
   if (carouselState.flowerbeds && modelLists.flowerbeds) {
@@ -1596,12 +1571,14 @@ function updateSummaryTable() {
   }
   
   // Підставка
-  if (addedElements.stands && carouselState.stands && modelLists.stands) {
-    const standFilename = modelLists.stands[carouselState.stands.index];
+  if (addedElements.stands) {
     const summaryStandEl = document.getElementById('summary-stand');
     if (summaryStandEl) {
-      summaryStandEl.textContent = 
-        standFilename ? standFilename.replace('.skp', '') : '--';
+      if (typeof addedElements.stands === 'object' && addedElements.stands.filename) {
+        summaryStandEl.textContent = addedElements.stands.filename.replace('.skp', '');
+      } else {
+        summaryStandEl.textContent = 'Підставка';
+      }
     }
   } else {
     const summaryStandEl = document.getElementById('summary-stand');
@@ -1999,6 +1976,11 @@ function getAllInputValues() {
     cladding: {
       thickness: document.getElementById('cladding-thickness').value
     },
+    stands: {
+      height: document.getElementById('stands-height').value,
+      width: document.getElementById('stands-width').value,
+      depth: document.getElementById('stands-depth').value
+    },
     fenceCorner: {
       postHeight: document.getElementById('fence-corner-post-height').value,
       postSize: document.getElementById('fence-corner-post-size').value,
@@ -2054,6 +2036,13 @@ function convertAllValues(oldValues, oldUnit, newUnit) {
   // Конвертуємо значення облицювання
   if (oldValues.cladding) {
     document.getElementById('cladding-thickness').value = convertValue(oldValues.cladding.thickness, oldUnit, newUnit);
+  }
+  
+  // Конвертуємо значення підставки
+  if (oldValues.stands) {
+    document.getElementById('stands-height').value = convertValue(oldValues.stands.height, oldUnit, newUnit);
+    document.getElementById('stands-width').value = convertValue(oldValues.stands.width, oldUnit, newUnit);
+    document.getElementById('stands-depth').value = convertValue(oldValues.stands.depth, oldUnit, newUnit);
   }
   
   // Конвертуємо значення кутової огорожі
@@ -2498,8 +2487,6 @@ function updateStandsDisplay() {
   debugLog(`   - Висота: ${height}`, 'info');
   debugLog(`   - Ширина: ${width}`, 'info');
   debugLog(`   - Довжина: ${depth}`, 'info');
-  debugLog(`   - carouselState.stands: ${!!carouselState.stands}`, 'info');
-  debugLog(`   - carouselState.stands.index: ${carouselState.stands?.index}`, 'info');
   
   const display = document.getElementById('stands-dimensions-display');
   if (display) {
@@ -2515,9 +2502,6 @@ function updateStandsDisplay() {
     display.textContent = displayText;
     
     debugLog(` Відображення оновлено: ${displayText}`, 'info');
-    
-    // Діагностичне повідомлення (можна видалити після тестування)
-    // showDiagnosticMessage(`Відображення: В=${heightDisplay} Ш=${widthDisplay} Д=${depthDisplay} ${unitText}`);
   } else {
     debugLog(` Не знайдено елемент stands-dimensions-display`, 'warning');
   }
@@ -2772,48 +2756,58 @@ function addStandWithCustomSize() {
   debugLog('🏗️ addStandWithCustomSize() викликано!', 'info');
   
   try {
-    // Отримуємо вибрану підставку з каруселі
-    let selectedStand = null;
-    if (carouselState.stands && modelLists.stands && modelLists.stands[carouselState.stands.index]) {
-      selectedStand = modelLists.stands[carouselState.stands.index];
-      debugLog(`🏗️ Вибрана підставка: ${selectedStand}`, 'info');
-    } else {
-      debugLog(` Підставка не вибрана`, 'warning');
-      alert('Будь ласка, виберіть підставку з каруселі');
+    // Отримуємо розміри з полів вводу (порядок: довжина, ширина, висота)
+    const depthRaw = parseInt(document.getElementById('stands-depth').value);  // Довжина (перше поле)
+    const widthRaw = parseInt(document.getElementById('stands-width').value);  // Ширина (друге поле)
+    const heightRaw = parseInt(document.getElementById('stands-height').value); // Висота (третє поле)
+    
+    debugLog(` Отримано розміри з полів:`, 'info');
+    debugLog(`   - Висота (stands-height): ${heightRaw}`, 'info');
+    debugLog(`   - Ширина (stands-width): ${widthRaw}`, 'info');
+    debugLog(`   - Довжина (stands-depth): ${depthRaw}`, 'info');
+    
+    // Конвертуємо в міліметри для передачі до Ruby
+    const height = convertToMm(heightRaw);
+    const width = convertToMm(widthRaw);
+    const depth = convertToMm(depthRaw);
+    
+    const currentUnit = getCurrentUnit();
+    debugLog(` Конвертовано в міліметри (${currentUnit} → мм):`, 'info');
+    debugLog(`   - Висота: ${heightRaw} ${currentUnit} → ${height} мм`, 'info');
+    debugLog(`   - Ширина: ${widthRaw} ${currentUnit} → ${width} мм`, 'info');
+    debugLog(`   - Довжина: ${depthRaw} ${currentUnit} → ${depth} мм`, 'info');
+    debugLog(` Розміри підставки: ${height}×${width}×${depth} мм (В×Ш×Д)`, 'info');
+    
+    // Перевіряємо валідність розмірів
+    if (isNaN(height) || isNaN(width) || isNaN(depth) || height <= 0 || width <= 0 || depth <= 0) {
+      debugLog(` Невалідні розміри підставки`, 'error');
+      alert('Будь ласка, введіть коректні розміри підставки');
       return;
     }
     
-    // Отримуємо розміри з полів вводу
-    const height = parseInt(document.getElementById('stands-height').value);
-    const width = parseInt(document.getElementById('stands-width').value);
-    const depth = parseInt(document.getElementById('stands-depth').value);
-    
-    debugLog(` Отримано розміри з полів:`, 'info');
-    debugLog(`   - Висота (stands-height): ${height}`, 'info');
-    debugLog(`   - Ширина (stands-width): ${width}`, 'info');
-    debugLog(`   - Довжина (stands-depth): ${depth}`, 'info');
-    debugLog(` Розміри підставки: ${height}×${width}×${depth} мм (В×Ш×Д)`, 'info');
-    
-    // Діагностичне повідомлення (можна видалити після тестування)
-    // showDiagnosticMessage(`Додаємо: В=${height} Ш=${width} Д=${depth} мм`);
-    
     // Додаємо підставку через SketchUp API
-    if (window.sketchup.add_model) {
-      debugLog(`🏗️ Додаємо підставку: ${selectedStand}`, 'info');
-      const result = window.sketchup.add_model('stands', selectedStand);
+    if (window.sketchup.add_stand) {
+      debugLog(`🏗️ Додаємо підставку з розмірами: ${height}×${width}×${depth}`, 'info');
+      // Передаємо параметри в порядку: height, width, depth (як очікує Ruby callback)
+      const result = window.sketchup.add_stand(height, width, depth);
       debugLog(`📤 Результат додавання підставки: ${result}`, 'info');
       
-      // Зберігаємо інформацію про розміри для майбутнього оновлення
+      // Зберігаємо інформацію про розміри
       if (!window.standCustomSizes) {
         window.standCustomSizes = {};
       }
-      window.standCustomSizes[selectedStand] = { height, width, depth };
+      window.standCustomSizes['stand_custom'] = { height, width, depth };
       
-      addedElements['stands'] = true;
+      addedElements['stands'] = {
+        filename: 'stand_custom',
+        height: height,
+        width: width,
+        depth: depth
+      };
       updateSummaryTable();
       debugLog(` Підставка успішно додана`, 'success');
     } else {
-      debugLog(` window.sketchup.add_model не доступний`, 'warning');
+      debugLog(` window.sketchup.add_stand не доступний`, 'warning');
       alert('Помилка: не вдалося додати підставку');
     }
     
@@ -2827,180 +2821,7 @@ function addStandWithCustomSize() {
   debugLog('🏁 addStandWithCustomSize() завершено!', 'info');
 }
 
-// Оновлення розміру підставки
-function updateStandSize() {
-  console.log(' updateStandSize() викликано!');
-  debugLog(' updateStandSize() викликано!', 'info');
-  
-  try {
-    // Перевіряємо, чи є підставка в моделі
-    if (!addedElements['stands']) {
-      debugLog(` Немає підставки в моделі`, 'warning');
-      alert('Спочатку додайте підставку');
-      return;
-    }
-    
-    // Отримуємо нові розміри з полів вводу
-    const height = parseInt(document.getElementById('stands-height').value);
-    const width = parseInt(document.getElementById('stands-width').value);
-    const depth = parseInt(document.getElementById('stands-depth').value);
-    
-    debugLog(` Отримано нові розміри з полів:`, 'info');
-    debugLog(`   - Висота (stands-height): ${height}`, 'info');
-    debugLog(`   - Ширина (stands-width): ${width}`, 'info');
-    debugLog(`   - Довжина (stands-depth): ${depth}`, 'info');
-    debugLog(` Нові розміри підставки: ${height}×${width}×${depth} мм (В×Ш×Д)`, 'info');
-    
-    // Діагностичне повідомлення (можна видалити після тестування)
-    // showDiagnosticMessage(`Оновлюємо: В=${height} Ш=${width} Д=${depth} мм`);
-    
-    // Оновлюємо розмір підставки через SketchUp API
-    if (window.sketchup.update_stand_size) {
-      debugLog(` Оновлюємо розмір підставки`, 'info');
-      const result = window.sketchup.update_stand_size(height, width, depth);
-      debugLog(`📤 Результат оновлення розміру: ${result}`, 'info');
-      
-      updateSummaryTable();
-      debugLog(` Розмір підставки успішно оновлено`, 'success');
-    } else {
-      debugLog(` window.sketchup.update_stand_size не доступний`, 'warning');
-      alert('Функція оновлення розміру підставки не реалізована в SketchUp API');
-    }
-    
-  } catch (error) {
-    debugLog(` Помилка в updateStandSize(): ${error.message}`, 'error');
-    debugLog(` Stack trace: ${error.stack}`, 'error');
-    alert(`Помилка при оновленні розміру підставки: ${error.message}`);
-  }
-  
-  console.log('🏁 updateStandSize() завершено!');
-  debugLog('🏁 updateStandSize() завершено!', 'info');
-}
 
-// Автоматичне заповнення полів розмірів вибраної підставки
-function fillStandSizeFields() {
-  console.log(' fillStandSizeFields() викликано!');
-  debugLog(' fillStandSizeFields() викликано!', 'info');
-  
-  try {
-    // Отримуємо вибрану підставку
-    if (!carouselState.stands || !modelLists.stands || !modelLists.stands[carouselState.stands.index]) {
-      debugLog(` Немає вибраної підставки`, 'warning');
-      debugLog(`   - carouselState.stands: ${!!carouselState.stands}`, 'warning');
-      debugLog(`   - modelLists.stands: ${!!modelLists.stands}`, 'warning');
-      debugLog(`   - carouselState.stands.index: ${carouselState.stands?.index}`, 'warning');
-      debugLog(`   - modelLists.stands.length: ${modelLists.stands?.length}`, 'warning');
-      return;
-    }
-    
-    const selectedStand = modelLists.stands[carouselState.stands.index];
-    debugLog(` Заповнюємо поля для підставки: ${selectedStand}`, 'info');
-    debugLog(`   - carouselState.stands.index: ${carouselState.stands.index}`, 'info');
-    debugLog(`   - modelLists.stands.length: ${modelLists.stands.length}`, 'info');
-    
-    // Стандартні розміри для різних типів підставок (в мм: В×Ш×Д)
-    // height = висота, width = ширина, depth = довжина
-    const standDimensions = {
-      'stand1.skp': { height: 200, width: 150, depth: 500 },
-      'stand2.skp': { height: 150, width: 120, depth: 400 },
-      'stand3.skp': { height: 300, width: 200, depth: 600 },
-      'stand4.skp': { height: 180, width: 140, depth: 450 },
-      'stand5.skp': { height: 250, width: 180, depth: 550 },
-      // Додайте інші підставки за потреби
-    };
-    
-    // Отримуємо розміри для вибраної підставки або використовуємо стандартні
-    const dimensions = standDimensions[selectedStand] || { height: 200, width: 150, depth: 500 };
-    
-    // Заповнюємо поля вводу
-    const heightField = document.getElementById('stands-height');
-    const widthField = document.getElementById('stands-width');
-    const depthField = document.getElementById('stands-depth');
-    
-    if (heightField && widthField && depthField) {
-      debugLog(` Заповнюємо поля:`, 'info');
-      debugLog(`   - Висота (stands-height): ${dimensions.height}`, 'info');
-      debugLog(`   - Ширина (stands-width): ${dimensions.width}`, 'info');
-      debugLog(`   - Довжина (stands-depth): ${dimensions.depth}`, 'info');
-      
-      heightField.value = dimensions.height;
-      widthField.value = dimensions.width;
-      depthField.value = dimensions.depth;
-      
-      debugLog(` Поля заповнено: ${dimensions.height}×${dimensions.width}×${dimensions.depth} мм (В×Ш×Д)`, 'info');
-      
-      // Діагностичне повідомлення (можна видалити після тестування)
-      // showDiagnosticMessage(`Заповнено поля: В=${dimensions.height} Ш=${dimensions.width} Д=${dimensions.depth} мм`);
-      
-      // Оновлюємо відображення
-      updateStandsDisplay();
-    } else {
-      debugLog(` Не вдалося знайти поля вводу для розмірів підставки`, 'warning');
-      debugLog(`   - heightField: ${!!heightField}`, 'warning');
-      debugLog(`   - widthField: ${!!widthField}`, 'warning');
-      debugLog(`   - depthField: ${!!depthField}`, 'warning');
-      
-      // showDiagnosticMessage(`Помилка: Не знайдено поля вводу!`);
-    }
-    
-  } catch (error) {
-    debugLog(` Помилка в fillStandSizeFields(): ${error.message}`, 'error');
-    debugLog(` Stack trace: ${error.stack}`, 'error');
-  }
-  
-  console.log('🏁 fillStandSizeFields() завершено!');
-  debugLog('🏁 fillStandSizeFields() завершено!', 'info');
-}
 
 // Спеціальна ініціалізація каруселі підставок
 
-
-// Оновлення списку підставок в каруселі
-function refreshStandsCarousel() {
-  console.log(' refreshStandsCarousel() викликано!');
-  debugLog(' refreshStandsCarousel() викликано!', 'info');
-  
-  try {
-    // Запитуємо оновлений список підставок з сервера
-    if (window.sketchup && window.sketchup.get_stands_list) {
-      debugLog('📡 Запитуємо оновлений список підставок', 'info');
-      const newStandsList = window.sketchup.get_stands_list();
-      
-      if (newStandsList && Array.isArray(newStandsList)) {
-        debugLog(`📋 Отримано новий список підставок: ${newStandsList.length} елементів`, 'info');
-        debugLog(`📋 Список підставок: ${JSON.stringify(newStandsList)}`, 'info');
-        
-        // Оновлюємо modelLists
-        modelLists.stands = newStandsList;
-        
-        // Оновлюємо StateManager якщо доступний
-        if (window.ProGran3 && window.ProGran3.Core && window.ProGran3.Core.StateManager) {
-          window.ProGran3.Core.StateManager.setModelLists(modelLists);
-        }
-        
-        // Перезапускаємо карусель через CarouselManager
-        debugLog(' Перезапускаємо карусель підставок', 'info');
-        if (CarouselManager && CarouselManager.initialize) {
-          CarouselManager.initialize('stands');
-        } else if (typeof initializeStandsCarousel === 'function') {
-          initializeStandsCarousel();
-        } else {
-          debugLog(' Не знайдено функцію для ініціалізації каруселі підставок', 'warning');
-        }
-        
-        debugLog(' Карусель підставок оновлена успішно', 'success');
-      } else {
-        debugLog(' Не вдалося отримати оновлений список підставок', 'warning');
-      }
-    } else {
-      debugLog(' window.sketchup.get_stands_list не доступний', 'warning');
-    }
-    
-  } catch (error) {
-    debugLog(` Помилка в refreshStandsCarousel(): ${error.message}`, 'error');
-    debugLog(` Stack trace: ${error.stack}`, 'error');
-  }
-  
-  console.log('🏁 refreshStandsCarousel() завершено!');
-  debugLog('🏁 refreshStandsCarousel() завершено!', 'info');
-}
