@@ -10,7 +10,6 @@ module ProGran3
   require_relative 'progran3/dimensions_manager'
   require_relative 'progran3/coordination_manager'
   require_relative 'progran3/callback_manager'
-  require_relative 'progran3/test_suite'
   
   # Підключаємо основні модулі
   require_relative 'progran3/loader'
@@ -86,7 +85,6 @@ module ProGran3
         File.join(plugin_dir, 'proGran3', 'dimensions_manager.rb'),
         File.join(plugin_dir, 'proGran3', 'coordination_manager.rb'),
         File.join(plugin_dir, 'proGran3', 'callback_manager.rb'),
-        File.join(plugin_dir, 'proGran3', 'test_suite.rb'),
         File.join(plugin_dir, 'proGran3', 'loader.rb'),
         File.join(plugin_dir, 'proGran3', 'ui.rb'),
         File.join(plugin_dir, 'proGran3', 'builders', 'foundation_builder.rb'),
@@ -112,10 +110,6 @@ module ProGran3
     Logger.finish("Перезавантаження плагіна ProGran3", "Main")
   end
   
-  # Метод для швидкого тестування
-  def self.test
-    TestSuite.test_plugin
-  end
 
   # Універсальний метод для витягування превью з .skp файлів
   def self.extract_skp_preview(component_path, size = 256)
@@ -132,36 +126,4 @@ module ProGran3
     CoordinationManager.update_all_elements
   end
 
-  # Додаткові тестові методи (делегування до TestSuite)
-  def self.test_skp_preview_extractor
-    TestSuite.test_skp_preview_extractor
-  end
-  
-  def self.test_universal_extraction
-    TestSuite.test_universal_extraction
-  end
-  
-  def self.test_validation
-    TestSuite.test_validation
-  end
-  
-  def self.test_dimensions_manager
-    TestSuite.test_dimensions_manager
-  end
-
-  def self.test_carousel
-    TestSuite.test_carousel
-  end
-
-  def self.test_ui
-    TestSuite.test_ui
-  end
-
-  def self.test_gravestones_preview
-    TestSuite.test_gravestones_preview
-  end
-
-  def self.run_all_tests
-    TestSuite.run_all_tests
-  end
 end

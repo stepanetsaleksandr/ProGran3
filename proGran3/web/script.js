@@ -2296,13 +2296,6 @@ function resetTileThicknessOptions() {
 }
 
 // Функція для оновлення значення слайдера
-function updateSliderValue(slider) {
-  const value = slider.value;
-  const valueDisplay = slider.parentElement.querySelector('.slider-value-variant-5');
-  if (valueDisplay) {
-    valueDisplay.textContent = value;
-  }
-}
 
 
 
@@ -2329,13 +2322,6 @@ function toggleTheme() {
 
 }
 
-function changeAccent(color) {
-  currentAccent = color;
-  document.documentElement.setAttribute('data-accent', color);
-  localStorage.setItem('accent', color);
-  
-
-}
 
 function initializeTheme() {
   const savedTheme = localStorage.getItem('theme') || 'light';
@@ -2369,28 +2355,6 @@ function initializeTheme() {
 
 
 
-// Додавання вибраної надгробної плити до моделі
-function addGravestone() {
-  const category = 'gravestones';
-  const state = carouselState[category];
-  
-  if (!state || !modelLists[category] || !modelLists[category][state.index]) {
-    debugLog(` Не вдалося додати надгробну плиту: немає вибраного елемента`, 'error');
-    return;
-  }
-  
-  const filename = modelLists[category][state.index];
-  debugLog(`🏗️ Додавання надгробної плити: ${filename}`, 'info');
-  
-  if (window.sketchup && window.sketchup.add_model) {
-    window.sketchup.add_model(category, filename);
-    addedElements[category] = true;
-    updateSummaryTable();
-    debugLog(` Надгробна плита додана: ${filename}`, 'success');
-  } else {
-    debugLog(` window.sketchup.add_model не доступний`, 'error');
-  }
-}
 
 // Додавання вибраного декору огорожі до моделі
 
@@ -2443,40 +2407,6 @@ function toggleDebugLog() {
   }
 }
 
-// Функція для показу діагностичних повідомлень
-function showDiagnosticMessage(message) {
-  // Створюємо або знаходимо елемент для діагностичних повідомлень
-  let diagnosticElement = document.getElementById('diagnostic-message');
-  if (!diagnosticElement) {
-    diagnosticElement = document.createElement('div');
-    diagnosticElement.id = 'diagnostic-message';
-    diagnosticElement.style.cssText = `
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      background: #333;
-      color: #fff;
-      padding: 8px 12px;
-      border-radius: 4px;
-      font-size: 12px;
-      z-index: 10000;
-      max-width: 300px;
-      word-wrap: break-word;
-    `;
-    document.body.appendChild(diagnosticElement);
-  }
-  
-  // Показуємо повідомлення
-  diagnosticElement.textContent = message;
-  diagnosticElement.style.display = 'block';
-  
-  // Автоматично ховаємо через 3 секунди
-  setTimeout(() => {
-    if (diagnosticElement) {
-      diagnosticElement.style.display = 'none';
-    }
-  }, 3000);
-}
 
 function updateStandsDisplay() {
   const height = document.getElementById('stands-height').value;
