@@ -126,4 +126,53 @@ module ProGran3
     CoordinationManager.update_all_elements
   end
 
+  # Тестовий метод для генерації превью поточної моделі
+  def self.test_model_preview
+    Logger.info("🧪 Тестування генерації превью поточної моделі", "Main")
+    
+    begin
+      # Тестуємо різні розміри та якості
+      test_cases = [
+        { size: 256, quality: 'low' },
+        { size: 512, quality: 'medium' },
+        { size: 1024, quality: 'high' }
+      ]
+      
+      test_cases.each do |params|
+        Logger.info("📐 Тестуємо: розмір=#{params[:size]}, якість=#{params[:quality]}", "Main")
+        
+        result = SkpPreviewExtractor.generate_current_model_preview(params[:size], params[:quality])
+        
+        if result
+          Logger.success("✅ Тест успішний для #{params[:size]}x#{params[:size]} (#{params[:quality]})", "Main")
+        else
+          Logger.error("❌ Тест невдалий для #{params[:size]}x#{params[:size]} (#{params[:quality]})", "Main")
+        end
+      end
+      
+    rescue => e
+      Logger.error("Помилка тестування превью: #{e.message}", "Main")
+    end
+  end
+
+  # Простий тест генерації превью
+  def self.test_simple_preview
+    Logger.info("🧪 Простий тест генерації превью", "Main")
+    
+    begin
+      result = SkpPreviewExtractor.generate_current_model_preview(256, 'low')
+      
+      if result
+        Logger.success("✅ Простий тест успішний", "Main")
+        Logger.info("📏 Довжина результату: #{result.length}", "Main")
+      else
+        Logger.error("❌ Простий тест невдалий", "Main")
+      end
+      
+    rescue => e
+      Logger.error("Помилка простого тесту: #{e.message}", "Main")
+      Logger.error("Stack trace: #{e.backtrace.join("\n")}", "Main")
+    end
+  end
+
 end

@@ -141,6 +141,90 @@ module ProGran3
       end
     end
     
+    # Генерація превью поточної моделі
+    def generate_current_model_preview(size = 512, quality = 'medium')
+      puts "🎨 Генерація превью поточної моделі"
+      puts "📐 Параметри: розмір=#{size}, якість=#{quality}"
+      
+      begin
+        puts "🔍 Перевіряємо активну модель..."
+        model = Sketchup.active_model
+        if model.nil?
+          puts "❌ Активна модель не знайдена"
+          return nil
+        end
+        puts "✅ Активна модель знайдена"
+
+        # Перевіряємо чи є щось в моделі
+        puts "🔍 Перевіряємо вміст моделі..."
+        if model.entities.length == 0
+          puts "❌ Модель порожня"
+          return nil
+        end
+        puts "✅ Модель містить #{model.entities.length} елементів"
+
+        # Налаштування для рендерингу
+        size = size.to_i
+        size = [64, size, 2048].sort[1] # Обмежуємо розмір від 64 до 2048 пікселів
+        puts "📏 Фінальний розмір: #{size}x#{size}"
+
+        # Створюємо тимчасовий файл для збереження зображення
+        puts "📁 Створюємо тимчасовий файл..."
+        temp_dir = File.join(Dir.tmpdir, "progran3_previews")
+        Dir.mkdir(temp_dir) unless Dir.exist?(temp_dir)
+        
+        timestamp = Time.now.strftime("%Y%m%d_%H%M%S")
+        temp_file = File.join(temp_dir, "model_preview_#{timestamp}.png")
+        puts "📄 Шлях до тимчасового файлу: #{temp_file}"
+
+        # Налаштування рендерингу
+        puts "🔍 Перевіряємо активний вид..."
+        view = model.active_view
+        if view.nil?
+          puts "❌ Активний вид не знайдено"
+          return nil
+        end
+        puts "✅ Активний вид знайдено"
+
+        # Генеруємо зображення без складних налаштувань
+        puts "📸 Генерація зображення розміром #{size}x#{size}"
+        
+        # Використовуємо write_image для створення превью
+        # Параметри: filename, width, height, antialias, compression
+        success = view.write_image(temp_file, size, size, true, 0.9)
+        
+        if success && File.exist?(temp_file) && File.size(temp_file) > 0
+          puts "✅ Превью успішно згенеровано"
+          puts "📏 Розмір файлу: #{File.size(temp_file)} байт"
+          
+          # Читаємо файл і конвертуємо в base64
+          require 'base64'
+          image_data = File.binread(temp_file)
+          base64_data = Base64.strict_encode64(image_data)
+          data_url = "data:image/png;base64,#{base64_data}"
+          
+          puts "📊 Довжина base64: #{base64_data.length} символів"
+          puts "📊 Довжина data URL: #{data_url.length} символів"
+          
+          # Видаляємо тимчасовий файл
+          File.delete(temp_file) if File.exist?(temp_file)
+          
+          return data_url
+        else
+          puts "❌ Не вдалося згенерувати зображення"
+          puts "Файл існує: #{File.exist?(temp_file)}, розмір: #{File.exist?(temp_file) ? File.size(temp_file) : 'N/A'}"
+          return nil
+        end
+
+      rescue => e
+        puts "❌ Помилка генерації превью: #{e.message}"
+        puts "Stack trace: #{e.backtrace.join("\n")}"
+        return nil
+      ensure
+        puts "🏁 Завершення генерації превью"
+      end
+    end
+
     # Тестування універсального методу
     def test_universal_extraction
       puts "🧪 Тестування універсального витягування..."

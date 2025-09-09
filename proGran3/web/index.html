@@ -42,7 +42,7 @@
       <button class="tab-button" data-tab="gravestone" onclick="switchTab('gravestone')" data-i18n="tabs.gravestone">Надгробна частина</button>
       <button class="tab-button" data-tab="fence" onclick="switchTab('fence')" data-i18n="tabs.fence">Огорожа</button>
       <button class="tab-button" data-tab="additional" onclick="switchTab('additional')" data-i18n="tabs.elements">Додаткові елементи</button>
-
+      <button class="tab-button" data-tab="view" onclick="switchTab('view')" data-i18n="tabs.view">Вигляд</button>
     </div>
 
     <!-- Таб "База" -->
@@ -438,7 +438,76 @@
       </div>
     </div>
 
-
+    <!-- Таб "Вигляд" -->
+    <div class="tab-content" id="view-tab">
+      <section class="panel">
+        <div class="panel-header" onclick="togglePanel(this)">
+          <h2 class="panel-title" data-i18n="panels.preview">Превью моделі</h2>
+          <span class="chevron"></span>
+          <span class="header-placeholder"></span>
+        </div>
+        <div class="panel-content">
+          <p class="panel-description">Створіть превью поточної моделі для перегляду та збереження.</p>
+          
+          <!-- Налаштування превью -->
+          <div class="input-row">
+            <div class="input-wrapper">
+              <label for="preview-size" data-i18n="labels.preview_size">Розмір превью (пікселі)</label>
+              <select id="preview-size" onchange="updatePreviewSettings()">
+                <option value="256">256x256</option>
+                <option value="512" selected>512x512</option>
+                <option value="1024">1024x1024</option>
+              </select>
+            </div>
+            <div class="input-wrapper">
+              <label for="preview-quality" data-i18n="labels.preview_quality">Якість</label>
+              <select id="preview-quality" onchange="updatePreviewSettings()">
+                <option value="low" data-i18n="quality.low">Низька</option>
+                <option value="medium" selected data-i18n="quality.medium">Середня</option>
+                <option value="high" data-i18n="quality.high">Висока</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Кнопка створення превью -->
+          <button onclick="generateModelPreview()" id="generate-preview-btn" data-i18n="buttons.generate_preview">
+            <span class="button-icon">📷</span>
+            Створити превью
+          </button>
+          
+          <!-- Область відображення превью -->
+          <div id="preview-container" class="preview-container" style="display: none;">
+            <div class="preview-header">
+              <h3 data-i18n="preview.title">Превью моделі</h3>
+              <div class="preview-actions">
+                <button onclick="downloadPreview()" class="action-btn" data-i18n="buttons.download_preview">
+                  <span class="button-icon">💾</span>
+                  Завантажити
+                </button>
+                <button onclick="copyPreviewToClipboard()" class="action-btn" data-i18n="buttons.copy_preview">
+                  <span class="button-icon">📋</span>
+                  Копіювати
+                </button>
+              </div>
+            </div>
+            <div class="preview-image-container">
+              <img id="preview-image" src="" alt="Превью моделі" class="preview-image">
+            </div>
+            <div class="preview-info">
+              <p id="preview-info-text"></p>
+            </div>
+          </div>
+          
+          <!-- Статус генерації -->
+          <div id="preview-status" class="preview-status" style="display: none;">
+            <div class="status-indicator">
+              <div class="spinner"></div>
+              <span data-i18n="preview.generating">Генерація превью...</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
 
     <!-- Специфікація (залишається поза табами) -->
     <section class="panel collapsed" id="specification-panel">

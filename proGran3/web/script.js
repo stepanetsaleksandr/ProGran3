@@ -773,6 +773,9 @@ function initializeApp() {
   // Ініціалізація табів
   initializeTabs();
   
+  // Ініціалізація превью табу
+  initializePreviewTab();
+  
   // Ініціалізація UI (без повторного виклику ready)
   if(document.querySelector('.tiling-mode-btn')) {
     debugLog(` Знайдено кнопки способу укладання, оновлюємо контроли`, 'success');
@@ -2754,4 +2757,242 @@ function addStandWithCustomSize() {
 
 
 // Спеціальна ініціалізація каруселі підставок
+
+// --- ФУНКЦІЇ ДЛЯ ПРЕВЬЮ МОДЕЛІ ---
+
+// Глобальні змінні для превью
+let currentPreviewData = null;
+let previewSettings = {
+  size: 512,
+  quality: 'medium'
+};
+
+// Оновлення налаштувань превью
+function updatePreviewSettings() {
+  const sizeSelect = document.getElementById('preview-size');
+  const qualitySelect = document.getElementById('preview-quality');
+  
+  if (sizeSelect) {
+    previewSettings.size = parseInt(sizeSelect.value);
+  }
+  
+  if (qualitySelect) {
+    previewSettings.quality = qualitySelect.value;
+  }
+  
+  debugLog(`Налаштування превью оновлено: розмір=${previewSettings.size}, якість=${previewSettings.quality}`, 'info');
+}
+
+// Генерація превью моделі
+function generateModelPreview() {
+  debugLog('🎨 Початок генерації превью моделі', 'info');
+  
+  // Оновлюємо налаштування
+  updatePreviewSettings();
+  
+  // Показуємо статус генерації
+  showPreviewStatus(true);
+  
+  // Приховуємо попереднє превью
+  hidePreviewContainer();
+  
+  try {
+    // Перевіряємо доступність SketchUp API
+    if (!window.sketchup || !window.sketchup.generate_model_preview) {
+      throw new Error('SketchUp API для генерації превью не доступний');
+    }
+    
+    debugLog(`📐 Параметри превью: розмір=${previewSettings.size}, якість=${previewSettings.quality}`, 'info');
+    
+    // Викликаємо SketchUp API для генерації превью
+    const result = window.sketchup.generate_model_preview(previewSettings.size, previewSettings.quality);
+    
+    debugLog(`📤 Результат callback: ${result} (тип: ${typeof result})`, 'info');
+    
+    // Callback тепер повертає 1 або 0, а дані приходять через execute_script
+    if (result === 1) {
+      debugLog('✅ Callback успішний, очікуємо дані через execute_script', 'success');
+    } else if (result === 0) {
+      throw new Error('Callback повернув помилку');
+    } else {
+      debugLog(`⚠️ Callback повернув неочікуване значення: ${result}, але продовжуємо`, 'warn');
+      // Не кидаємо помилку, оскільки превью все одно генерується
+    }
+    
+  } catch (error) {
+    debugLog(`❌ Помилка генерації превью: ${error.message}`, 'error');
+    alert(`Помилка при створенні превью: ${error.message}`);
+    showPreviewStatus(false);
+  }
+}
+
+// Обробка успішного результату превью (викликається з Ruby)
+function receiveModelPreview(result) {
+  debugLog('📥 Отримано результат превью з Ruby', 'info');
+  debugLog(`📊 Дані: success=${result.success}, size=${result.size}, quality=${result.quality}`, 'info');
+  
+  try {
+    if (result && result.success && result.data) {
+      // Зберігаємо дані превью
+      currentPreviewData = {
+        base64: result.data,
+        size: result.size,
+        quality: result.quality,
+        generatedAt: result.generated_at || new Date().toISOString(),
+        filename: `model_preview_${Date.now()}.png`
+      };
+      
+      // Показуємо превью
+      showPreviewContainer();
+      updatePreviewInfo();
+      
+      debugLog('✅ Превью успішно згенеровано та відображено', 'success');
+    } else {
+      throw new Error('Некоректні дані превью');
+    }
+  } catch (error) {
+    debugLog(`❌ Помилка обробки превью: ${error.message}`, 'error');
+    alert(`Помилка обробки превью: ${error.message}`);
+  } finally {
+    // Приховуємо статус генерації
+    showPreviewStatus(false);
+  }
+}
+
+// Обробка помилки превью (викликається з Ruby)
+function handleModelPreviewError(errorMessage) {
+  debugLog(`❌ Помилка превью з Ruby: ${errorMessage}`, 'error');
+  alert(`Помилка при створенні превью: ${errorMessage}`);
+  showPreviewStatus(false);
+}
+
+// Показ/приховування статусу генерації
+function showPreviewStatus(show) {
+  const statusElement = document.getElementById('preview-status');
+  if (statusElement) {
+    statusElement.style.display = show ? 'block' : 'none';
+  }
+  
+  // Блокуємо/розблокуємо кнопку
+  const button = document.getElementById('generate-preview-btn');
+  if (button) {
+    button.disabled = show;
+    button.textContent = show ? 'Генерація...' : '📷 Створити превью';
+  }
+}
+
+// Показ контейнера превью
+function showPreviewContainer() {
+  const container = document.getElementById('preview-container');
+  if (container) {
+    container.style.display = 'block';
+    
+    // Встановлюємо зображення
+    const img = document.getElementById('preview-image');
+    if (img && currentPreviewData) {
+      img.src = currentPreviewData.base64;
+      img.alt = 'Превью моделі';
+    }
+  }
+}
+
+// Приховування контейнера превью
+function hidePreviewContainer() {
+  const container = document.getElementById('preview-container');
+  if (container) {
+    container.style.display = 'none';
+  }
+}
+
+// Оновлення інформації про превью
+function updatePreviewInfo() {
+  const infoElement = document.getElementById('preview-info-text');
+  if (infoElement && currentPreviewData) {
+    const size = currentPreviewData.size;
+    const quality = currentPreviewData.quality;
+    const date = new Date(currentPreviewData.generatedAt).toLocaleString();
+    
+    infoElement.textContent = `Розмір: ${size}×${size} пікселів | Якість: ${quality} | Створено: ${date}`;
+  }
+}
+
+// Завантаження превью
+function downloadPreview() {
+  if (!currentPreviewData) {
+    alert('Немає превью для завантаження');
+    return;
+  }
+  
+  try {
+    debugLog('💾 Завантаження превью', 'info');
+    
+    // Створюємо посилання для завантаження
+    const link = document.createElement('a');
+    link.href = currentPreviewData.base64;
+    link.download = currentPreviewData.filename;
+    
+    // Додаємо до DOM, клікаємо і видаляємо
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    debugLog(`✅ Превью завантажено: ${currentPreviewData.filename}`, 'success');
+    
+  } catch (error) {
+    debugLog(`❌ Помилка завантаження превью: ${error.message}`, 'error');
+    alert(`Помилка при завантаженні превью: ${error.message}`);
+  }
+}
+
+// Копіювання превью в буфер обміну
+async function copyPreviewToClipboard() {
+  if (!currentPreviewData) {
+    alert('Немає превью для копіювання');
+    return;
+  }
+  
+  try {
+    debugLog('📋 Копіювання превью в буфер обміну', 'info');
+    
+    // Конвертуємо base64 в blob
+    const response = await fetch(currentPreviewData.base64);
+    const blob = await response.blob();
+    
+    // Копіюємо в буфер обміну
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        [blob.type]: blob
+      })
+    ]);
+    
+    debugLog('✅ Превью скопійовано в буфер обміну', 'success');
+    alert('Превью скопійовано в буфер обміну!');
+    
+  } catch (error) {
+    debugLog(`❌ Помилка копіювання превью: ${error.message}`, 'error');
+    alert(`Помилка при копіюванні превью: ${error.message}`);
+  }
+}
+
+// Ініціалізація превью при завантаженні сторінки
+function initializePreviewTab() {
+  debugLog('🎨 Ініціалізація таба превью', 'info');
+  
+  // Встановлюємо початкові налаштування
+  updatePreviewSettings();
+  
+  // Додаємо обробники подій
+  const sizeSelect = document.getElementById('preview-size');
+  const qualitySelect = document.getElementById('preview-quality');
+  
+  if (sizeSelect) {
+    sizeSelect.addEventListener('change', updatePreviewSettings);
+  }
+  
+  if (qualitySelect) {
+    qualitySelect.addEventListener('change', updatePreviewSettings);
+  }
+  
+  debugLog('✅ Таб превью ініціалізовано', 'success');
+}
 

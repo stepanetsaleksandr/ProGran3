@@ -23,7 +23,10 @@
     "apply": "Застосувати",
     "reset": "Скинути",
     "close": "Закрити",
-    "open": "Відкрити"
+    "open": "Відкрити",
+    "generate_preview": "Створити превью",
+    "download_preview": "Завантажити",
+    "copy_preview": "Копіювати"
   },
   "dimensions": {
     "height": "Висота",
@@ -59,7 +62,8 @@
     "monument": "Пам'ятник",
     "gravestone": "Надгробок",
     "elements": "Елементи",
-    "fence": "Огорожа"
+    "fence": "Огорожа",
+    "view": "Вигляд"
   },
   "panels": {
     "foundation": "Фундамент",
@@ -73,7 +77,8 @@
     "fence_corner": "Кутова огорожа",
     "fence_perimeter": "Периметральна огорожа",
     "fence_decor": "Декор огорожі",
-    "lamps": "Лампи"
+    "lamps": "Лампи",
+    "preview": "Превью моделі"
   },
   "summary": {
     "title": "Підсумок проекту",
@@ -154,5 +159,18 @@
     "create_perimeter_fence": "Створити периметральну огорожу",
     "add_fence_decor": "Додати декор на огорожу",
     "refresh": "Оновити"
+  },
+  "labels": {
+    "preview_size": "Розмір превью (пікселі)",
+    "preview_quality": "Якість"
+  },
+  "quality": {
+    "low": "Низька",
+    "medium": "Середня",
+    "high": "Висока"
+  },
+  "preview": {
+    "title": "Превью моделі",
+    "generating": "Генерація превью..."
   }
 }

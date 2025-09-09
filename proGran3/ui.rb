@@ -363,7 +363,93 @@ module ProGran3
         stands_list
       end
 
+      # Тестовий callback для перевірки
+      @dialog.add_action_callback("test_preview_callback") do |action_context, size, quality|
+        @dialog.execute_script("console.log('🧪 Тестовий callback працює! size=#{size}, quality=#{quality}');")
+        42
+      end
+
+      # Callback для генерації превью моделі
+      @dialog.add_action_callback("generate_model_preview") do |action_context, size, quality|
+        begin
+          ProGran3::Logger.info("🔄 Callback generate_model_preview викликано", "UI")
+          ProGran3::Logger.info("📥 Параметри: size=#{size}, quality=#{quality}", "UI")
+          
+          result = generate_model_preview_callback(@dialog, size, quality)
+          
+          ProGran3::Logger.info("📤 Результат callback: #{result.inspect}", "UI")
+          
+          # Відправляємо результат в JavaScript
+          if result && result[:success]
+            ProGran3::Logger.info("✅ Відправляємо успішний результат в JavaScript", "UI")
+            # Екрануємо одинарні лапки в base64 даних
+            escaped_data = result[:data].gsub("'", "\\'")
+            script = "receiveModelPreview(#{result.to_json});"
+            @dialog.execute_script(script)
+            ProGran3::Logger.info("✅ Результат превью відправлено в JavaScript", "UI")
+            ProGran3::Logger.info("🔄 Повертаємо 1 (успіх)", "UI")
+            1
+          else
+            error_msg = result ? result[:error] : "Невідома помилка"
+            ProGran3::Logger.error("❌ Відправляємо помилку в JavaScript: #{error_msg}", "UI")
+            script = "handleModelPreviewError('#{error_msg}');"
+            @dialog.execute_script(script)
+            ProGran3::Logger.error("❌ Помилка превью відправлена в JavaScript: #{error_msg}", "UI")
+            ProGran3::Logger.info("🔄 Повертаємо 0 (помилка)", "UI")
+            0
+          end
+          
+        rescue => e
+          ProGran3::Logger.error("❌ Критична помилка в callback: #{e.message}", "UI")
+          ProGran3::Logger.error("Stack trace: #{e.backtrace.join("\n")}", "UI")
+          
+          # Відправляємо помилку в JavaScript
+          script = "handleModelPreviewError('Критична помилка: #{e.message}');"
+          @dialog.execute_script(script)
+          
+          ProGran3::Logger.info("🔄 Повертаємо 0 (критична помилка)", "UI")
+          0
+        end
+      end
+
       @dialog.show
+    end
+
+    private
+
+    # Генерація превью поточної моделі
+    def generate_model_preview_callback(dialog, size, quality)
+      begin
+        ProGran3::Logger.info("🎨 Початок генерації превью моделі", "UI")
+        ProGran3::Logger.info("📐 Параметри: розмір=#{size}, якість=#{quality}", "UI")
+
+        # Використовуємо новий метод з SkpPreviewExtractor
+        data_url = ProGran3::SkpPreviewExtractor.generate_current_model_preview(size, quality)
+        
+        if data_url
+          ProGran3::Logger.success("✅ Превью успішно згенеровано", "UI")
+          ProGran3::Logger.info("📏 Довжина base64 даних: #{data_url.length}", "UI")
+          
+          result = {
+            success: true,
+            data: data_url,
+            size: size.to_i,
+            quality: quality,
+            generated_at: Time.now.iso8601
+          }
+          
+          ProGran3::Logger.info("📤 Повертаємо результат: #{result.keys.join(', ')}", "UI")
+          return result
+        else
+          ProGran3::Logger.error("Не вдалося згенерувати превью", "UI")
+          return { success: false, error: "Не вдалося згенерувати превью моделі" }
+        end
+
+      rescue => e
+        ProGran3::Logger.error("Помилка генерації превью: #{e.message}", "UI")
+        ProGran3::Logger.error("Stack trace: #{e.backtrace.join("\n")}", "UI")
+        return { success: false, error: "Помилка генерації превью: #{e.message}" }
+      end
     end
   end
 end
