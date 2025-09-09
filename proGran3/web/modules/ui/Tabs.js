@@ -20,7 +20,7 @@
   }
   
   function validateTabName(tabName) {
-    const validTabs = ['base', 'monument', 'gravestone', 'fence', 'additional', 'view'];
+    const validTabs = ['base', 'monument', 'gravestone', 'fence', 'view'];
     return validTabs.includes(tabName);
   }
   
@@ -73,7 +73,6 @@
       'monument': ['steles'],
       'gravestone': ['gravestones'],
       'fence': ['fence_decor'],
-      'additional': [],
       'view': []
     };
     

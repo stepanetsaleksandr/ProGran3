@@ -58,8 +58,8 @@
     "base": "Base",
     "monument": "Monument",
     "gravestone": "Gravestone",
-    "elements": "Elements",
-    "fence": "Fence"
+    "fence": "Fence",
+    "view": "View"
   },
   "panels": {
     "foundation": "Foundation",

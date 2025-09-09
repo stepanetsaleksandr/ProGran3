@@ -159,7 +159,7 @@
             monument: "Памятник",
             gravestone: "Надгробна частина",
             fence: "Огорожа",
-            elements: "Додаткові елементи"
+            view: "Вигляд",
           },
           panels: {
             foundation: "Фундамент",
@@ -228,7 +228,7 @@
             monument: "Pomnik",
             gravestone: "Nagrobek",
             fence: "Ogrodzenie",
-            elements: "Elementy"
+            view: "Widok",
           },
           panels: {
             foundation: "Fundament",
@@ -297,7 +297,7 @@
             monument: "Monument",
             gravestone: "Gravestone",
             fence: "Fence",
-            elements: "Elements"
+            view: "View",
           },
           panels: {
             foundation: "Foundation",
@@ -379,7 +379,7 @@
           monument: "Памятник",
           gravestone: "Надгробна частина",
           fence: "Огорожа",
-          elements: "Додаткові елементи"
+          view: "Вигляд",
         },
         panels: {
           foundation: "Фундамент",

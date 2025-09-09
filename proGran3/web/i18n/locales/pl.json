@@ -58,8 +58,8 @@
     "base": "Podstawa",
     "monument": "Pomnik",
     "gravestone": "Nagrobek",
-    "elements": "Elementy",
-    "fence": "Ogrodzenie"
+    "fence": "Ogrodzenie",
+    "view": "Widok"
   },
   "panels": {
     "foundation": "Fundament",

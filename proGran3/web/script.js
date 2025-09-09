@@ -167,7 +167,6 @@ function initializeCarouselsForTab(tabName) {
     'base': ['stands', 'flowerbeds'],
     'monument': ['stands', 'steles'],
     'gravestone': ['flowerbeds', 'gravestones'],
-    'elements': ['steles'],
     'fence': ['fence_decor']
   };
   
