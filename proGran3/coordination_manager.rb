@@ -82,6 +82,85 @@ module ProGran3
       update_cladding(foundation.bounds)
     end
     
+    # Оновлення залежних компонентів при зміні стел
+    def update_stele_dependents(new_stele_params = nil)
+      model = Sketchup.active_model
+      model.start_operation('Update Stele Dependents', true)
+      
+      begin
+        # Збереження стану перед оновленням
+        saved_state = ModelStateManager.save_state_before_update
+        
+        # Знаходимо всі існуючі елементи
+        elements = find_existing_elements
+        
+        # Оновлюємо стели
+        if new_stele_params
+          update_stele_with_params(new_stele_params)
+        else
+          # Використовуємо збережені параметри
+          stele_params = get_stele_params
+          update_stele_with_params(stele_params) if stele_params
+        end
+        
+        model.commit_operation
+        ProGran3::Logger.success("Стели оновлено успішно", "CoordinationManager")
+        true
+        
+      rescue => e
+        model.abort_operation
+        # Відновлення стану при помилці
+        ModelStateManager.restore_state_after_update(saved_state)
+        ErrorHandler.handle_error(e, "CoordinationManager", "update_stele_dependents")
+        false
+      end
+    end
+    
+    # Оновлення залежних компонентів при зміні підставки
+    def update_stand_dependents(new_stand_params = nil)
+      model = Sketchup.active_model
+      model.start_operation('Update Stand Dependents', true)
+      
+      begin
+        # Збереження стану перед оновленням
+        saved_state = ModelStateManager.save_state_before_update
+        
+        # Знаходимо всі існуючі елементи
+        elements = find_existing_elements
+        
+        # Оновлюємо підставку
+        if new_stand_params
+          update_stand_with_params(new_stand_params)
+        else
+          # Використовуємо збережені параметри
+          stand_params = get_stand_params
+          update_stand_with_params(stand_params) if stand_params
+        end
+        
+        # Отримуємо оновлені межі підставки
+        stand = find_stand
+        return false unless stand
+        
+        stand_bounds = stand.bounds
+        
+        # Оновлюємо всі залежні від підставки елементи
+        update_stele_dependent(stand_bounds) if elements[:stele]
+        update_flowerbed_dependent(stand_bounds) if elements[:flowerbed]
+        update_gravestone_dependent(stand_bounds) if elements[:gravestone]
+        
+        model.commit_operation
+        ProGran3::Logger.success("Залежні від підставки елементи оновлено успішно", "CoordinationManager")
+        true
+        
+      rescue => e
+        model.abort_operation
+        # Відновлення стану при помилці
+        ModelStateManager.restore_state_after_update(saved_state)
+        ErrorHandler.handle_error(e, "CoordinationManager", "update_stand_dependents")
+        false
+      end
+    end
+    
     private
     
     # Пошук всіх існуючих елементів
@@ -105,6 +184,12 @@ module ProGran3
     def find_foundation
       model = Sketchup.active_model
       model.entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name == "Foundation" }
+    end
+    
+    # Пошук підставки
+    def find_stand
+      model = Sketchup.active_model
+      model.entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name == "Stand" }
     end
     
     # Оновлення фундаменту з новими параметрами
@@ -229,6 +314,32 @@ module ProGran3
       ProGran3.insert_component(stand_params[:category], stand_params[:filename])
     end
     
+    # Оновлення підставки з новими параметрами
+    def update_stand_with_params(params)
+      # Видаляємо стару підставку
+      old_stand = find_stand
+      old_stand.erase! if old_stand
+      
+      # Створюємо нову підставку з параметрами
+      if params[:gaps]
+        ProGran3.create_stand_with_dimensions(
+          params[:height] || 200,
+          params[:width] || 600,
+          params[:depth] || 200,
+          params[:gaps],
+          params[:gaps_height] || 50,
+          params[:gaps_width] || 650,
+          params[:gaps_depth] || 250
+        )
+      else
+        ProGran3.create_stand_with_dimensions(
+          params[:height] || 200,
+          params[:width] || 600,
+          params[:depth] || 200
+        )
+      end
+    end
+    
     # Оновлення стели
     def update_stele(foundation_bounds)
       # Отримуємо поточні параметри стели
@@ -245,6 +356,22 @@ module ProGran3
       ProGran3.insert_component(stele_params[:category], stele_params[:filename])
     end
     
+    # Оновлення стели з новими параметрами
+    def update_stele_with_params(params)
+      # Видаляємо старі стели
+      model = Sketchup.active_model
+      entities = model.entities
+      old_steles = entities.grep(Sketchup::ComponentInstance).find_all { |c| c.definition.name.downcase.include?('stele') }
+      old_steles.each(&:erase!)
+      
+      # Створюємо нові стели
+      if params[:type] == 'paired'
+        ProGran3.insert_paired_steles(params[:category], params[:filename], params[:distance])
+      else
+        ProGran3.insert_component(params[:category], params[:filename])
+      end
+    end
+    
     # Оновлення квітника
     def update_flowerbed(foundation_bounds)
       # Отримуємо поточні параметри квітника
@@ -259,6 +386,58 @@ module ProGran3
       
       # Створюємо новий квітник
       ProGran3.insert_component(flowerbed_params[:category], flowerbed_params[:filename])
+    end
+    
+    # Оновлення стели як залежного компонента
+    def update_stele_dependent(stand_bounds)
+      # Отримуємо поточні параметри стели
+      stele_params = get_stele_params
+      return unless stele_params[:filename]
+      
+      # Видаляємо стару стелу
+      model = Sketchup.active_model
+      entities = model.entities
+      old_stele = entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('stele') }
+      old_stele.erase! if old_stele
+      
+      # Створюємо нову стелу
+      if stele_params[:type] == 'paired'
+        ProGran3.insert_paired_steles(stele_params[:category], stele_params[:filename], stele_params[:distance])
+      else
+        ProGran3.insert_component(stele_params[:category], stele_params[:filename])
+      end
+    end
+    
+    # Оновлення квітника як залежного компонента
+    def update_flowerbed_dependent(stand_bounds)
+      # Отримуємо поточні параметри квітника
+      flowerbed_params = get_flowerbed_params
+      return unless flowerbed_params[:filename]
+      
+      # Видаляємо старий квітник
+      model = Sketchup.active_model
+      entities = model.entities
+      old_flowerbed = entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('flowerbed') }
+      old_flowerbed.erase! if old_flowerbed
+      
+      # Створюємо новий квітник
+      ProGran3.insert_component(flowerbed_params[:category], flowerbed_params[:filename])
+    end
+    
+    # Оновлення надгробка як залежного компонента
+    def update_gravestone_dependent(stand_bounds)
+      # Отримуємо поточні параметри надгробка
+      gravestone_params = get_gravestone_params
+      return unless gravestone_params[:filename]
+      
+      # Видаляємо старий надгробок
+      model = Sketchup.active_model
+      entities = model.entities
+      old_gravestone = entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('gravestone') || c.definition.name.downcase.include?('plate') }
+      old_gravestone.erase! if old_gravestone
+      
+      # Створюємо новий надгробок
+      ProGran3.insert_component(gravestone_params[:category], gravestone_params[:filename])
     end
     
     # Отримання параметрів підставки з CallbackManager

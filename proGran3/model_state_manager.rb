@@ -275,6 +275,9 @@ class ModelStateManager
       @model_state[category][:exists] = true
       @model_state[category][:params] = params
       
+      # Зберігаємо позицію та bounds компонента
+      save_component_position_and_bounds(category)
+      
       # Логування зміни
       log_change(:component_added, category, params)
       
@@ -362,6 +365,38 @@ class ModelStateManager
       true
     end
     
+    # Збереження позиції та bounds компонента
+    def save_component_position_and_bounds(category)
+      ProGran3::Logger.info("Збереження позиції та bounds компонента: #{category}", "ModelState")
+      
+      # Знаходимо компонент в моделі
+      component = find_component_in_model(category)
+      if component
+        bounds = component.bounds
+        position = {
+          x: bounds.center.x,
+          y: bounds.center.y,
+          z: bounds.center.z,
+          min: { x: bounds.min.x, y: bounds.min.y, z: bounds.min.z },
+          max: { x: bounds.max.x, y: bounds.max.y, z: bounds.max.z }
+        }
+        
+        @model_state[category][:position] = position
+        @model_state[category][:bounds] = {
+          width: bounds.width,
+          height: bounds.height,
+          depth: bounds.depth
+        }
+        
+        log_change(:position_and_bounds_saved, category, { position: position, bounds: @model_state[category][:bounds] })
+        ProGran3::Logger.info("Позиція та bounds збережено для #{category}: #{position[:x]}, #{position[:y]}, #{position[:z]}", "ModelState")
+      else
+        ProGran3::Logger.warn("Не знайдено компонент #{category} в моделі для збереження позиції", "ModelState")
+      end
+      
+      true
+    end
+    
     # Отримання позиції компонента
     def get_component_position(category)
       @model_state[category][:position]
@@ -424,6 +459,43 @@ class ModelStateManager
     end
     
     private
+    
+    # Пошук компонента в моделі
+    def find_component_in_model(category)
+      model = Sketchup.active_model
+      entities = model.entities
+      
+      case category.to_sym
+      when :foundation
+        entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name == "Foundation" }
+      when :stands
+        entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name == "Stand" }
+      when :steles, :first_stele, :second_stele
+        entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('stele') }
+      when :flowerbeds
+        entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('flowerbed') }
+      when :gravestones
+        entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('gravestone') || c.definition.name.downcase.include?('plate') }
+      when :lamps
+        entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('lamp') }
+      when :fence_corner
+        entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.include?('CornerFence') }
+      when :fence_perimeter
+        entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.include?('PerimeterFence') }
+      when :fence_decor
+        entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('fence_decor') }
+      when :blind_area
+        entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.start_with?("BlindArea") }
+      when :tiles
+        entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.start_with?("Perimeter_Tile_") || c.definition.name.start_with?("Modular_Tile") }
+      when :cladding
+        entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.start_with?("Cladding") }
+      when :pavement_tiles
+        entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('pavement_tile') }
+      else
+        nil
+      end
+    end
     
     # Логування змін
     def log_change(action, category, params = {})

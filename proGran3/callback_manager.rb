@@ -59,8 +59,8 @@ module ProGran3
         gaps_depth: gaps_depth.to_i
       }
       
-      # Створюємо підставку з правильним позиціонуванням
-      success = ProGran3.create_stand_with_dimensions(@stand_params[:height], @stand_params[:width], @stand_params[:depth], @stand_params[:gaps], @stand_params[:gaps_height], @stand_params[:gaps_width], @stand_params[:gaps_depth])
+      # Створюємо підставку з координацією залежних елементів
+      success = CoordinationManager.update_stand_dependents(@stand_params)
       
       if success
         # Оновлення стану через ModelStateManager
@@ -244,9 +244,11 @@ module ProGran3
           @pavement_tiles_params = { category: category, filename: model_name }
         end
         
-        # Додаємо модель
-        if category.to_sym == :steles && stele_type == 'paired'
-          success = ProGran3.insert_paired_steles(category, model_name, stele_distance)
+        # Додаємо модель з координацією
+        if category.to_sym == :steles
+          # Використовуємо CoordinationManager для стел
+          stele_params = { category: category, filename: model_name, type: stele_type, distance: stele_distance }
+          success = CoordinationManager.update_stele_dependents(stele_params)
         else
           success = ProGran3.insert_component(category, model_name)
         end
