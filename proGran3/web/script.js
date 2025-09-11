@@ -109,33 +109,12 @@ function switchTab(tabName) {
   // Зберігаємо активний таб
   activeTab = tabName;
   
-      // Оновлюємо каруселі в активному табі
-    setTimeout(() => {
-      updateCarouselsInActiveTab();
-        // Додатково ініціалізуємо каруселі для нового таба
-  initializeCarouselsForTab(tabName);
-  
-  // Спеціальна обробка для таба gravestone
-  if (tabName === 'gravestone') {
-    setTimeout(() => {
-      debugLog(`🎠 Спеціальна ініціалізація каруселі gravestones для таба gravestone`, 'info');
-      if (CarouselManager.hasCarousel('gravestones') && modelLists['gravestones']) {
-        const trackElement = document.getElementById('gravestones-carousel-track');
-        const viewportElement = document.getElementById('gravestones-carousel-viewport');
-        
-        if (trackElement && viewportElement) {
-          debugLog(`Спеціально ініціалізуємо карусель gravestones для таба gravestone`, 'success');
-          initializeGravestonesCarousel('gravestones');
-        } else {
-          debugLog(`Не знайдено елементи каруселі gravestones для таба gravestone`, 'error');
-        }
-      } else {
-        debugLog(`Карусель gravestones не доступна або немає моделей для таба gravestone`, 'warning');
-      }
-    }, 300);
-  }
-  
-    }, 100);
+  // Оновлюємо каруселі в активному табі
+  setTimeout(() => {
+    updateCarouselsInActiveTab();
+    // Ініціалізуємо каруселі для нового таба
+    initializeCarouselsForTab(tabName);
+  }, 50);
     
     
 }
@@ -147,9 +126,10 @@ function updateCarouselsInActiveTab() {
     // Знаходимо всі каруселі в активному табі
     const carousels = activeTabContent.querySelectorAll('.carousel-container');
     carousels.forEach(carousel => {
-      // Тригеримо оновлення каруселі
+      // Перевіряємо, чи карусель видима
       const viewport = carousel.querySelector('.carousel-viewport');
-      if (viewport) {
+      if (viewport && viewport.offsetParent !== null) {
+        // Тільки оновлюємо видимі каруселі
         viewport.style.display = 'none';
         setTimeout(() => {
           viewport.style.display = 'block';
@@ -174,10 +154,15 @@ function initializeCarouselsForTab(tabName) {
   carouselTypes.forEach(category => {
     debugLog(`Перевіряємо карусель ${category} для таба ${tabName}`, 'info');
     
+    // Перевіряємо, чи вже ініціалізована карусель (тимчасово відключено для діагностики)
+    // if (CarouselManager.isInitialized(category)) {
+    //   debugLog(`Карусель ${category} вже ініціалізована, пропускаємо`, 'info');
+    //   return;
+    // }
+    
     if (CarouselManager.hasCarousel(category) && modelLists[category]) {
       const trackElement = document.getElementById(CarouselManager.getCarouselElementId(category, 'track'));
       const viewportElement = document.getElementById(CarouselManager.getCarouselElementId(category, 'viewport'));
-      
       
       if (trackElement && viewportElement) {
         debugLog(`Ініціалізуємо карусель ${category} для таба ${tabName}`, 'success');
@@ -384,12 +369,146 @@ const CarouselManager = {
     return category in this.carousels;
   },
 
+  // Перевірка чи ініціалізована карусель
+  isInitialized(category) {
+    return carouselState[category] && carouselState[category].initialized === true;
+  },
+
+  // Валідація стану каруселі
+  validateState(category) {
+    if (!carouselState[category]) {
+      debugLog(`Стан каруселі ${category} не існує, створюємо`, 'warning');
+      carouselState[category] = { index: 0, initialized: false };
+      return false;
+    }
+    
+    const state = carouselState[category];
+    const models = modelLists[category];
+    
+    // Перевіряємо валідність індексу
+    if (models && models.length > 0) {
+      if (state.index < 0 || state.index >= models.length) {
+        debugLog(`Невірний індекс ${state.index} для каруселі ${category}, скидаємо на 0`, 'warning');
+        state.index = 0;
+        return false;
+      }
+    }
+    
+    return true;
+  },
+
+  // Синхронізація стану каруселі
+  syncState(category) {
+    if (!this.validateState(category)) {
+      return false;
+    }
+    
+    const state = carouselState[category];
+    const track = document.getElementById(this.getCarouselElementId(category, 'track'));
+    
+    if (!track) {
+      debugLog(`Не знайдено track для синхронізації стану каруселі ${category}`, 'error');
+      return false;
+    }
+    
+    const items = track.querySelectorAll('.carousel-item');
+    if (items.length === 0) {
+      debugLog(`Немає елементів для синхронізації стану каруселі ${category}`, 'error');
+      return false;
+    }
+    
+    // Синхронізуємо активний елемент
+    items.forEach((item, i) => {
+      item.classList.toggle('active', i === state.index);
+    });
+    
+    debugLog(`Стан каруселі ${category} синхронізовано`, 'success');
+    return true;
+  },
+
+  // Очищення pending previews для каруселі
+  clearPendingPreviews(category) {
+    try {
+      if (window.ProGran3 && window.ProGran3.Communication && window.ProGran3.Communication.SketchUpBridge) {
+        // Очищуємо через SketchUpBridge
+        const models = modelLists[category] || [];
+        models.forEach(filename => {
+          const componentPath = `${category}/${filename}`;
+          if (window.ProGran3.Communication.SketchUpBridge.removePendingPreview) {
+            window.ProGran3.Communication.SketchUpBridge.removePendingPreview(componentPath);
+          }
+        });
+      } else {
+        // Fallback очищення
+        if (window.pendingPreviews) {
+          const models = modelLists[category] || [];
+          models.forEach(filename => {
+            const componentPath = `${category}/${filename}`;
+            delete window.pendingPreviews[componentPath];
+          });
+        }
+      }
+      
+      debugLog(`Очищено pending previews для каруселі ${category}`, 'info');
+    } catch (error) {
+      debugLog(`Помилка при очищенні pending previews для ${category}: ${error.message}`, 'error');
+    }
+  },
+
+  // Видалення event listeners
+  removeEventListeners(category, viewport) {
+    try {
+      if (viewport && viewport._wheelHandler) {
+        viewport.removeEventListener('wheel', viewport._wheelHandler);
+        delete viewport._wheelHandler;
+      }
+    } catch (error) {
+      debugLog(`Помилка при видаленні event listeners для ${category}: ${error.message}`, 'error');
+    }
+  },
+
+  // Додавання wheel event listener з debouncing
+  addWheelEventListener(category, viewport) {
+    try {
+      let wheelTimeout;
+      
+      const wheelHandler = (event) => {
+        event.preventDefault();
+        
+        // Debouncing - ігноруємо події, якщо остання була менше 100ms тому
+        if (wheelTimeout) {
+          return;
+        }
+        
+        wheelTimeout = setTimeout(() => {
+          wheelTimeout = null;
+        }, 100);
+        
+        const direction = event.deltaY > 0 ? 1 : -1;
+        debugLog(`🎯 Подія wheel в каруселі ${category}: direction=${direction}`, 'info');
+        this.moveCarousel(category, direction);
+      };
+      
+      viewport._wheelHandler = wheelHandler;
+      viewport.addEventListener('wheel', wheelHandler, { passive: false });
+    } catch (error) {
+      debugLog(`Помилка при додаванні wheel event listener для ${category}: ${error.message}`, 'error');
+    }
+  },
+
   // Ініціалізація каруселі (уніфікована логіка як у стел)
   initialize(category, options = {}) {
-    debugLog(` CarouselManager.initialize викликано для ${category}`, 'info');
-    
-    const track = document.getElementById(this.getCarouselElementId(category, 'track'));
-    const viewport = document.getElementById(this.getCarouselElementId(category, 'viewport'));
+    try {
+      debugLog(` CarouselManager.initialize викликано для ${category}`, 'info');
+      
+      // Перевіряємо, чи вже ініціалізована карусель (тимчасово відключено для діагностики)
+      // if (this.isInitialized(category)) {
+      //   debugLog(` Карусель ${category} вже ініціалізована, пропускаємо`, 'info');
+      //   return;
+      // }
+      
+      const track = document.getElementById(this.getCarouselElementId(category, 'track'));
+      const viewport = document.getElementById(this.getCarouselElementId(category, 'viewport'));
     
     // Додаткова діагностика для fence_decor
     if (category === 'fence_decor') {
@@ -409,10 +528,17 @@ const CarouselManager = {
     
     // Створюємо стан каруселі, якщо не існує
     if (!carouselState[category]) {
-      carouselState[category] = { index: 0 };
+      carouselState[category] = { index: 0, initialized: false };
     }
     
+    // Очищуємо попередній контент
     track.innerHTML = '';
+    
+    // Очищуємо pending previews
+    this.clearPendingPreviews(category);
+    
+    // Видаляємо попередні event listeners
+    this.removeEventListeners(category, viewport);
 
     modelLists[category].forEach(filename => {
       const item = document.createElement('div');
@@ -428,22 +554,21 @@ const CarouselManager = {
       track.appendChild(item);
     });
     
-    // Додаємо прокрутку колесом миші БЕЗ debouncing (як у стел)
-    viewport.addEventListener('wheel', (event) => {
-      event.preventDefault();
-      
-      const direction = event.deltaY > 0 ? 1 : -1;
-      debugLog(`🎯 Подія wheel в каруселі ${category}: direction=${direction}`, 'info');
-      this.moveCarousel(category, direction);
-    });
+    // Додаємо прокрутку колесом миші з debouncing
+    this.addWheelEventListener(category, viewport);
 
-    setTimeout(() => {
-      this.showCarouselItem(category, 0);
-      // Ледаче завантаження для першого елемента (як у стел)
-      this.loadOrGeneratePreview(category, 0);
-    }, 100);
+    // Ініціалізуємо перший елемент синхронно
+    this.showCarouselItem(category, 0);
+    this.loadOrGeneratePreview(category, 0);
     
-    debugLog(` Карусель ${category} ініціалізована`, 'success');
+      // Позначаємо як ініціалізовану
+      carouselState[category].initialized = true;
+      
+      debugLog(` Карусель ${category} ініціалізована`, 'success');
+    } catch (error) {
+      debugLog(`Помилка при ініціалізації каруселі ${category}: ${error.message}`, 'error');
+      console.error('Carousel initialization error:', error);
+    }
   },
 
 
@@ -453,10 +578,23 @@ const CarouselManager = {
     
     const track = document.getElementById(this.getCarouselElementId(category, 'track'));
     const viewport = document.getElementById(this.getCarouselElementId(category, 'viewport'));
+    
+    // Перевіряємо існування DOM елементів
+    if (!track || !viewport) {
+      debugLog(` Не знайдено DOM елементи для каруселі ${category}`, 'error');
+      return;
+    }
+    
     const items = track.querySelectorAll('.carousel-item');
     
-    if (!track || items.length === 0 || !items[index]) {
+    if (items.length === 0 || !items[index]) {
       debugLog(` Не вдалося знайти елементи для ${category}[${index}]`, 'error');
+      return;
+    }
+
+    // Валідуємо індекс
+    if (index < 0 || index >= items.length) {
+      debugLog(` Невірний індекс ${index} для каруселі ${category} з ${items.length} елементами`, 'error');
       return;
     }
 
@@ -469,15 +607,12 @@ const CarouselManager = {
     const itemCenter = targetItem.offsetLeft + targetItem.offsetWidth / 2;
     const newTransform = viewportCenter - itemCenter;
 
-    // Перевіряємо і створюємо стан каруселі, якщо не існує
-    if (!carouselState[category]) {
-      carouselState[category] = { index: 0 };
-    }
+    // Валідуємо та синхронізуємо стан каруселі
+    this.validateState(category);
     carouselState[category].index = index;
     track.style.transform = `translateX(${newTransform}px)`;
     
     debugLog(` Показано елемент ${index} в каруселі ${category}`, 'success');
-    
     
     // Ледаче завантаження для активного елемента та сусідів (як у стел)
     this.loadOrGeneratePreview(category, index);
@@ -579,15 +714,32 @@ const CarouselManager = {
   moveCarousel(category, direction) {
     debugLog(` moveCarousel викликано для ${category}, direction=${direction}`, 'info');
     
-    // Перевіряємо і створюємо стан каруселі, якщо не існує
-    if (!carouselState[category]) {
-      carouselState[category] = { index: 0 };
+    // Перевіряємо, чи ініціалізована карусель
+    if (!this.isInitialized(category)) {
+      debugLog(` Карусель ${category} не ініціалізована, пропускаємо moveCarousel`, 'warning');
+      return;
     }
+    
+    // Валідуємо стан каруселі
+    this.validateState(category);
     
     const state = carouselState[category];
     const newIndex = state.index + direction;
     const track = document.getElementById(this.getCarouselElementId(category, 'track'));
+    
+    // Перевіряємо існування track
+    if (!track) {
+      debugLog(` Не знайдено track для каруселі ${category}`, 'error');
+      return;
+    }
+    
     const items = track.querySelectorAll('.carousel-item');
+    
+    // Перевіряємо, чи є елементи
+    if (items.length === 0) {
+      debugLog(` Немає елементів в каруселі ${category}`, 'error');
+      return;
+    }
     
     debugLog(`   - Поточний індекс: ${state.index}`, 'info');
     debugLog(`   - Новий індекс: ${newIndex}`, 'info');
@@ -607,10 +759,8 @@ const CarouselManager = {
 
   // Додавання моделі
   addModel(category) {
-    // Перевіряємо і створюємо стан каруселі, якщо не існує
-    if (!carouselState[category]) {
-      carouselState[category] = { index: 0 };
-    }
+    // Валідуємо стан каруселі
+    this.validateState(category);
     const state = carouselState[category];
     const filename = modelLists[category][state.index];
     
