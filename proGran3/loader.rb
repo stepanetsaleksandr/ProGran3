@@ -47,6 +47,44 @@ module ProGran3
     all_instances_by_category("stands").last
   end
 
+  # Функція для отримання останньої підставки (не проміжної)
+  def last_base_stand_instance
+    model = Sketchup.active_model
+    entities = model.active_entities
+    
+    # Шукаємо всі компоненти підставки, але виключаємо проміжні
+    stand_instances = entities.grep(Sketchup::ComponentInstance).select do |inst|
+      inst.definition.name == "Stand" && !inst.definition.name.include?("Gaps")
+    end
+    
+    stand_instances.last
+  end
+
+  # Функція для отримання проміжної
+  def last_gaps_instance
+    model = Sketchup.active_model
+    entities = model.active_entities
+    
+    # Шукаємо компоненти проміжної
+    gaps_instances = entities.grep(Sketchup::ComponentInstance).select do |inst|
+      inst.definition.name == "StandGaps"
+    end
+    
+    gaps_instances.last
+  end
+
+  # Функція для отримання поверхні для розміщення стел (проміжна або підставка)
+  def get_steles_placement_surface
+    gaps = last_gaps_instance
+    if gaps
+      ProGran3::Logger.info("Використовуємо проміжну для розміщення стел", "Loader")
+      gaps
+    else
+      ProGran3::Logger.info("Використовуємо підставку для розміщення стел", "Loader")
+      last_base_stand_instance
+    end
+  end
+
   # Спеціальна функція для додавання декору на всі стовпчики огорожі
   def add_fence_decor_to_all_posts(filename)
     ProGran3::Logger.info("Додавання декору на всі стовпчики огорожі: #{filename}", "Loader")
@@ -128,14 +166,24 @@ module ProGran3
       end
       # Якщо немає фундаменту, координати вже встановлені вище
     else
-      stand = last_stand_instance
+      stand = last_base_stand_instance
       if stand
         stand_bounds = stand.bounds
         comp_bounds = comp_def.bounds
         if category == "steles"
-          x = stand_bounds.center.x - comp_bounds.center.x
-          y = stand_bounds.center.y - comp_bounds.center.y
-          z = stand_bounds.max.z - comp_bounds.min.z
+          # Використовуємо проміжну для розміщення стел, якщо вона є
+          placement_surface = get_steles_placement_surface
+          if placement_surface
+            surface_bounds = placement_surface.bounds
+            x = surface_bounds.center.x - comp_bounds.center.x
+            y = surface_bounds.center.y - comp_bounds.center.y
+            z = surface_bounds.max.z - comp_bounds.min.z
+          else
+            # Fallback до підставки
+            x = stand_bounds.center.x - comp_bounds.center.x
+            y = stand_bounds.center.y - comp_bounds.center.y
+            z = stand_bounds.max.z - comp_bounds.min.z
+          end
         elsif category == "flowerbeds"
           placement_z = foundation_z
           tile_instance = entities.grep(Sketchup::ComponentInstance).find { |inst| inst.definition.name.start_with?("Perimeter_Tile_") || inst.definition.name.start_with?("Modular_Tile") }
@@ -316,7 +364,7 @@ module ProGran3
        if flowerbed
          puts "Надгробна плита розміщена на південній стороні квітника з вирівнюванням країв: x=#{x}, y=#{y}, z=#{z}"
       else
-        stand = last_stand_instance
+        stand = last_base_stand_instance
                  if stand
            puts "Надгробна плита розміщена прилягаючи до північної площини підставки (південна сторона плити до північної сторони підставки, на тому ж рівні): x=#{x}, y=#{y}, z=#{z}"
         else
@@ -340,7 +388,7 @@ module ProGran3
          puts "Квітник: низ (min.z)=#{flowerbed_bounds.min.z}, верх (max.z)=#{flowerbed_bounds.max.z}"
        end
       
-             stand = last_stand_instance
+             stand = last_base_stand_instance
        if stand
          stand_bounds = stand.bounds
          puts "Підставка: південна сторона (min.x)=#{stand_bounds.min.x}, північна сторона (max.x)=#{stand_bounds.max.x}, центр (center.x)=#{stand_bounds.center.x}"
@@ -372,20 +420,20 @@ module ProGran3
     comp_def = load_component(category, filename)
     return false unless comp_def
     
-    # Знаходимо підставку для позиціонування
-    stand = last_stand_instance
-    unless stand
-      ProGran3::Logger.error("Не знайдено підставку для позиціонування стел", "Loader")
+    # Знаходимо поверхню для позиціонування стел (проміжна або підставка)
+    placement_surface = get_steles_placement_surface
+    unless placement_surface
+      ProGran3::Logger.error("Не знайдено поверхню для позиціонування стел", "Loader")
       return false
     end
     
-    stand_bounds = stand.bounds
+    surface_bounds = placement_surface.bounds
     comp_bounds = comp_def.bounds
     
     # Центральна позиція (як для одинарної стели)
-    center_x = stand_bounds.center.x - comp_bounds.center.x
-    center_y = stand_bounds.center.y - comp_bounds.center.y
-    center_z = stand_bounds.max.z - comp_bounds.min.z
+    center_x = surface_bounds.center.x - comp_bounds.center.x
+    center_y = surface_bounds.center.y - comp_bounds.center.y
+    center_z = surface_bounds.max.z - comp_bounds.min.z
     
     # Спочатку створюємо стели в початкових позиціях
     # Перша стела (по центру підставки)
@@ -444,7 +492,7 @@ module ProGran3
     ProGran3::Logger.info("Відстань між центрами стел: #{separation_distance * 2}мм", "Loader")
     
     ProGran3::Logger.info("Парні стели додано успішно", "Loader")
-    ProGran3::Logger.info("Центр підставки: x=#{center_x}, y=#{center_y}, z=#{center_z}", "Loader")
+    ProGran3::Logger.info("Центр поверхні розміщення: x=#{center_x}, y=#{center_y}, z=#{center_z}", "Loader")
     ProGran3::Logger.info("Точка дотику стел зміщена в центр підставки", "Loader")
     ProGran3::Logger.info("Перша стела: оригінальна орієнтація", "Loader")
     ProGran3::Logger.info("Друга стела: дзеркальне відображення по Y", "Loader")
@@ -606,6 +654,13 @@ module ProGran3
       # Видаляємо старі компоненти підставки
       entities.grep(Sketchup::ComponentInstance).select { |c| c.definition.name == "Stand" }.each(&:erase!)
       
+      # Видаляємо старі проміжні (завжди, незалежно від того, чи створюємо нову)
+      old_gaps = entities.grep(Sketchup::ComponentInstance).select { |c| c.definition.name == "StandGaps" }
+      if old_gaps.any?
+        ProGran3::Logger.info("Видаляємо #{old_gaps.length} старих проміжних", "Loader")
+        old_gaps.each(&:erase!)
+      end
+      
       # Очищаємо невикористані визначення
       defs.purge_unused
       
@@ -682,8 +737,8 @@ module ProGran3
       entities = model.active_entities
       defs = model.definitions
       
-      # Видаляємо старі проміжні
-      entities.grep(Sketchup::ComponentInstance).select { |c| c.definition.name == "StandGaps" }.each(&:erase!)
+      # Старі проміжні вже видалені в create_stand_with_dimensions
+      ProGran3::Logger.info("Створюємо нову проміжну", "Loader")
       
       # Створюємо новий компонент проміжної
       gaps_def = defs.add("StandGaps")
@@ -701,7 +756,14 @@ module ProGran3
       face.pushpull(gaps_height.mm)  # Товщина проміжної
       
       # Позиціонування проміжної зверху на підставці
-      stand_bounds = stand_instance.bounds
+      # Використовуємо базову підставку для позиціонування
+      base_stand = last_base_stand_instance
+      if base_stand
+        stand_bounds = base_stand.bounds
+      else
+        stand_bounds = stand_instance.bounds
+      end
+      
       gaps_x = stand_bounds.center.x - gaps_def.bounds.center.x
       gaps_y = stand_bounds.center.y - gaps_def.bounds.center.y
       gaps_z = stand_bounds.max.z - gaps_def.bounds.min.z  # Зверху на підставці

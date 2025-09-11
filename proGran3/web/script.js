@@ -1331,10 +1331,13 @@ function updateSteleType() {
 function updateSteleDistance() {
   const distanceInput = document.getElementById('stele-distance');
   if (distanceInput) {
-    carouselState.steles.distance = parseInt(distanceInput.value) || 200;
-    debugLog(`Відстань між стелами змінено на: ${carouselState.steles.distance}мм`, 'info');
+    // Конвертуємо значення в міліметри для збереження в стані
+    const distanceMm = convertToMm(distanceInput.value);
+    carouselState.steles.distance = distanceMm;
+    debugLog(`Відстань між стелами змінено на: ${distanceMm}мм`, 'info');
   }
 }
+
 
 // Функція для оновлення вмикача проміжних
 function updateStandsGaps() {
@@ -1400,33 +1403,6 @@ function updateGapsDisplay() {
   }
 }
 
-// Функція для оновлення полів проміжної при зміні одиниць
-function updateGapsFieldsUnits() {
-  const gapsDepthInput = document.getElementById('gaps-depth');
-  const gapsWidthInput = document.getElementById('gaps-width');
-  const gapsHeightInput = document.getElementById('gaps-height');
-  
-  if (gapsDepthInput && gapsWidthInput && gapsHeightInput) {
-    const currentUnit = getCurrentUnit();
-    
-    // Конвертуємо значення з поточних одиниць в міліметри
-    const depthMm = convertToMm(gapsDepthInput.value);
-    const widthMm = convertToMm(gapsWidthInput.value);
-    const heightMm = convertToMm(gapsHeightInput.value);
-    
-    // Конвертуємо назад в поточні одиниці
-    const depthConverted = currentUnit === 'cm' ? Math.round(depthMm / 10) : depthMm;
-    const widthConverted = currentUnit === 'cm' ? Math.round(widthMm / 10) : widthMm;
-    const heightConverted = currentUnit === 'cm' ? Math.round(heightMm / 10) : heightMm;
-    
-    // Оновлюємо значення полів
-    gapsDepthInput.value = depthConverted;
-    gapsWidthInput.value = widthConverted;
-    gapsHeightInput.value = heightConverted;
-    
-    debugLog(`Поля проміжної оновлено для одиниць ${currentUnit}: ${heightConverted}×${widthConverted}×${depthConverted}`, 'info');
-  }
-}
 
 // Ініціалізація типу стел при завантаженні
 function initializeSteleType() {
@@ -1590,9 +1566,6 @@ function updateAllDisplays() {
   // Оновлення відображення підставки
   debugLog(` Викликаємо updateStandsDisplay() з updateAllDisplays()`, 'info');
   updateStandsDisplay();
-  
-  // Оновлення полів проміжної при зміні одиниць
-  updateGapsFieldsUnits();
   
   // Оновлення підсумкової таблиці
   debugLog(` Викликаємо updateSummaryTable() з updateAllDisplays()`, 'info');
@@ -2153,6 +2126,12 @@ function getAllInputValues() {
       width: document.getElementById('stands-width').value,
       depth: document.getElementById('stands-depth').value
     },
+    gaps: {
+      height: document.getElementById('gaps-height').value,
+      width: document.getElementById('gaps-width').value,
+      depth: document.getElementById('gaps-depth').value
+    },
+    steleDistance: document.getElementById('stele-distance').value,
     fenceCorner: {
       postHeight: document.getElementById('fence-corner-post-height').value,
       postSize: document.getElementById('fence-corner-post-size').value,
@@ -2215,6 +2194,18 @@ function convertAllValues(oldValues, oldUnit, newUnit) {
     document.getElementById('stands-height').value = convertValue(oldValues.stands.height, oldUnit, newUnit);
     document.getElementById('stands-width').value = convertValue(oldValues.stands.width, oldUnit, newUnit);
     document.getElementById('stands-depth').value = convertValue(oldValues.stands.depth, oldUnit, newUnit);
+  }
+  
+  // Конвертуємо значення проміжної
+  if (oldValues.gaps) {
+    document.getElementById('gaps-height').value = convertValue(oldValues.gaps.height, oldUnit, newUnit);
+    document.getElementById('gaps-width').value = convertValue(oldValues.gaps.width, oldUnit, newUnit);
+    document.getElementById('gaps-depth').value = convertValue(oldValues.gaps.depth, oldUnit, newUnit);
+  }
+  
+  // Конвертуємо значення відстані між стелами
+  if (oldValues.steleDistance !== undefined) {
+    document.getElementById('stele-distance').value = convertValue(oldValues.steleDistance, oldUnit, newUnit);
   }
   
   // Конвертуємо значення кутової огорожі
@@ -2311,6 +2302,19 @@ function updateUnitLabels() {
   document.getElementById('stands-height-label').textContent = `Висота (${unitText})`;
   document.getElementById('stands-width-label').textContent = `Ширина (${unitText})`;
   document.getElementById('stands-depth-label').textContent = `Довжина (${unitText})`;
+  
+  // Проміжна
+  const gapsHeightLabel = document.getElementById('gaps-height-label');
+  const gapsWidthLabel = document.getElementById('gaps-width-label');
+  const gapsDepthLabel = document.getElementById('gaps-depth-label');
+  
+  if (gapsHeightLabel) gapsHeightLabel.textContent = `Висота проміжної (${unitText})`;
+  if (gapsWidthLabel) gapsWidthLabel.textContent = `Ширина проміжної (${unitText})`;
+  if (gapsDepthLabel) gapsDepthLabel.textContent = `Довжина проміжної (${unitText})`;
+  
+  // Відстань між стелами
+  const steleDistanceLabel = document.getElementById('stele-distance-label');
+  if (steleDistanceLabel) steleDistanceLabel.textContent = `Відстань між стелами (${unitText})`;
 }
 
 // Форматування значення для відображення
