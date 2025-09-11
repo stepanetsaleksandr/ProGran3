@@ -57,8 +57,14 @@ function updateDynamicContent() {
   // Оновлюємо заголовки панелей
   updatePanelHeaders();
   
+  // Оновлюємо всі лейбли з data-i18n атрибутами
+  updateAllI18nLabels();
+  
   // Оновлюємо розміри в заголовках
   updateAllDisplays();
+  
+  // Оновлюємо лейбли з одиницями вимірювання
+  updateUnitLabels();
   
   // Оновлюємо специфікацію
   if (typeof updateSummaryTable === 'function') {
@@ -73,6 +79,28 @@ function updatePanelHeaders() {
     const key = panel.getAttribute('data-i18n');
     if (key) {
       panel.textContent = t(key);
+    }
+  });
+}
+
+// Оновлення всіх лейблів з data-i18n атрибутами
+function updateAllI18nLabels() {
+  const labels = document.querySelectorAll('[data-i18n]');
+  debugLog(`Оновлення ${labels.length} лейблів з data-i18n атрибутами`, 'info');
+  
+  labels.forEach(label => {
+    const key = label.getAttribute('data-i18n');
+    if (key) {
+      // Перевіряємо, чи це не лейбл з одиницями вимірювання (крім спеціальних випадків)
+      if (!label.id.includes('-label') || label.id.includes('stele-distance-label') || label.id.includes('gaps-') || label.id.includes('stands-')) {
+        const translation = t(key);
+        if (translation !== key) {
+          label.textContent = translation;
+          debugLog(`Оновлено лейбл ${label.id}: ${key} -> ${translation}`, 'info');
+        } else {
+          debugLog(`Переклад не знайдено для ключа: ${key}`, 'warning');
+        }
+      }
     }
   });
 }
@@ -1023,6 +1051,7 @@ function initializeApp() {
   
   debugLog(` Викликаємо updateAllDisplays()`, 'info');
   updateAllDisplays();
+  updateAllI18nLabels();
   updateUnitLabels();
   updateThicknessButtons();
   updateSeamButtons();
@@ -2413,45 +2442,78 @@ function updateUnitLabels() {
   const unitText = currentUnit === 'mm' ? 'мм' : 'см';
   
   // Фундамент
-  document.getElementById('foundation-depth-label').textContent = `Довжина (${unitText})`;
-  document.getElementById('foundation-width-label').textContent = `Ширина (${unitText})`;
-  document.getElementById('foundation-height-label').textContent = `Висота (${unitText})`;
+  const foundationDepthLabel = document.getElementById('foundation-depth-label');
+  const foundationWidthLabel = document.getElementById('foundation-width-label');
+  const foundationHeightLabel = document.getElementById('foundation-height-label');
+  
+  if (foundationDepthLabel) foundationDepthLabel.textContent = `Довжина (${unitText})`;
+  if (foundationWidthLabel) foundationWidthLabel.textContent = `Ширина (${unitText})`;
+  if (foundationHeightLabel) foundationHeightLabel.textContent = `Висота (${unitText})`;
   
   // Відмостка
-  document.getElementById('blind-area-thickness-label').textContent = `Товщина (${unitText})`;
-  document.getElementById('blind-area-uniform-width-label').textContent = `Ширина (${unitText})`;
-  document.getElementById('blind-area-north-label').textContent = `Північна сторона (${unitText})`;
-  document.getElementById('blind-area-south-label').textContent = `Південна сторона (${unitText})`;
-  document.getElementById('blind-area-east-label').textContent = `Східна сторона (${unitText})`;
-  document.getElementById('blind-area-west-label').textContent = `Західна сторона (${unitText})`;
+  const blindAreaThicknessLabel = document.getElementById('blind-area-thickness-label');
+  const blindAreaUniformWidthLabel = document.getElementById('blind-area-uniform-width-label');
+  const blindAreaNorthLabel = document.getElementById('blind-area-north-label');
+  const blindAreaSouthLabel = document.getElementById('blind-area-south-label');
+  const blindAreaEastLabel = document.getElementById('blind-area-east-label');
+  const blindAreaWestLabel = document.getElementById('blind-area-west-label');
+  
+  if (blindAreaThicknessLabel) blindAreaThicknessLabel.textContent = `Товщина (${unitText})`;
+  if (blindAreaUniformWidthLabel) blindAreaUniformWidthLabel.textContent = `Ширина (${unitText})`;
+  if (blindAreaNorthLabel) blindAreaNorthLabel.textContent = `Північна сторона (${unitText})`;
+  if (blindAreaSouthLabel) blindAreaSouthLabel.textContent = `Південна сторона (${unitText})`;
+  if (blindAreaEastLabel) blindAreaEastLabel.textContent = `Східна сторона (${unitText})`;
+  if (blindAreaWestLabel) blindAreaWestLabel.textContent = `Західна сторона (${unitText})`;
   
   // Плитка
-  document.getElementById('tile-thickness-frame-label').textContent = `Товщина`;
-  document.getElementById('tile-border-width-label').textContent = `Ширина рамки (${unitText})`;
-  document.getElementById('tile-overhang-label').textContent = `Виступ (${unitText})`;
-  document.getElementById('frame-seam-label').textContent = `Шов між плитками (мм)`; // Шви завжди в мм
-  document.getElementById('modular-thickness-label').textContent = `Товщина (${unitText}):`;
-  document.getElementById('modular-seam-label').textContent = `Шов (мм)`; // Шви завжди в мм
-  document.getElementById('modular-overhang-label').textContent = `Виступ (${unitText}):`;
+  const tileThicknessFrameLabel = document.getElementById('tile-thickness-frame-label');
+  const tileBorderWidthLabel = document.getElementById('tile-border-width-label');
+  const tileOverhangLabel = document.getElementById('tile-overhang-label');
+  const frameSeamLabel = document.getElementById('frame-seam-label');
+  const modularThicknessLabel = document.getElementById('modular-thickness-label');
+  const modularSeamLabel = document.getElementById('modular-seam-label');
+  const modularOverhangLabel = document.getElementById('modular-overhang-label');
+  
+  if (tileThicknessFrameLabel) tileThicknessFrameLabel.textContent = `Товщина`;
+  if (tileBorderWidthLabel) tileBorderWidthLabel.textContent = `Ширина рамки (${unitText})`;
+  if (tileOverhangLabel) tileOverhangLabel.textContent = `Виступ (${unitText})`;
+  if (frameSeamLabel) frameSeamLabel.textContent = `Шов між плитками (мм)`; // Шви завжди в мм
+  if (modularThicknessLabel) modularThicknessLabel.textContent = `Товщина (${unitText}):`;
+  if (modularSeamLabel) modularSeamLabel.textContent = `Шов (мм)`; // Шви завжди в мм
+  if (modularOverhangLabel) modularOverhangLabel.textContent = `Виступ (${unitText}):`;
   
   // Облицювання
-  document.getElementById('cladding-thickness-label').textContent = `Товщина (${unitText})`;
+  const claddingThicknessLabel = document.getElementById('cladding-thickness-label');
+  if (claddingThicknessLabel) claddingThicknessLabel.textContent = `Товщина (${unitText})`;
   
   // Кутова огорожа
-  document.getElementById('fence-corner-post-height-label').textContent = `Висота стовпа (${unitText})`;
-  document.getElementById('fence-corner-post-size-label').textContent = `Розмір стовпа (${unitText})`;
-  document.getElementById('fence-corner-side-height-label').textContent = `Висота панелі (${unitText})`;
-  document.getElementById('fence-corner-side-length-label').textContent = `Довжина панелі (${unitText})`;
-  document.getElementById('fence-corner-side-thickness-label').textContent = `Товщина панелі (${unitText})`;
+  const fenceCornerPostHeightLabel = document.getElementById('fence-corner-post-height-label');
+  const fenceCornerPostSizeLabel = document.getElementById('fence-corner-post-size-label');
+  const fenceCornerSideHeightLabel = document.getElementById('fence-corner-side-height-label');
+  const fenceCornerSideLengthLabel = document.getElementById('fence-corner-side-length-label');
+  const fenceCornerSideThicknessLabel = document.getElementById('fence-corner-side-thickness-label');
+  
+  if (fenceCornerPostHeightLabel) fenceCornerPostHeightLabel.textContent = `Висота стовпа (${unitText})`;
+  if (fenceCornerPostSizeLabel) fenceCornerPostSizeLabel.textContent = `Розмір стовпа (${unitText})`;
+  if (fenceCornerSideHeightLabel) fenceCornerSideHeightLabel.textContent = `Висота панелі (${unitText})`;
+  if (fenceCornerSideLengthLabel) fenceCornerSideLengthLabel.textContent = `Довжина панелі (${unitText})`;
+  if (fenceCornerSideThicknessLabel) fenceCornerSideThicknessLabel.textContent = `Товщина панелі (${unitText})`;
   
   // Периметральна огорожа
-  document.getElementById('fence-perimeter-post-height-label').textContent = `Висота стовпа (${unitText})`;
-  document.getElementById('fence-perimeter-post-size-label').textContent = `Розмір стовпа (${unitText})`;
+  const fencePerimeterPostHeightLabel = document.getElementById('fence-perimeter-post-height-label');
+  const fencePerimeterPostSizeLabel = document.getElementById('fence-perimeter-post-size-label');
+  
+  if (fencePerimeterPostHeightLabel) fencePerimeterPostHeightLabel.textContent = `Висота стовпа (${unitText})`;
+  if (fencePerimeterPostSizeLabel) fencePerimeterPostSizeLabel.textContent = `Розмір стовпа (${unitText})`;
   
   // Підставка
-  document.getElementById('stands-height-label').textContent = `Висота (${unitText})`;
-  document.getElementById('stands-width-label').textContent = `Ширина (${unitText})`;
-  document.getElementById('stands-depth-label').textContent = `Довжина (${unitText})`;
+  const standsHeightLabel = document.getElementById('stands-height-label');
+  const standsWidthLabel = document.getElementById('stands-width-label');
+  const standsDepthLabel = document.getElementById('stands-depth-label');
+  
+  if (standsHeightLabel) standsHeightLabel.textContent = `Висота (${unitText})`;
+  if (standsWidthLabel) standsWidthLabel.textContent = `Ширина (${unitText})`;
+  if (standsDepthLabel) standsDepthLabel.textContent = `Довжина (${unitText})`;
   
   // Проміжна
   const gapsHeightLabel = document.getElementById('gaps-height-label');
