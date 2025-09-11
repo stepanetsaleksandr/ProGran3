@@ -284,6 +284,20 @@
           <span id="steles-dimensions-display" class="header-dimensions"></span>
         </div>
         <div class="panel-content">
+          <!-- Перемикач типу стел -->
+          <div class="input-group">
+            <div class="stele-type-toggle">
+              <label class="toggle-label">
+                <input type="radio" name="stele-type" value="single" checked onchange="updateSteleType()">
+                <span data-i18n="stele.single">Одна стела</span>
+              </label>
+              <label class="toggle-label">
+                <input type="radio" name="stele-type" value="paired" onchange="updateSteleType()">
+                <span data-i18n="stele.paired">Парні стели</span>
+              </label>
+            </div>
+          </div>
+          
           <div class="carousel-container">
             <div class="carousel-viewport" id="steles-carousel-viewport">
               <div class="carousel-track" id="steles-carousel-track"></div>

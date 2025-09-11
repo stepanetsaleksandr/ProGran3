@@ -13,6 +13,10 @@
     "tiling": "Płytka",
     "cladding": "Okładzina"
   },
+  "stele": {
+    "single": "Pojedyncza stela",
+    "paired": "Pary stel"
+  },
   "buttons": {
     "create": "Utwórz",
     "add": "Dodaj",

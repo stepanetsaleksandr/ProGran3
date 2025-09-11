@@ -352,6 +352,132 @@ module ProGran3
     instance
   end
 
+  # Додавання парних стел
+  def insert_paired_steles(category, filename)
+    ProGran3::Logger.info("Додавання парних стел: #{filename}", "Loader")
+    
+    # Перевірка через ModelStateManager
+    unless ModelStateManager.can_add_component?(category.to_sym)
+      ProGran3::Logger.error("Неможливо додати компонент: #{category}", "Loader")
+      return false
+    end
+    
+    model = Sketchup.active_model
+    entities = model.active_entities
+    
+    # Видаляємо старі стели
+    all_instances_by_category(category).each(&:erase!)
+    
+    # Завантажуємо компонент
+    comp_def = load_component(category, filename)
+    return false unless comp_def
+    
+    # Знаходимо підставку для позиціонування
+    stand = last_stand_instance
+    unless stand
+      ProGran3::Logger.error("Не знайдено підставку для позиціонування стел", "Loader")
+      return false
+    end
+    
+    stand_bounds = stand.bounds
+    comp_bounds = comp_def.bounds
+    
+    # Центральна позиція (як для одинарної стели)
+    center_x = stand_bounds.center.x - comp_bounds.center.x
+    center_y = stand_bounds.center.y - comp_bounds.center.y
+    center_z = stand_bounds.max.z - comp_bounds.min.z
+    
+    # Спочатку створюємо стели в початкових позиціях
+    # Перша стела (по центру підставки)
+    first_trans = Geom::Transformation.new([center_x, center_y, center_z])
+    first_instance = entities.add_instance(comp_def, first_trans)
+    
+    # Друга стела (по центру підставки + дзеркальне відображення по Y)
+    move_trans = Geom::Transformation.new([center_x, center_y, center_z])
+    mirror_trans = Geom::Transformation.scaling([0, 0, 0], 1, -1, 1)
+    combined_trans = move_trans * mirror_trans
+    second_instance = entities.add_instance(comp_def, combined_trans)
+    
+    # Розраховуємо точку дотику стел
+    first_bounds = first_instance.bounds
+    second_bounds = second_instance.bounds
+    
+    # Знаходимо точку дотику (середню точку між найближчими краями)
+    if first_bounds.max.y > second_bounds.min.y
+      # Стели перекриваються - точка дотику в центрі перекриття
+      touch_point_y = (first_bounds.max.y + second_bounds.min.y) / 2
+    else
+      # Стели не перекриваються - точка дотику в центрі проміжку
+      touch_point_y = (first_bounds.max.y + second_bounds.min.y) / 2
+    end
+    
+    # Розраховуємо зсув для центрування обох стел
+    # Потрібно змістити обидві стели на однакову відстань
+    stele_half_width = comp_bounds.height / 2  # Половина ширини стели
+    shift_y = stele_half_width  # Зсув на половину ширини стели
+    
+    ProGran3::Logger.info("Ширина стели: #{comp_bounds.height}мм", "Loader")
+    ProGran3::Logger.info("Половина ширини стели: #{stele_half_width}мм", "Loader")
+    ProGran3::Logger.info("Зсув для центрування: +#{shift_y}мм по Y", "Loader")
+    
+    # Видаляємо старі стели
+    first_instance.erase!
+    second_instance.erase!
+    
+    # Створюємо стели з правильним зсувом
+    # Перша стела (зсув на половину ширини стели)
+    first_trans_corrected = Geom::Transformation.new([center_x, center_y + shift_y, center_z])
+    first_instance = entities.add_instance(comp_def, first_trans_corrected)
+    
+    # Друга стела (зсув на половину ширини стели + дзеркальне відображення)
+    move_trans_corrected = Geom::Transformation.new([center_x, center_y + shift_y, center_z])
+    combined_trans_corrected = move_trans_corrected * mirror_trans
+    second_instance = entities.add_instance(comp_def, combined_trans_corrected)
+    
+    ProGran3::Logger.info("Парні стели додано успішно", "Loader")
+    ProGran3::Logger.info("Центр підставки: x=#{center_x}, y=#{center_y}, z=#{center_z}", "Loader")
+    ProGran3::Logger.info("Точка дотику стел зміщена в центр підставки", "Loader")
+    ProGran3::Logger.info("Перша стела: оригінальна орієнтація", "Loader")
+    ProGran3::Logger.info("Друга стела: дзеркальне відображення по Y", "Loader")
+    
+    # Розрахунок точок дотику стел
+    ProGran3::Logger.info("=== РОЗРАХУНОК ТОЧОК ДОТИКУ ===", "Loader")
+    ProGran3::Logger.info("Межі стели (comp_bounds):", "Loader")
+    ProGran3::Logger.info("  min.x=#{comp_bounds.min.x}, max.x=#{comp_bounds.max.x}", "Loader")
+    ProGran3::Logger.info("  min.y=#{comp_bounds.min.y}, max.y=#{comp_bounds.max.y}", "Loader")
+    ProGran3::Logger.info("  min.z=#{comp_bounds.min.z}, max.z=#{comp_bounds.max.z}", "Loader")
+    ProGran3::Logger.info("Ширина стели по Y: #{comp_bounds.height}мм", "Loader")
+    ProGran3::Logger.info("Висота стели по Z: #{comp_bounds.depth}мм", "Loader")
+    ProGran3::Logger.info("Довжина стели по X: #{comp_bounds.width}мм", "Loader")
+    
+    # Позиції стел після трансформації
+    first_bounds = first_instance.bounds
+    second_bounds = second_instance.bounds
+    
+    ProGran3::Logger.info("Перша стела (після трансформації):", "Loader")
+    ProGran3::Logger.info("  min.y=#{first_bounds.min.y}, max.y=#{first_bounds.max.y}", "Loader")
+    ProGran3::Logger.info("  центр.y=#{first_bounds.center.y}", "Loader")
+    
+    ProGran3::Logger.info("Друга стела (після трансформації):", "Loader")
+    ProGran3::Logger.info("  min.y=#{second_bounds.min.y}, max.y=#{second_bounds.max.y}", "Loader")
+    ProGran3::Logger.info("  центр.y=#{second_bounds.center.y}", "Loader")
+    
+    # Розрахунок відстані між стелами
+    distance_between = (second_bounds.center.y - first_bounds.center.y).abs
+    ProGran3::Logger.info("Відстань між центрами стел: #{distance_between}мм", "Loader")
+    
+    # Перевірка перекриття
+    if first_bounds.max.y > second_bounds.min.y
+      overlap = first_bounds.max.y - second_bounds.min.y
+      ProGran3::Logger.info("ПЕРЕКРИТТЯ: #{overlap}мм", "Loader")
+    else
+      gap = second_bounds.min.y - first_bounds.max.y
+      ProGran3::Logger.info("ПРОМІЖОК: #{gap}мм", "Loader")
+    end
+    
+    true
+  end
+
   # Оновлення розміру підставки
   def update_stand_size(height, width, depth)
     begin

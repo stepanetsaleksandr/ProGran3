@@ -13,6 +13,10 @@
     "tiling": "Tiling",
     "cladding": "Cladding"
   },
+  "stele": {
+    "single": "Single Stele",
+    "paired": "Paired Steles"
+  },
   "buttons": {
     "create": "Create",
     "add": "Add",

@@ -4,7 +4,7 @@
 let modelLists = {};
 let carouselState = {
   stands: { index: 0 },
-  steles: { index: 0 },
+  steles: { index: 0, type: 'single' }, // Додаємо тип стел
   flowerbeds: { index: 0 },
   gravestones: { index: 0 },
   fence_decor: { index: 0 }
@@ -615,7 +615,14 @@ const CarouselManager = {
     const filename = modelLists[category][state.index];
     
     if (window.sketchup && window.sketchup.add_model) {
-      window.sketchup.add_model(category, filename);
+      // Для стел передаємо додатковий параметр типу
+      if (category === 'steles') {
+        const steleType = state.type || 'single'; // За замовчуванням 'single'
+        window.sketchup.add_model(category, filename, steleType);
+        debugLog(`Додавання стел типу: ${steleType}`, 'info');
+      } else {
+        window.sketchup.add_model(category, filename);
+      }
       addedElements[category] = true;
       updateSummaryTable();
     }
@@ -874,6 +881,10 @@ function initializeApp() {
   // Ініціалізуємо тему
   initializeTheme();
   debugLog(` Тема ініціалізована`, 'success');
+  
+  // Ініціалізуємо тип стел
+  initializeSteleType();
+  debugLog(` Тип стел ініціалізовано`, 'success');
   
   debugLog(` initializeApp завершено`, 'success');
 }
@@ -1292,6 +1303,25 @@ function moveCarousel(category, direction) {
 
 function addModel(category) {
   CarouselManager.addModel(category);
+}
+
+// Функція для оновлення типу стел
+function updateSteleType() {
+  const selectedType = document.querySelector('input[name="stele-type"]:checked').value;
+  carouselState.steles.type = selectedType;
+  debugLog(`Тип стел змінено на: ${selectedType}`, 'info');
+}
+
+// Ініціалізація типу стел при завантаженні
+function initializeSteleType() {
+  const steleTypeInputs = document.querySelectorAll('input[name="stele-type"]');
+  if (steleTypeInputs.length > 0) {
+    const checkedInput = document.querySelector('input[name="stele-type"]:checked');
+    if (checkedInput) {
+      carouselState.steles.type = checkedInput.value;
+      debugLog(`Ініціалізовано тип стел: ${checkedInput.value}`, 'info');
+    }
+  }
 }
 
 // --- ІНШІ ФУНКЦІЇ ---

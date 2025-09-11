@@ -66,8 +66,8 @@ module ProGran3
        end
 
 
-      @dialog.add_action_callback("add_model") do |dialog, category, filename|
-        CallbackManager.add_model_callback(dialog, category, filename)
+      @dialog.add_action_callback("add_model") do |dialog, category, filename, stele_type = nil|
+        CallbackManager.add_model_callback(dialog, category, filename, stele_type)
       end
       
       @dialog.add_action_callback("add_fence_decor") do |dialog, filename|

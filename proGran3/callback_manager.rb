@@ -177,7 +177,7 @@ module ProGran3
     end
 
     # Callback для додавання моделей
-    def add_model_callback(dialog, category, model_name)
+    def add_model_callback(dialog, category, model_name, stele_type = nil)
       begin
         # Валідація категорії
         validation_result = Validation.validate_category(category.to_sym, "UI")
@@ -205,7 +205,7 @@ module ProGran3
         when :stands
           @stand_params = { category: category, filename: model_name }
         when :steles
-          @stele_params = { category: category, filename: model_name }
+          @stele_params = { category: category, filename: model_name, type: stele_type }
         when :flowerbeds
           @flowerbed_params = { category: category, filename: model_name }
         when :gravestones
@@ -215,11 +215,17 @@ module ProGran3
         end
         
         # Додаємо модель
-        success = ProGran3.insert_component(category, model_name)
+        if category.to_sym == :steles && stele_type == 'paired'
+          success = ProGran3.insert_paired_steles(category, model_name)
+        else
+          success = ProGran3.insert_component(category, model_name)
+        end
         
         if success
           # Оновлення стану через ModelStateManager
-          ModelStateManager.component_added(category.to_sym, { filename: model_name })
+          state_params = { filename: model_name }
+          state_params[:type] = stele_type if category.to_sym == :steles && stele_type
+          ModelStateManager.component_added(category.to_sym, state_params)
         end
         
         success
