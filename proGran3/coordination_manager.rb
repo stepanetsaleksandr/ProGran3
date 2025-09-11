@@ -366,7 +366,7 @@ module ProGran3
       
       # Створюємо нові стели
       if params[:type] == 'paired'
-        ProGran3.insert_paired_steles(params[:category], params[:filename], params[:distance])
+        ProGran3.insert_paired_steles(params[:category], params[:filename], params[:distance], params[:central_detail], params[:central_detail_width], params[:central_detail_depth], params[:central_detail_height])
       else
         ProGran3.insert_component(params[:category], params[:filename])
       end
@@ -402,7 +402,7 @@ module ProGran3
       
       # Створюємо нову стелу
       if stele_params[:type] == 'paired'
-        ProGran3.insert_paired_steles(stele_params[:category], stele_params[:filename], stele_params[:distance])
+        ProGran3.insert_paired_steles(stele_params[:category], stele_params[:filename], stele_params[:distance], stele_params[:central_detail], stele_params[:central_detail_width], stele_params[:central_detail_depth], stele_params[:central_detail_height])
       else
         ProGran3.insert_component(stele_params[:category], stele_params[:filename])
       end

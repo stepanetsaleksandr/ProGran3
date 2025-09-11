@@ -334,6 +334,39 @@
             </div>
           </div>
           
+          <!-- Центральна деталь для парних стел -->
+          <div class="input-group" id="central-detail-group" style="display: none;">
+            <div class="toggle-container">
+              <label class="toggle-label">
+                <input type="checkbox" id="central-detail" onchange="updateCentralDetail()">
+                <span data-i18n="stele.central_detail">Центральна деталь</span>
+              </label>
+            </div>
+            
+            <div class="input-group" id="central-detail-dimensions-group" style="display: none;">
+              <div class="input-row">
+                <div class="input-wrapper">
+                  <label id="central-detail-width-label" for="central-detail-width" data-i18n="labels.central_detail_width_mm">Ширина (мм)</label>
+                  <input type="number" id="central-detail-width" value="200" min="50" max="1000" oninput="updateCentralDetailDisplay()">
+                </div>
+                <div class="input-wrapper">
+                  <label id="central-detail-depth-label" for="central-detail-depth" data-i18n="labels.central_detail_depth_mm">Товщина (мм)</label>
+                  <input type="number" id="central-detail-depth" value="50" min="10" max="200" oninput="updateCentralDetailDisplay()">
+                </div>
+                <div class="input-wrapper">
+                  <label id="central-detail-height-label" for="central-detail-height" data-i18n="labels.central_detail_height_mm">Висота (мм)</label>
+                  <input type="number" id="central-detail-height" value="1200" min="50" max="2000" oninput="updateCentralDetailDisplay()">
+                </div>
+              </div>
+              
+              <!-- Кнопка для побудови центральної деталі -->
+              <div class="input-group">
+                <button type="button" class="action-btn" id="create-central-detail-btn" onclick="createCentralDetail()" data-i18n="buttons.create_central_detail">Створити центральну деталь</button>
+              </div>
+              </div>
+            </div>
+          </div>
+          
           <div class="carousel-container">
             <div class="carousel-viewport" id="steles-carousel-viewport">
               <div class="carousel-track" id="steles-carousel-track"></div>

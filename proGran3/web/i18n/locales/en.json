@@ -16,7 +16,8 @@
   "stele": {
     "single": "Single Stele",
     "paired": "Paired Steles",
-    "distance_mm": "Distance between steles (mm)"
+    "distance_mm": "Distance between steles (mm)",
+    "central_detail": "Central detail"
   },
   "stands": {
     "gaps": "Intermediate"
@@ -139,7 +140,10 @@
     "back_side": "Back side",
     "entrance": "Entrance",
     "side_sides": "Side sides",
-    "size_settings": "Size settings"
+    "size_settings": "Size settings",
+    "central_detail_width_mm": "Width (mm)",
+    "central_detail_depth_mm": "Thickness (mm)",
+    "central_detail_height_mm": "Height (mm)"
   },
   "buttons": {
     "uniform_width": "Uniform width",
@@ -166,6 +170,7 @@
     "create_corner_fence": "Create corner fence",
     "create_perimeter_fence": "Create perimeter fence",
     "add_fence_decor": "Add fence decor",
+    "create_central_detail": "Create central detail",
     "refresh": "Refresh"
   }
 }

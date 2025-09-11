@@ -16,7 +16,8 @@
   "stele": {
     "single": "Pojedyncza stela",
     "paired": "Pary stel",
-    "distance_mm": "Odległość między stelami (mm)"
+    "distance_mm": "Odległość między stelami (mm)",
+    "central_detail": "Szczegół centralny"
   },
   "stands": {
     "gaps": "Pośrednia"
@@ -139,7 +140,10 @@
     "back_side": "Strona tylna",
     "entrance": "Wejście",
     "side_sides": "Strony boczne",
-    "size_settings": "Ustawienia rozmiaru"
+    "size_settings": "Ustawienia rozmiaru",
+    "central_detail_width_mm": "Szerokość (mm)",
+    "central_detail_depth_mm": "Grubość (mm)",
+    "central_detail_height_mm": "Wysokość (mm)"
   },
   "buttons": {
     "uniform_width": "Jednolita szerokość",
@@ -166,6 +170,7 @@
     "create_corner_fence": "Utwórz ogrodzenie narożne",
     "create_perimeter_fence": "Utwórz ogrodzenie obwodowe",
     "add_fence_decor": "Dodaj dekorację ogrodzenia",
+    "create_central_detail": "Utwórz szczegół centralny",
     "refresh": "Odśwież"
   }
 }

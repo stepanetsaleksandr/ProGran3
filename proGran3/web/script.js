@@ -4,7 +4,7 @@
 let modelLists = {};
 let carouselState = {
   stands: { index: 0, gaps: false }, // Додаємо вмикач проміжків
-  steles: { index: 0, type: 'single', distance: 200 }, // Додаємо тип стел та відстань
+  steles: { index: 0, type: 'single', distance: 200, centralDetail: false, centralDetailWidth: 200, centralDetailDepth: 50, centralDetailHeight: 1200 }, // Додаємо тип стел, відстань та центральну деталь
   flowerbeds: { index: 0 },
   gravestones: { index: 0 },
   fence_decor: { index: 0 }
@@ -92,7 +92,7 @@ function updateAllI18nLabels() {
     const key = label.getAttribute('data-i18n');
     if (key) {
       // Перевіряємо, чи це не лейбл з одиницями вимірювання (крім спеціальних випадків)
-      if (!label.id.includes('-label') || label.id.includes('stele-distance-label') || label.id.includes('gaps-') || label.id.includes('stands-')) {
+      if (!label.id.includes('-label') || label.id.includes('stele-distance-label') || label.id.includes('gaps-') || label.id.includes('stands-') || label.id.includes('central-detail-')) {
         const translation = t(key);
         if (translation !== key) {
           label.textContent = translation;
@@ -793,12 +793,16 @@ const CarouselManager = {
     const filename = modelLists[category][state.index];
     
     if (window.sketchup && window.sketchup.add_model) {
-      // Для стел передаємо додаткові параметри типу та відстані
+      // Для стел передаємо додаткові параметри типу, відстані та центральної деталі
       if (category === 'steles') {
         const steleType = state.type || 'single'; // За замовчуванням 'single'
         const steleDistance = state.distance || 200; // За замовчуванням 200мм
-        window.sketchup.add_model(category, filename, steleType, steleDistance);
-        debugLog(`Додавання стел типу: ${steleType}, відстань: ${steleDistance}мм`, 'info');
+        const centralDetail = state.centralDetail || false; // За замовчуванням false
+        const centralDetailWidth = state.centralDetailWidth || 200; // За замовчуванням 200мм
+        const centralDetailDepth = state.centralDetailDepth || 50; // За замовчуванням 50мм
+        const centralDetailHeight = state.centralDetailHeight || 250; // За замовчуванням 250мм
+        window.sketchup.add_model(category, filename, steleType, steleDistance, centralDetail, centralDetailWidth, centralDetailDepth, centralDetailHeight);
+        debugLog(`Додавання стел типу: ${steleType}, відстань: ${steleDistance}мм, центральна деталь: ${centralDetail}`, 'info');
       } else {
         window.sketchup.add_model(category, filename);
       }
@@ -1504,6 +1508,9 @@ function updateSteleType() {
       distanceGroup.style.display = 'none';
     }
   }
+  
+  // Оновлюємо відображення центральної деталі
+  updateCentralDetailDisplay();
 }
 
 // Функція для оновлення відстані між стелами
@@ -1514,6 +1521,11 @@ function updateSteleDistance() {
     const distanceMm = convertToMm(distanceInput.value);
     carouselState.steles.distance = distanceMm;
     debugLog(`Відстань між стелами змінено на: ${distanceMm}мм`, 'info');
+    
+    // Оновлюємо розміри центральної деталі
+    if (carouselState.steles.centralDetail) {
+      updateCentralDetailFromSteleDistance();
+    }
   }
 }
 
@@ -1592,6 +1604,84 @@ function initializeSteleType() {
       carouselState.steles.type = checkedInput.value;
       debugLog(`Ініціалізовано тип стел: ${checkedInput.value}`, 'info');
     }
+  }
+  initializeCentralDetail();
+}
+
+// Ініціалізація центральної деталі
+function initializeCentralDetail() {
+  const centralDetailCheckbox = document.getElementById('central-detail');
+  if (centralDetailCheckbox) {
+    carouselState.steles.centralDetail = centralDetailCheckbox.checked;
+    updateCentralDetailDisplay();
+    debugLog(`Ініціалізовано центральну деталь: ${centralDetailCheckbox.checked}`, 'info');
+  }
+}
+
+// Оновлення центральної деталі
+function updateCentralDetail() {
+  const centralDetailCheckbox = document.getElementById('central-detail');
+  if (centralDetailCheckbox) {
+    carouselState.steles.centralDetail = centralDetailCheckbox.checked;
+    updateCentralDetailDisplay();
+    debugLog(`Центральна деталь: ${centralDetailCheckbox.checked ? 'увімкнено' : 'вимкнено'}`, 'info');
+  }
+}
+
+// Оновлення відображення центральної деталі
+function updateCentralDetailDisplay() {
+  const centralDetailGroup = document.getElementById('central-detail-group');
+  const centralDetailDimensionsGroup = document.getElementById('central-detail-dimensions-group');
+  
+  if (centralDetailGroup && centralDetailDimensionsGroup) {
+    if (carouselState.steles.type === 'paired') {
+      centralDetailGroup.style.display = 'block';
+      if (carouselState.steles.centralDetail) {
+        centralDetailDimensionsGroup.style.display = 'block';
+        updateCentralDetailFromSteleDistance();
+      } else {
+        centralDetailDimensionsGroup.style.display = 'none';
+      }
+    } else {
+      centralDetailGroup.style.display = 'none';
+    }
+  }
+}
+
+// Оновлення розмірів центральної деталі на основі відстані між стелами
+function updateCentralDetailFromSteleDistance() {
+  const steleDistance = parseFloat(document.getElementById('stele-distance').value) || 200;
+  const centralDetailWidth = document.getElementById('central-detail-width');
+  const centralDetailDepth = document.getElementById('central-detail-depth');
+  const centralDetailHeight = document.getElementById('central-detail-height');
+  
+  if (centralDetailWidth && centralDetailDepth && centralDetailHeight) {
+    // Ширина = відстань між стелами
+    centralDetailWidth.value = steleDistance;
+    
+    // Товщина = 50мм (за замовчуванням)
+    centralDetailDepth.value = 50;
+    
+    // Висота = 1200мм (за замовчуванням)
+    centralDetailHeight.value = 1200;
+    
+    debugLog(`Оновлено розміри центральної деталі: ${steleDistance}×50×1200 мм`, 'info');
+  }
+}
+
+// Створення центральної деталі
+function createCentralDetail() {
+  const centralDetailWidth = parseFloat(document.getElementById('central-detail-width').value) || 200;
+  const centralDetailDepth = parseFloat(document.getElementById('central-detail-depth').value) || 50;
+  const centralDetailHeight = parseFloat(document.getElementById('central-detail-height').value) || 1200;
+  
+  debugLog(`Створення центральної деталі: ${centralDetailWidth}×${centralDetailDepth}×${centralDetailHeight} мм`, 'info');
+  
+  // Викликаємо Ruby метод для створення центральної деталі
+  if (window.sketchup && window.sketchup.create_central_detail) {
+    window.sketchup.create_central_detail(centralDetailWidth, centralDetailDepth, centralDetailHeight);
+  } else {
+    debugLog('SketchUp bridge не доступний для створення центральної деталі', 'error');
   }
 }
 
@@ -2311,6 +2401,11 @@ function getAllInputValues() {
       depth: document.getElementById('gaps-depth').value
     },
     steleDistance: document.getElementById('stele-distance').value,
+    centralDetail: {
+      width: document.getElementById('central-detail-width').value,
+      depth: document.getElementById('central-detail-depth').value,
+      height: document.getElementById('central-detail-height').value
+    },
     fenceCorner: {
       postHeight: document.getElementById('fence-corner-post-height').value,
       postSize: document.getElementById('fence-corner-post-size').value,
@@ -2385,6 +2480,13 @@ function convertAllValues(oldValues, oldUnit, newUnit) {
   // Конвертуємо значення відстані між стелами
   if (oldValues.steleDistance !== undefined) {
     document.getElementById('stele-distance').value = convertValue(oldValues.steleDistance, oldUnit, newUnit);
+  }
+  
+  // Конвертуємо розміри центральної деталі
+  if (oldValues.centralDetail) {
+    document.getElementById('central-detail-width').value = convertValue(oldValues.centralDetail.width, oldUnit, newUnit);
+    document.getElementById('central-detail-depth').value = convertValue(oldValues.centralDetail.depth, oldUnit, newUnit);
+    document.getElementById('central-detail-height').value = convertValue(oldValues.centralDetail.height, oldUnit, newUnit);
   }
   
   // Конвертуємо значення кутової огорожі
@@ -2527,6 +2629,15 @@ function updateUnitLabels() {
   // Відстань між стелами
   const steleDistanceLabel = document.getElementById('stele-distance-label');
   if (steleDistanceLabel) steleDistanceLabel.textContent = `Відстань між стелами (${unitText})`;
+  
+  // Центральна деталь
+  const centralDetailWidthLabel = document.getElementById('central-detail-width-label');
+  const centralDetailDepthLabel = document.getElementById('central-detail-depth-label');
+  const centralDetailHeightLabel = document.getElementById('central-detail-height-label');
+  
+  if (centralDetailWidthLabel) centralDetailWidthLabel.textContent = `Ширина (${unitText})`;
+  if (centralDetailDepthLabel) centralDetailDepthLabel.textContent = `Товщина (${unitText})`;
+  if (centralDetailHeightLabel) centralDetailHeightLabel.textContent = `Висота (${unitText})`;
 }
 
 // Форматування значення для відображення

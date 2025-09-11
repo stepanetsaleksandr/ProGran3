@@ -401,7 +401,7 @@ module ProGran3
   end
 
   # Додавання парних стел
-  def insert_paired_steles(category, filename, distance = 200)
+  def insert_paired_steles(category, filename, distance = 200, central_detail = false, central_detail_width = 200, central_detail_depth = 50, central_detail_height = 1200)
     ProGran3::Logger.info("Додавання парних стел: #{filename}", "Loader")
     
     # Перевірка через ModelStateManager
@@ -532,7 +532,84 @@ module ProGran3
       ProGran3::Logger.info("ПРОМІЖОК: #{gap}мм", "Loader")
     end
     
+    # Центральна деталь створюється окремою кнопкою, не при додаванні стел
+    
     true
+  end
+
+  # Створення центральної деталі
+  def create_central_detail(center_x, center_y, center_z, width, depth, height)
+    ProGran3::Logger.info("Створення центральної деталі: #{width}×#{depth}×#{height} мм", "Loader")
+    
+    begin
+      model = Sketchup.active_model
+      entities = model.active_entities
+      
+      # Видаляємо старі центральні деталі
+      entities.grep(Sketchup::ComponentInstance).find_all { |c| 
+        c.definition.name == "CentralDetail"
+      }.each(&:erase!)
+      
+      # Створюємо групу для центральної деталі
+      group = entities.add_group
+      group.name = "CentralDetail"
+      
+      # Розраховуємо розміри в SketchUp одиницях
+      width_su = width.mm
+      depth_su = depth.mm
+      height_su = height.mm
+      
+      # Створюємо прямокутник для основи
+      points = [
+        [0, 0, 0],
+        [width_su, 0, 0],
+        [width_su, depth_su, 0],
+        [0, depth_su, 0]
+      ]
+      
+      # Додаємо основу
+      face = group.entities.add_face(points)
+      
+      # Видаляємо основу, щоб створити тільки ребра
+      face.erase!
+      
+      # Додаємо ребра
+      group.entities.add_line([0, 0, 0], [width_su, 0, 0])
+      group.entities.add_line([width_su, 0, 0], [width_su, depth_su, 0])
+      group.entities.add_line([width_su, depth_su, 0], [0, depth_su, 0])
+      group.entities.add_line([0, depth_su, 0], [0, 0, 0])
+      
+      # Додаємо вертикальні ребра
+      group.entities.add_line([0, 0, 0], [0, 0, height_su])
+      group.entities.add_line([width_su, 0, 0], [width_su, 0, height_su])
+      group.entities.add_line([width_su, depth_su, 0], [width_su, depth_su, height_su])
+      group.entities.add_line([0, depth_su, 0], [0, depth_su, height_su])
+      
+      # Додаємо верхні ребра
+      group.entities.add_line([0, 0, height_su], [width_su, 0, height_su])
+      group.entities.add_line([width_su, 0, height_su], [width_su, depth_su, height_su])
+      group.entities.add_line([width_su, depth_su, height_su], [0, depth_su, height_su])
+      group.entities.add_line([0, depth_su, height_su], [0, 0, height_su])
+      
+      # Позиціонуємо центральну деталь
+      # Центруємо відносно заданої позиції
+      group_bounds = group.bounds
+      offset_x = center_x - group_bounds.center.x
+      offset_y = center_y - group_bounds.center.y
+      offset_z = center_z - group_bounds.min.z
+      
+      transform = Geom::Transformation.new([offset_x, offset_y, offset_z])
+      group.transform!(transform)
+      
+      ProGran3::Logger.info("Центральна деталь створена успішно", "Loader")
+      ProGran3::Logger.info("Позиція: x=#{center_x}, y=#{center_y}, z=#{center_z}", "Loader")
+      ProGran3::Logger.info("Розміри: #{width}×#{depth}×#{height} мм", "Loader")
+      
+      true
+    rescue => e
+      ProGran3::Logger.error("Помилка при створенні центральної деталі: #{e.message}", "Loader")
+      false
+    end
   end
 
   # Оновлення розміру підставки

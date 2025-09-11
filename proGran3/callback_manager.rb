@@ -205,7 +205,7 @@ module ProGran3
     end
 
     # Callback для додавання моделей
-    def add_model_callback(dialog, category, model_name, stele_type = nil, stele_distance = nil)
+    def add_model_callback(dialog, category, model_name, stele_type = nil, stele_distance = nil, central_detail = false, central_detail_width = 200, central_detail_depth = 50, central_detail_height = 1200)
       begin
         # Валідація категорії
         validation_result = Validation.validate_category(category.to_sym, "UI")
@@ -233,7 +233,7 @@ module ProGran3
         when :stands
           @stand_params = { category: category, filename: model_name }
         when :steles
-          @stele_params = { category: category, filename: model_name, type: stele_type, distance: stele_distance }
+          @stele_params = { category: category, filename: model_name, type: stele_type, distance: stele_distance, central_detail: central_detail, central_detail_width: central_detail_width, central_detail_depth: central_detail_depth, central_detail_height: central_detail_height }
         when :flowerbeds
           @flowerbed_params = { category: category, filename: model_name }
         when :gravestones
@@ -247,7 +247,7 @@ module ProGran3
         # Додаємо модель з координацією
         if category.to_sym == :steles
           # Використовуємо CoordinationManager для стел
-          stele_params = { category: category, filename: model_name, type: stele_type, distance: stele_distance }
+          stele_params = { category: category, filename: model_name, type: stele_type, distance: stele_distance, central_detail: central_detail, central_detail_width: central_detail_width, central_detail_depth: central_detail_depth, central_detail_height: central_detail_height }
           success = CoordinationManager.update_stele_dependents(stele_params)
         else
           success = ProGran3.insert_component(category, model_name)
@@ -259,6 +259,10 @@ module ProGran3
           if category.to_sym == :steles
             state_params[:type] = stele_type if stele_type
             state_params[:distance] = stele_distance if stele_distance
+            state_params[:central_detail] = central_detail if central_detail
+            state_params[:central_detail_width] = central_detail_width if central_detail_width
+            state_params[:central_detail_depth] = central_detail_depth if central_detail_depth
+            state_params[:central_detail_height] = central_detail_height if central_detail_height
           end
           ModelStateManager.component_added(category.to_sym, state_params)
         end
@@ -266,6 +270,128 @@ module ProGran3
         success
       rescue => e
         ErrorHandler.handle_error(e, "UI", "add_model")
+        false
+      end
+    end
+
+    # Callback для створення центральної деталі
+    def create_central_detail_callback(dialog, width, depth, height)
+      begin
+        ProGran3::Logger.info("Створення центральної деталі: #{width}×#{depth}×#{height} мм", "CallbackManager")
+        
+        # Знаходимо поверхню для позиціонування (проміжна або підставка)
+        placement_surface = get_steles_placement_surface
+        unless placement_surface
+          ProGran3::Logger.error("Не знайдено поверхню для позиціонування центральної деталі", "CallbackManager")
+          return false
+        end
+        
+        surface_bounds = placement_surface.bounds
+        center_x = surface_bounds.center.x
+        center_y = surface_bounds.center.y
+        center_z = surface_bounds.max.z
+        
+        # Створюємо центральну деталь
+        success = create_central_detail(center_x, center_y, center_z, width, depth, height)
+        
+        if success
+          ProGran3::Logger.info("Центральна деталь створена успішно", "CallbackManager")
+        else
+          ProGran3::Logger.error("Помилка при створенні центральної деталі", "CallbackManager")
+        end
+        
+        success
+      rescue => e
+        ProGran3::Logger.error("Помилка в create_central_detail_callback: #{e.message}", "CallbackManager")
+        false
+      end
+    end
+
+    # Знаходження поверхні для позиціонування стел (проміжна або підставка)
+    def get_steles_placement_surface
+      model = Sketchup.active_model
+      entities = model.active_entities
+      
+      # Спочатку шукаємо проміжну деталь
+      gaps_instance = entities.grep(Sketchup::ComponentInstance).find { |c| 
+        c.definition.name == "StandGaps"
+      }
+      
+      if gaps_instance
+        ProGran3::Logger.info("Знайдено проміжну деталь для позиціонування стел", "CallbackManager")
+        return gaps_instance
+      end
+      
+      # Якщо проміжної немає, шукаємо підставку
+      stand_instance = entities.grep(Sketchup::ComponentInstance).find { |c| 
+        c.definition.name.downcase.include?('stand') && c.definition.name != "StandGaps"
+      }
+      
+      if stand_instance
+        ProGran3::Logger.info("Знайдено підставку для позиціонування стел", "CallbackManager")
+        return stand_instance
+      end
+      
+      ProGran3::Logger.warn("Не знайдено поверхню для позиціонування стел", "CallbackManager")
+      nil
+    end
+
+    # Створення центральної деталі
+    def create_central_detail(center_x, center_y, center_z, width, depth, height)
+      ProGran3::Logger.info("Створення центральної деталі: #{width}×#{depth}×#{height} мм", "CallbackManager")
+      
+      begin
+        model = Sketchup.active_model
+        entities = model.active_entities
+        
+        # Видаляємо старі центральні деталі
+        entities.grep(Sketchup::ComponentInstance).find_all { |c| 
+          c.definition.name == "CentralDetail"
+        }.each(&:erase!)
+        
+        # Створюємо групу для центральної деталі
+        group = entities.add_group
+        group.name = "CentralDetail"
+        
+        # Розраховуємо розміри в SketchUp одиницях
+        # width = ширина по Y, depth = товщина по X, height = висота по Z
+        width_su = width.mm    # по осі Y
+        depth_su = depth.mm    # по осі X (товщина)
+        height_su = height.mm  # по осі Z
+        
+        # Створюємо прямокутник для основи (по осі XY)
+        points = [
+          [0, 0, 0],           # лівий нижній
+          [depth_su, 0, 0],    # правий нижній (по X)
+          [depth_su, width_su, 0], # правий верхній (по Y)
+          [0, width_su, 0]     # лівий верхній
+        ]
+        
+        # Додаємо основу (нижню грань)
+        bottom_face = group.entities.add_face(points)
+        
+        # Піднімаємо основу на висоту
+        bottom_face.pushpull(height_su)
+        
+        # Тепер у нас є повний блок з гранями
+        
+        # Позиціонуємо центральну деталь
+        # Центруємо відносно заданої позиції
+        group_bounds = group.bounds
+        offset_x = center_x - group_bounds.center.x
+        offset_y = center_y - group_bounds.center.y
+        offset_z = center_z - group_bounds.min.z
+        
+        transform = Geom::Transformation.new([offset_x, offset_y, offset_z])
+        group.transform!(transform)
+        
+        ProGran3::Logger.info("Центральна деталь створена успішно", "CallbackManager")
+        ProGran3::Logger.info("Позиція: x=#{center_x}, y=#{center_y}, z=#{center_z}", "CallbackManager")
+        ProGran3::Logger.info("Розміри: #{width}×#{depth}×#{height} мм", "CallbackManager")
+        
+        true
+      rescue => e
+        ProGran3::Logger.error("Помилка при створенні центральної деталі: #{e.message}", "CallbackManager")
         false
       end
     end
