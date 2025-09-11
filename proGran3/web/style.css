@@ -132,6 +132,55 @@ header {
 .header-center h1 {
   margin: 0;
   text-align: center;
+  animation: pulse 3s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+/* Зупинка анімації при наведенні */
+.header-center h1:hover {
+  animation-play-state: paused;
+  transform: scale(1.05);
+  color: var(--accent-color, #3498db);
+}
+
+/* Анімація пульсації для заголовка */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    color: var(--text-primary, #2c3e50);
+  }
+  50% {
+    transform: scale(1.05);
+    color: var(--accent-color, #3498db);
+  }
+  100% {
+    transform: scale(1);
+    color: var(--text-primary, #2c3e50);
+  }
+}
+
+/* Підтримка темної теми для анімації */
+[data-theme="dark"] .header-center h1 {
+  animation: pulse-dark 3s ease-in-out infinite;
+}
+
+[data-theme="dark"] .header-center h1:hover {
+  color: var(--accent-color-dark, #5dade2);
+}
+
+@keyframes pulse-dark {
+  0% {
+    transform: scale(1);
+    color: var(--text-primary-dark, #ecf0f1);
+  }
+  50% {
+    transform: scale(1.05);
+    color: var(--accent-color-dark, #5dade2);
+  }
+  100% {
+    transform: scale(1);
+    color: var(--text-primary-dark, #ecf0f1);
+  }
 }
 
 /* Правий верхній кут - вибір мови */
