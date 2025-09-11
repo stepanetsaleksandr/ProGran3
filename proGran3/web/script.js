@@ -4,7 +4,7 @@
 let modelLists = {};
 let carouselState = {
   stands: { index: 0 },
-  steles: { index: 0, type: 'single' }, // Додаємо тип стел
+  steles: { index: 0, type: 'single', distance: 200 }, // Додаємо тип стел та відстань
   flowerbeds: { index: 0 },
   gravestones: { index: 0 },
   fence_decor: { index: 0 }
@@ -615,11 +615,12 @@ const CarouselManager = {
     const filename = modelLists[category][state.index];
     
     if (window.sketchup && window.sketchup.add_model) {
-      // Для стел передаємо додатковий параметр типу
+      // Для стел передаємо додаткові параметри типу та відстані
       if (category === 'steles') {
         const steleType = state.type || 'single'; // За замовчуванням 'single'
-        window.sketchup.add_model(category, filename, steleType);
-        debugLog(`Додавання стел типу: ${steleType}`, 'info');
+        const steleDistance = state.distance || 200; // За замовчуванням 200мм
+        window.sketchup.add_model(category, filename, steleType, steleDistance);
+        debugLog(`Додавання стел типу: ${steleType}, відстань: ${steleDistance}мм`, 'info');
       } else {
         window.sketchup.add_model(category, filename);
       }
@@ -1310,6 +1311,25 @@ function updateSteleType() {
   const selectedType = document.querySelector('input[name="stele-type"]:checked').value;
   carouselState.steles.type = selectedType;
   debugLog(`Тип стел змінено на: ${selectedType}`, 'info');
+  
+  // Показуємо/ховаємо поле відстані для парних стел
+  const distanceGroup = document.getElementById('stele-distance-group');
+  if (distanceGroup) {
+    if (selectedType === 'paired') {
+      distanceGroup.style.display = 'block';
+    } else {
+      distanceGroup.style.display = 'none';
+    }
+  }
+}
+
+// Функція для оновлення відстані між стелами
+function updateSteleDistance() {
+  const distanceInput = document.getElementById('stele-distance');
+  if (distanceInput) {
+    carouselState.steles.distance = parseInt(distanceInput.value) || 200;
+    debugLog(`Відстань між стелами змінено на: ${carouselState.steles.distance}мм`, 'info');
+  }
 }
 
 // Ініціалізація типу стел при завантаженні

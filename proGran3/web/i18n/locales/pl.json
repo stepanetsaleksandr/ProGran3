@@ -15,7 +15,8 @@
   },
   "stele": {
     "single": "Pojedyncza stela",
-    "paired": "Pary stel"
+    "paired": "Pary stel",
+    "distance_mm": "Odległość między stelami (mm)"
   },
   "buttons": {
     "create": "Utwórz",

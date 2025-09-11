@@ -15,7 +15,8 @@
   },
   "stele": {
     "single": "Single Stele",
-    "paired": "Paired Steles"
+    "paired": "Paired Steles",
+    "distance_mm": "Distance between steles (mm)"
   },
   "buttons": {
     "create": "Create",

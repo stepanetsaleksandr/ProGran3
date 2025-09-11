@@ -353,7 +353,7 @@ module ProGran3
   end
 
   # Додавання парних стел
-  def insert_paired_steles(category, filename)
+  def insert_paired_steles(category, filename, distance = 200)
     ProGran3::Logger.info("Додавання парних стел: #{filename}", "Loader")
     
     # Перевірка через ModelStateManager
@@ -412,27 +412,36 @@ module ProGran3
     end
     
     # Розраховуємо зсув для центрування обох стел
-    # Потрібно змістити обидві стели на однакову відстань
     stele_half_width = comp_bounds.height / 2  # Половина ширини стели
-    shift_y = stele_half_width  # Зсув на половину ширини стели
+    base_shift_y = stele_half_width  # Базовий зсув на половину ширини стели
+    
+    # Додатковий зсув для розведення стел на задану відстань в кожну сторону
+    separation_distance = (distance / 2).mm  # Половина відстані для кожної сторони
     
     ProGran3::Logger.info("Ширина стели: #{comp_bounds.height}мм", "Loader")
     ProGran3::Logger.info("Половина ширини стели: #{stele_half_width}мм", "Loader")
-    ProGran3::Logger.info("Зсув для центрування: +#{shift_y}мм по Y", "Loader")
+    ProGran3::Logger.info("Загальна відстань між стелами: #{distance}мм", "Loader")
+    ProGran3::Logger.info("Відстань розведення в кожну сторону: #{separation_distance}мм", "Loader")
     
     # Видаляємо старі стели
     first_instance.erase!
     second_instance.erase!
     
     # Створюємо стели з правильним зсувом
-    # Перша стела (зсув на половину ширини стели)
-    first_trans_corrected = Geom::Transformation.new([center_x, center_y + shift_y, center_z])
+    # Перша стела (базовий зсув + 100мм для розведення в південь)
+    first_y = center_y + base_shift_y + separation_distance
+    first_trans_corrected = Geom::Transformation.new([center_x, first_y, center_z])
     first_instance = entities.add_instance(comp_def, first_trans_corrected)
     
-    # Друга стела (зсув на половину ширини стели + дзеркальне відображення)
-    move_trans_corrected = Geom::Transformation.new([center_x, center_y + shift_y, center_z])
+    # Друга стела (базовий зсув - 100мм для розведення в північ + дзеркальне відображення)
+    second_y = center_y + base_shift_y - separation_distance
+    move_trans_corrected = Geom::Transformation.new([center_x, second_y, center_z])
     combined_trans_corrected = move_trans_corrected * mirror_trans
     second_instance = entities.add_instance(comp_def, combined_trans_corrected)
+    
+    ProGran3::Logger.info("Перша стела: y=#{first_y} (центр + 100мм, південь)", "Loader")
+    ProGran3::Logger.info("Друга стела: y=#{second_y} (центр - 100мм, північ)", "Loader")
+    ProGran3::Logger.info("Відстань між центрами стел: #{separation_distance * 2}мм", "Loader")
     
     ProGran3::Logger.info("Парні стели додано успішно", "Loader")
     ProGran3::Logger.info("Центр підставки: x=#{center_x}, y=#{center_y}, z=#{center_z}", "Loader")
