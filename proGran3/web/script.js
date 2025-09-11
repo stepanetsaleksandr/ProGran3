@@ -3,7 +3,7 @@
 // --- ГЛОБАЛЬНІ ЗМІННІ ---
 let modelLists = {};
 let carouselState = {
-  stands: { index: 0 },
+  stands: { index: 0, gaps: false }, // Додаємо вмикач проміжків
   steles: { index: 0, type: 'single', distance: 200 }, // Додаємо тип стел та відстань
   flowerbeds: { index: 0 },
   gravestones: { index: 0 },
@@ -887,6 +887,10 @@ function initializeApp() {
   initializeSteleType();
   debugLog(` Тип стел ініціалізовано`, 'success');
   
+  // Ініціалізуємо вмикач проміжків
+  initializeStandsGaps();
+  debugLog(` Вмикач проміжків ініціалізовано`, 'success');
+  
   debugLog(` initializeApp завершено`, 'success');
 }
 
@@ -1332,6 +1336,98 @@ function updateSteleDistance() {
   }
 }
 
+// Функція для оновлення вмикача проміжних
+function updateStandsGaps() {
+  const gapsCheckbox = document.getElementById('stands-gaps');
+  if (gapsCheckbox) {
+    carouselState.stands.gaps = gapsCheckbox.checked;
+    debugLog(`Проміжна підставки: ${gapsCheckbox.checked ? 'увімкнено' : 'вимкнено'}`, 'info');
+    
+    // Показуємо/приховуємо поля розмірів проміжної
+    const gapsDimensionsGroup = document.getElementById('gaps-dimensions-group');
+    if (gapsDimensionsGroup) {
+      if (gapsCheckbox.checked) {
+        gapsDimensionsGroup.style.display = 'block';
+        // Автоматично заповнюємо довжину та ширину з розмірів підставки
+        updateGapsFromStandDimensions();
+      } else {
+        gapsDimensionsGroup.style.display = 'none';
+      }
+    }
+  }
+}
+
+// Функція для оновлення розмірів проміжної з розмірів підставки
+function updateGapsFromStandDimensions() {
+  const standDepth = document.getElementById('stands-depth');
+  const standWidth = document.getElementById('stands-width');
+  const gapsDepth = document.getElementById('gaps-depth');
+  const gapsWidth = document.getElementById('gaps-width');
+  
+  if (standDepth && standWidth && gapsDepth && gapsWidth) {
+    const currentUnit = getCurrentUnit();
+    
+    // Конвертуємо розміри підставки в міліметри
+    const standDepthMm = convertToMm(standDepth.value);
+    const standWidthMm = convertToMm(standWidth.value);
+    
+    // Додаємо 50 мм до розмірів підставки
+    const newDepthMm = standDepthMm + 50;
+    const newWidthMm = standWidthMm + 50;
+    
+    // Конвертуємо назад в поточні одиниці
+    const newDepth = currentUnit === 'cm' ? Math.round(newDepthMm / 10) : newDepthMm;
+    const newWidth = currentUnit === 'cm' ? Math.round(newWidthMm / 10) : newWidthMm;
+    
+    gapsDepth.value = newDepth;
+    gapsWidth.value = newWidth;
+    debugLog(`Розміри проміжної оновлено з підставки (+50мм): ${newDepth}×${newWidth} ${currentUnit}`, 'info');
+  }
+}
+
+// Функція для оновлення відображення розмірів проміжної
+function updateGapsDisplay() {
+  const depthInput = document.getElementById('gaps-depth');
+  const widthInput = document.getElementById('gaps-width');
+  const heightInput = document.getElementById('gaps-height');
+  
+  if (depthInput && widthInput && heightInput) {
+    const depth = parseInt(depthInput.value) || 650;
+    const width = parseInt(widthInput.value) || 200;
+    const height = parseInt(heightInput.value) || 50;
+    
+    debugLog(`Розміри проміжної: ${height}×${width}×${depth} мм (В×Ш×Д)`, 'info');
+  }
+}
+
+// Функція для оновлення полів проміжної при зміні одиниць
+function updateGapsFieldsUnits() {
+  const gapsDepthInput = document.getElementById('gaps-depth');
+  const gapsWidthInput = document.getElementById('gaps-width');
+  const gapsHeightInput = document.getElementById('gaps-height');
+  
+  if (gapsDepthInput && gapsWidthInput && gapsHeightInput) {
+    const currentUnit = getCurrentUnit();
+    
+    // Конвертуємо значення з поточних одиниць в міліметри
+    const depthMm = convertToMm(gapsDepthInput.value);
+    const widthMm = convertToMm(gapsWidthInput.value);
+    const heightMm = convertToMm(gapsHeightInput.value);
+    
+    // Конвертуємо назад в поточні одиниці
+    const depthConverted = currentUnit === 'cm' ? Math.round(depthMm / 10) : depthMm;
+    const widthConverted = currentUnit === 'cm' ? Math.round(widthMm / 10) : widthMm;
+    const heightConverted = currentUnit === 'cm' ? Math.round(heightMm / 10) : heightMm;
+    
+    // Оновлюємо значення полів
+    gapsDepthInput.value = depthConverted;
+    gapsWidthInput.value = widthConverted;
+    gapsHeightInput.value = heightConverted;
+    
+    debugLog(`Поля проміжної оновлено для одиниць ${currentUnit}: ${heightConverted}×${widthConverted}×${depthConverted}`, 'info');
+  }
+}
+
 // Ініціалізація типу стел при завантаженні
 function initializeSteleType() {
   const steleTypeInputs = document.querySelectorAll('input[name="stele-type"]');
@@ -1340,6 +1436,27 @@ function initializeSteleType() {
     if (checkedInput) {
       carouselState.steles.type = checkedInput.value;
       debugLog(`Ініціалізовано тип стел: ${checkedInput.value}`, 'info');
+    }
+  }
+}
+
+// Ініціалізація вмикача проміжних при завантаженні
+function initializeStandsGaps() {
+  const gapsCheckbox = document.getElementById('stands-gaps');
+  if (gapsCheckbox) {
+    carouselState.stands.gaps = gapsCheckbox.checked;
+    debugLog(`Ініціалізовано проміжну підставки: ${gapsCheckbox.checked}`, 'info');
+    
+    // Ініціалізуємо видимість полів проміжної
+    const gapsDimensionsGroup = document.getElementById('gaps-dimensions-group');
+    if (gapsDimensionsGroup) {
+      if (gapsCheckbox.checked) {
+        gapsDimensionsGroup.style.display = 'block';
+        // Автоматично заповнюємо розміри з підставки
+        updateGapsFromStandDimensions();
+      } else {
+        gapsDimensionsGroup.style.display = 'none';
+      }
     }
   }
 }
@@ -1473,6 +1590,9 @@ function updateAllDisplays() {
   // Оновлення відображення підставки
   debugLog(` Викликаємо updateStandsDisplay() з updateAllDisplays()`, 'info');
   updateStandsDisplay();
+  
+  // Оновлення полів проміжної при зміні одиниць
+  updateGapsFieldsUnits();
   
   // Оновлення підсумкової таблиці
   debugLog(` Викликаємо updateSummaryTable() з updateAllDisplays()`, 'info');
@@ -2487,6 +2607,12 @@ function updateStandsDisplay() {
   } else {
     debugLog(` Не знайдено елемент stands-dimensions-display`, 'warning');
   }
+  
+  // Якщо проміжна увімкнена, оновлюємо її розміри
+  const gapsCheckbox = document.getElementById('stands-gaps');
+  if (gapsCheckbox && gapsCheckbox.checked) {
+    updateGapsFromStandDimensions();
+  }
 }
 
 // Оновлення відображення периметральної огорожі
@@ -2767,11 +2893,29 @@ function addStandWithCustomSize() {
       return;
     }
     
+    // Отримуємо стан вмикача проміжної
+    const gapsEnabled = carouselState.stands.gaps || false;
+    debugLog(` Проміжна підставки: ${gapsEnabled ? 'увімкнено' : 'вимкнено'}`, 'info');
+    
+    // Отримуємо розміри проміжної якщо увімкнено
+    let gapsHeight = 0, gapsWidth = 0, gapsDepth = 0;
+    if (gapsEnabled) {
+      const gapsDepthRaw = parseInt(document.getElementById('gaps-depth').value);
+      const gapsWidthRaw = parseInt(document.getElementById('gaps-width').value);
+      const gapsHeightRaw = parseInt(document.getElementById('gaps-height').value);
+      
+      gapsHeight = convertToMm(gapsHeightRaw);
+      gapsWidth = convertToMm(gapsWidthRaw);
+      gapsDepth = convertToMm(gapsDepthRaw);
+      
+      debugLog(` Розміри проміжної: ${gapsHeight}×${gapsWidth}×${gapsDepth} мм (В×Ш×Д)`, 'info');
+    }
+    
     // Додаємо підставку через SketchUp API
     if (window.sketchup.add_stand) {
       debugLog(`🏗️ Додаємо підставку з розмірами: ${height}×${width}×${depth}`, 'info');
-      // Передаємо параметри в порядку: height, width, depth (як очікує Ruby callback)
-      const result = window.sketchup.add_stand(height, width, depth);
+      // Передаємо параметри в порядку: height, width, depth, gaps, gapsHeight, gapsWidth, gapsDepth
+      const result = window.sketchup.add_stand(height, width, depth, gapsEnabled, gapsHeight, gapsWidth, gapsDepth);
       debugLog(`📤 Результат додавання підставки: ${result}`, 'info');
       
       // Зберігаємо інформацію про розміри
@@ -2784,7 +2928,11 @@ function addStandWithCustomSize() {
         filename: 'stand_custom',
         height: height,
         width: width,
-        depth: depth
+        depth: depth,
+        gaps: gapsEnabled,
+        gapsHeight: gapsHeight,
+        gapsWidth: gapsWidth,
+        gapsDepth: gapsDepth
       };
       updateSummaryTable();
       debugLog(` Підставка успішно додана`, 'success');

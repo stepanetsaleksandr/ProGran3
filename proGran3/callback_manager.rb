@@ -45,18 +45,22 @@ module ProGran3
     end
 
     # Callback для підставки
-    def add_stand_callback(dialog, height, width, depth)
+    def add_stand_callback(dialog, height, width, depth, gaps = false, gaps_height = 0, gaps_width = 0, gaps_depth = 0)
       return false unless validate_dimensions_callback(depth, width, height, "підставки")
       
       # Зберігаємо параметри підставки
       @stand_params = {
         height: height.to_i,
         width: width.to_i,
-        depth: depth.to_i
+        depth: depth.to_i,
+        gaps: gaps,
+        gaps_height: gaps_height.to_i,
+        gaps_width: gaps_width.to_i,
+        gaps_depth: gaps_depth.to_i
       }
       
       # Створюємо підставку з правильним позиціонуванням
-      success = ProGran3.create_stand_with_dimensions(@stand_params[:height], @stand_params[:width], @stand_params[:depth])
+      success = ProGran3.create_stand_with_dimensions(@stand_params[:height], @stand_params[:width], @stand_params[:depth], @stand_params[:gaps], @stand_params[:gaps_height], @stand_params[:gaps_width], @stand_params[:gaps_depth])
       
       if success
         # Оновлення стану через ModelStateManager

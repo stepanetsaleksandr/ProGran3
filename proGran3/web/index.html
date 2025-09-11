@@ -271,6 +271,34 @@
             </div>
           </div>
           
+          <!-- Вмикач проміжки -->
+          <div class="input-group">
+            <div class="gaps-toggle">
+              <label class="toggle-label">
+                <input type="checkbox" id="stands-gaps" onchange="updateStandsGaps()">
+                <span data-i18n="stands.gaps">Проміжка</span>
+              </label>
+            </div>
+          </div>
+          
+          <!-- Розміри проміжків (показуються тільки коли увімкнено проміжки) -->
+          <div class="input-group" id="gaps-dimensions-group" style="display: none;">
+            <div class="input-row">
+              <div class="input-wrapper">
+                <label id="gaps-depth-label" for="gaps-depth" data-i18n="labels.gaps_depth_mm">Довжина проміжки (мм)</label>
+                <input type="number" id="gaps-depth" value="650" min="100" max="2000" oninput="updateGapsDisplay()">
+              </div>
+              <div class="input-wrapper">
+                <label id="gaps-width-label" for="gaps-width" data-i18n="labels.gaps_width_mm">Ширина проміжки (мм)</label>
+                <input type="number" id="gaps-width" value="200" min="100" max="1500" oninput="updateGapsDisplay()">
+              </div>
+              <div class="input-wrapper">
+                <label id="gaps-height-label" for="gaps-height" data-i18n="labels.gaps_height_mm">Висота проміжки (мм)</label>
+                <input type="number" id="gaps-height" value="50" min="10" max="1000" oninput="updateGapsDisplay()">
+              </div>
+            </div>
+          </div>
+          
           <div class="button-group">
             <button onclick="addStandWithCustomSize(); advanceToNextPanel(this);" data-i18n="buttons.add_stand">Додати підставку</button>
           </div>

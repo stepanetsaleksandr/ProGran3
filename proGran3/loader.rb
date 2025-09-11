@@ -592,9 +592,12 @@ module ProGran3
   end
 
   # Створення підставки з кастомними розмірами
-  def create_stand_with_dimensions(height, width, depth)
+  def create_stand_with_dimensions(height, width, depth, gaps = false, gaps_height = 0, gaps_width = 0, gaps_depth = 0)
     begin
-      ProGran3::Logger.info("Створення підставки з розмірами: #{height}×#{width}×#{depth} мм", "Loader")
+      ProGran3::Logger.info("Створення підставки з розмірами: #{height}×#{width}×#{depth} мм, проміжна: #{gaps ? 'увімкнено' : 'вимкнено'}", "Loader")
+      if gaps
+        ProGran3::Logger.info("Розміри проміжної: #{gaps_height}×#{gaps_width}×#{gaps_depth} мм", "Loader")
+      end
       
       model = Sketchup.active_model
       entities = model.active_entities
@@ -653,7 +656,12 @@ module ProGran3
       
       # Додаємо екземпляр компонента до моделі з правильним позиціонуванням
       transform = Geom::Transformation.new([x, y, z])
-      entities.add_instance(comp_def, transform)
+      stand_instance = entities.add_instance(comp_def, transform)
+      
+      # Створюємо проміжну якщо увімкнено
+      if gaps
+        create_stand_gaps(stand_instance, gaps_height, gaps_width, gaps_depth)
+      end
       
       ProGran3::Logger.success("Підставка створена з розмірами #{height}×#{width}×#{depth} мм", "Loader")
       true
@@ -662,6 +670,50 @@ module ProGran3
       ProGran3::Logger.error("Помилка при створенні підставки: #{e.message}", "Loader")
       ProGran3::Logger.error("Stack trace: #{e.backtrace.join('\n')}", "Loader")
       false
+    end
+  end
+
+  # Створення проміжної для підставки
+  def create_stand_gaps(stand_instance, gaps_height, gaps_width, gaps_depth)
+    begin
+      ProGran3::Logger.info("Створення проміжної з розмірами: #{gaps_height}×#{gaps_width}×#{gaps_depth} мм", "Loader")
+      
+      model = Sketchup.active_model
+      entities = model.active_entities
+      defs = model.definitions
+      
+      # Видаляємо старі проміжні
+      entities.grep(Sketchup::ComponentInstance).select { |c| c.definition.name == "StandGaps" }.each(&:erase!)
+      
+      # Створюємо новий компонент проміжної
+      gaps_def = defs.add("StandGaps")
+      
+      # Створюємо геометрію проміжної з окремими розмірами
+      points = [
+        Geom::Point3d.new(0, 0, 0),
+        Geom::Point3d.new(gaps_width.mm, 0, 0),
+        Geom::Point3d.new(gaps_width.mm, gaps_depth.mm, 0),
+        Geom::Point3d.new(0, gaps_depth.mm, 0)
+      ]
+      
+      face = gaps_def.entities.add_face(points)
+      face.reverse! if face.normal.z < 0
+      face.pushpull(gaps_height.mm)  # Товщина проміжної
+      
+      # Позиціонування проміжної зверху на підставці
+      stand_bounds = stand_instance.bounds
+      gaps_x = stand_bounds.center.x - gaps_def.bounds.center.x
+      gaps_y = stand_bounds.center.y - gaps_def.bounds.center.y
+      gaps_z = stand_bounds.max.z - gaps_def.bounds.min.z  # Зверху на підставці
+      
+      gaps_transform = Geom::Transformation.new([gaps_x, gaps_y, gaps_z])
+      entities.add_instance(gaps_def, gaps_transform)
+      
+      ProGran3::Logger.success("Проміжна створена з розмірами #{gaps_height}×#{gaps_width}×#{gaps_depth} мм", "Loader")
+      
+    rescue => e
+      ProGran3::Logger.error("Помилка при створенні проміжної: #{e.message}", "Loader")
+      ProGran3::Logger.error("Stack trace: #{e.backtrace.join('\n')}", "Loader")
     end
   end
 end

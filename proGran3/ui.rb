@@ -44,8 +44,8 @@ module ProGran3
         CallbackManager.add_foundation_callback(dialog, depth, width, height)
       end
 
-      @dialog.add_action_callback("add_stand") do |dialog, height, width, depth|
-        CallbackManager.add_stand_callback(dialog, height, width, depth)
+      @dialog.add_action_callback("add_stand") do |dialog, height, width, depth, gaps = false, gaps_height = 0, gaps_width = 0, gaps_depth = 0|
+        CallbackManager.add_stand_callback(dialog, height, width, depth, gaps, gaps_height, gaps_width, gaps_depth)
       end
 
       @dialog.add_action_callback("add_tiles") do |dialog, type, *params|

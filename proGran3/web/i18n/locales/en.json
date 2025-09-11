@@ -18,6 +18,9 @@
     "paired": "Paired Steles",
     "distance_mm": "Distance between steles (mm)"
   },
+  "stands": {
+    "gaps": "Intermediate"
+  },
   "buttons": {
     "create": "Create",
     "add": "Add",
@@ -110,6 +113,11 @@
     "width_mode": "Width mode",
     "thickness_mm": "Thickness (mm)",
     "width_mm": "Width (mm)",
+    "depth_mm": "Length (mm)",
+    "height_mm": "Height (mm)",
+    "gaps_depth_mm": "Intermediate Length (mm)",
+    "gaps_width_mm": "Intermediate Width (mm)",
+    "gaps_height_mm": "Intermediate Height (mm)",
     "north_side_mm": "North side (mm)",
     "south_side_mm": "South side (mm)",
     "east_side_mm": "East side (mm)",

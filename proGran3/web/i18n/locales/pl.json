@@ -18,6 +18,9 @@
     "paired": "Pary stel",
     "distance_mm": "Odległość między stelami (mm)"
   },
+  "stands": {
+    "gaps": "Pośrednia"
+  },
   "buttons": {
     "create": "Utwórz",
     "add": "Dodaj",
@@ -110,6 +113,11 @@
     "width_mode": "Tryb szerokości",
     "thickness_mm": "Grubość (mm)",
     "width_mm": "Szerokość (mm)",
+    "depth_mm": "Długość (mm)",
+    "height_mm": "Wysokość (mm)",
+    "gaps_depth_mm": "Długość pośredniej (mm)",
+    "gaps_width_mm": "Szerokość pośredniej (mm)",
+    "gaps_height_mm": "Wysokość pośredniej (mm)",
     "north_side_mm": "Strona północna (mm)",
     "south_side_mm": "Strona południowa (mm)",
     "east_side_mm": "Strona wschodnia (mm)",
