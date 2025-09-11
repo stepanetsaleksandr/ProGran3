@@ -25,7 +25,7 @@
       required: true
     },
     category: {
-      allowed: ['stands', 'steles', 'flowerbeds', 'gravestones', 'fence_decor', 'foundation', 'tiling', 'cladding', 'blindArea'],
+      allowed: ['stands', 'steles', 'flowerbeds', 'gravestones', 'fence_decor', 'foundation', 'tiling', 'cladding', 'blindArea', 'blind_area', 'tiles', 'pavement_tiles'],
       required: true
     }
   };

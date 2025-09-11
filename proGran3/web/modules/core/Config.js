@@ -69,7 +69,10 @@
       foundation: { maxCount: 1, required: true },
       tiling: { maxCount: 1, required: false },
       cladding: { maxCount: 1, required: false },
-      blindArea: { maxCount: 1, required: false }
+      blindArea: { maxCount: 1, required: false },
+      blind_area: { maxCount: 1, required: false },
+      tiles: { maxCount: 1, required: false },
+      pavement_tiles: { maxCount: 1, required: false }
     }
   };
   

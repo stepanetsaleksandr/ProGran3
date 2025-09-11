@@ -102,8 +102,14 @@ module ProGran3
         seam: seam
       }
       
-      ProGran3::TilingBuilder.insert_perimeter_tiles(thickness, borderWidth, overhang, seam)
-      true
+      success = ProGran3::TilingBuilder.insert_perimeter_tiles(thickness, borderWidth, overhang, seam)
+      
+      if success
+        # Оновлення стану через ModelStateManager
+        ModelStateManager.component_added(:tiles, @tiles_params)
+      end
+      
+      success
     end
 
     # Callback для модульної плитки
@@ -121,8 +127,14 @@ module ProGran3
         overhang: overhang
       }
       
-      ProGran3::TilingBuilder.insert_modular_tiles(tileSize, thickness, seam, overhang)
-      true
+      success = ProGran3::TilingBuilder.insert_modular_tiles(tileSize, thickness, seam, overhang)
+      
+      if success
+        # Оновлення стану через ModelStateManager
+        ModelStateManager.component_added(:tiles, @tiles_params)
+      end
+      
+      success
     end
 
     # Callback для облицювання
@@ -134,8 +146,14 @@ module ProGran3
       # Зберігаємо параметри для автоматичного оновлення
       @cladding_params = { thickness: thickness }
       
-      ProGran3::CladdingBuilder.create(thickness)
-      true
+      success = ProGran3::CladdingBuilder.create(thickness)
+      
+      if success
+        # Оновлення стану через ModelStateManager
+        ModelStateManager.component_added(:cladding, @cladding_params)
+      end
+      
+      success
     end
 
     # Callback для відмостки
@@ -151,13 +169,19 @@ module ProGran3
         widths: width_params.map(&:to_i)
       }
       
-      case mode
+      success = case mode
       when "uniform"
         ProGran3::BlindAreaBuilder.create_uniform(width_params[0].to_i, thickness)
       when "custom"
         ProGran3::BlindAreaBuilder.create(*width_params.map(&:to_i), thickness)
       end
-      true
+      
+      if success
+        # Оновлення стану через ModelStateManager
+        ModelStateManager.component_added(:blind_area, @blind_area_params)
+      end
+      
+      success
     end
 
     # Callback для додавання декору огорожі на всі стовпчики
@@ -216,6 +240,8 @@ module ProGran3
           @gravestone_params = { category: category, filename: model_name }
         when :fence_decor
           @fence_decor_params = { category: category, filename: model_name }
+        when :pavement_tiles
+          @pavement_tiles_params = { category: category, filename: model_name }
         end
         
         # Додаємо модель

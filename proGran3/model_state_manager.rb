@@ -138,6 +138,30 @@ class ModelStateManager
       filename: nil,
       position: {},
       bounds: {}
+    },
+    blind_area: {
+      exists: false,
+      params: {},
+      position: {},
+      bounds: {}
+    },
+    tiles: {
+      exists: false,
+      params: {},
+      position: {},
+      bounds: {}
+    },
+    cladding: {
+      exists: false,
+      params: {},
+      position: {},
+      bounds: {}
+    },
+    pavement_tiles: {
+      exists: false,
+      filename: nil,
+      position: {},
+      bounds: {}
     }
   }
   
@@ -153,7 +177,11 @@ class ModelStateManager
     lamps: [:gravestones],
     fence_corner: [:foundation],
     fence_perimeter: [:foundation],
-    fence_decor: [:fence_corner, :fence_perimeter]
+    fence_decor: [:fence_corner, :fence_perimeter],
+    blind_area: [:foundation],
+    tiles: [:foundation],
+    cladding: [:foundation],
+    pavement_tiles: [:foundation]
   }
   
   # Валідаційні правила
@@ -169,7 +197,11 @@ class ModelStateManager
     lamps: { required: false, max_count: 1, depends_on: [:gravestones] },
     fence_corner: { required: false, max_count: 1, depends_on: [:foundation] },
     fence_perimeter: { required: false, max_count: 1, depends_on: [:foundation] },
-    fence_decor: { required: false, max_count: 1, depends_on: [:fence_corner, :fence_perimeter] }
+    fence_decor: { required: false, max_count: 1, depends_on: [:fence_corner, :fence_perimeter] },
+    blind_area: { required: false, max_count: 1, depends_on: [:foundation] },
+    tiles: { required: false, max_count: 1, depends_on: [:foundation] },
+    cladding: { required: false, max_count: 1, depends_on: [:foundation] },
+    pavement_tiles: { required: false, max_count: 1, depends_on: [:foundation] }
   }
   
   # Історія змін

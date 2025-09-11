@@ -28,7 +28,10 @@
     gravestones: false,
     steles: false,
     fence_corner: false,
-    fence_perimeter: false
+    fence_perimeter: false,
+    blind_area: false,
+    tiles: false,
+    pavement_tiles: false
   };
   let currentUnit = 'mm';
   
@@ -138,7 +141,10 @@
       gravestones: false,
       steles: false,
       fence_corner: false,
-      fence_perimeter: false
+      fence_perimeter: false,
+      blind_area: false,
+      tiles: false,
+      pavement_tiles: false
     };
     currentUnit = 'mm';
     logStateChange('resetState');
