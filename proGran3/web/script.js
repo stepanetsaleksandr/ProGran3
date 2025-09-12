@@ -1647,8 +1647,14 @@ function updateCentralDetailDisplay() {
     if (carouselState.steles.type === 'paired') {
       centralDetailGroup.style.display = 'block';
       if (carouselState.steles.centralDetail) {
+        // Перевіряємо, чи поля були приховані раніше
+        const wasHidden = centralDetailDimensionsGroup.style.display === 'none';
         centralDetailDimensionsGroup.style.display = 'block';
-        updateCentralDetailFromSteleDistance();
+        
+        // Ініціалізуємо значення тільки при першому показі
+        if (wasHidden) {
+          updateCentralDetailFromSteleDistance();
+        }
       } else {
         centralDetailDimensionsGroup.style.display = 'none';
       }
