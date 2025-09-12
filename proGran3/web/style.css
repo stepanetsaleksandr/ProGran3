@@ -763,4 +763,368 @@ header {
   }
 }
 
+/* ========== STELE SECTION STYLES ========== */
+
+/* Секції стел */
+.stele-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+/* Компактна версія секції розмірів */
+.stele-section.compact {
+  margin-bottom: var(--spacing-md);
+}
+
+.stele-section.compact .input-card.compact {
+  padding: var(--spacing-md);
+  margin: 0;
+}
+
+.stele-section.compact .section-header {
+  display: none; /* Приховуємо заголовок для компактності */
+}
+
+
+.stele-section.conditional {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.stele-section.conditional[style*="display: none"] {
+  opacity: 0;
+  transform: translateY(-10px);
+  margin-bottom: 0;
+  max-height: 0;
+}
+
+/* Заголовки секцій */
+.section-header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.section-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+  text-align: center;
+}
+
+/* Сегментований контрол у стилі плагіна */
+.segmented-control {
+  display: flex;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-light);
+}
+
+.segmented-control::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.segment {
+  flex: 1;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--font-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: var(--radius-sm);
+  position: relative;
+  z-index: 1;
+  font-family: inherit;
+}
+
+.segment:hover {
+  color: var(--text-color);
+  background: rgba(74, 144, 226, 0.1);
+}
+
+.segment.active {
+  background: rgba(74, 144, 226, 0.25);
+  color: var(--text-color);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
+}
+
+/* Картки для вводу у стилі плагіна */
+.input-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-light);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.input-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.input-card:hover {
+  box-shadow: var(--shadow-medium);
+  border-color: rgba(74, 144, 226, 0.3);
+}
+
+/* Перемикач з лейблом в одному рядку */
+.toggle-with-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) 0;
+}
+
+.toggle-label-text {
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--text-color);
+  flex: 1;
+}
+
+/* Перемикач у стилі плагіна */
+.modern-toggle {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-left: var(--spacing-md);
+}
+
+.modern-toggle input[type="checkbox"] {
+  display: none;
+}
+
+.toggle-slider {
+  width: 50px;
+  height: 28px;
+  background: var(--glass-border);
+  border-radius: 14px;
+  position: relative;
+  transition: all 0.3s ease;
+  border: 1px solid var(--glass-border);
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 50%;
+  top: 1px;
+  left: 1px;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-light);
+  border: 1px solid var(--glass-border);
+}
+
+.modern-toggle input[type="checkbox"]:checked + .toggle-slider {
+  background: rgba(74, 144, 226, 0.3);
+  border-color: rgba(74, 144, 226, 0.5);
+}
+
+.modern-toggle input[type="checkbox"]:checked + .toggle-slider::before {
+  transform: translateX(22px);
+  background: rgba(74, 144, 226, 0.8);
+  border-color: rgba(74, 144, 226, 1);
+}
+
+.toggle-label {
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+/* Умовний контент */
+.conditional-content {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--glass-border);
+  animation: slideDown 0.3s ease-out;
+}
+
+/* Інформаційний текст */
+.info-text {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(74, 144, 226, 0.1);
+  border: 1px solid rgba(74, 144, 226, 0.2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  text-align: center;
+  font-style: italic;
+}
+
+/* Кнопки у стилі плагіна */
+.primary-btn {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: var(--text-color);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  font-size: var(--font-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: var(--spacing-lg);
+  box-shadow: var(--shadow-light);
+  position: relative;
+  overflow: hidden;
+  font-family: inherit;
+}
+
+.primary-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.primary-btn:hover::before {
+  left: 100%;
+}
+
+.primary-btn:hover {
+  background: rgba(74, 144, 226, 0.15);
+  border-color: rgba(74, 144, 226, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(74, 144, 226, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.action-btn.secondary {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: var(--text-color);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--spacing-md);
+  box-shadow: var(--shadow-light);
+  font-family: inherit;
+}
+
+.action-btn.secondary:hover {
+  background: rgba(74, 144, 226, 0.15);
+  border-color: rgba(74, 144, 226, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2), 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Анімації */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 200px;
+    padding-top: var(--spacing-lg);
+  }
+}
+
+/* Dark theme support */
+.dark .section-title {
+  color: var(--text-color);
+}
+
+.dark .segmented-control {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+}
+
+.dark .segment {
+  color: var(--text-secondary);
+}
+
+.dark .segment:hover {
+  color: var(--text-color);
+}
+
+.dark .input-card {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+}
+
+.dark .toggle-label {
+  color: var(--text-color);
+}
+
+.dark .toggle-slider {
+  background: var(--glass-border);
+  border-color: var(--glass-border);
+}
+
+.dark .conditional-content {
+  border-top-color: var(--glass-border);
+}
+
+.dark .primary-btn {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  color: var(--text-color);
+}
+
+.dark .action-btn.secondary {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  color: var(--text-color);
+}
+
+.dark .info-text {
+  background: rgba(74, 144, 226, 0.15);
+  border-color: rgba(74, 144, 226, 0.3);
+  color: var(--text-secondary);
+}
+
 

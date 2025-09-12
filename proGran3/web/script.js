@@ -1494,23 +1494,47 @@ function addModel(category) {
 }
 
 // Функція для оновлення типу стел
-function updateSteleType() {
-  const selectedType = document.querySelector('input[name="stele-type"]:checked').value;
-  carouselState.steles.type = selectedType;
-  debugLog(`Тип стел змінено на: ${selectedType}`, 'info');
+// Функція для вибору типу стели (нова Apple-style логіка)
+function selectSteleType(button) {
+  const segments = document.querySelectorAll('.segment');
+  const steleDistanceSection = document.getElementById('stele-distance-section');
+  const centralDetailSection = document.getElementById('central-detail-section');
   
-  // Показуємо/ховаємо поле відстані для парних стел
-  const distanceGroup = document.getElementById('stele-distance-group');
-  if (distanceGroup) {
-    if (selectedType === 'paired') {
-      distanceGroup.style.display = 'block';
-    } else {
-      distanceGroup.style.display = 'none';
+  // Оновлюємо активний стан сегментів
+  segments.forEach(segment => segment.classList.remove('active'));
+  button.classList.add('active');
+  
+  const steleType = button.dataset.value;
+  carouselState.steles.type = steleType;
+  
+  if (steleType === 'single') {
+    // Приховуємо секції для парних стел
+    steleDistanceSection.style.display = 'none';
+    centralDetailSection.style.display = 'none';
+    debugLog('Тип стели: одна', 'info');
+  } else if (steleType === 'paired') {
+    // Показуємо секції для парних стел з анімацією
+    steleDistanceSection.style.display = 'block';
+    centralDetailSection.style.display = 'block';
+    updateCentralDetailDisplay();
+    debugLog('Тип стели: парні', 'info');
+  }
+}
+
+// Функція для оновлення типу стели (legacy support)
+function updateSteleType() {
+  const singleRadio = document.querySelector('input[name="stele-type"][value="single"]');
+  const pairedRadio = document.querySelector('input[name="stele-type"][value="paired"]');
+  
+  if (singleRadio && pairedRadio) {
+    if (singleRadio.checked) {
+      const singleButton = document.querySelector('.segment[data-value="single"]');
+      if (singleButton) selectSteleType(singleButton);
+    } else if (pairedRadio.checked) {
+      const pairedButton = document.querySelector('.segment[data-value="paired"]');
+      if (pairedButton) selectSteleType(pairedButton);
     }
   }
-  
-  // Оновлюємо відображення центральної деталі
-  updateCentralDetailDisplay();
 }
 
 // Функція для оновлення відстані між стелами
@@ -1606,6 +1630,9 @@ function initializeSteleType() {
     }
   }
   initializeCentralDetail();
+  
+  // Ініціалізуємо нову Apple-style структуру
+  initializeSteleSections();
 }
 
 // Ініціалізація центральної деталі
@@ -1619,6 +1646,20 @@ function initializeCentralDetail() {
   }
 }
 
+// Ініціалізація нової Apple-style структури стел
+function initializeSteleSections() {
+  // Встановлюємо початковий стан сегментів
+  const singleButton = document.querySelector('.segment[data-value="single"]');
+  if (singleButton && !singleButton.classList.contains('active')) {
+    selectSteleType(singleButton);
+  }
+  
+  // Ініціалізуємо центральну деталь
+  initializeCentralDetail();
+  
+  debugLog('Ініціалізовано секції стел у Apple стилі', 'info');
+}
+
 // Оновлення центральної деталі
 function updateCentralDetail() {
   const centralDetailCheckbox = document.getElementById('central-detail');
@@ -1627,25 +1668,31 @@ function updateCentralDetail() {
     const isNowEnabled = centralDetailCheckbox.checked;
     carouselState.steles.centralDetail = isNowEnabled;
     
-    // Якщо центральна деталь була увімкнена і тепер вимкнена - видаляємо її
-    // Або якщо центральна деталь була створена і тепер вимкнена
-    if ((wasEnabled && !isNowEnabled) || (!isNowEnabled && carouselState.steles.centralDetailCreated)) {
-      deleteCentralDetail();
+    if (isNowEnabled) {
+      // При вмиканні - створюємо центральну деталь
+      updateCentralDetailDisplay();
+      // Невелика затримка для завершення анімації показу полів
+      setTimeout(() => {
+        createCentralDetail();
+      }, 100);
+    } else {
+      // При вимиканні - видаляємо центральну деталь
+      if (carouselState.steles.centralDetailCreated) {
+        deleteCentralDetail();
+      }
+      updateCentralDetailDisplay();
     }
     
-    updateCentralDetailDisplay();
     debugLog(`Центральна деталь: ${isNowEnabled ? 'увімкнено' : 'вимкнено'} (було: ${wasEnabled}, створена: ${carouselState.steles.centralDetailCreated})`, 'info');
   }
 }
 
 // Оновлення відображення центральної деталі
 function updateCentralDetailDisplay() {
-  const centralDetailGroup = document.getElementById('central-detail-group');
   const centralDetailDimensionsGroup = document.getElementById('central-detail-dimensions-group');
   
-  if (centralDetailGroup && centralDetailDimensionsGroup) {
+  if (centralDetailDimensionsGroup) {
     if (carouselState.steles.type === 'paired') {
-      centralDetailGroup.style.display = 'block';
       if (carouselState.steles.centralDetail) {
         // Перевіряємо, чи поля були приховані раніше
         const wasHidden = centralDetailDimensionsGroup.style.display === 'none';
@@ -1659,7 +1706,7 @@ function updateCentralDetailDisplay() {
         centralDetailDimensionsGroup.style.display = 'none';
       }
     } else {
-      centralDetailGroup.style.display = 'none';
+      centralDetailDimensionsGroup.style.display = 'none';
     }
   }
 }

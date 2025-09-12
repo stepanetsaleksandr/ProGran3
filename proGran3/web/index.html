@@ -308,68 +308,75 @@
           <span id="steles-dimensions-display" class="header-dimensions"></span>
         </div>
         <div class="panel-content">
-          <!-- Перемикач типу стел -->
-          <div class="input-group">
-            <div class="stele-type-toggle">
-              <label class="toggle-label">
-                <input type="radio" name="stele-type" value="single" checked onchange="updateSteleType()">
-                <span data-i18n="stele.single">Одна стела</span>
-              </label>
-              <label class="toggle-label">
-                <input type="radio" name="stele-type" value="paired" onchange="updateSteleType()">
-                <span data-i18n="stele.paired">Парні стели</span>
-              </label>
+          <!-- Секція 1: Тип стели -->
+          <div class="stele-section">
+            <div class="section-header">
+              <h3 class="section-title" data-i18n="stele.type_title">Тип стели</h3>
+            </div>
+            <div class="segmented-control">
+              <button type="button" class="segment active" data-value="single" onclick="selectSteleType(this)">
+                <span data-i18n="stele.single">Одна</span>
+              </button>
+              <button type="button" class="segment" data-value="paired" onclick="selectSteleType(this)">
+                <span data-i18n="stele.paired">Парні</span>
+              </button>
             </div>
           </div>
           
-          <!-- Поле вводу відстані між стелами (тільки для парних) -->
-          <div class="input-group" id="stele-distance-group" style="display: none;">
-            <div class="input-row">
-              <div class="input-wrapper">
-                <label id="stele-distance-label" for="stele-distance" data-i18n="stele.distance_mm">Відстань між стелами (мм)</label>
-                <input type="number" id="stele-distance" value="200" min="0" max="1000" oninput="updateSteleDistance()">
-              </div>
-            </div>
-          </div>
-          
-          <!-- Центральна деталь для парних стел -->
-          <div class="input-group" id="central-detail-group" style="display: none;">
-            <div class="toggle-container">
-              <label class="toggle-label">
-                <input type="checkbox" id="central-detail" onchange="updateCentralDetail()">
-                <span data-i18n="stele.central_detail">Центральна деталь</span>
-              </label>
-            </div>
-            
-            <div class="input-group" id="central-detail-dimensions-group" style="display: none;">
+          <!-- Секція 2: Розміри (тільки для парних) - компактна версія -->
+          <div class="stele-section conditional compact" id="stele-distance-section" style="display: none;">
+            <div class="input-card compact">
               <div class="input-row">
                 <div class="input-wrapper">
-                  <label id="central-detail-width-label" for="central-detail-width" data-i18n="labels.central_detail_width_mm">Ширина (мм)</label>
-                  <input type="number" id="central-detail-width" value="200" min="50" max="1000" oninput="updateCentralDetailDisplay()">
+                  <label id="stele-distance-label" for="stele-distance" data-i18n="stele.distance_mm">Відстань між стелами (мм)</label>
+                  <input type="number" id="stele-distance" value="200" min="0" max="1000" oninput="updateSteleDistance()">
                 </div>
-                <div class="input-wrapper">
-                  <label id="central-detail-depth-label" for="central-detail-depth" data-i18n="labels.central_detail_depth_mm">Товщина (мм)</label>
-                  <input type="number" id="central-detail-depth" value="50" min="10" max="200" oninput="updateCentralDetailDisplay()">
-                </div>
-                <div class="input-wrapper">
-                  <label id="central-detail-height-label" for="central-detail-height" data-i18n="labels.central_detail_height_mm">Висота (мм)</label>
-                  <input type="number" id="central-detail-height" value="1200" min="50" max="2000" oninput="updateCentralDetailDisplay()">
-                </div>
-              </div>
-              
-              <!-- Кнопка для побудови центральної деталі -->
-              <div class="input-group">
-                <button type="button" class="action-btn" id="create-central-detail-btn" onclick="createCentralDetail()" data-i18n="buttons.create_central_detail">Створити центральну деталь</button>
               </div>
             </div>
           </div>
           
-          <div class="carousel-container">
-            <div class="carousel-viewport" id="steles-carousel-viewport">
-              <div class="carousel-track" id="steles-carousel-track"></div>
+          <!-- Секція 3: Вибір моделі -->
+          <div class="stele-section">
+            <div class="section-header">
+              <h3 class="section-title" data-i18n="stele.model_title">Модель стели</h3>
+            </div>
+            <div class="carousel-container">
+              <div class="carousel-viewport" id="steles-carousel-viewport">
+                <div class="carousel-track" id="steles-carousel-track"></div>
+              </div>
+            </div>
+            <button class="primary-btn" onclick="addModel('steles'); advanceToNextPanel(this);" data-i18n="buttons.add_stele">Додати стелу</button>
+          </div>
+          
+          <!-- Секція 4: Центральна деталь (тільки для парних) - під кнопкою -->
+          <div class="stele-section conditional" id="central-detail-section" style="display: none;">
+            <div class="input-card">
+              <div class="toggle-with-label">
+                <span class="toggle-label-text" data-i18n="stele.central_detail">Центральна деталь</span>
+                <label class="modern-toggle">
+                  <input type="checkbox" id="central-detail" onchange="updateCentralDetail()">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              
+              <div class="conditional-content" id="central-detail-dimensions-group" style="display: none;">
+                <div class="input-row">
+                  <div class="input-wrapper">
+                    <label id="central-detail-width-label" for="central-detail-width" data-i18n="labels.central_detail_width_mm">Ширина (мм)</label>
+                    <input type="number" id="central-detail-width" value="200" min="50" max="1000" oninput="updateCentralDetailDisplay()">
+                  </div>
+                  <div class="input-wrapper">
+                    <label id="central-detail-depth-label" for="central-detail-depth" data-i18n="labels.central_detail_depth_mm">Товщина (мм)</label>
+                    <input type="number" id="central-detail-depth" value="50" min="10" max="200" oninput="updateCentralDetailDisplay()">
+                  </div>
+                  <div class="input-wrapper">
+                    <label id="central-detail-height-label" for="central-detail-height" data-i18n="labels.central_detail_height_mm">Висота (мм)</label>
+                    <input type="number" id="central-detail-height" value="1200" min="50" max="2000" oninput="updateCentralDetailDisplay()">
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <button onclick="addModel('steles'); advanceToNextPanel(this);" data-i18n="buttons.add_stele">Додати стелу</button>
         </div>
       </section>
     </div>
