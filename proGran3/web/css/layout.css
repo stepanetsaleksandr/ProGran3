@@ -408,6 +408,25 @@
   color: var(--text-color);
 }
 
+/* Panel Description */
+.panel-description {
+  margin: 0 0 var(--spacing-lg) 0;
+  padding: var(--spacing-md);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.dark .panel-description {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+}
+
 /* ========== ПОКРАЩЕННЯ INPUT ROWS ========== */
 
 /* Основні стилі для горизонтального розташування */
