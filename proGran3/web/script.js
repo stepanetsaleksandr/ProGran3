@@ -1511,6 +1511,20 @@ function selectSteleType(button) {
   if (steleType === 'single') {
     // Приховуємо секцію для парних стел
     steleOptionsSection.style.display = 'none';
+    
+    // Видаляємо центральну деталь, якщо вона була створена
+    if (carouselState.steles.centralDetail && carouselState.steles.centralDetailCreated) {
+      debugLog('Видаляємо центральну деталь при перемиканні на одну стелу', 'info');
+      deleteCentralDetail();
+      carouselState.steles.centralDetail = false;
+    }
+    
+    // Оновлюємо чекбокс центральної деталі
+    const centralDetailCheckbox = document.getElementById('central-detail');
+    if (centralDetailCheckbox) {
+      centralDetailCheckbox.checked = false;
+    }
+    
     debugLog('Тип стели: одна', 'info');
   } else if (steleType === 'paired') {
     // Показуємо секцію для парних стел з анімацією
