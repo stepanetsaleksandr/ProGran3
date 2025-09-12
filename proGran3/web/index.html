@@ -323,19 +323,7 @@
             </div>
           </div>
           
-          <!-- Секція 2: Розміри (тільки для парних) - компактна версія -->
-          <div class="stele-section conditional compact" id="stele-distance-section" style="display: none;">
-            <div class="input-card compact">
-              <div class="input-row">
-                <div class="input-wrapper">
-                  <label id="stele-distance-label" for="stele-distance" data-i18n="stele.distance_mm">Відстань між стелами (мм)</label>
-                  <input type="number" id="stele-distance" value="200" min="0" max="1000" oninput="updateSteleDistance()">
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Секція 3: Вибір моделі -->
+          <!-- Секція 2: Вибір моделі -->
           <div class="stele-section">
             <div class="section-header">
               <h3 class="section-title" data-i18n="stele.model_title">Модель стели</h3>
@@ -348,9 +336,16 @@
             <button class="primary-btn" onclick="addModel('steles'); advanceToNextPanel(this);" data-i18n="buttons.add_stele">Додати стелу</button>
           </div>
           
-          <!-- Секція 4: Центральна деталь (тільки для парних) - під кнопкою -->
-          <div class="stele-section conditional" id="central-detail-section" style="display: none;">
+          <!-- Секція 3: Розміри та центральна деталь (тільки для парних) - під кнопкою -->
+          <div class="stele-section conditional" id="stele-options-section" style="display: none;">
             <div class="input-card">
+              <!-- Відстань між стелами -->
+              <div class="label-with-input">
+                <label id="stele-distance-label" for="stele-distance" data-i18n="stele.distance_mm">Відстань між стелами (мм)</label>
+                <input type="number" id="stele-distance" value="200" min="0" max="1000" oninput="updateSteleDistance()">
+              </div>
+              
+              <!-- Центральна деталь -->
               <div class="toggle-with-label">
                 <span class="toggle-label-text" data-i18n="stele.central_detail">Центральна деталь</span>
                 <label class="modern-toggle">

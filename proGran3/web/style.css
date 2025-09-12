@@ -784,6 +784,35 @@ header {
   display: none; /* Приховуємо заголовок для компактності */
 }
 
+/* Лейбл з полем вводу в одному рядку */
+.label-with-input {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.label-with-input label {
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--text-color);
+  flex: 1;
+  margin: 0;
+}
+
+.label-with-input input {
+  width: 80px;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+/* Розділення між елементами в об'єднаній секції */
+.toggle-with-label {
+  border-top: 1px solid var(--glass-border);
+  padding-top: var(--spacing-lg);
+}
+
 
 .stele-section.conditional {
   transition: all 0.3s ease;

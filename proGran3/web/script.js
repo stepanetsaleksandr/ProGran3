@@ -1497,8 +1497,7 @@ function addModel(category) {
 // Функція для вибору типу стели (нова Apple-style логіка)
 function selectSteleType(button) {
   const segments = document.querySelectorAll('.segment');
-  const steleDistanceSection = document.getElementById('stele-distance-section');
-  const centralDetailSection = document.getElementById('central-detail-section');
+  const steleOptionsSection = document.getElementById('stele-options-section');
   
   // Оновлюємо активний стан сегментів
   segments.forEach(segment => segment.classList.remove('active'));
@@ -1508,14 +1507,12 @@ function selectSteleType(button) {
   carouselState.steles.type = steleType;
   
   if (steleType === 'single') {
-    // Приховуємо секції для парних стел
-    steleDistanceSection.style.display = 'none';
-    centralDetailSection.style.display = 'none';
+    // Приховуємо секцію для парних стел
+    steleOptionsSection.style.display = 'none';
     debugLog('Тип стели: одна', 'info');
   } else if (steleType === 'paired') {
-    // Показуємо секції для парних стел з анімацією
-    steleDistanceSection.style.display = 'block';
-    centralDetailSection.style.display = 'block';
+    // Показуємо секцію для парних стел з анімацією
+    steleOptionsSection.style.display = 'block';
     updateCentralDetailDisplay();
     debugLog('Тип стели: парні', 'info');
   }
@@ -1710,6 +1707,7 @@ function updateCentralDetailDisplay() {
     }
   }
 }
+
 
 // Оновлення розмірів центральної деталі на основі відстані між стелами
 function updateCentralDetailFromSteleDistance() {
