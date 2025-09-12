@@ -627,6 +627,7 @@ label.label-left {
   
   .panel-content {
     padding: var(--spacing-md);
+    overflow-y: auto;
   }
   
   .panel-header {

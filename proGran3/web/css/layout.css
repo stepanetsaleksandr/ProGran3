@@ -177,7 +177,7 @@
 
 .panel-content {
   padding: var(--spacing-xl);
-  overflow: hidden;
+  overflow-y: auto;
   max-height: 1000px;
   transition: max-height 0.4s ease-in-out, padding 0.4s ease, visibility 0.4s ease, opacity 0.3s ease-in-out;
   visibility: visible;

@@ -1613,6 +1613,7 @@ function initializeCentralDetail() {
   const centralDetailCheckbox = document.getElementById('central-detail');
   if (centralDetailCheckbox) {
     carouselState.steles.centralDetail = centralDetailCheckbox.checked;
+    carouselState.steles.centralDetailCreated = false; // Ініціалізуємо флаг
     updateCentralDetailDisplay();
     debugLog(`Ініціалізовано центральну деталь: ${centralDetailCheckbox.checked}`, 'info');
   }
@@ -1622,9 +1623,18 @@ function initializeCentralDetail() {
 function updateCentralDetail() {
   const centralDetailCheckbox = document.getElementById('central-detail');
   if (centralDetailCheckbox) {
-    carouselState.steles.centralDetail = centralDetailCheckbox.checked;
+    const wasEnabled = carouselState.steles.centralDetail;
+    const isNowEnabled = centralDetailCheckbox.checked;
+    carouselState.steles.centralDetail = isNowEnabled;
+    
+    // Якщо центральна деталь була увімкнена і тепер вимкнена - видаляємо її
+    // Або якщо центральна деталь була створена і тепер вимкнена
+    if ((wasEnabled && !isNowEnabled) || (!isNowEnabled && carouselState.steles.centralDetailCreated)) {
+      deleteCentralDetail();
+    }
+    
     updateCentralDetailDisplay();
-    debugLog(`Центральна деталь: ${centralDetailCheckbox.checked ? 'увімкнено' : 'вимкнено'}`, 'info');
+    debugLog(`Центральна деталь: ${isNowEnabled ? 'увімкнено' : 'вимкнено'} (було: ${wasEnabled}, створена: ${carouselState.steles.centralDetailCreated})`, 'info');
   }
 }
 
@@ -1656,32 +1666,62 @@ function updateCentralDetailFromSteleDistance() {
   const centralDetailHeight = document.getElementById('central-detail-height');
   
   if (centralDetailWidth && centralDetailDepth && centralDetailHeight) {
+    const currentUnit = getCurrentUnit();
+    
     // Ширина = відстань між стелами
     centralDetailWidth.value = steleDistance;
     
-    // Товщина = 50мм (за замовчуванням)
-    centralDetailDepth.value = 50;
+    // Товщина = 50мм (за замовчуванням) - конвертуємо в поточні одиниці
+    const defaultDepth = currentUnit === 'cm' ? 5 : 50;
+    centralDetailDepth.value = defaultDepth;
     
-    // Висота = 1200мм (за замовчуванням)
-    centralDetailHeight.value = 1200;
+    // Висота = 1200мм (за замовчуванням) - конвертуємо в поточні одиниці
+    const defaultHeight = currentUnit === 'cm' ? 120 : 1200;
+    centralDetailHeight.value = defaultHeight;
     
-    debugLog(`Оновлено розміри центральної деталі: ${steleDistance}×50×1200 мм`, 'info');
+    debugLog(`Оновлено розміри центральної деталі: ${steleDistance}×${defaultDepth}×${defaultHeight} ${currentUnit}`, 'info');
   }
 }
 
 // Створення центральної деталі
 function createCentralDetail() {
-  const centralDetailWidth = parseFloat(document.getElementById('central-detail-width').value) || 200;
-  const centralDetailDepth = parseFloat(document.getElementById('central-detail-depth').value) || 50;
-  const centralDetailHeight = parseFloat(document.getElementById('central-detail-height').value) || 1200;
+  const centralDetailWidthRaw = parseFloat(document.getElementById('central-detail-width').value) || 200;
+  const centralDetailDepthRaw = parseFloat(document.getElementById('central-detail-depth').value) || 50;
+  const centralDetailHeightRaw = parseFloat(document.getElementById('central-detail-height').value) || 1200;
   
-  debugLog(`Створення центральної деталі: ${centralDetailWidth}×${centralDetailDepth}×${centralDetailHeight} мм`, 'info');
+  // Конвертуємо значення в міліметри для передачі в Ruby
+  const centralDetailWidth = convertToMm(centralDetailWidthRaw);
+  const centralDetailDepth = convertToMm(centralDetailDepthRaw);
+  const centralDetailHeight = convertToMm(centralDetailHeightRaw);
+  
+  const currentUnit = getCurrentUnit();
+  debugLog(`Створення центральної деталі (${currentUnit} → мм):`, 'info');
+  debugLog(`  - Ширина: ${centralDetailWidthRaw} ${currentUnit} → ${centralDetailWidth} мм`, 'info');
+  debugLog(`  - Товщина: ${centralDetailDepthRaw} ${currentUnit} → ${centralDetailDepth} мм`, 'info');
+  debugLog(`  - Висота: ${centralDetailHeightRaw} ${currentUnit} → ${centralDetailHeight} мм`, 'info');
+  debugLog(`Центральна деталь: ${centralDetailWidth}×${centralDetailDepth}×${centralDetailHeight} мм`, 'info');
   
   // Викликаємо Ruby метод для створення центральної деталі
   if (window.sketchup && window.sketchup.create_central_detail) {
     window.sketchup.create_central_detail(centralDetailWidth, centralDetailDepth, centralDetailHeight);
+    // Встановлюємо флаг, що центральна деталь була створена
+    carouselState.steles.centralDetailCreated = true;
   } else {
     debugLog('SketchUp bridge не доступний для створення центральної деталі', 'error');
+  }
+}
+
+// Видалення центральної деталі
+function deleteCentralDetail() {
+  debugLog('Видалення центральної деталі', 'info');
+  
+  // Викликаємо Ruby метод для видалення центральної деталі
+  if (window.sketchup && window.sketchup.delete_central_detail) {
+    window.sketchup.delete_central_detail();
+    // Скидаємо флаг, що центральна деталь була створена
+    carouselState.steles.centralDetailCreated = false;
+  } else {
+    debugLog('SketchUp bridge не доступний для видалення центральної деталі', 'error');
   }
 }
 

@@ -74,6 +74,10 @@ module ProGran3
         CallbackManager.create_central_detail_callback(dialog, width, depth, height)
       end
       
+      @dialog.add_action_callback("delete_central_detail") do |dialog|
+        CallbackManager.delete_central_detail_callback(dialog)
+      end
+      
       @dialog.add_action_callback("add_fence_decor") do |dialog, filename|
         CallbackManager.add_fence_decor_callback(dialog, filename)
       end

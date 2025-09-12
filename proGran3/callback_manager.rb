@@ -307,6 +307,27 @@ module ProGran3
       end
     end
 
+    # Callback для видалення центральної деталі
+    def delete_central_detail_callback(dialog)
+      begin
+        ProGran3::Logger.info("Видалення центральної деталі", "CallbackManager")
+        
+        # Видаляємо центральну деталь
+        success = delete_central_detail
+        
+        if success
+          ProGran3::Logger.info("Центральна деталь видалена успішно", "CallbackManager")
+        else
+          ProGran3::Logger.error("Помилка при видаленні центральної деталі", "CallbackManager")
+        end
+        
+        success
+      rescue => e
+        ProGran3::Logger.error("Помилка в delete_central_detail_callback: #{e.message}", "CallbackManager")
+        false
+      end
+    end
+
     # Знаходження поверхні для позиціонування стел (проміжна або підставка)
     def get_steles_placement_surface
       model = Sketchup.active_model
@@ -344,9 +365,9 @@ module ProGran3
         model = Sketchup.active_model
         entities = model.active_entities
         
-        # Видаляємо старі центральні деталі
-        entities.grep(Sketchup::ComponentInstance).find_all { |c| 
-          c.definition.name == "CentralDetail"
+        # Видаляємо старі центральні деталі (групи)
+        entities.grep(Sketchup::Group).find_all { |g| 
+          g.name == "CentralDetail"
         }.each(&:erase!)
         
         # Створюємо групу для центральної деталі
@@ -392,6 +413,35 @@ module ProGran3
         true
       rescue => e
         ProGran3::Logger.error("Помилка при створенні центральної деталі: #{e.message}", "CallbackManager")
+        false
+      end
+    end
+
+    # Видалення центральної деталі
+    def delete_central_detail
+      ProGran3::Logger.info("Видалення центральної деталі", "CallbackManager")
+      
+      begin
+        model = Sketchup.active_model
+        entities = model.active_entities
+        
+        # Знаходимо та видаляємо всі центральні деталі (групи)
+        central_details = entities.grep(Sketchup::Group).find_all { |g| 
+          g.name == "CentralDetail"
+        }
+        
+        if central_details.empty?
+          ProGran3::Logger.info("Центральні деталі не знайдено для видалення", "CallbackManager")
+          return true
+        end
+        
+        # Видаляємо всі знайдені центральні деталі
+        central_details.each(&:erase!)
+        
+        ProGran3::Logger.info("Видалено #{central_details.length} центральних деталей", "CallbackManager")
+        true
+      rescue => e
+        ProGran3::Logger.error("Помилка при видаленні центральної деталі: #{e.message}", "CallbackManager")
         false
       end
     end
