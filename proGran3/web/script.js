@@ -4,7 +4,7 @@
 let modelLists = {};
 let carouselState = {
   stands: { index: 0, gaps: false }, // Додаємо вмикач проміжків
-  steles: { index: 0, type: 'single', distance: 200, centralDetail: false, centralDetailWidth: 200, centralDetailDepth: 50, centralDetailHeight: 1200 }, // Додаємо тип стел, відстань та центральну деталь
+  steles: { index: 0, type: 'single', distance: 200, centralDetail: false, centralDetailWidth: 200, centralDetailDepth: 50, centralDetailHeight: 1200, modelCreated: false }, // Додаємо тип стел, відстань, центральну деталь та флаг створення моделі
   flowerbeds: { index: 0 },
   gravestones: { index: 0 },
   fence_decor: { index: 0 }
@@ -802,7 +802,9 @@ const CarouselManager = {
         const centralDetailDepth = state.centralDetailDepth || 50; // За замовчуванням 50мм
         const centralDetailHeight = state.centralDetailHeight || 250; // За замовчуванням 250мм
         window.sketchup.add_model(category, filename, steleType, steleDistance, centralDetail, centralDetailWidth, centralDetailDepth, centralDetailHeight);
-        debugLog(`Додавання стел типу: ${steleType}, відстань: ${steleDistance}мм, центральна деталь: ${centralDetail}`, 'info');
+        // Встановлюємо флаг, що модель створена
+        carouselState.steles.modelCreated = true;
+        debugLog(`Додавання стел типу: ${steleType}, відстань: ${steleDistance}мм, центральна деталь: ${centralDetail}. Флаг modelCreated встановлено в true`, 'info');
       } else {
         window.sketchup.add_model(category, filename);
       }
@@ -1547,9 +1549,41 @@ function updateSteleDistance() {
     if (carouselState.steles.centralDetail) {
       updateCentralDetailFromSteleDistance();
     }
+    
+    // Автоматично оновлюємо існуючу модель стел
+    updateExistingSteleModel();
+  } else {
+    debugLog('Поле stele-distance не знайдено', 'error');
   }
 }
 
+// Функція для автоматичного оновлення існуючої моделі стел
+function updateExistingSteleModel() {
+  // Перевіряємо, чи є вже створена модель стел
+  if (carouselState.steles.modelCreated && window.sketchup && (window.sketchup.update_model || window.sketchup.add_model)) {
+    const state = carouselState.steles;
+    const filename = modelLists.steles[state.index];
+    
+    if (filename) {
+      const steleType = state.type || 'single';
+      const steleDistance = state.distance || 200;
+      const centralDetail = state.centralDetail || false;
+      const centralDetailWidth = state.centralDetailWidth || 200;
+      const centralDetailDepth = state.centralDetailDepth || 50;
+      const centralDetailHeight = state.centralDetailHeight || 1200;
+      
+      debugLog(`Оновлення моделі стел: ${filename}, відстань: ${steleDistance}мм, центральна деталь: ${centralDetail} (${centralDetailWidth}x${centralDetailDepth}x${centralDetailHeight}мм)`, 'info');
+      
+      // Спробуємо використати update_model, якщо вона існує
+      if (window.sketchup.update_model) {
+        window.sketchup.update_model('steles', filename, steleType, steleDistance, centralDetail, centralDetailWidth, centralDetailDepth, centralDetailHeight);
+      } else if (window.sketchup.add_model) {
+        // Fallback: використовуємо add_model як оновлення
+        window.sketchup.add_model('steles', filename, steleType, steleDistance, centralDetail, centralDetailWidth, centralDetailDepth, centralDetailHeight);
+      }
+    }
+  }
+}
 
 // Функція для оновлення вмикача проміжних
 function updateStandsGaps() {
@@ -1680,6 +1714,9 @@ function updateCentralDetail() {
       updateCentralDetailDisplay();
     }
     
+    // Автоматично оновлюємо існуючу модель стел
+    updateExistingSteleModel();
+    
     debugLog(`Центральна деталь: ${isNowEnabled ? 'увімкнено' : 'вимкнено'} (було: ${wasEnabled}, створена: ${carouselState.steles.centralDetailCreated})`, 'info');
   }
 }
@@ -1706,8 +1743,53 @@ function updateCentralDetailDisplay() {
       centralDetailDimensionsGroup.style.display = 'none';
     }
   }
+  
+  // Оновлюємо розміри центральної деталі в стані
+  const centralDetailWidth = document.getElementById('central-detail-width');
+  const centralDetailDepth = document.getElementById('central-detail-depth');
+  const centralDetailHeight = document.getElementById('central-detail-height');
+  
+  if (centralDetailWidth && centralDetailDepth && centralDetailHeight) {
+    const widthMm = convertToMm(centralDetailWidth.value);
+    const depthMm = convertToMm(centralDetailDepth.value);
+    const heightMm = convertToMm(centralDetailHeight.value);
+    
+    carouselState.steles.centralDetailWidth = widthMm;
+    carouselState.steles.centralDetailDepth = depthMm;
+    carouselState.steles.centralDetailHeight = heightMm;
+    
+    debugLog(`Розміри центральної деталі оновлено в стані: ${widthMm}x${depthMm}x${heightMm}мм`, 'info');
+  }
 }
 
+
+// Функція для ручного оновлення моделі стел з новими розмірами
+function updateSteleModelWithNewDimensions() {
+  debugLog('=== КНОПКА "ОНОВИТИ РОЗМІРИ" НАТИСНУТА ===', 'info');
+  
+  // Перевіряємо, чи є створена модель стел
+  if (!carouselState.steles.modelCreated) {
+    debugLog('ПОМИЛКА: Модель стел ще не створена', 'error');
+    alert('Спочатку додайте стелу!');
+    return;
+  }
+  
+  debugLog('Модель створена, продовжуємо оновлення...', 'info');
+  
+  // Оновлюємо розміри в стані перед оновленням моделі
+  updateCentralDetailDisplay();
+  
+  // Викликаємо оновлення моделі стел
+  updateExistingSteleModel();
+  
+  // Якщо центральна деталь увімкнена, оновлюємо її окремо
+  if (carouselState.steles.centralDetail) {
+    debugLog('Оновлюємо центральну деталь з новими розмірами...', 'info');
+    createCentralDetail();
+  }
+  
+  debugLog('Оновлення завершено', 'info');
+}
 
 // Оновлення розмірів центральної деталі на основі відстані між стелами
 function updateCentralDetailFromSteleDistance() {

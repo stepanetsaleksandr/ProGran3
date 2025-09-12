@@ -32,7 +32,8 @@
     "apply": "Apply",
     "reset": "Reset",
     "close": "Close",
-    "open": "Open"
+    "open": "Open",
+    "update_dimensions": "Update Dimensions"
   },
   "dimensions": {
     "height": "Height",

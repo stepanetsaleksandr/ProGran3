@@ -35,7 +35,8 @@
     "open": "Відкрити",
     "generate_preview": "Створити превью",
     "download_preview": "Завантажити",
-    "copy_preview": "Копіювати"
+    "copy_preview": "Копіювати",
+    "update_dimensions": "Оновити розміри"
   },
   "dimensions": {
     "height": "Висота",

@@ -32,7 +32,8 @@
     "apply": "Zastosuj",
     "reset": "Resetuj",
     "close": "Zamknij",
-    "open": "Otwórz"
+    "open": "Otwórz",
+    "update_dimensions": "Aktualizuj wymiary"
   },
   "dimensions": {
     "height": "Wysokość",
