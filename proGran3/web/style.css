@@ -768,6 +768,69 @@ header {
 /* Секції стел */
 .stele-section {
   margin-bottom: var(--spacing-xl);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  max-height: 1000px; /* Достатньо велике значення для розгорнутої секції */
+}
+
+/* Згорнута секція стели */
+.stele-section.collapsed {
+  max-height: 60px; /* Залишаємо тільки заголовок */
+  opacity: 0.7;
+  margin-bottom: var(--spacing-sm);
+}
+
+.stele-section.collapsed .section-header {
+  cursor: pointer;
+  user-select: none;
+  opacity: 1; /* Заголовок завжди видимий */
+  display: block;
+}
+
+.stele-section.collapsed .section-header:hover {
+  opacity: 1;
+}
+
+.stele-section.collapsed .section-header .section-title {
+  opacity: 1; /* Заголовок завжди видимий */
+  display: block;
+}
+
+.stele-section.collapsed .carousel-container,
+.stele-section.collapsed .primary-btn {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+/* Контент в розгорнутій секції */
+.stele-section .carousel-container,
+.stele-section .primary-btn {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.4s ease 0.1s, transform 0.4s ease 0.1s;
+  pointer-events: auto;
+}
+
+/* Стрілка в заголовку секції */
+.section-header .chevron {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Стрілка в згорнутій секції стели */
+.stele-section.collapsed .chevron {
+  transform: translateY(-50%) rotate(-135deg); /* Стрілка вниз (згорнуто) */
+}
+
+/* Показуємо стрілку тільки коли секція може згортатися */
+.stele-section .section-header .chevron {
+  opacity: 1;
 }
 
 /* Компактна версія секції розмірів */
@@ -829,6 +892,9 @@ header {
 /* Заголовки секцій */
 .section-header {
   margin-bottom: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  position: relative;
 }
 
 .section-title {
@@ -837,6 +903,7 @@ header {
   color: var(--text-color);
   margin: 0;
   text-align: center;
+  flex: 1;
 }
 
 /* Сегментований контрол у стилі плагіна */

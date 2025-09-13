@@ -805,11 +805,29 @@ const CarouselManager = {
         // Встановлюємо флаг, що модель створена
         carouselState.steles.modelCreated = true;
         debugLog(`Додавання стел типу: ${steleType}, відстань: ${steleDistance}мм, центральна деталь: ${centralDetail}. Флаг modelCreated встановлено в true`, 'info');
+        
+        // Згортаємо секцію 2 (Вибір моделі) після додавання стели
+        this.collapseSteleModelSection();
       } else {
         window.sketchup.add_model(category, filename);
       }
       addedElements[category] = true;
       updateSummaryTable();
+    }
+  },
+
+  // Згортання секції вибору моделі стели
+  collapseSteleModelSection() {
+    try {
+      const modelSection = document.querySelector('#stele-model-section');
+      if (modelSection) {
+        modelSection.classList.add('collapsed');
+        debugLog('Секція вибору моделі стели згорнута', 'success');
+      } else {
+        debugLog('Не знайдено секцію вибору моделі стели', 'warning');
+      }
+    } catch (error) {
+      debugLog(`Помилка при згортанні секції вибору моделі стели: ${error.message}`, 'error');
     }
   },
 
@@ -3707,3 +3725,18 @@ function initializePreviewTab() {
   debugLog('✅ Таб превью ініціалізовано', 'success');
 }
 
+
+// Функція для перемикання секції вибору моделі стели
+function toggleSteleModelSection(headerElement) {
+  const section = headerElement.closest('.stele-section');
+  if (section) {
+    const wasCollapsed = section.classList.contains('collapsed');
+    section.classList.toggle('collapsed');
+    
+    if (wasCollapsed) {
+      debugLog('Секція вибору моделі стели розгорнута', 'info');
+    } else {
+      debugLog('Секція вибору моделі стели згорнута', 'info');
+    }
+  }
+}
