@@ -17,7 +17,11 @@
     "single": "Одна стела",
     "paired": "Парні стели",
     "distance_mm": "Відстань між стелами (мм)",
-    "central_detail": "Центральна деталь"
+    "central_detail": "Центральна деталь",
+    "scaling_title": "Масштабування стели",
+    "width": "Ширина стели",
+    "height": "Висота стели",
+    "depth": "Глибина стели"
   },
   "stands": {
     "gaps": "Проміжна"
@@ -36,7 +40,8 @@
     "generate_preview": "Створити превью",
     "download_preview": "Завантажити",
     "copy_preview": "Копіювати",
-    "update_dimensions": "Оновити розміри"
+    "update_dimensions": "Оновити розміри",
+    "apply_scaling": "Застосувати масштабування"
   },
   "dimensions": {
     "height": "Висота",

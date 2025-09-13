@@ -274,6 +274,269 @@ module ProGran3
       end
     end
 
+    # Callback для отримання розмірів стели
+    def get_stele_dimensions_callback(dialog)
+      begin
+        ProGran3::Logger.info("Отримання розмірів стели", "CallbackManager")
+        
+        # Знаходимо всі стели
+        stele_instances = ProGran3.all_instances_by_category("steles")
+        if stele_instances.empty?
+          ProGran3::Logger.warn("Стела не знайдена", "CallbackManager")
+          return { width: 100, height: 200, depth: 50 } # Значення за замовчуванням
+        end
+        
+        ProGran3::Logger.info("Знайдено #{stele_instances.length} стел", "CallbackManager")
+        
+        # Очищаємо стели з невалідними розмірами
+        valid_steles = stele_instances.select do |stele|
+          bounds = stele.bounds
+          width_mm = bounds.width.to_mm
+          height_mm = bounds.height.to_mm
+          depth_mm = bounds.depth.to_mm
+          
+          is_valid = width_mm > 0 && height_mm > 0 && depth_mm > 0
+          unless is_valid
+            ProGran3::Logger.warn("Видаляємо стелу з невалідними розмірами: #{stele.definition.name}, розміри: #{width_mm}×#{height_mm}×#{depth_mm} мм", "CallbackManager")
+            stele.erase!
+          end
+          is_valid
+        end
+        
+        if valid_steles.empty?
+          ProGran3::Logger.warn("Немає валідних стел", "CallbackManager")
+          return { width: 100, height: 200, depth: 50 } # Значення за замовчуванням
+        end
+        
+        # Беремо останню валідну стелу (найновішу)
+        stele = valid_steles.last
+        ProGran3::Logger.info("Вибрано стелу: #{stele.definition.name}", "CallbackManager")
+        bounds = stele.bounds
+        
+        ProGran3::Logger.info("Bounds стели: width=#{bounds.width.to_mm}, height=#{bounds.height.to_mm}, depth=#{bounds.depth.to_mm} мм", "CallbackManager")
+        ProGran3::Logger.info("Bounds min/max: min=#{bounds.min}, max=#{bounds.max}", "CallbackManager")
+        ProGran3::Logger.info("Розрахунок розмірів:", "CallbackManager")
+        ProGran3::Logger.info("  X-розмір (глибина): #{bounds.max.x - bounds.min.x} = #{bounds.depth.to_mm} мм", "CallbackManager")
+        ProGran3::Logger.info("  Y-розмір (ширина): #{bounds.max.y - bounds.min.y} = #{bounds.width.to_mm} мм", "CallbackManager")
+        ProGran3::Logger.info("  Z-розмір (висота): #{bounds.max.z - bounds.min.z} = #{bounds.height.to_mm} мм", "CallbackManager")
+        
+        # ДЕТАЛЬНА ДІАГНОСТИКА: що означають bounds.width, bounds.height, bounds.depth
+        ProGran3::Logger.info("Детальна діагностика bounds:", "CallbackManager")
+        ProGran3::Logger.info("  bounds.width = #{bounds.width.to_mm} мм", "CallbackManager")
+        ProGran3::Logger.info("  bounds.height = #{bounds.height.to_mm} мм", "CallbackManager")
+        ProGran3::Logger.info("  bounds.depth = #{bounds.depth.to_mm} мм", "CallbackManager")
+        ProGran3::Logger.info("  Розрахунок вручну:", "CallbackManager")
+        ProGran3::Logger.info("    X-розмір (max.x - min.x) = #{bounds.max.x - bounds.min.x} мм", "CallbackManager")
+        ProGran3::Logger.info("    Y-розмір (max.y - min.y) = #{bounds.max.y - bounds.min.y} мм", "CallbackManager")
+        ProGran3::Logger.info("    Z-розмір (max.z - min.z) = #{bounds.max.z - bounds.min.z} мм", "CallbackManager")
+        ProGran3::Logger.info("  Порівняння:", "CallbackManager")
+        ProGran3::Logger.info("    bounds.width == Y-розмір? #{bounds.width == (bounds.max.y - bounds.min.y)}", "CallbackManager")
+        ProGran3::Logger.info("    bounds.height == Z-розмір? #{bounds.height == (bounds.max.z - bounds.min.z)}", "CallbackManager")
+        ProGran3::Logger.info("    bounds.depth == X-розмір? #{bounds.depth == (bounds.max.x - bounds.min.x)}", "CallbackManager")
+        
+        # ПРАВИЛЬНИЙ МАПІНГ SketchUp bounds → UI поля:
+        # Фактично: стела 1000(висота) × 500(ширина) × 80(глибина)
+        # bounds показує: width=80, height=500, depth=1000
+        # Тому правильний мапінг:
+        # - bounds.width = 80 → це глибина (X-розмір) → UI "глибина"
+        # - bounds.height = 500 → це ширина (Y-розмір) → UI "ширина"  
+        # - bounds.depth = 1000 → це висота (Z-розмір) → UI "висота"
+        dimensions = {
+          width: bounds.height.to_mm.round,  # bounds.height → UI "ширина"
+          height: bounds.depth.to_mm.round,  # bounds.depth → UI "висота"
+          depth: bounds.width.to_mm.round    # bounds.width → UI "глибина"
+        }
+        
+        ProGran3::Logger.info("ПРАВИЛЬНИЙ МАПІНГ до UI полів:", "CallbackManager")
+        ProGran3::Logger.info("  bounds.height (#{bounds.height.to_mm.round}) → UI 'ширина' (#{dimensions[:width]})", "CallbackManager")
+        ProGran3::Logger.info("  bounds.depth (#{bounds.depth.to_mm.round}) → UI 'висота' (#{dimensions[:height]})", "CallbackManager")
+        ProGran3::Logger.info("  bounds.width (#{bounds.width.to_mm.round}) → UI 'глибина' (#{dimensions[:depth]})", "CallbackManager")
+        ProGran3::Logger.info("Розміри стели: #{dimensions[:width]}(ширина)×#{dimensions[:height]}(висота)×#{dimensions[:depth]}(глибина) мм", "CallbackManager")
+        
+        # Передаємо розміри назад в JavaScript через dialog
+        dialog.execute_script("window.sketchup.steleDimensions = #{dimensions.to_json};")
+        ProGran3::Logger.info("Розміри передано в JavaScript: #{dimensions.to_json}", "CallbackManager")
+        
+        dimensions
+        
+      rescue => e
+        ProGran3::Logger.error("Помилка отримання розмірів стели: #{e.message}", "CallbackManager")
+        { width: 100, height: 200, depth: 50 } # Значення за замовчуванням
+      end
+    end
+    
+    # Callback для масштабування стели
+    def scale_stele_callback(dialog, scale_x, scale_y, scale_z)
+      begin
+        ProGran3::Logger.info("Масштабування стели: X(глибина)=#{scale_x}, Y(ширина)=#{scale_y}, Z(висота)=#{scale_z}", "CallbackManager")
+        
+        # Перевіряємо коефіцієнти масштабування
+        if scale_x.nil? || scale_y.nil? || scale_z.nil? || 
+           scale_x == 0 || scale_y == 0 || scale_z == 0
+          ProGran3::Logger.error("Неправильні коефіцієнти масштабування: X=#{scale_x}, Y=#{scale_y}, Z=#{scale_z}", "CallbackManager")
+          return false
+        end
+        
+        # Перевіряємо на NaN та Infinity (тільки для Float)
+        if scale_x.is_a?(Float) && (scale_x.nan? || scale_x.infinite?)
+          ProGran3::Logger.error("Неправильний коефіцієнт масштабування X: #{scale_x}", "CallbackManager")
+          return false
+        end
+        
+        if scale_y.is_a?(Float) && (scale_y.nan? || scale_y.infinite?)
+          ProGran3::Logger.error("Неправильний коефіцієнт масштабування Y: #{scale_y}", "CallbackManager")
+          return false
+        end
+        
+        if scale_z.is_a?(Float) && (scale_z.nan? || scale_z.infinite?)
+          ProGran3::Logger.error("Неправильний коефіцієнт масштабування Z: #{scale_z}", "CallbackManager")
+          return false
+        end
+        
+        # Знаходимо всі стели
+        stele_instances = ProGran3.all_instances_by_category("steles")
+        if stele_instances.empty?
+          ProGran3::Logger.error("Стела не знайдена для масштабування", "CallbackManager")
+          return false
+        end
+        
+        ProGran3::Logger.info("Знайдено #{stele_instances.length} стел для масштабування", "CallbackManager")
+        
+        # Застосовуємо масштабування до всіх стел з валідними розмірами
+        stele_instances.each_with_index do |stele, index|
+          bounds = stele.bounds
+          center = bounds.center
+          definition_name = stele.definition.name
+          
+          # Перевіряємо, чи стела має валідні розміри
+          width_mm = bounds.width.to_mm
+          height_mm = bounds.height.to_mm
+          depth_mm = bounds.depth.to_mm
+          
+          if width_mm <= 0 || height_mm <= 0 || depth_mm <= 0
+            ProGran3::Logger.warn("Стела #{index + 1} пропущена (невалідні розміри): #{definition_name}, розміри: #{width_mm}(ширина)×#{height_mm}(висота)×#{depth_mm}(глибина) мм", "CallbackManager")
+            next
+          end
+          
+          ProGran3::Logger.info("Стела #{index + 1} до масштабування: #{definition_name}, центр: #{center}, розміри: #{width_mm}(ширина)×#{height_mm}(висота)×#{depth_mm}(глибина) мм", "CallbackManager")
+          
+          # Масштабування з правильними точками відліку:
+          # - Висота (Z): відносно основи (нижньої грані) - щоб стела росте тільки вгору
+          # - Ширина та глибина (X, Y): відносно центру
+          base_point = Geom::Point3d.new(center.x, center.y, bounds.min.z)
+          ProGran3::Logger.info("Стела #{index + 1} точка основи для масштабування: #{base_point}", "CallbackManager")
+          
+          # Детальна діагностика масштабування
+          ProGran3::Logger.info("Стела #{index + 1} коефіцієнти масштабування:", "CallbackManager")
+          ProGran3::Logger.info("  scale_x (глибина по X) = #{scale_x}", "CallbackManager")
+          ProGran3::Logger.info("  scale_y (ширина по Y) = #{scale_y}", "CallbackManager")
+          ProGran3::Logger.info("  scale_z (висота по Z) = #{scale_z}", "CallbackManager")
+          
+          # МАСШТАБУВАННЯ ВСІХ РОЗМІРІВ:
+          # - Висота (Z-вісь): тільки вгору (від основи)
+          # - Ширина (Y-вісь) та глибина (X-вісь): від центру (в обидві сторони)
+          
+          base_point = Geom::Point3d.new(center.x, center.y, bounds.min.z)
+          ProGran3::Logger.info("Стела #{index + 1} масштабування ВСІХ РОЗМІРІВ:", "CallbackManager")
+          ProGran3::Logger.info("  center: #{center}", "CallbackManager")
+          ProGran3::Logger.info("  base_point (основа): #{base_point}", "CallbackManager")
+          ProGran3::Logger.info("  scale_x (глибина): #{scale_x} (ВІД ЦЕНТРУ)", "CallbackManager")
+          ProGran3::Logger.info("  scale_y (ширина): #{scale_y} (ВІД ЦЕНТРУ)", "CallbackManager")
+          ProGran3::Logger.info("  scale_z (висота): #{scale_z} (ТІЛЬКИ ВГОРУ)", "CallbackManager")
+          
+          # Створюємо комбіновану трансформацію:
+          # 1. Спочатку масштабуємо ширину та глибину відносно центру
+          center_scale = Geom::Transformation.scaling(center, scale_x, scale_y, 1.0)
+          # 2. Потім масштабуємо висоту відносно основи
+          base_scale = Geom::Transformation.scaling(base_point, 1.0, 1.0, scale_z)
+          
+          # Комбінуємо трансформації
+          combined_transformation = center_scale * base_scale
+          stele.transform!(combined_transformation)
+          
+          # Перевіряємо нові розміри
+          new_bounds = stele.bounds
+          new_center = new_bounds.center
+          ProGran3::Logger.info("Стела #{index + 1} після масштабування: #{definition_name}, новий центр: #{new_center}, нові розміри: #{new_bounds.width.to_mm}(ширина)×#{new_bounds.height.to_mm}(висота)×#{new_bounds.depth.to_mm}(глибина) мм", "CallbackManager")
+        end
+        
+        ProGran3::Logger.success("Масштабування стели завершено успішно", "CallbackManager")
+        true
+        
+      rescue => e
+        ProGran3::Logger.error("Помилка масштабування стели: #{e.message}", "CallbackManager")
+        ProGran3::Logger.error("Stack trace: #{e.backtrace.join("\n")}", "CallbackManager")
+        false
+      end
+    end
+    
+    # Альтернативний callback для масштабування стели через створення нової
+    def scale_stele_alternative_callback(dialog, new_width, new_height, new_depth)
+      begin
+        ProGran3::Logger.info("Альтернативне масштабування стели: #{new_width}×#{new_height}×#{new_depth} мм", "CallbackManager")
+        
+        # Знаходимо всі стели
+        stele_instances = ProGran3.all_instances_by_category("steles")
+        if stele_instances.empty?
+          ProGran3::Logger.error("Стела не знайдена для масштабування", "CallbackManager")
+          return false
+        end
+        
+        # Зберігаємо інформацію про першу стелу
+        first_stele = stele_instances.first
+        original_bounds = first_stele.bounds
+        definition_name = first_stele.definition.name
+        
+        # Розраховуємо коефіцієнти масштабування
+        # X = глибина, Y = ширина, Z = висота
+        scale_x = new_depth / original_bounds.depth.to_mm   # Глибина по X
+        scale_y = new_width / original_bounds.width.to_mm   # Ширина по Y
+        scale_z = new_height / original_bounds.height.to_mm # Висота по Z
+        
+        ProGran3::Logger.info("Коефіцієнти масштабування: X(глибина)=#{scale_x}, Y(ширина)=#{scale_y}, Z(висота)=#{scale_z}", "CallbackManager")
+        
+        # Видаляємо старі стели
+        stele_instances.each(&:erase!)
+        
+        # Завантажуємо компонент заново
+        comp_def = ProGran3.load_component("steles", definition_name)
+        return false unless comp_def
+        
+        # Знаходимо поверхню для позиціонування
+        placement_surface = ProGran3.get_steles_placement_surface
+        unless placement_surface
+          ProGran3::Logger.error("Не знайдено поверхню для позиціонування стели", "CallbackManager")
+          return false
+        end
+        
+        surface_bounds = placement_surface.bounds
+        comp_bounds = comp_def.bounds
+        
+        # Центральна позиція
+        center_x = surface_bounds.center.x - comp_bounds.center.x
+        center_y = surface_bounds.center.y - comp_bounds.center.y
+        center_z = surface_bounds.max.z - comp_bounds.min.z
+        
+        # Створюємо трансформацію з масштабуванням
+        position_transformation = Geom::Transformation.new([center_x, center_y, center_z])
+        scale_transformation = Geom::Transformation.scaling([0, 0, 0], scale_x, scale_y, scale_z)
+        combined_transformation = position_transformation * scale_transformation
+        
+        # Додаємо нову стелу
+        model = Sketchup.active_model
+        entities = model.active_entities
+        new_stele = entities.add_instance(comp_def, combined_transformation)
+        
+        ProGran3::Logger.success("Альтернативне масштабування стели завершено успішно", "CallbackManager")
+        true
+        
+      rescue => e
+        ProGran3::Logger.error("Помилка альтернативного масштабування стели: #{e.message}", "CallbackManager")
+        ProGran3::Logger.error("Stack trace: #{e.backtrace.join("\n")}", "CallbackManager")
+        false
+      end
+    end
+
     # Callback для створення центральної деталі
     def create_central_detail_callback(dialog, width, depth, height)
       begin

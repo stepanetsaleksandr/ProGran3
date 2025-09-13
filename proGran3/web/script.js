@@ -808,6 +808,11 @@ const CarouselManager = {
         
         // Згортаємо секцію 2 (Вибір моделі) після додавання стели
         this.collapseSteleModelSection();
+        
+        // Показуємо секцію масштабування стели
+        setTimeout(() => {
+          showSteleScalingSection();
+        }, 500); // Невелика затримка для завершення додавання стели
       } else {
         window.sketchup.add_model(category, filename);
       }
@@ -2614,6 +2619,11 @@ function getAllInputValues() {
       depth: document.getElementById('central-detail-depth').value,
       height: document.getElementById('central-detail-height').value
     },
+    steleScaling: {
+      width: document.getElementById('stele-width') ? document.getElementById('stele-width').value : null,
+      height: document.getElementById('stele-height') ? document.getElementById('stele-height').value : null,
+      depth: document.getElementById('stele-depth') ? document.getElementById('stele-depth').value : null
+    },
     fenceCorner: {
       postHeight: document.getElementById('fence-corner-post-height').value,
       postSize: document.getElementById('fence-corner-post-size').value,
@@ -2697,6 +2707,13 @@ function convertAllValues(oldValues, oldUnit, newUnit) {
     document.getElementById('central-detail-height').value = convertValue(oldValues.centralDetail.height, oldUnit, newUnit);
   }
   
+  // Конвертуємо розміри стели (масштабування)
+  if (oldValues.steleScaling) {
+    document.getElementById('stele-width').value = convertValue(oldValues.steleScaling.width, oldUnit, newUnit);
+    document.getElementById('stele-height').value = convertValue(oldValues.steleScaling.height, oldUnit, newUnit);
+    document.getElementById('stele-depth').value = convertValue(oldValues.steleScaling.depth, oldUnit, newUnit);
+  }
+  
   // Конвертуємо значення кутової огорожі
   if (oldValues.fenceCorner) {
     document.getElementById('fence-corner-post-height').value = convertValue(oldValues.fenceCorner.postHeight, oldUnit, newUnit);
@@ -2744,12 +2761,28 @@ function convertValue(value, oldUnit, newUnit, isSeam = false) {
 
 // Отримання поточної одиниці вимірювання
 function getCurrentUnit() {
+  debugLog(`getCurrentUnit: повертаємо "${currentUnit}"`, 'info');
   return currentUnit;
 }
 
 // Оновлення всіх лейблів з одиницями вимірювання
 function updateUnitLabels() {
   const unitText = currentUnit === 'mm' ? 'мм' : 'см';
+  
+  // Стела - масштабування
+  const steleWidthLabel = document.getElementById('stele-width-label');
+  const steleHeightLabel = document.getElementById('stele-height-label');
+  const steleDepthLabel = document.getElementById('stele-depth-label');
+  
+  if (steleWidthLabel) {
+    steleWidthLabel.textContent = `Ширина стели (${unitText})`;
+  }
+  if (steleHeightLabel) {
+    steleHeightLabel.textContent = `Висота стели (${unitText})`;
+  }
+  if (steleDepthLabel) {
+    steleDepthLabel.textContent = `Глибина стели (${unitText})`;
+  }
   
   // Фундамент
   const foundationDepthLabel = document.getElementById('foundation-depth-label');
@@ -2866,19 +2899,27 @@ function formatValue(value, unit = null) {
 // Конвертація значення в мм для відправки в Ruby
 function convertToMm(value, isSeam = false) {
   const numValue = parseFloat(value);
-  if (isNaN(numValue)) return value;
+  if (isNaN(numValue)) {
+    debugLog(`convertToMm: невалідне значення "${value}"`, 'warn');
+    return value;
+  }
   
   // Шви завжди вже в мм, не потребують конвертації
   if (isSeam) {
+    debugLog(`convertToMm: шов "${value}" → ${numValue} мм (без конвертації)`, 'info');
     return numValue;
   }
   
   if (currentUnit === 'mm') {
+    debugLog(`convertToMm: "${value}" мм → ${numValue} мм (без конвертації)`, 'info');
     return numValue;
   } else if (currentUnit === 'cm') {
-    return Math.round(numValue * 10);
+    const result = Math.round(numValue * 10);
+    debugLog(`convertToMm: "${value}" см → ${numValue} × 10 = ${result} мм`, 'info');
+    return result;
   }
   
+  debugLog(`convertToMm: невідома одиниця "${currentUnit}", повертаємо ${numValue}`, 'warn');
   return numValue;
 }
 
@@ -3851,4 +3892,373 @@ function applyAccordionToTab(tabElement) {
   });
   
   debugLog(`Застосовано акордеон поведінку до всіх панелей в табі ${tabElement.id}`, 'info');
+}
+
+// === ФУНКЦІЇ ДЛЯ МАСШТАБУВАННЯ СТЕЛИ ===
+
+// Глобальні змінні для зберігання оригінальних розмірів стели
+let originalSteleDimensions = null;
+let currentSteleDimensions = null;
+
+// Функція для отримання поточних розмірів стели з SketchUp (асинхронна)
+function getCurrentSteleDimensions() {
+  return new Promise((resolve, reject) => {
+    debugLog('getCurrentSteleDimensions: початок виконання', 'info');
+    
+    if (!window.sketchup) {
+      debugLog('getCurrentSteleDimensions: window.sketchup не існує', 'error');
+      reject(new Error('window.sketchup не існує'));
+      return;
+    }
+    
+    if (!window.sketchup.get_stele_dimensions) {
+      debugLog('getCurrentSteleDimensions: window.sketchup.get_stele_dimensions не існує', 'error');
+      debugLog(`Доступні методи: ${Object.keys(window.sketchup)}`, 'info');
+      reject(new Error('window.sketchup.get_stele_dimensions не існує'));
+      return;
+    }
+    
+    try {
+      debugLog('getCurrentSteleDimensions: викликаємо window.sketchup.get_stele_dimensions()', 'info');
+      window.sketchup.get_stele_dimensions();
+      
+      // Чекаємо, щоб Ruby callback встиг виконатися
+      setTimeout(() => {
+        const dimensions = window.sketchup.steleDimensions;
+        debugLog(`getCurrentSteleDimensions: отримано розміри стели з SketchUp: ${JSON.stringify(dimensions)}`, 'info');
+        
+        if (!dimensions) {
+          debugLog('getCurrentSteleDimensions: dimensions is null', 'warn');
+          reject(new Error('Розміри стели не отримано'));
+          return;
+        }
+        
+        if (typeof dimensions.width === 'undefined' || typeof dimensions.height === 'undefined' || typeof dimensions.depth === 'undefined') {
+          debugLog(`getCurrentSteleDimensions: невалідні розміри: width=${dimensions.width}, height=${dimensions.height}, depth=${dimensions.depth}`, 'warn');
+          reject(new Error('Невалідні розміри стели'));
+          return;
+        }
+        
+        debugLog(`getCurrentSteleDimensions: валідні розміри: ${dimensions.width}×${dimensions.height}×${dimensions.depth} мм`, 'info');
+        resolve(dimensions);
+      }, 200); // Збільшуємо час очікування
+      
+    } catch (error) {
+      debugLog(`getCurrentSteleDimensions: помилка отримання розмірів стели: ${error.message}`, 'error');
+      debugLog(`getCurrentSteleDimensions: stack trace: ${error.stack}`, 'error');
+      reject(error);
+    }
+  });
+}
+
+// Функція для встановлення розмірів стели в UI
+function setSteleDimensionsInUI(dimensions) {
+  if (!dimensions) {
+    debugLog('setSteleDimensionsInUI: dimensions is null or undefined', 'error');
+    return;
+  }
+  
+  debugLog(`setSteleDimensionsInUI: отримано dimensions: ${JSON.stringify(dimensions)}`, 'info');
+  
+  // Перевіряємо, чи всі розміри існують
+  if (typeof dimensions.width === 'undefined' || typeof dimensions.height === 'undefined' || typeof dimensions.depth === 'undefined') {
+    debugLog(`setSteleDimensionsInUI: некоректні розміри: width=${dimensions.width}, height=${dimensions.height}, depth=${dimensions.depth}`, 'error');
+    return;
+  }
+  
+  const currentUnit = getCurrentUnit();
+  
+  // Конвертуємо з мм в поточні одиниці
+  const width = currentUnit === 'cm' ? Math.round(dimensions.width / 10) : dimensions.width;
+  const height = currentUnit === 'cm' ? Math.round(dimensions.height / 10) : dimensions.height;
+  const depth = currentUnit === 'cm' ? Math.round(dimensions.depth / 10) : dimensions.depth;
+  
+  debugLog(`setSteleDimensionsInUI: конвертація розмірів:`, 'info');
+  debugLog(`  Оригінальні (мм): width=${dimensions.width}, height=${dimensions.height}, depth=${dimensions.depth}`, 'info');
+  debugLog(`  Конвертовані (${currentUnit}): width=${width}, height=${height}, depth=${depth}`, 'info');
+  debugLog(`  Мапінг до UI полів:`, 'info');
+  debugLog(`    dimensions.width (${dimensions.width}) → stele-width (${width})`, 'info');
+  debugLog(`    dimensions.height (${dimensions.height}) → stele-height (${height})`, 'info');
+  debugLog(`    dimensions.depth (${dimensions.depth}) → stele-depth (${depth})`, 'info');
+  
+  const steleWidth = document.getElementById('stele-width');
+  const steleHeight = document.getElementById('stele-height');
+  const steleDepth = document.getElementById('stele-depth');
+  
+  if (steleWidth) {
+    steleWidth.value = width;
+    debugLog(`setSteleDimensionsInUI: встановлено stele-width = ${width}`, 'info');
+  }
+  if (steleHeight) {
+    steleHeight.value = height;
+    debugLog(`setSteleDimensionsInUI: встановлено stele-height = ${height}`, 'info');
+  }
+  if (steleDepth) {
+    steleDepth.value = depth;
+    debugLog(`setSteleDimensionsInUI: встановлено stele-depth = ${depth}`, 'info');
+  }
+  
+  debugLog(`Встановлено розміри стели в UI: ${width}×${height}×${depth} ${currentUnit}`, 'info');
+}
+
+// Функція для показу секції масштабування стели
+async function showSteleScalingSection() {
+  const scalingSection = document.getElementById('stele-scaling-section');
+  if (scalingSection) {
+    scalingSection.style.display = 'block';
+    
+    debugLog('showSteleScalingSection: отримуємо розміри стели...', 'info');
+    
+    try {
+      // Отримуємо поточні розміри стели (асинхронно)
+      const dimensions = await getCurrentSteleDimensions();
+      debugLog(`showSteleScalingSection: отримано dimensions: ${JSON.stringify(dimensions)}`, 'info');
+      
+      if (dimensions && dimensions.width && dimensions.height && dimensions.depth) {
+        originalSteleDimensions = dimensions;
+        currentSteleDimensions = { ...dimensions };
+        setSteleDimensionsInUI(dimensions);
+        debugLog(`showSteleScalingSection: встановлено оригінальні розміри: ${dimensions.width}×${dimensions.height}×${dimensions.depth} мм`, 'info');
+        debugLog('Показано секцію масштабування стели', 'info');
+      } else {
+        throw new Error('Невалідні розміри стели');
+      }
+    } catch (error) {
+      debugLog(`showSteleScalingSection: помилка отримання розмірів стели: ${error.message}`, 'error');
+      
+      // Показуємо помилку користувачу
+      if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.showNotification) {
+        window.ProGran3.UI.showNotification('Не вдалося отримати розміри стели для масштабування', 'error');
+      }
+      
+      // Приховуємо секцію масштабування
+      scalingSection.style.display = 'none';
+      return;
+    }
+  } else {
+    debugLog('showSteleScalingSection: не знайдено секцію масштабування', 'error');
+  }
+}
+
+// Функція для приховування секції масштабування стели
+function hideSteleScalingSection() {
+  const scalingSection = document.getElementById('stele-scaling-section');
+  if (scalingSection) {
+    scalingSection.style.display = 'none';
+    debugLog('Приховано секцію масштабування стели', 'info');
+  }
+}
+
+// Функція для оновлення масштабування стели (викликається при зміні значень)
+function updateSteleScaling() {
+  const steleWidth = document.getElementById('stele-width');
+  const steleHeight = document.getElementById('stele-height');
+  const steleDepth = document.getElementById('stele-depth');
+  
+  if (!steleWidth || !steleHeight || !steleDepth) {
+    debugLog('updateSteleScaling: не знайдено елементи вводу', 'error');
+    return;
+  }
+  
+  // Перевіряємо, чи значення не порожні
+  if (!steleWidth.value || !steleHeight.value || !steleDepth.value) {
+    debugLog(`updateSteleScaling: порожні значення: width=${steleWidth.value}, height=${steleHeight.value}, depth=${steleDepth.value}`, 'warn');
+    return;
+  }
+  
+  const currentUnit = getCurrentUnit();
+  
+  // Конвертуємо в мм для зберігання
+  debugLog(`updateSteleScaling: конвертація значень:`, 'info');
+  debugLog(`  Ширина: "${steleWidth.value}" (${currentUnit}) → convertToMm()`, 'info');
+  debugLog(`  Висота: "${steleHeight.value}" (${currentUnit}) → convertToMm()`, 'info');
+  debugLog(`  Глибина: "${steleDepth.value}" (${currentUnit}) → convertToMm()`, 'info');
+  
+  const widthMm = convertToMm(steleWidth.value);
+  const heightMm = convertToMm(steleHeight.value);
+  const depthMm = convertToMm(steleDepth.value);
+  
+  debugLog(`updateSteleScaling: результати конвертації:`, 'info');
+  debugLog(`  Ширина: ${widthMm} мм`, 'info');
+  debugLog(`  Висота: ${heightMm} мм`, 'info');
+  debugLog(`  Глибина: ${depthMm} мм`, 'info');
+  
+  // Перевіряємо, чи конвертація пройшла успішно
+  if (isNaN(widthMm) || isNaN(heightMm) || isNaN(depthMm)) {
+    debugLog(`updateSteleScaling: помилка конвертації: widthMm=${widthMm}, heightMm=${heightMm}, depthMm=${depthMm}`, 'error');
+    return;
+  }
+  
+  currentSteleDimensions = {
+    width: widthMm,
+    height: heightMm,
+    depth: depthMm
+  };
+  
+  debugLog(`Оновлено розміри стели: ${widthMm}×${heightMm}×${depthMm} мм`, 'info');
+}
+
+// Функція для застосування масштабування стели
+function applySteleScaling() {
+  if (!currentSteleDimensions) {
+    debugLog('Немає розмірів для масштабування стели', 'error');
+    return;
+  }
+  
+  if (!originalSteleDimensions) {
+    debugLog('Немає оригінальних розмірів стели', 'error');
+    return;
+  }
+  
+  // Розраховуємо коефіцієнти масштабування
+  // МАСШТАБУВАННЯ ВСІХ РОЗМІРІВ:
+  // - Висота: тільки вгору (від основи)
+  // - Ширина та глибина: від центру (в обидві сторони)
+  const scaleX = originalSteleDimensions.depth > 0 ? currentSteleDimensions.depth / originalSteleDimensions.depth : 1;   // UI "глибина" → X-вісь
+  const scaleY = originalSteleDimensions.width > 0 ? currentSteleDimensions.width / originalSteleDimensions.width : 1;   // UI "ширина" → Y-вісь
+  const scaleZ = originalSteleDimensions.height > 0 ? currentSteleDimensions.height / originalSteleDimensions.height : 1; // UI "висота" → Z-вісь
+  
+  // Перевіряємо на NaN та Infinity
+  if (isNaN(scaleX) || isNaN(scaleY) || isNaN(scaleZ) || !isFinite(scaleX) || !isFinite(scaleY) || !isFinite(scaleZ)) {
+    debugLog(`Помилка розрахунку коефіцієнтів масштабування: scaleX=${scaleX}, scaleY=${scaleY}, scaleZ=${scaleZ}`, 'error');
+    if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.showNotification) {
+      window.ProGran3.UI.showNotification('Помилка розрахунку коефіцієнтів масштабування', 'error');
+    }
+    return;
+  }
+  
+  debugLog(`Застосування масштабування стели (ВСІ РОЗМІРИ):`, 'info');
+  debugLog(`  Оригінальні розміри: ${originalSteleDimensions.width}(ширина)×${originalSteleDimensions.height}(висота)×${originalSteleDimensions.depth}(глибина) мм`, 'info');
+  debugLog(`  Нові розміри: ${currentSteleDimensions.width}(ширина)×${currentSteleDimensions.height}(висота)×${currentSteleDimensions.depth}(глибина) мм`, 'info');
+  debugLog(`  Значення з UI:`, 'info');
+  debugLog(`    Ширина: ${document.getElementById('stele-width')?.value} → ${currentSteleDimensions.width} мм (від центру)`, 'info');
+  debugLog(`    Висота: ${document.getElementById('stele-height')?.value} → ${currentSteleDimensions.height} мм (тільки вгору)`, 'info');
+  debugLog(`    Глибина: ${document.getElementById('stele-depth')?.value} → ${currentSteleDimensions.depth} мм (від центру)`, 'info');
+  debugLog(`  Коефіцієнти масштабування: X(глибина)=${scaleX.toFixed(3)}, Y(ширина)=${scaleY.toFixed(3)}, Z(висота)=${scaleZ.toFixed(3)}`, 'info');
+  debugLog(`  Детальний розрахунок:`, 'info');
+  debugLog(`    scaleX = ${currentSteleDimensions.depth} / ${originalSteleDimensions.depth} = ${scaleX.toFixed(3)} (глибина від центру)`, 'info');
+  debugLog(`    scaleY = ${currentSteleDimensions.width} / ${originalSteleDimensions.width} = ${scaleY.toFixed(3)} (ширина від центру)`, 'info');
+  debugLog(`    scaleZ = ${currentSteleDimensions.height} / ${originalSteleDimensions.height} = ${scaleZ.toFixed(3)} (висота тільки вгору)`, 'info');
+  debugLog(`  Очікувані результати:`, 'info');
+  debugLog(`    Глибина: ${originalSteleDimensions.depth} × ${scaleX.toFixed(3)} = ${(originalSteleDimensions.depth * scaleX).toFixed(1)} мм (від центру)`, 'info');
+  debugLog(`    Ширина: ${originalSteleDimensions.width} × ${scaleY.toFixed(3)} = ${(originalSteleDimensions.width * scaleY).toFixed(1)} мм (від центру)`, 'info');
+  debugLog(`    Висота: ${originalSteleDimensions.height} × ${scaleZ.toFixed(3)} = ${(originalSteleDimensions.height * scaleZ).toFixed(1)} мм (тільки вгору)`, 'info');
+  
+  // Перевіряємо, чи стела існує перед масштабуванням
+  const dimensionsBefore = getCurrentSteleDimensions();
+  if (!dimensionsBefore) {
+    debugLog('❌ Стела не знайдена перед масштабуванням', 'error');
+    if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.showNotification) {
+      window.ProGran3.UI.showNotification('Стела не знайдена для масштабування', 'error');
+    }
+    return;
+  }
+  
+  debugLog(`Стела знайдена перед масштабуванням: ${dimensionsBefore.width}×${dimensionsBefore.height}×${dimensionsBefore.depth} мм`, 'info');
+  
+  // Використовуємо основний метод масштабування (модифікація існуючої стели)
+  if (window.sketchup && window.sketchup.scale_stele) {
+    try {
+      debugLog(`Викликаємо scale_stele з коефіцієнтами: X(глибина)=${scaleX}, Y(ширина)=${scaleY}, Z(висота)=${scaleZ}`, 'info');
+      
+      const success = window.sketchup.scale_stele(scaleX, scaleY, scaleZ);
+      
+      if (success) {
+        debugLog('✅ Масштабування стели застосовано успішно', 'success');
+        
+        // Оновлюємо оригінальні розміри
+        originalSteleDimensions = { ...currentSteleDimensions };
+        
+        // Перевіряємо, чи стела все ще існує після масштабування
+        setTimeout(() => {
+          const dimensions = getCurrentSteleDimensions();
+          if (dimensions) {
+            debugLog(`Стела після масштабування: ${dimensions.width}(ширина)×${dimensions.height}(висота)×${dimensions.depth}(глибина) мм`, 'info');
+            // Показуємо повідомлення користувачу тільки якщо стела існує
+            if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.showNotification) {
+              window.ProGran3.UI.showNotification('Масштабування стели застосовано успішно', 'success');
+            }
+          } else {
+            debugLog('⚠️ Стела не знайдена після масштабування', 'warn');
+            if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.showNotification) {
+              window.ProGran3.UI.showNotification('Помилка: стела зникла після масштабування', 'error');
+            }
+          }
+        }, 200);
+      } else {
+        debugLog('❌ Помилка застосування масштабування стели, спробуємо альтернативний метод', 'warn');
+        
+        // Спробуємо альтернативний метод
+        if (window.sketchup && window.sketchup.scale_stele_alternative) {
+          try {
+            debugLog(`Спробуємо альтернативний метод з розмірами: ${currentSteleDimensions.width}×${currentSteleDimensions.height}×${currentSteleDimensions.depth} мм`, 'info');
+            
+            const altSuccess = window.sketchup.scale_stele_alternative(
+              currentSteleDimensions.width, 
+              currentSteleDimensions.height, 
+              currentSteleDimensions.depth
+            );
+            
+            if (altSuccess) {
+              debugLog('✅ Альтернативне масштабування стели застосовано успішно', 'success');
+              originalSteleDimensions = { ...currentSteleDimensions };
+              
+              // Перевіряємо, чи стела існує після альтернативного масштабування
+              setTimeout(() => {
+                const dimensions = getCurrentSteleDimensions();
+                if (dimensions) {
+                  debugLog(`Стела після альтернативного масштабування: ${dimensions.width}(ширина)×${dimensions.height}(висота)×${dimensions.depth}(глибина) мм`, 'info');
+                  if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.showNotification) {
+                    window.ProGran3.UI.showNotification('Масштабування стели застосовано успішно (альтернативний метод)', 'success');
+                  }
+                } else {
+                  debugLog('⚠️ Стела не знайдена після альтернативного масштабування', 'warn');
+                  if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.showNotification) {
+                    window.ProGran3.UI.showNotification('Помилка: стела зникла після альтернативного масштабування', 'error');
+                  }
+                }
+              }, 200);
+            } else {
+              debugLog('❌ Альтернативний метод також не спрацював', 'error');
+              if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.showNotification) {
+                window.ProGran3.UI.showNotification('Помилка застосування масштабування', 'error');
+              }
+            }
+          } catch (altError) {
+            debugLog(`Помилка альтернативного методу: ${altError.message}`, 'error');
+            if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.showNotification) {
+              window.ProGran3.UI.showNotification('Помилка масштабування стели', 'error');
+            }
+          }
+        } else {
+          debugLog('❌ Альтернативний метод не доступний', 'error');
+          if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.showNotification) {
+            window.ProGran3.UI.showNotification('Помилка застосування масштабування', 'error');
+          }
+        }
+      }
+    } catch (error) {
+      debugLog(`Помилка виклику scale_stele: ${error.message}`, 'error');
+      debugLog(`Stack trace: ${error.stack}`, 'error');
+      if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.showNotification) {
+        window.ProGran3.UI.showNotification('Помилка масштабування стели', 'error');
+      }
+    }
+  } else {
+    debugLog('Метод scale_stele не доступний в window.sketchup', 'error');
+    debugLog(`Доступні методи: ${Object.keys(window.sketchup || {})}`, 'info');
+  }
+}
+
+// Функція для скидання масштабування стели до оригінальних розмірів
+function resetSteleScaling() {
+  if (!originalSteleDimensions) {
+    debugLog('Немає оригінальних розмірів для скидання', 'error');
+    return;
+  }
+  
+  setSteleDimensionsInUI(originalSteleDimensions);
+  currentSteleDimensions = { ...originalSteleDimensions };
+  
+  debugLog('Скинуто масштабування стели до оригінальних розмірів', 'info');
 }

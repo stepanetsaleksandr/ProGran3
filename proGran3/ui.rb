@@ -70,6 +70,21 @@ module ProGran3
         CallbackManager.add_model_callback(dialog, category, filename, stele_type, stele_distance, central_detail, central_detail_width, central_detail_depth, central_detail_height)
       end
       
+      # Callback для отримання розмірів стели
+      @dialog.add_action_callback("get_stele_dimensions") do |dialog|
+        CallbackManager.get_stele_dimensions_callback(@dialog)
+      end
+      
+      # Callback для масштабування стели
+      @dialog.add_action_callback("scale_stele") do |dialog, scale_x, scale_y, scale_z|
+        CallbackManager.scale_stele_callback(dialog, scale_x, scale_y, scale_z)
+      end
+      
+      # Callback для альтернативного масштабування стели
+      @dialog.add_action_callback("scale_stele_alternative") do |dialog, new_width, new_height, new_depth|
+        CallbackManager.scale_stele_alternative_callback(dialog, new_width, new_height, new_depth)
+      end
+      
       @dialog.add_action_callback("create_central_detail") do |dialog, width, depth, height|
         CallbackManager.create_central_detail_callback(dialog, width, depth, height)
       end

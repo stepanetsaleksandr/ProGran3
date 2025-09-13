@@ -337,7 +337,35 @@
             <button class="primary-btn" onclick="addModel('steles'); advanceToNextPanel(this);" data-i18n="buttons.add_stele">Додати стелу</button>
           </div>
           
-          <!-- Секція 3: Розміри та центральна деталь (тільки для парних) - під кнопкою -->
+          <!-- Секція 3: Масштабування стели -->
+          <div class="stele-section conditional" id="stele-scaling-section" style="display: none;">
+            <div class="input-card">
+              <h4 class="input-card-title" data-i18n="stele.scaling_title">Масштабування стели</h4>
+              
+              <!-- Ширина стели -->
+              <div class="label-with-input">
+                <label id="stele-width-label" for="stele-width" data-i18n="stele.width">Ширина стели</label>
+                <input type="number" id="stele-width" value="100" min="10" max="1000" step="1" oninput="updateSteleScaling()">
+              </div>
+              
+              <!-- Висота стели -->
+              <div class="label-with-input">
+                <label id="stele-height-label" for="stele-height" data-i18n="stele.height">Висота стели</label>
+                <input type="number" id="stele-height" value="200" min="10" max="2000" step="1" oninput="updateSteleScaling()">
+              </div>
+              
+              <!-- Глибина стели -->
+              <div class="label-with-input">
+                <label id="stele-depth-label" for="stele-depth" data-i18n="stele.depth">Глибина стели</label>
+                <input type="number" id="stele-depth" value="50" min="5" max="500" step="1" oninput="updateSteleScaling()">
+              </div>
+              
+              <!-- Кнопка застосування масштабування -->
+              <button class="primary-btn" onclick="applySteleScaling()" data-i18n="buttons.apply_scaling">Застосувати масштабування</button>
+            </div>
+          </div>
+          
+          <!-- Секція 4: Розміри та центральна деталь (тільки для парних) - під кнопкою -->
           <div class="stele-section conditional" id="stele-options-section" style="display: none;">
             <div class="input-card">
               <!-- Відстань між стелами -->
@@ -625,6 +653,7 @@
   
   <!-- 2. Utils модулі
     -->
+  
   <script src="modules/utils/Helpers.js"></script>
   <script src="modules/utils/Validation.js"></script>
   <script src="modules/utils/Units.js"></script>
