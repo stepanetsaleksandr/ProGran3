@@ -46,7 +46,7 @@
     <!-- Таб "База" -->
     <div class="tab-content active" id="base-tab">
       <section class="panel">
-        <div class="panel-header" onclick="togglePanel(this)">
+        <div class="panel-header" onclick="toggleAccordionPanel(this)">
           <h2 class="panel-title" data-i18n="panels.foundation">Фундамент</h2>
           <span class="chevron"></span>
           <span id="foundation-dimensions-display" class="header-dimensions"></span>
@@ -71,7 +71,7 @@
       </section>
 
       <section class="panel collapsed">
-        <div class="panel-header" onclick="togglePanel(this)">
+        <div class="panel-header" onclick="toggleAccordionPanel(this)">
           <h2 class="panel-title" data-i18n="panels.blind_area">Відмостка</h2>
           <span class="chevron"></span>
           <span id="blind-area-dimensions-display" class="header-dimensions"></span>
@@ -131,7 +131,7 @@
       </section>
 
       <section class="panel collapsed">
-        <div class="panel-header" onclick="togglePanel(this)">
+        <div class="panel-header" onclick="toggleAccordionPanel(this)">
           <h2 class="panel-title" data-i18n="panels.tiling">Плитка на фундаменті</h2>
           <span class="chevron"></span>
           <span id="tiling-type-display" class="header-dimensions"></span>
@@ -225,7 +225,7 @@
       </section>
 
       <section class="panel collapsed">
-        <div class="panel-header" onclick="togglePanel(this)">
+        <div class="panel-header" onclick="toggleAccordionPanel(this)">
           <h2 class="panel-title" data-i18n="panels.cladding">Бокове облицювання</h2>
           <span class="chevron"></span>
           <span id="cladding-dimensions-display" class="header-dimensions"></span>
@@ -245,7 +245,7 @@
     <!-- Таб "Памятник" -->
     <div class="tab-content" id="monument-tab">
       <section class="panel">
-        <div class="panel-header" onclick="togglePanel(this)">
+        <div class="panel-header" onclick="toggleAccordionPanel(this)">
           <h2 class="panel-title" data-i18n="panels.stands">Підставка</h2>
           <span class="chevron"></span>
           <span id="stands-dimensions-display" class="header-dimensions"></span>
@@ -302,7 +302,7 @@
       </section>
       
       <section class="panel collapsed">
-        <div class="panel-header" onclick="togglePanel(this)">
+        <div class="panel-header" onclick="toggleAccordionPanel(this)">
           <h2 class="panel-title" data-i18n="panels.steles">Стела</h2>
           <span class="chevron"></span>
           <span id="steles-dimensions-display" class="header-dimensions"></span>
@@ -387,7 +387,7 @@
     <!-- Таб "Надгробна частина" -->
     <div class="tab-content" id="gravestone-tab">
       <section class="panel">
-        <div class="panel-header" onclick="togglePanel(this)">
+        <div class="panel-header" onclick="toggleAccordionPanel(this)">
           <h2 class="panel-title" data-i18n="panels.flowerbeds">Квітник</h2>
           <span class="chevron"></span>
           <span id="flowerbeds-dimensions-display" class="header-dimensions"></span>
@@ -403,7 +403,7 @@
       </section>
       
       <section class="panel collapsed">
-        <div class="panel-header" onclick="togglePanel(this)">
+        <div class="panel-header" onclick="toggleAccordionPanel(this)">
           <h2 class="panel-title" data-i18n="panels.gravestones">Надгробна плита</h2>
           <span class="chevron"></span>
           <span id="gravestones-dimensions-display" class="header-dimensions"></span>
@@ -422,7 +422,7 @@
     <!-- Таб "Огорожа" -->
     <div class="tab-content" id="fence-tab">
       <section class="panel">
-        <div class="panel-header" onclick="togglePanel(this)">
+        <div class="panel-header" onclick="toggleAccordionPanel(this)">
           <h2 class="panel-title" data-i18n="panels.fence_corner">Кутова огорожа</h2>
           <span class="chevron"></span>
           <span id="fence-corner-dimensions-display" class="header-dimensions"></span>
@@ -458,7 +458,7 @@
       </section>
       
       <section class="panel collapsed">
-        <div class="panel-header" onclick="togglePanel(this)">
+        <div class="panel-header" onclick="toggleAccordionPanel(this)">
           <h2 class="panel-title" data-i18n="panels.fence_perimeter">Периметральна огорожа</h2>
           <span class="chevron"></span>
           <span id="fence-perimeter-dimensions-display" class="header-dimensions"></span>
@@ -496,7 +496,7 @@
       </section>
       
       <section class="panel collapsed">
-        <div class="panel-header" onclick="togglePanel(this)">
+        <div class="panel-header" onclick="toggleAccordionPanel(this)">
           <h2 class="panel-title" data-i18n="panels.fence_decor">Декор огорожі</h2>
           <span class="chevron"></span>
           <span id="fence-decor-dimensions-display" class="header-dimensions"></span>
@@ -521,7 +521,7 @@
     <!-- Таб "Вигляд" -->
     <div class="tab-content" id="view-tab">
       <section class="panel">
-        <div class="panel-header" onclick="togglePanel(this)">
+        <div class="panel-header" onclick="toggleAccordionPanel(this)">
           <h2 class="panel-title" data-i18n="panels.preview">Превью моделі</h2>
           <span class="chevron"></span>
           <span class="header-placeholder"></span>
@@ -623,7 +623,8 @@
   <script src="modules/core/Logger.js"></script>
   <script src="modules/core/StateManager.js"></script>
   
-  <!-- 2. Utils модулі -->
+  <!-- 2. Utils модулі
+    -->
   <script src="modules/utils/Helpers.js"></script>
   <script src="modules/utils/Validation.js"></script>
   <script src="modules/utils/Units.js"></script>

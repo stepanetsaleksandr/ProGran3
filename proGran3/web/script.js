@@ -982,6 +982,9 @@ function initializeApp() {
   // Ініціалізація табів
   initializeTabs();
   
+  // Ініціалізація акордеон поведінки для всіх табів
+  initializeAccordionBehavior();
+  
   // Ініціалізація превью табу
   initializePreviewTab();
   
@@ -3739,4 +3742,113 @@ function toggleSteleModelSection(headerElement) {
       debugLog('Секція вибору моделі стели згорнута', 'info');
     }
   }
+}
+
+// Універсальна функція для акордеон поведінки в будь-якому табі
+function toggleAccordionPanel(headerElement) {
+  const panel = headerElement.closest('.panel');
+  if (!panel) return;
+  
+  // Знаходимо батьківський таб
+  const tab = panel.closest('.tab-content');
+  if (!tab) return;
+  
+  // Знаходимо всі панелі в поточному табі
+  const allPanels = tab.querySelectorAll('.panel');
+  
+  // Якщо поточна панель розгорнута, згортаємо її
+  if (!panel.classList.contains('collapsed')) {
+    panel.classList.add('collapsed');
+    debugLog(`Панель згорнута (акордеон) в табі ${tab.id}`, 'info');
+    return;
+  }
+  
+  // Згортаємо всі панелі в табі
+  allPanels.forEach(p => {
+    p.classList.add('collapsed');
+  });
+  
+  // Розгортаємо поточну панель
+  panel.classList.remove('collapsed');
+  
+  debugLog(`Панель розгорнута (акордеон) в табі ${tab.id}, інші згорнуті`, 'info');
+  
+  // Ініціалізуємо каруселі в розгорнутій панелі
+  setTimeout(() => {
+    const carousels = panel.querySelectorAll('.carousel-container');
+    carousels.forEach(carousel => {
+      const viewport = carousel.querySelector('.carousel-viewport');
+      if (viewport) {
+        viewport.style.display = 'none';
+        setTimeout(() => {
+          viewport.style.display = 'block';
+        }, 10);
+      }
+    });
+  }, 100);
+}
+
+// Функція для автоматичного застосування акордеон поведінки до всіх панелей
+function initializeAccordionBehavior() {
+  // Знаходимо всі таби
+  const tabs = document.querySelectorAll('.tab-content');
+  
+  tabs.forEach(tab => {
+    const panels = tab.querySelectorAll('.panel');
+    
+    panels.forEach(panel => {
+      const header = panel.querySelector('.panel-header');
+      if (header) {
+        // Перевіряємо, чи вже є onclick обробник
+        const currentOnclick = header.getAttribute('onclick');
+        
+        // Якщо є togglePanel, замінюємо на toggleAccordionPanel
+        if (currentOnclick && currentOnclick.includes('togglePanel')) {
+          header.setAttribute('onclick', 'toggleAccordionPanel(this)');
+          debugLog(`Застосовано акордеон поведінку до панелі в табі ${tab.id}`, 'info');
+        }
+        // Якщо є toggleBasePanel, замінюємо на toggleAccordionPanel
+        else if (currentOnclick && currentOnclick.includes('toggleBasePanel')) {
+          header.setAttribute('onclick', 'toggleAccordionPanel(this)');
+          debugLog(`Застосовано акордеон поведінку до панелі в табі ${tab.id}`, 'info');
+        }
+        // Якщо немає onclick, додаємо toggleAccordionPanel
+        else if (!currentOnclick) {
+          header.setAttribute('onclick', 'toggleAccordionPanel(this)');
+          debugLog(`Додано акордеон поведінку до панелі в табі ${tab.id}`, 'info');
+        }
+      }
+    });
+  });
+  
+  debugLog('✅ Акордеон поведінка ініціалізована для всіх табів', 'success');
+}
+
+// Функція для застосування акордеон поведінки до нової панелі
+function applyAccordionToNewPanel(panelElement) {
+  if (!panelElement) return;
+  
+  const header = panelElement.querySelector('.panel-header');
+  if (!header) return;
+  
+  // Перевіряємо, чи вже є onclick обробник
+  const currentOnclick = header.getAttribute('onclick');
+  
+  // Якщо немає onclick або є togglePanel, замінюємо на toggleAccordionPanel
+  if (!currentOnclick || currentOnclick.includes('togglePanel')) {
+    header.setAttribute('onclick', 'toggleAccordionPanel(this)');
+    debugLog(`Застосовано акордеон поведінку до нової панелі`, 'info');
+  }
+}
+
+// Функція для застосування акордеон поведінки до всіх панелей в табі
+function applyAccordionToTab(tabElement) {
+  if (!tabElement) return;
+  
+  const panels = tabElement.querySelectorAll('.panel');
+  panels.forEach(panel => {
+    applyAccordionToNewPanel(panel);
+  });
+  
+  debugLog(`Застосовано акордеон поведінку до всіх панелей в табі ${tabElement.id}`, 'info');
 }
