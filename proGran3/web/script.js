@@ -1,14 +1,7 @@
 // progran3/web/script.js
 
 // --- ГЛОБАЛЬНІ ЗМІННІ ---
-let modelLists = {};
-let carouselState = {
-  stands: { index: 0, gaps: false }, // Додаємо вмикач проміжків
-  steles: { index: 0, type: 'single', distance: 200, centralDetail: false, centralDetailWidth: 200, centralDetailDepth: 50, centralDetailHeight: 1200, modelCreated: false }, // Додаємо тип стел, відстань, центральну деталь та флаг створення моделі
-  flowerbeds: { index: 0 },
-  gravestones: { index: 0 },
-  fence_decor: { index: 0 }
-};
+// Перенесено в modules/core/GlobalState.js
 
 // --- ІНІЦІАЛІЗАЦІЯ I18N ---
 async function initializeI18n() {
@@ -106,7 +99,7 @@ function updateAllI18nLabels() {
 }
 
 // --- СИСТЕМА ТАБІВ ---
-let activeTab = 'base'; // Активний таб за замовчуванням
+// activeTab перенесено в modules/core/GlobalState.js
 
 // Функція переключення табів
 function switchTab(tabName) {
@@ -310,22 +303,10 @@ function initializeFloatingLabels() {
 }
 
 // Відстеження доданих елементів до моделі
-let addedElements = {
-  foundation: false,
-  tiling: false,
-  cladding: false,
-  blindArea: false,
-  stands: false,
-  flowerbeds: false,
-  gravestones: false,
-  steles: false,
-  fence_corner: false,
-  fence_perimeter: false,
-  fence_decor: false
-};
+// addedElements перенесено в modules/core/GlobalState.js
 
 // Поточна одиниця вимірювання
-let currentUnit = 'mm';
+// currentUnit перенесено в modules/core/GlobalState.js
 
 
 
@@ -3064,8 +3045,7 @@ function resetTileThicknessOptions() {
 // ========== MISSING FUNCTIONS ==========
 
 // Глобальні змінні для функціональності
-let currentTheme = 'light';
-let currentAccent = 'blue';
+// currentTheme та currentAccent перенесено в modules/core/GlobalState.js
 
 
 
@@ -3548,11 +3528,7 @@ function addStandWithCustomSize() {
 // --- ФУНКЦІЇ ДЛЯ ПРЕВЬЮ МОДЕЛІ ---
 
 // Глобальні змінні для превью
-let currentPreviewData = null;
-let previewSettings = {
-  size: 512,
-  quality: 'medium'
-};
+// currentPreviewData та previewSettings перенесено в modules/core/GlobalState.js
 
 // Оновлення налаштувань превью
 function updatePreviewSettings() {
@@ -3911,8 +3887,7 @@ function applyAccordionToTab(tabElement) {
 // === ФУНКЦІЇ ДЛЯ МАСШТАБУВАННЯ СТЕЛИ ===
 
 // Глобальні змінні для зберігання оригінальних розмірів стели
-let originalSteleDimensions = null;
-let currentSteleDimensions = null;
+// originalSteleDimensions та currentSteleDimensions перенесено в modules/core/GlobalState.js
 
 // Функція для отримання поточних розмірів стели з SketchUp (асинхронна)
 function getCurrentSteleDimensions() {
