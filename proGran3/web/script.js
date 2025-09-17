@@ -4,99 +4,10 @@
 // Перенесено в modules/core/GlobalState.js
 
 // --- ІНІЦІАЛІЗАЦІЯ I18N ---
-async function initializeI18n() {
-  try {
-    // Ініціалізуємо I18nManager
-    if (window.ProGran3 && window.ProGran3.I18n && window.ProGran3.I18n.Manager) {
-      await window.ProGran3.I18n.Manager.init();
-      debugLog('I18n ініціалізовано успішно', 'success');
-    }
-    
-    // Ініціалізуємо перемикач мов
-    if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.LanguageSwitcher) {
-      window.ProGran3.UI.LanguageSwitcher.init();
-      debugLog('Перемикач мов ініціалізовано', 'success');
-    }
-  } catch (error) {
-    debugLog(`Помилка ініціалізації i18n: ${error.message}`, 'error');
-  }
-}
+// initializeI18n() перенесено в modules/core/I18nManager.js
 
 // --- ФУНКЦІЇ I18N ---
-// Функція для отримання перекладу
-function t(key, params = {}) {
-  if (window.ProGran3 && window.ProGran3.I18n && window.ProGran3.I18n.Manager) {
-    return window.ProGran3.I18n.Manager.t(key, params);
-  }
-  return key; // Fallback
-}
-
-// Функція для зміни мови
-async function changeLanguage(lang) {
-  if (window.ProGran3 && window.ProGran3.I18n && window.ProGran3.I18n.Manager) {
-    const success = await window.ProGran3.I18n.Manager.changeLanguage(lang);
-    if (success) {
-      debugLog(`Мову змінено на: ${lang}`, 'success');
-      // Оновлюємо динамічний контент
-      updateDynamicContent();
-    }
-    return success;
-  }
-  return false;
-}
-
-// Оновлення динамічного контенту після зміни мови
-function updateDynamicContent() {
-  // Оновлюємо заголовки панелей
-  updatePanelHeaders();
-  
-  // Оновлюємо всі лейбли з data-i18n атрибутами
-  updateAllI18nLabels();
-  
-  // Оновлюємо розміри в заголовках
-  updateAllDisplays();
-  
-  // Оновлюємо лейбли з одиницями вимірювання
-  updateUnitLabels();
-  
-  // Оновлюємо специфікацію
-  if (typeof updateSummaryTable === 'function') {
-    updateSummaryTable();
-  }
-}
-
-// Оновлення заголовків панелей
-function updatePanelHeaders() {
-  const panels = document.querySelectorAll('.panel-title');
-  panels.forEach(panel => {
-    const key = panel.getAttribute('data-i18n');
-    if (key) {
-      panel.textContent = t(key);
-    }
-  });
-}
-
-// Оновлення всіх лейблів з data-i18n атрибутами
-function updateAllI18nLabels() {
-  const labels = document.querySelectorAll('[data-i18n]');
-  debugLog(`Оновлення ${labels.length} лейблів з data-i18n атрибутами`, 'info');
-  
-  labels.forEach(label => {
-    const key = label.getAttribute('data-i18n');
-    if (key) {
-      // Перевіряємо, чи це не лейбл з одиницями вимірювання (крім спеціальних випадків)
-      if (!label.id.includes('-label') || label.id.includes('stele-distance-label') || label.id.includes('gaps-') || label.id.includes('stands-') || label.id.includes('central-detail-')) {
-        const translation = t(key);
-        if (translation !== key) {
-          label.textContent = translation;
-          debugLog(`Оновлено лейбл ${label.id}: ${key} -> ${translation}`, 'info');
-        } else {
-          debugLog(`Переклад не знайдено для ключа: ${key}`, 'warning');
-        }
-      }
-    }
-  });
-}
+// Всі I18n функції перенесено в modules/core/I18nManager.js
 
 // --- СИСТЕМА ТАБІВ ---
 // activeTab перенесено в modules/core/GlobalState.js
@@ -237,70 +148,7 @@ function initializeTabs() {
 }
 
 // Ініціалізація floating labels
-function initializeFloatingLabels() {
-  const floatingInputs = document.querySelectorAll('.floating-label input');
-  const floatingSelects = document.querySelectorAll('.floating-label select');
-  
-  // Обробка input елементів
-  floatingInputs.forEach(input => {
-    // Встановлюємо початковий стан для полів зі значеннями
-    if (input.value && input.value.trim() !== '') {
-      input.classList.add('has-value');
-    }
-    
-    // Додаємо обробники подій
-    input.addEventListener('focus', function() {
-      this.parentElement.classList.add('focused');
-    });
-    
-    input.addEventListener('blur', function() {
-      this.parentElement.classList.remove('focused');
-      if (this.value && this.value.trim() !== '') {
-        this.classList.add('has-value');
-      } else {
-        this.classList.remove('has-value');
-      }
-    });
-    
-    input.addEventListener('input', function() {
-      if (this.value && this.value.trim() !== '') {
-        this.classList.add('has-value');
-      } else {
-        this.classList.remove('has-value');
-      }
-    });
-  });
-  
-  // Обробка select елементів
-  floatingSelects.forEach(select => {
-    // Встановлюємо початковий стан для полів зі значеннями
-    if (select.value && select.value.trim() !== '') {
-      select.classList.add('has-value');
-    }
-    
-    // Додаємо обробники подій
-    select.addEventListener('focus', function() {
-      this.parentElement.classList.add('focused');
-    });
-    
-    select.addEventListener('blur', function() {
-      this.parentElement.classList.remove('focused');
-      if (this.value && this.value.trim() !== '') {
-        this.classList.add('has-value');
-      } else {
-        this.classList.remove('has-value');
-      }
-    });
-    
-    select.addEventListener('change', function() {
-      if (this.value && this.value.trim() !== '') {
-        this.classList.add('has-value');
-      } else {
-        this.classList.remove('has-value');
-      }
-    });
-  });
-}
+// initializeFloatingLabels() перенесено в modules/ui/AccordionManager.js
 
 // Відстеження доданих елементів до моделі
 // addedElements перенесено в modules/core/GlobalState.js
@@ -1992,64 +1840,7 @@ function addBlindArea() {
 
 
 
-function updateAllDisplays() {
-  debugLog(` updateAllDisplays() викликано`, 'info');
-  const unitText = currentUnit === 'mm' ? 'мм' : 'см';
-  
-  // Оновлення відображення розмірів фундаменту
-  const foundationDepth = document.getElementById('foundation-depth').value;
-  const foundationWidth = document.getElementById('foundation-width').value;
-  const foundationHeight = document.getElementById('foundation-height').value;
-  document.getElementById('foundation-dimensions-display').textContent = 
-    `${foundationDepth}×${foundationWidth}×${foundationHeight} ${unitText}`;
-  
-  // Оновлення відображення типу плитки
-  const tilingMode = getSelectedTilingMode();
-  const activeButton = document.querySelector('.tiling-mode-btn.active');
-  if (activeButton) {
-    document.getElementById('tiling-type-display').textContent = activeButton.textContent;
-  }
-  
-  // Оновлення відображення товщини облицювання
-  const claddingThickness = document.getElementById('cladding-thickness').value;
-  document.getElementById('cladding-dimensions-display').textContent = 
-    `Товщина: ${claddingThickness} ${unitText}`;
-  
-  // Оновлення відображення розмірів відмостки
-  const blindAreaThickness = document.getElementById('blind-area-thickness').value;
-  const blindAreaMode = getSelectedBlindAreaMode();
-  
-  if (blindAreaMode === 'uniform') {
-    const uniformWidth = document.getElementById('blind-area-uniform-width').value;
-    document.getElementById('blind-area-dimensions-display').textContent = 
-      `Ширина: ${uniformWidth} ${unitText}, Товщина: ${blindAreaThickness} ${unitText}`;
-  } else {
-    const blindAreaNorth = document.getElementById('blind-area-north').value;
-    const blindAreaSouth = document.getElementById('blind-area-south').value;
-    const blindAreaEast = document.getElementById('blind-area-east').value;
-    const blindAreaWest = document.getElementById('blind-area-west').value;
-    document.getElementById('blind-area-dimensions-display').textContent = 
-      `П:${blindAreaNorth} Пд:${blindAreaSouth} С:${blindAreaEast} З:${blindAreaWest} ${unitText}, Т:${blindAreaThickness} ${unitText}`;
-  }
-  
-  // Оновлення відображення вибраних моделей
-  updateModelDisplays();
-  
-  
-  // Оновлення відображення огорожі
-  updateFenceCornerDisplay();
-  updateFencePerimeterDisplay();
-  
-  // Оновлення відображення підставки
-  debugLog(` Викликаємо updateStandsDisplay() з updateAllDisplays()`, 'info');
-  updateStandsDisplay();
-  
-  // Оновлення підсумкової таблиці
-  debugLog(` Викликаємо updateSummaryTable() з updateAllDisplays()`, 'info');
-  updateSummaryTable();
-  
-  debugLog(` updateAllDisplays() завершено`, 'info');
-}
+// updateAllDisplays() перенесено в modules/ui/AccordionManager.js
 
 function updateModelDisplays() {
   // Оновлення відображення підставки - тепер використовуємо updateStandsDisplay
@@ -2761,120 +2552,7 @@ function getCurrentUnit() {
 }
 
 // Оновлення всіх лейблів з одиницями вимірювання
-function updateUnitLabels() {
-  const unitText = currentUnit === 'mm' ? 'мм' : 'см';
-  
-  // Стела - масштабування
-  const steleWidthLabel = document.getElementById('stele-width-label');
-  const steleHeightLabel = document.getElementById('stele-height-label');
-  const steleDepthLabel = document.getElementById('stele-depth-label');
-  
-  if (steleWidthLabel) {
-    steleWidthLabel.textContent = `Ширина стели (${unitText})`;
-  }
-  if (steleHeightLabel) {
-    steleHeightLabel.textContent = `Висота стели (${unitText})`;
-  }
-  if (steleDepthLabel) {
-    steleDepthLabel.textContent = `Глибина стели (${unitText})`;
-  }
-  
-  // Фундамент
-  const foundationDepthLabel = document.getElementById('foundation-depth-label');
-  const foundationWidthLabel = document.getElementById('foundation-width-label');
-  const foundationHeightLabel = document.getElementById('foundation-height-label');
-  
-  if (foundationDepthLabel) foundationDepthLabel.textContent = `Довжина (${unitText})`;
-  if (foundationWidthLabel) foundationWidthLabel.textContent = `Ширина (${unitText})`;
-  if (foundationHeightLabel) foundationHeightLabel.textContent = `Висота (${unitText})`;
-  
-  // Відмостка
-  const blindAreaThicknessLabel = document.getElementById('blind-area-thickness-label');
-  const blindAreaUniformWidthLabel = document.getElementById('blind-area-uniform-width-label');
-  const blindAreaNorthLabel = document.getElementById('blind-area-north-label');
-  const blindAreaSouthLabel = document.getElementById('blind-area-south-label');
-  const blindAreaEastLabel = document.getElementById('blind-area-east-label');
-  const blindAreaWestLabel = document.getElementById('blind-area-west-label');
-  
-  if (blindAreaThicknessLabel) blindAreaThicknessLabel.textContent = `Товщина (${unitText})`;
-  if (blindAreaUniformWidthLabel) blindAreaUniformWidthLabel.textContent = `Ширина (${unitText})`;
-  if (blindAreaNorthLabel) blindAreaNorthLabel.textContent = `Північна сторона (${unitText})`;
-  if (blindAreaSouthLabel) blindAreaSouthLabel.textContent = `Південна сторона (${unitText})`;
-  if (blindAreaEastLabel) blindAreaEastLabel.textContent = `Східна сторона (${unitText})`;
-  if (blindAreaWestLabel) blindAreaWestLabel.textContent = `Західна сторона (${unitText})`;
-  
-  // Плитка
-  const tileThicknessFrameLabel = document.getElementById('tile-thickness-frame-label');
-  const tileBorderWidthLabel = document.getElementById('tile-border-width-label');
-  const tileOverhangLabel = document.getElementById('tile-overhang-label');
-  const frameSeamLabel = document.getElementById('frame-seam-label');
-  const modularThicknessLabel = document.getElementById('modular-thickness-label');
-  const modularSeamLabel = document.getElementById('modular-seam-label');
-  const modularOverhangLabel = document.getElementById('modular-overhang-label');
-  
-  if (tileThicknessFrameLabel) tileThicknessFrameLabel.textContent = `Товщина`;
-  if (tileBorderWidthLabel) tileBorderWidthLabel.textContent = `Ширина рамки (${unitText})`;
-  if (tileOverhangLabel) tileOverhangLabel.textContent = `Виступ (${unitText})`;
-  if (frameSeamLabel) frameSeamLabel.textContent = `Шов між плитками (мм)`; // Шви завжди в мм
-  if (modularThicknessLabel) modularThicknessLabel.textContent = `Товщина (${unitText}):`;
-  if (modularSeamLabel) modularSeamLabel.textContent = `Шов (мм)`; // Шви завжди в мм
-  if (modularOverhangLabel) modularOverhangLabel.textContent = `Виступ (${unitText}):`;
-  
-  // Облицювання
-  const claddingThicknessLabel = document.getElementById('cladding-thickness-label');
-  if (claddingThicknessLabel) claddingThicknessLabel.textContent = `Товщина (${unitText})`;
-  
-  // Кутова огорожа
-  const fenceCornerPostHeightLabel = document.getElementById('fence-corner-post-height-label');
-  const fenceCornerPostSizeLabel = document.getElementById('fence-corner-post-size-label');
-  const fenceCornerSideHeightLabel = document.getElementById('fence-corner-side-height-label');
-  const fenceCornerSideLengthLabel = document.getElementById('fence-corner-side-length-label');
-  const fenceCornerSideThicknessLabel = document.getElementById('fence-corner-side-thickness-label');
-  
-  if (fenceCornerPostHeightLabel) fenceCornerPostHeightLabel.textContent = `Висота стовпа (${unitText})`;
-  if (fenceCornerPostSizeLabel) fenceCornerPostSizeLabel.textContent = `Розмір стовпа (${unitText})`;
-  if (fenceCornerSideHeightLabel) fenceCornerSideHeightLabel.textContent = `Висота панелі (${unitText})`;
-  if (fenceCornerSideLengthLabel) fenceCornerSideLengthLabel.textContent = `Довжина панелі (${unitText})`;
-  if (fenceCornerSideThicknessLabel) fenceCornerSideThicknessLabel.textContent = `Товщина панелі (${unitText})`;
-  
-  // Периметральна огорожа
-  const fencePerimeterPostHeightLabel = document.getElementById('fence-perimeter-post-height-label');
-  const fencePerimeterPostSizeLabel = document.getElementById('fence-perimeter-post-size-label');
-  
-  if (fencePerimeterPostHeightLabel) fencePerimeterPostHeightLabel.textContent = `Висота стовпа (${unitText})`;
-  if (fencePerimeterPostSizeLabel) fencePerimeterPostSizeLabel.textContent = `Розмір стовпа (${unitText})`;
-  
-  // Підставка
-  const standsHeightLabel = document.getElementById('stands-height-label');
-  const standsWidthLabel = document.getElementById('stands-width-label');
-  const standsDepthLabel = document.getElementById('stands-depth-label');
-  
-  if (standsHeightLabel) standsHeightLabel.textContent = `Висота (${unitText})`;
-  if (standsWidthLabel) standsWidthLabel.textContent = `Ширина (${unitText})`;
-  if (standsDepthLabel) standsDepthLabel.textContent = `Довжина (${unitText})`;
-  
-  // Проміжна
-  const gapsHeightLabel = document.getElementById('gaps-height-label');
-  const gapsWidthLabel = document.getElementById('gaps-width-label');
-  const gapsDepthLabel = document.getElementById('gaps-depth-label');
-  
-  if (gapsHeightLabel) gapsHeightLabel.textContent = `Висота проміжної (${unitText})`;
-  if (gapsWidthLabel) gapsWidthLabel.textContent = `Ширина проміжної (${unitText})`;
-  if (gapsDepthLabel) gapsDepthLabel.textContent = `Довжина проміжної (${unitText})`;
-  
-  // Відстань між стелами
-  const steleDistanceLabel = document.getElementById('stele-distance-label');
-  if (steleDistanceLabel) steleDistanceLabel.textContent = `Відстань між стелами (${unitText})`;
-  
-  // Центральна деталь
-  const centralDetailWidthLabel = document.getElementById('central-detail-width-label');
-  const centralDetailDepthLabel = document.getElementById('central-detail-depth-label');
-  const centralDetailHeightLabel = document.getElementById('central-detail-height-label');
-  
-  if (centralDetailWidthLabel) centralDetailWidthLabel.textContent = `Ширина (${unitText})`;
-  if (centralDetailDepthLabel) centralDetailDepthLabel.textContent = `Товщина (${unitText})`;
-  if (centralDetailHeightLabel) centralDetailHeightLabel.textContent = `Висота (${unitText})`;
-}
+// updateUnitLabels() перенесено в modules/ui/AccordionManager.js
 
 // Форматування значення для відображення
 function formatValue(value, unit = null) {
@@ -3776,48 +3454,7 @@ function toggleSteleModelSection(headerElement) {
 }
 
 // Універсальна функція для акордеон поведінки в будь-якому табі
-function toggleAccordionPanel(headerElement) {
-  const panel = headerElement.closest('.panel');
-  if (!panel) return;
-  
-  // Знаходимо батьківський таб
-  const tab = panel.closest('.tab-content');
-  if (!tab) return;
-  
-  // Знаходимо всі панелі в поточному табі
-  const allPanels = tab.querySelectorAll('.panel');
-  
-  // Якщо поточна панель розгорнута, згортаємо її
-  if (!panel.classList.contains('collapsed')) {
-    panel.classList.add('collapsed');
-    debugLog(`Панель згорнута (акордеон) в табі ${tab.id}`, 'info');
-    return;
-  }
-  
-  // Згортаємо всі панелі в табі
-  allPanels.forEach(p => {
-    p.classList.add('collapsed');
-  });
-  
-  // Розгортаємо поточну панель
-  panel.classList.remove('collapsed');
-  
-  debugLog(`Панель розгорнута (акордеон) в табі ${tab.id}, інші згорнуті`, 'info');
-  
-  // Ініціалізуємо каруселі в розгорнутій панелі
-  setTimeout(() => {
-    const carousels = panel.querySelectorAll('.carousel-container');
-    carousels.forEach(carousel => {
-      const viewport = carousel.querySelector('.carousel-viewport');
-      if (viewport) {
-        viewport.style.display = 'none';
-        setTimeout(() => {
-          viewport.style.display = 'block';
-        }, 10);
-      }
-    });
-  }, 100);
-}
+// toggleAccordionPanel() перенесено в modules/ui/AccordionManager.js
 
 // Функція для автоматичного застосування акордеон поведінки до всіх панелей
 function initializeAccordionBehavior() {
