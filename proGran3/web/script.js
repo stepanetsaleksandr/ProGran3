@@ -809,10 +809,12 @@ const CarouselManager = {
         // Згортаємо секцію 2 (Вибір моделі) після додавання стели
         this.collapseSteleModelSection();
         
-        // Показуємо секцію масштабування стели
-        setTimeout(() => {
-          showSteleScalingSection();
-        }, 500); // Невелика затримка для завершення додавання стели
+        // Показуємо секцію масштабування стели тільки для однієї стели
+        if (steleType === 'single') {
+          setTimeout(() => {
+            showSteleScalingSection();
+          }, 500); // Невелика затримка для завершення додавання стели
+        }
       } else {
         window.sketchup.add_model(category, filename);
       }
@@ -1526,6 +1528,7 @@ function addModel(category) {
 function selectSteleType(button) {
   const segments = document.querySelectorAll('.segment');
   const steleOptionsSection = document.getElementById('stele-options-section');
+  const steleScalingSection = document.getElementById('stele-scaling-section');
   
   // Оновлюємо активний стан сегментів
   segments.forEach(segment => segment.classList.remove('active'));
@@ -1537,6 +1540,11 @@ function selectSteleType(button) {
   if (steleType === 'single') {
     // Приховуємо секцію для парних стел
     steleOptionsSection.style.display = 'none';
+    
+    // Показуємо секцію масштабування для однієї стели
+    if (steleScalingSection && carouselState.steles.modelCreated) {
+      steleScalingSection.style.display = 'block';
+    }
     
     // Видаляємо центральну деталь, якщо вона була створена
     if (carouselState.steles.centralDetail && carouselState.steles.centralDetailCreated) {
@@ -1555,6 +1563,12 @@ function selectSteleType(button) {
   } else if (steleType === 'paired') {
     // Показуємо секцію для парних стел з анімацією
     steleOptionsSection.style.display = 'block';
+    
+    // Приховуємо секцію масштабування для парних стел
+    if (steleScalingSection) {
+      steleScalingSection.style.display = 'none';
+    }
+    
     updateCentralDetailDisplay();
     debugLog('Тип стели: парні', 'info');
   }
@@ -4003,6 +4017,12 @@ function setSteleDimensionsInUI(dimensions) {
 
 // Функція для показу секції масштабування стели
 async function showSteleScalingSection() {
+  // Показуємо секцію масштабування тільки для однієї стели
+  if (carouselState.steles.type !== 'single') {
+    debugLog('Секція масштабування доступна тільки для однієї стели', 'info');
+    return;
+  }
+  
   const scalingSection = document.getElementById('stele-scaling-section');
   if (scalingSection) {
     scalingSection.style.display = 'block';
