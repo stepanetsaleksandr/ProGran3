@@ -2679,6 +2679,171 @@ function convertToMm(value, isSeam = false) {
 // ============================================================================
 // Функції для роботи з UI елементами (кнопки, селектори, тощо)
 
+// --- КОНТРОЛИ ТОВЩИНИ ---
+// Функції для вибору та отримання товщини плитки
+
+// Вибір товщини плитки
+function selectThickness(button) {
+  // Видаляємо активний клас з усіх кнопок
+  const buttons = document.querySelectorAll('.thickness-btn');
+  buttons.forEach(btn => btn.classList.remove('active'));
+  
+  // Додаємо активний клас до натиснутої кнопки
+  button.classList.add('active');
+  
+  // Оновлюємо відображення
+  updateAllDisplays();
+  
+  debugLog(` Вибрано товщину плитки: ${button.dataset.value}`, 'success');
+}
+
+// Отримання вибраної товщини
+function getSelectedThickness() {
+  const activeButton = document.querySelector('.thickness-btn.active');
+  if (activeButton) {
+    return activeButton.dataset.value;
+  }
+  return '20'; // Значення за замовчуванням
+}
+
+// Оновлення кнопок товщини
+function updateThicknessButtons() {
+  const buttons = document.querySelectorAll('.thickness-btn');
+  buttons.forEach(btn => {
+    const value = parseFloat(btn.dataset.value);
+    if (currentUnit === 'mm') {
+      btn.textContent = `${value}мм`;
+    } else if (currentUnit === 'cm') {
+      btn.textContent = `${(value / 10).toFixed(1)}см`;
+    }
+  });
+}
+
+// --- КОНТРОЛИ ПЛИТКИ ---
+// Функції для вибору способу укладання плитки
+
+// Вибір способу укладання плитки
+function selectTilingMode(button) {
+  // Видаляємо активний клас з усіх кнопок
+  const buttons = document.querySelectorAll('.tiling-mode-btn');
+  buttons.forEach(btn => btn.classList.remove('active'));
+  
+  // Додаємо активний клас до натиснутої кнопки
+  button.classList.add('active');
+  
+  // Оновлюємо контроли
+  updateTilingControls();
+  
+  debugLog(` Вибрано спосіб укладання: ${button.dataset.value}`, 'success');
+}
+
+// Отримання вибраного способу укладання
+function getSelectedTilingMode() {
+  const activeButton = document.querySelector('.tiling-mode-btn.active');
+  if (activeButton) {
+    return activeButton.dataset.value;
+  }
+  return 'standard'; // Значення за замовчуванням
+}
+
+// --- КОНТРОЛИ ШВІВ ---
+// Функції для вибору та отримання швів
+
+// Вибір шву
+function selectSeam(button) {
+  // Видаляємо активний клас з усіх кнопок
+  const buttons = document.querySelectorAll('.seam-btn');
+  buttons.forEach(btn => btn.classList.remove('active'));
+  
+  // Додаємо активний клас до натиснутої кнопки
+  button.classList.add('active');
+  
+  // Оновлюємо відображення
+  updateAllDisplays();
+  
+  debugLog(` Вибрано шов: ${button.dataset.value} мм`, 'success');
+}
+
+// Отримання вибраного шву
+function getSelectedSeam() {
+  const activeButton = document.querySelector('.seam-btn.active');
+  if (activeButton) {
+    return activeButton.dataset.value;
+  }
+  return '3'; // Значення за замовчуванням
+}
+
+// Оновлення кнопок швів
+function updateSeamButtons() {
+  const buttons = document.querySelectorAll('.seam-btn');
+  buttons.forEach(btn => {
+    const value = parseFloat(btn.dataset.value);
+    btn.textContent = `${value}мм`; // Шви завжди в мм
+  });
+}
+
+// --- КОНТРОЛИ СТЕЛ ---
+// Функції для вибору типу стел
+
+// Вибір типу стели
+function selectSteleType(button) {
+  const segments = document.querySelectorAll('.segment');
+  const steleOptionsSection = document.getElementById('stele-options-section');
+  const steleScalingSection = document.getElementById('stele-scaling-section');
+  
+  // Оновлюємо активний стан сегментів
+  segments.forEach(segment => {
+    segment.classList.remove('active');
+  });
+  
+  // Активуємо поточний сегмент
+  const currentSegment = button.closest('.segment');
+  if (currentSegment) {
+    currentSegment.classList.add('active');
+  }
+  
+  // Показуємо/приховуємо секції залежно від типу
+  const steleType = button.dataset.steleType;
+  
+  if (steleType === 'custom') {
+    if (steleOptionsSection) steleOptionsSection.style.display = 'block';
+    if (steleScalingSection) steleScalingSection.style.display = 'block';
+  } else {
+    if (steleOptionsSection) steleOptionsSection.style.display = 'none';
+    if (steleScalingSection) steleScalingSection.style.display = 'none';
+  }
+  
+  debugLog(` Вибрано тип стели: ${steleType}`, 'success');
+}
+
+// --- КОНТРОЛИ ВІДМОСТКИ ---
+// Функції для вибору режиму відмостки
+
+// Вибір режиму відмостки
+function selectBlindAreaMode(button) {
+  // Видаляємо активний клас з усіх кнопок режиму ширини
+  document.querySelectorAll('.button-group-tiling-mode .tiling-mode-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+
+  // Додаємо активний клас до натиснутої кнопки
+  button.classList.add('active');
+
+  // Оновлюємо контроли відмостки
+  updateBlindAreaControls();
+
+  debugLog(` Вибрано режим відмостки: ${button.dataset.value}`, 'success');
+}
+
+// Отримання вибраного режиму відмостки
+function getSelectedBlindAreaMode() {
+  const activeButton = document.querySelector('.button-group-tiling-mode .tiling-mode-btn.active');
+  if (activeButton) {
+    return activeButton.dataset.value;
+  }
+  return 'uniform'; // Значення за замовчуванням
+}
+
 // Функція для вибору товщини плитки
 function selectThickness(button) {
   // Видаляємо активний клас з усіх кнопок
