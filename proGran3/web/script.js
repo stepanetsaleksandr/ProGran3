@@ -501,7 +501,7 @@ const CarouselManager = {
     if (index + 1 < items.length) this.loadOrGeneratePreview(category, index + 1);
     if (index - 1 >= 0) this.loadOrGeneratePreview(category, index - 1);
     
-    updateAllDisplays();
+    // updateAllDisplays() видалено - функція не існує
   },
 
   // Ледаче завантаження превью (уніфікована логіка як у стел)
@@ -962,9 +962,9 @@ function initializeApp() {
   debugLog(` Floating labels ініціалізовано`, 'success');
   
   debugLog(` Викликаємо updateAllDisplays()`, 'info');
-  updateAllDisplays();
-  updateAllI18nLabels();
-  updateUnitLabels();
+  // updateAllDisplays() видалено - функція не існує
+  // updateAllI18nLabels() видалено - функція не існує
+  // updateUnitLabels() видалено - функція не існує
   updateThicknessButtons();
   updateSeamButtons();
   
@@ -1046,7 +1046,7 @@ function loadModelLists(data) {
   const stats = CarouselManager.getCarouselStats();
   debugLog(`📊 Статистика каруселей: ${stats.active}/${stats.total} активних`, 'info');
   
-  updateAllDisplays();
+  // updateAllDisplays() видалено - функція не існує
 }
 
 // ============================================================================
@@ -1378,7 +1378,7 @@ function showMainStelesCarouselItem(category, index) {
   if (index + 1 < items.length) loadOrGenerateMainStelesPreview(category, index + 1);
   if (index - 1 >= 0) loadOrGenerateMainStelesPreview(category, index - 1);
   
-  updateAllDisplays();
+  // updateAllDisplays() видалено - функція не існує
 }
 
 
@@ -1899,7 +1899,7 @@ function updateBlindAreaControls() {
     customControls.classList.remove('hidden');
   }
   
-  updateAllDisplays();
+  // updateAllDisplays() видалено - функція не існує
 }
 
 
@@ -2222,17 +2222,21 @@ function addFoundation() {
   const height = document.getElementById('foundation-height').value;
   
   if (window.sketchup && window.sketchup.add_foundation) {
-    const depthMm = convertToMm(depth);
-    const widthMm = convertToMm(width);
-    const heightMm = convertToMm(height);
-    
-    debugLog(` Додаємо фундамент: ${depthMm}×${widthMm}×${heightMm} мм`, 'info');
-    
-    window.sketchup.add_foundation(depthMm, widthMm, heightMm);
-    addedElements.foundation = true;
-    updateSummaryTable();
-    
-    debugLog(` Фундамент додано успішно`, 'success');
+    try {
+      const depthMm = convertToMm(depth);
+      const widthMm = convertToMm(width);
+      const heightMm = convertToMm(height);
+      
+      debugLog(` Додаємо фундамент: ${depthMm}×${widthMm}×${heightMm} мм`, 'info');
+      
+      window.sketchup.add_foundation(depthMm, widthMm, heightMm);
+      addedElements.foundation = true;
+      updateSummaryTable();
+      
+      debugLog(` Фундамент додано успішно`, 'success');
+    } catch (error) {
+      debugLog(` Помилка при додаванні фундаменту: ${error.message}`, 'error');
+    }
   } else {
     debugLog(` window.sketchup.add_foundation не доступний`, 'error');
   }
@@ -2247,43 +2251,47 @@ function addTiles() {
   debugLog(`🏗️ Додавання плитки, режим: ${mode}`, 'info');
   
   if (window.sketchup && window.sketchup.add_tiles) {
-    if (mode === 'frame') {
-      const thickness = getSelectedThickness();
-      const borderWidth = document.getElementById('tile-border-width').value;
-      const overhang = document.getElementById('tile-overhang').value;
-      const seam = getSelectedSeam();
-      
-      debugLog(` Параметри рамки: товщина=${thickness}, ширина=${borderWidth}, виступ=${overhang}, шов=${seam}`, 'info');
-      
-      // Конвертуємо в мм
-      const thicknessMm = convertToMm(thickness);
-      const borderWidthMm = convertToMm(borderWidth);
-      const overhangMm = convertToMm(overhang);
-      const seamMm = convertToMm(seam, true); // Шви завжди в мм
-      
-      debugLog(` Параметри в мм: товщина=${thicknessMm}, ширина=${borderWidthMm}, виступ=${overhangMm}, шов=${seamMm}`, 'info');
-      
-      window.sketchup.add_tiles('frame', thicknessMm, borderWidthMm, overhangMm, seamMm);
-    } else {
-      const size = document.getElementById('modular-tile-size').value;
-      const thickness = document.getElementById('modular-thickness').value;
-      const seam = getSelectedSeam();
-      const overhang = document.getElementById('modular-overhang').value;
-      
-      debugLog(` Параметри модульної: розмір=${size}, товщина=${thickness}, шов=${seam}, виступ=${overhang}`, 'info');
-      
-      // Конвертуємо в мм
-      const thicknessMm = convertToMm(thickness);
-      const seamMm = convertToMm(seam, true); // Шви завжди в мм
-      const overhangMm = convertToMm(overhang);
-      
-      debugLog(` Параметри в мм: товщина=${thicknessMm}, шов=${seamMm}, виступ=${overhangMm}`, 'info');
-      
-      window.sketchup.add_tiles('modular', size, thicknessMm, seamMm, overhangMm);
+    try {
+      if (mode === 'frame') {
+        const thickness = getSelectedThickness();
+        const borderWidth = document.getElementById('tile-border-width').value;
+        const overhang = document.getElementById('tile-overhang').value;
+        const seam = getSelectedSeam();
+        
+        debugLog(` Параметри рамки: товщина=${thickness}, ширина=${borderWidth}, виступ=${overhang}, шов=${seam}`, 'info');
+        
+        // Конвертуємо в мм
+        const thicknessMm = convertToMm(thickness);
+        const borderWidthMm = convertToMm(borderWidth);
+        const overhangMm = convertToMm(overhang);
+        const seamMm = convertToMm(seam, true); // Шви завжди в мм
+        
+        debugLog(` Параметри в мм: товщина=${thicknessMm}, ширина=${borderWidthMm}, виступ=${overhangMm}, шов=${seamMm}`, 'info');
+        
+        window.sketchup.add_tiles('frame', thicknessMm, borderWidthMm, overhangMm, seamMm);
+      } else {
+        const size = document.getElementById('modular-tile-size').value;
+        const thickness = document.getElementById('modular-thickness').value;
+        const seam = getSelectedSeam();
+        const overhang = document.getElementById('modular-overhang').value;
+        
+        debugLog(` Параметри модульної: розмір=${size}, товщина=${thickness}, шов=${seam}, виступ=${overhang}`, 'info');
+        
+        // Конвертуємо в мм
+        const thicknessMm = convertToMm(thickness);
+        const seamMm = convertToMm(seam, true); // Шви завжди в мм
+        const overhangMm = convertToMm(overhang);
+        
+        debugLog(` Параметри в мм: товщина=${thicknessMm}, шов=${seamMm}, виступ=${overhangMm}`, 'info');
+        
+        window.sketchup.add_tiles('modular', size, thicknessMm, seamMm, overhangMm);
+      }
+      addedElements.tiling = true;
+      updateSummaryTable();
+      debugLog(` Плитка додана успішно`, 'success');
+    } catch (error) {
+      debugLog(` Помилка при додаванні плитки: ${error.message}`, 'error');
     }
-    addedElements.tiling = true;
-    updateSummaryTable();
-    debugLog(` Плитка додана успішно`, 'success');
   } else {
     debugLog(` window.sketchup.add_tiles не доступний`, 'error');
   }
@@ -2586,8 +2594,8 @@ function changeUnit(newUnit) {
   convertAllValues(oldValues, oldUnit, newUnit);
   
   // Оновлюємо відображення
-  updateAllDisplays();
-  updateUnitLabels();
+  // updateAllDisplays() видалено - функція не існує
+  // updateUnitLabels() видалено - функція не існує
   updateThicknessButtons();
   updateSeamButtons();
   
@@ -2761,13 +2769,13 @@ function convertAllValues(oldValues, oldUnit, newUnit) {
   // Конвертуємо масштабування стел
   if (oldValues.steleScaling) {
     if (oldValues.steleScaling.width && document.getElementById('stele-width')) {
-      document.getElementById('stele-width').value = convertValue(oldValues.steleScaling.width, oldUnit, newUnit);
+    document.getElementById('stele-width').value = convertValue(oldValues.steleScaling.width, oldUnit, newUnit);
     }
     if (oldValues.steleScaling.height && document.getElementById('stele-height')) {
-      document.getElementById('stele-height').value = convertValue(oldValues.steleScaling.height, oldUnit, newUnit);
+    document.getElementById('stele-height').value = convertValue(oldValues.steleScaling.height, oldUnit, newUnit);
     }
     if (oldValues.steleScaling.depth && document.getElementById('stele-depth')) {
-      document.getElementById('stele-depth').value = convertValue(oldValues.steleScaling.depth, oldUnit, newUnit);
+    document.getElementById('stele-depth').value = convertValue(oldValues.steleScaling.depth, oldUnit, newUnit);
     }
   }
   
@@ -2907,7 +2915,7 @@ function selectThickness(button) {
   button.classList.add('active');
   
   // Оновлюємо відображення
-  updateAllDisplays();
+  // updateAllDisplays() видалено - функція не існує
   
   debugLog(` Вибрано товщину плитки: ${button.dataset.value}`, 'success');
 }
@@ -2974,7 +2982,7 @@ function selectSeam(button) {
   button.classList.add('active');
   
   // Оновлюємо відображення
-  updateAllDisplays();
+  // updateAllDisplays() видалено - функція не існує
   
   debugLog(` Вибрано шов: ${button.dataset.value} мм`, 'success');
 }
@@ -3038,7 +3046,7 @@ function selectThickness(button) {
   button.classList.add('active');
   
   // Оновлюємо відображення
-  updateAllDisplays();
+  // updateAllDisplays() видалено - функція не існує
   
   debugLog(` Вибрано товщину плитки: ${button.dataset.value}`, 'success');
 }
@@ -3068,7 +3076,7 @@ function selectSeam(button) {
   button.classList.add('active');
   
   // Оновлюємо відображення
-  updateAllDisplays();
+  // updateAllDisplays() видалено - функція не існує
   
   debugLog(` Вибрано шов: ${button.dataset.value} мм`, 'success');
 }
@@ -3125,21 +3133,7 @@ function updateThicknessButtons() {
 }
 
 // Функція для оновлення тексту кнопок шву при зміні одиниць
-function updateSeamButtons() {
-  const buttons = document.querySelectorAll('.seam-btn');
-  buttons.forEach(button => {
-    const originalValue = button.dataset.originalValue || button.dataset.value;
-    
-    // Зберігаємо оригінальне значення в мм при першому виклику
-    if (!button.dataset.originalValue) {
-      button.dataset.originalValue = button.dataset.value;
-    }
-    
-    // Шви завжди відображаються в мм, незалежно від поточних одиниць
-    button.textContent = `${originalValue} мм`;
-    button.dataset.value = originalValue;
-  });
-}
+// Дублікат функції updateSeamButtons видалено
 
 // Функція для скидання опцій товщини плитки до початкових значень (для зворотної сумісності)
 function resetTileThicknessOptions() {
