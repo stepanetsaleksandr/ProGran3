@@ -649,12 +649,21 @@ const CarouselManager = {
     if (window.sketchup && window.sketchup.add_model) {
       // Для стел передаємо додаткові параметри типу, відстані та центральної деталі
       if (category === 'steles') {
-        const steleType = state.type || 'single'; // За замовчуванням 'single'
-        const steleDistance = state.distance || 200; // За замовчуванням 200мм
-        const centralDetail = state.centralDetail || false; // За замовчуванням false
-        const centralDetailWidth = state.centralDetailWidth || 200; // За замовчуванням 200мм
-        const centralDetailDepth = state.centralDetailDepth || 50; // За замовчуванням 50мм
-        const centralDetailHeight = state.centralDetailHeight || 250; // За замовчуванням 250мм
+        // Перевіряємо, чи існує стан стел
+        if (!carouselState.steles) {
+          debugLog('ПОМИЛКА: carouselState.steles не існує!', 'error');
+          carouselState.steles = { type: 'single', distance: 200, centralDetail: false };
+        }
+        const steleType = carouselState.steles.type || 'single'; // За замовчуванням 'single'
+        const steleDistance = carouselState.steles.distance || 200; // За замовчуванням 200мм
+        const centralDetail = carouselState.steles.centralDetail || false; // За замовчуванням false
+        const centralDetailWidth = carouselState.steles.centralDetailWidth || 200; // За замовчуванням 200мм
+        const centralDetailDepth = carouselState.steles.centralDetailDepth || 50; // За замовчуванням 50мм
+        const centralDetailHeight = carouselState.steles.centralDetailHeight || 250; // За замовчуванням 250мм
+        
+        debugLog(`Додавання стели: тип=${steleType} (${typeof steleType}), відстань=${steleDistance}мм, центральна деталь=${centralDetail}`, 'info');
+        debugLog(`Повний стан стел: ${JSON.stringify(carouselState.steles)}`, 'info');
+        
         window.sketchup.add_model(category, filename, steleType, steleDistance, centralDetail, centralDetailWidth, centralDetailDepth, centralDetailHeight);
         // Встановлюємо флаг, що модель створена
         carouselState.steles.modelCreated = true;
@@ -788,7 +797,14 @@ const CarouselManager = {
 // ============================================================================
 // Функції для логування та діагностики
 
-// Функція для додавання повідомлень в debug лог
+/**
+ * Додає повідомлення до debug логу з кольоровим форматуванням
+ * @param {string} message - Текст повідомлення
+ * @param {string} type - Тип повідомлення: 'info', 'success', 'warning', 'error'
+ * @example
+ * debugLog('Фундамент створено', 'success');
+ * debugLog('Помилка валідації', 'error');
+ */
 function debugLog(message, type = 'info') {
   const debugLog = document.getElementById('debug-log');
   if (!debugLog) return;
@@ -1391,6 +1407,7 @@ function addModel(category) {
 // Функція для оновлення типу стел
 // Функція для вибору типу стели (нова Apple-style логіка)
 function selectSteleType(button) {
+  debugLog('selectSteleType викликано!', 'info');
   const segments = document.querySelectorAll('.segment');
   const steleOptionsSection = document.getElementById('stele-options-section');
   const steleScalingSection = document.getElementById('stele-scaling-section');
@@ -1399,8 +1416,11 @@ function selectSteleType(button) {
   segments.forEach(segment => segment.classList.remove('active'));
   button.classList.add('active');
   
-  const steleType = button.dataset.value;
+  const steleType = button.getAttribute('data-value');
   carouselState.steles.type = steleType;
+  
+  debugLog(`Вибрано тип стели: ${steleType} (${typeof steleType})`, 'info');
+  debugLog(`Стан стел після вибору: ${JSON.stringify(carouselState.steles)}`, 'info');
   
   if (steleType === 'single') {
     // Приховуємо секцію для парних стел
@@ -1432,6 +1452,23 @@ function selectSteleType(button) {
     // Приховуємо секцію масштабування для парних стел
     if (steleScalingSection) {
       steleScalingSection.style.display = 'none';
+    }
+    
+    // Встановлюємо значення за замовчуванням для парних стел
+    if (!carouselState.steles.distance) {
+      carouselState.steles.distance = 200;
+    }
+    if (!carouselState.steles.centralDetail) {
+      carouselState.steles.centralDetail = false;
+    }
+    if (!carouselState.steles.centralDetailWidth) {
+      carouselState.steles.centralDetailWidth = 200;
+    }
+    if (!carouselState.steles.centralDetailDepth) {
+      carouselState.steles.centralDetailDepth = 50;
+    }
+    if (!carouselState.steles.centralDetailHeight) {
+      carouselState.steles.centralDetailHeight = 250;
     }
     
     updateCentralDetailDisplay();
@@ -1571,6 +1608,23 @@ function updateGapsDisplay() {
 
 // Ініціалізація типу стел при завантаженні
 function initializeSteleType() {
+  // Ініціалізуємо стан стел, якщо не існує
+  if (!carouselState.steles) {
+    carouselState.steles = {
+      type: 'single',
+      distance: 200,
+      centralDetail: false,
+      centralDetailWidth: 200,
+      centralDetailDepth: 50,
+      centralDetailHeight: 250,
+      centralDetailCreated: false,
+      modelCreated: false
+    };
+    debugLog('Ініціалізовано стан стел', 'info');
+  } else {
+    debugLog(`Стан стел вже існує: ${JSON.stringify(carouselState.steles)}`, 'info');
+  }
+  
   const steleTypeInputs = document.querySelectorAll('input[name="stele-type"]');
   if (steleTypeInputs.length > 0) {
     const checkedInput = document.querySelector('input[name="stele-type"]:checked');
@@ -2156,7 +2210,12 @@ function updateSummaryTable() {
 // --- ФУНДАМЕНТ ---
 // Функції для створення фундаменту
 
-// Додавання фундаменту
+/**
+ * Створює фундамент в SketchUp з параметрами з UI
+ * Збирає розміри з полів вводу, конвертує в мм та викликає Ruby функцію
+ * @example
+ * addFoundation(); // Створює фундамент з поточними значеннями з UI
+ */
 function addFoundation() {
   const depth = document.getElementById('foundation-depth').value;
   const width = document.getElementById('foundation-width').value;
@@ -2184,34 +2243,46 @@ function addFoundation() {
 
 // Додавання плитки
 function addTiles() {
-  const thickness = getSelectedThickness();
-  const borderWidth = document.getElementById('tile-border-width').value;
-  const overhang = document.getElementById('tile-overhang').value;
-  const modularThickness = document.getElementById('modular-thickness').value;
-  const modularSeam = getSelectedSeam();
-  const modularOverhang = document.getElementById('modular-overhang').value;
+  const mode = getSelectedTilingMode();
+  debugLog(`🏗️ Додавання плитки, режим: ${mode}`, 'info');
   
   if (window.sketchup && window.sketchup.add_tiles) {
-    const thicknessMm = convertToMm(thickness);
-    const borderWidthMm = convertToMm(borderWidth);
-    const overhangMm = convertToMm(overhang);
-    const modularThicknessMm = convertToMm(modularThickness);
-    const modularSeamMm = convertToMm(modularSeam, true); // Шов завжди в мм
-    const modularOverhangMm = convertToMm(modularOverhang);
-    
-    debugLog(` Додаємо плитку: товщина=${thicknessMm}мм, бордюр=${borderWidthMm}мм`, 'info');
-    
-    window.sketchup.add_tiles(
-      thicknessMm, 
-      borderWidthMm, 
-      overhangMm, 
-      modularThicknessMm, 
-      modularSeamMm, 
-      modularOverhangMm
-    );
+    if (mode === 'frame') {
+      const thickness = getSelectedThickness();
+      const borderWidth = document.getElementById('tile-border-width').value;
+      const overhang = document.getElementById('tile-overhang').value;
+      const seam = getSelectedSeam();
+      
+      debugLog(` Параметри рамки: товщина=${thickness}, ширина=${borderWidth}, виступ=${overhang}, шов=${seam}`, 'info');
+      
+      // Конвертуємо в мм
+      const thicknessMm = convertToMm(thickness);
+      const borderWidthMm = convertToMm(borderWidth);
+      const overhangMm = convertToMm(overhang);
+      const seamMm = convertToMm(seam, true); // Шви завжди в мм
+      
+      debugLog(` Параметри в мм: товщина=${thicknessMm}, ширина=${borderWidthMm}, виступ=${overhangMm}, шов=${seamMm}`, 'info');
+      
+      window.sketchup.add_tiles('frame', thicknessMm, borderWidthMm, overhangMm, seamMm);
+    } else {
+      const size = document.getElementById('modular-tile-size').value;
+      const thickness = document.getElementById('modular-thickness').value;
+      const seam = getSelectedSeam();
+      const overhang = document.getElementById('modular-overhang').value;
+      
+      debugLog(` Параметри модульної: розмір=${size}, товщина=${thickness}, шов=${seam}, виступ=${overhang}`, 'info');
+      
+      // Конвертуємо в мм
+      const thicknessMm = convertToMm(thickness);
+      const seamMm = convertToMm(seam, true); // Шви завжди в мм
+      const overhangMm = convertToMm(overhang);
+      
+      debugLog(` Параметри в мм: товщина=${thicknessMm}, шов=${seamMm}, виступ=${overhangMm}`, 'info');
+      
+      window.sketchup.add_tiles('modular', size, thicknessMm, seamMm, overhangMm);
+    }
     addedElements.tiling = true;
     updateSummaryTable();
-    
     debugLog(` Плитка додана успішно`, 'success');
   } else {
     debugLog(` window.sketchup.add_tiles не доступний`, 'error');
@@ -2353,7 +2424,12 @@ function addStandWithCustomSize() {
 // --- ВІДМОСТКА ---
 // Функції для створення відмостки
 
-// Додавання відмостки
+/**
+ * Створює відмостку в SketchUp з параметрами з UI
+ * Підтримує два режими: однакова ширина (uniform) та різна ширина (custom)
+ * @example
+ * addBlindArea(); // Створює відмостку з поточними значеннями з UI
+ */
 function addBlindArea() {
   const thickness = document.getElementById('blind-area-thickness').value;
   const mode = getSelectedBlindAreaMode();
@@ -2533,7 +2609,14 @@ function changeUnit(newUnit) {
 // --- ЗБІР ДАНИХ ---
 // Функції для збору значень з UI
 
-// Збір всіх значень з UI
+/**
+ * Збирає всі значення з UI елементів у структурованому вигляді
+ * @returns {Object} Об'єкт з усіма значеннями з форми, згрупованими за категоріями
+ * @example
+ * const values = getAllInputValues();
+ * console.log(values.foundation.depth); // Значення глибини фундаменту
+ * console.log(values.tiles.thickness); // Вибрана товщина плитки
+ */
 function getAllInputValues() {
   return {
     foundation: {
@@ -2604,7 +2687,15 @@ function getAllInputValues() {
 // --- КОНВЕРТАЦІЯ ОДИНИЦЬ ---
 // Функції для конвертації між мм/см
 
-// Конвертація всіх значень
+/**
+ * Конвертує всі значення з однієї одиниці вимірювання в іншу
+ * @param {Object} oldValues - Об'єкт зі старими значеннями (результат getAllInputValues())
+ * @param {string} oldUnit - Стара одиниця вимірювання ('mm' або 'cm')
+ * @param {string} newUnit - Нова одиниця вимірювання ('mm' або 'cm')
+ * @example
+ * const values = getAllInputValues();
+ * convertAllValues(values, 'mm', 'cm'); // Конвертує всі значення з мм в см
+ */
 function convertAllValues(oldValues, oldUnit, newUnit) {
   // Конвертуємо значення фундаменту
   if (oldValues.foundation) {
@@ -2801,7 +2892,12 @@ function convertToMm(value, isSeam = false) {
 // --- КОНТРОЛИ ТОВЩИНИ ---
 // Функції для вибору та отримання товщини плитки
 
-// Вибір товщини плитки
+/**
+ * Обробляє вибір товщини плитки користувачем
+ * @param {HTMLElement} button - Кнопка, яку натиснув користувач
+ * @example
+ * selectThickness(document.querySelector('.thickness-btn[data-value="20"]'));
+ */
 function selectThickness(button) {
   // Видаляємо активний клас з усіх кнопок
   const buttons = document.querySelectorAll('.thickness-btn');
@@ -2902,38 +2998,7 @@ function updateSeamButtons() {
 }
 
 // --- КОНТРОЛИ СТЕЛ ---
-// Функції для вибору типу стел
-
-// Вибір типу стели
-function selectSteleType(button) {
-  const segments = document.querySelectorAll('.segment');
-  const steleOptionsSection = document.getElementById('stele-options-section');
-  const steleScalingSection = document.getElementById('stele-scaling-section');
-  
-  // Оновлюємо активний стан сегментів
-  segments.forEach(segment => {
-    segment.classList.remove('active');
-  });
-  
-  // Активуємо поточний сегмент
-  const currentSegment = button.closest('.segment');
-  if (currentSegment) {
-    currentSegment.classList.add('active');
-  }
-  
-  // Показуємо/приховуємо секції залежно від типу
-  const steleType = button.dataset.steleType;
-  
-  if (steleType === 'custom') {
-    if (steleOptionsSection) steleOptionsSection.style.display = 'block';
-    if (steleScalingSection) steleScalingSection.style.display = 'block';
-  } else {
-    if (steleOptionsSection) steleOptionsSection.style.display = 'none';
-    if (steleScalingSection) steleScalingSection.style.display = 'none';
-  }
-  
-  debugLog(` Вибрано тип стели: ${steleType}`, 'success');
-}
+// Функції для вибору типу стел (дублікат видалено)
 
 // --- КОНТРОЛИ ВІДМОСТКИ ---
 // Функції для вибору режиму відмостки

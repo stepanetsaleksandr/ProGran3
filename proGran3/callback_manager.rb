@@ -247,6 +247,7 @@ module ProGran3
         # Додаємо модель з координацією
         if category.to_sym == :steles
           # Використовуємо CoordinationManager для стел
+          ProGran3::Logger.info("CallbackManager: тип стели: #{stele_type} (#{stele_type.class})", "CallbackManager")
           stele_params = { category: category, filename: model_name, type: stele_type, distance: stele_distance, central_detail: central_detail, central_detail_width: central_detail_width, central_detail_depth: central_detail_depth, central_detail_height: central_detail_height }
           success = CoordinationManager.update_stele_dependents(stele_params)
         else

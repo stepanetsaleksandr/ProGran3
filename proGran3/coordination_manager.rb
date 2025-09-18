@@ -365,9 +365,12 @@ module ProGran3
       old_steles.each(&:erase!)
       
       # Створюємо нові стели
+      ProGran3::Logger.info("Тип стели: #{params[:type]} (#{params[:type].class})", "CoordinationManager")
       if params[:type] == 'paired'
+        ProGran3::Logger.info("Створюємо парні стели", "CoordinationManager")
         ProGran3.insert_paired_steles(params[:category], params[:filename], params[:distance], params[:central_detail], params[:central_detail_width], params[:central_detail_depth], params[:central_detail_height])
       else
+        ProGran3::Logger.info("Створюємо одну стелу", "CoordinationManager")
         ProGran3.insert_component(params[:category], params[:filename])
       end
     end
