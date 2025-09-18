@@ -2404,7 +2404,17 @@ function changeUnit(newUnit) {
   debugLog(` Одиниця вимірювання змінена на: ${newUnit}`, 'success');
 }
 
-// Отримання всіх значень з полів вводу
+
+
+// ============================================================================
+// 🔧 УТИЛІТИ
+// ============================================================================
+// Допоміжні функції для роботи з даними та одиницями вимірювання
+
+// --- ЗБІР ДАНИХ ---
+// Функції для збору значень з UI
+
+// Збір всіх значень з UI
 function getAllInputValues() {
   return {
     foundation: {
@@ -2472,6 +2482,9 @@ function getAllInputValues() {
   };
 }
 
+// --- КОНВЕРТАЦІЯ ОДИНИЦЬ ---
+// Функції для конвертації між мм/см
+
 // Конвертація всіх значень
 function convertAllValues(oldValues, oldUnit, newUnit) {
   // Конвертуємо значення фундаменту
@@ -2509,62 +2522,57 @@ function convertAllValues(oldValues, oldUnit, newUnit) {
     document.getElementById('cladding-thickness').value = convertValue(oldValues.cladding.thickness, oldUnit, newUnit);
   }
   
-  // Конвертуємо значення підставки
+  // Конвертуємо значення підставок
   if (oldValues.stands) {
     document.getElementById('stands-height').value = convertValue(oldValues.stands.height, oldUnit, newUnit);
     document.getElementById('stands-width').value = convertValue(oldValues.stands.width, oldUnit, newUnit);
     document.getElementById('stands-depth').value = convertValue(oldValues.stands.depth, oldUnit, newUnit);
   }
   
-  // Конвертуємо значення проміжної
+  // Конвертуємо значення зазорів
   if (oldValues.gaps) {
     document.getElementById('gaps-height').value = convertValue(oldValues.gaps.height, oldUnit, newUnit);
     document.getElementById('gaps-width').value = convertValue(oldValues.gaps.width, oldUnit, newUnit);
     document.getElementById('gaps-depth').value = convertValue(oldValues.gaps.depth, oldUnit, newUnit);
   }
   
-  // Конвертуємо значення відстані між стелами
-  if (oldValues.steleDistance !== undefined) {
+  // Конвертуємо відстань між стелами
+  if (oldValues.steleDistance) {
     document.getElementById('stele-distance').value = convertValue(oldValues.steleDistance, oldUnit, newUnit);
   }
   
-  // Конвертуємо розміри центральної деталі
+  // Конвертуємо центральну деталь
   if (oldValues.centralDetail) {
     document.getElementById('central-detail-width').value = convertValue(oldValues.centralDetail.width, oldUnit, newUnit);
     document.getElementById('central-detail-depth').value = convertValue(oldValues.centralDetail.depth, oldUnit, newUnit);
     document.getElementById('central-detail-height').value = convertValue(oldValues.centralDetail.height, oldUnit, newUnit);
   }
   
-  // Конвертуємо розміри стели (масштабування)
+  // Конвертуємо масштабування стел
   if (oldValues.steleScaling) {
-    document.getElementById('stele-width').value = convertValue(oldValues.steleScaling.width, oldUnit, newUnit);
-    document.getElementById('stele-height').value = convertValue(oldValues.steleScaling.height, oldUnit, newUnit);
-    document.getElementById('stele-depth').value = convertValue(oldValues.steleScaling.depth, oldUnit, newUnit);
+    if (oldValues.steleScaling.width && document.getElementById('stele-width')) {
+      document.getElementById('stele-width').value = convertValue(oldValues.steleScaling.width, oldUnit, newUnit);
+    }
+    if (oldValues.steleScaling.height && document.getElementById('stele-height')) {
+      document.getElementById('stele-height').value = convertValue(oldValues.steleScaling.height, oldUnit, newUnit);
+    }
+    if (oldValues.steleScaling.depth && document.getElementById('stele-depth')) {
+      document.getElementById('stele-depth').value = convertValue(oldValues.steleScaling.depth, oldUnit, newUnit);
+    }
   }
   
-  // Конвертуємо значення кутової огорожі
+  // Конвертуємо огорожі
   if (oldValues.fenceCorner) {
     document.getElementById('fence-corner-post-height').value = convertValue(oldValues.fenceCorner.postHeight, oldUnit, newUnit);
     document.getElementById('fence-corner-post-size').value = convertValue(oldValues.fenceCorner.postSize, oldUnit, newUnit);
     document.getElementById('fence-corner-side-height').value = convertValue(oldValues.fenceCorner.sideHeight, oldUnit, newUnit);
     document.getElementById('fence-corner-side-length').value = convertValue(oldValues.fenceCorner.sideLength, oldUnit, newUnit);
     document.getElementById('fence-corner-side-thickness').value = convertValue(oldValues.fenceCorner.sideThickness, oldUnit, newUnit);
-    // decorativeSize - фіксоване значення, не конвертується
   }
   
-  // Конвертуємо значення периметральної огорожі
   if (oldValues.fencePerimeter) {
     document.getElementById('fence-perimeter-post-height').value = convertValue(oldValues.fencePerimeter.postHeight, oldUnit, newUnit);
     document.getElementById('fence-perimeter-post-size').value = convertValue(oldValues.fencePerimeter.postSize, oldUnit, newUnit);
-    document.getElementById('fence-perimeter-north-count').value = oldValues.fencePerimeter.northCount; // Кількість не конвертується
-    document.getElementById('fence-perimeter-south-count').value = oldValues.fencePerimeter.southCount; // Кількість не конвертується
-    document.getElementById('fence-perimeter-east-west-count').value = oldValues.fencePerimeter.eastWestCount; // Кількість не конвертується
-    // decorativeHeight і decorativeThickness - фіксовані значення, не конвертуються
-  }
-  
-  // Конвертуємо значення облицювання
-  if (oldValues.cladding) {
-    document.getElementById('cladding-thickness').value = convertValue(oldValues.cladding.thickness, oldUnit, newUnit);
   }
 }
 
@@ -2573,28 +2581,54 @@ function convertValue(value, oldUnit, newUnit, isSeam = false) {
   const numValue = parseFloat(value);
   if (isNaN(numValue)) return value;
   
-  // Шви завжди залишаються в мм, не конвертуються
-  if (isSeam) {
-    return value;
-  }
+  // Шви завжди в мм, не конвертуються
+  if (isSeam) return numValue;
+  
+  if (oldUnit === newUnit) return numValue;
   
   if (oldUnit === 'mm' && newUnit === 'cm') {
-    return (numValue / 10).toFixed(0); // Прибираємо десяткові знаки для см
+    return Math.round(numValue / 10 * 100) / 100; // Округлюємо до 2 знаків після коми
   } else if (oldUnit === 'cm' && newUnit === 'mm') {
     return Math.round(numValue * 10);
   }
   
-  return value;
+  return numValue;
 }
 
 // Отримання поточної одиниці вимірювання
 function getCurrentUnit() {
-  debugLog(`getCurrentUnit: повертаємо "${currentUnit}"`, 'info');
-  return currentUnit;
+  return currentUnit || 'mm';
 }
 
-// Оновлення всіх лейблів з одиницями вимірювання
-// updateUnitLabels() перенесено в modules/ui/AccordionManager.js
+// Конвертація значення в мм для відправки в Ruby
+function convertToMm(value, isSeam = false) {
+  const numValue = parseFloat(value);
+  if (isNaN(numValue)) {
+    debugLog(`convertToMm: невалідне значення "${value}"`, 'warn');
+    return value;
+  }
+  
+  // Шви завжди вже в мм, не потребують конвертації
+  if (isSeam) {
+    debugLog(`convertToMm: шов "${value}" → ${numValue} мм (без конвертації)`, 'info');
+    return numValue;
+  }
+  
+  if (currentUnit === 'mm') {
+    debugLog(`convertToMm: "${value}" мм → ${numValue} мм (без конвертації)`, 'info');
+    return numValue;
+  } else if (currentUnit === 'cm') {
+    const result = Math.round(numValue * 10);
+    debugLog(`convertToMm: "${value}" см → ${numValue} × 10 = ${result} мм`, 'info');
+    return result;
+  }
+  
+  debugLog(`convertToMm: невідома одиниця "${currentUnit}", повертаємо ${numValue}`, 'warn');
+  return numValue;
+}
+
+// --- ФОРМАТУВАННЯ ---
+// Функції для форматування значень
 
 // Форматування значення для відображення
 function formatValue(value, unit = null) {
@@ -2610,11 +2644,6 @@ function formatValue(value, unit = null) {
   
   return value;
 }
-
-// ============================================================================
-// 🔧 УТИЛІТИ
-// ============================================================================
-// Допоміжні функції для роботи з даними та одиницями вимірювання
 
 // Конвертація значення в мм для відправки в Ruby
 function convertToMm(value, isSeam = false) {
