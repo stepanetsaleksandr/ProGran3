@@ -1848,31 +1848,6 @@ function updateBlindAreaControls() {
   updateAllDisplays();
 }
 
-function addBlindArea() {
-  const thickness = convertToMm(document.getElementById('blind-area-thickness').value);
-  const mode = getSelectedBlindAreaMode();
-  
-  if (mode === 'uniform') {
-    const width = convertToMm(document.getElementById('blind-area-uniform-width').value);
-    debugLog(`🏗️ Створення відмостки з однаковою шириною: ${width}мм, товщина: ${thickness}мм`, 'info');
-    if (window.sketchup && window.sketchup.add_blind_area_uniform) {
-      window.sketchup.add_blind_area_uniform(width, thickness);
-      addedElements.blindArea = true;
-      updateSummaryTable();
-    } else { debugLog(` window.sketchup.add_blind_area_uniform не доступний`, 'error'); }
-  } else {
-    const north = convertToMm(document.getElementById('blind-area-north').value);
-    const south = convertToMm(document.getElementById('blind-area-south').value);
-    const east = convertToMm(document.getElementById('blind-area-east').value);
-    const west = convertToMm(document.getElementById('blind-area-west').value);
-    debugLog(`🏗️ Створення відмостки з різною шириною: П:${north}мм, Пд:${south}мм, С:${east}мм, З:${west}мм, товщина: ${thickness}мм`, 'info');
-    if (window.sketchup && window.sketchup.add_blind_area_custom) {
-      window.sketchup.add_blind_area_custom(north, south, east, west, thickness);
-      addedElements.blindArea = true;
-      updateSummaryTable();
-    } else { debugLog(` window.sketchup.add_blind_area_custom не доступний`, 'error'); }
-  }
-}
 
 
 
@@ -2178,115 +2153,259 @@ function updateSummaryTable() {
 // Функції для створення елементів через SketchUp API
 // ВСІ ФУНКЦІЇ З window.sketchup - НЕ ТОРКАТИСЯ!
 
-// Функції для додавання елементів
+// --- ФУНДАМЕНТ ---
+// Функції для створення фундаменту
+
+// Додавання фундаменту
 function addFoundation() {
   const depth = document.getElementById('foundation-depth').value;
   const width = document.getElementById('foundation-width').value;
   const height = document.getElementById('foundation-height').value;
   
   if (window.sketchup && window.sketchup.add_foundation) {
-    // Конвертуємо в мм перед відправкою в Ruby
     const depthMm = convertToMm(depth);
     const widthMm = convertToMm(width);
     const heightMm = convertToMm(height);
     
+    debugLog(` Додаємо фундамент: ${depthMm}×${widthMm}×${heightMm} мм`, 'info');
+    
     window.sketchup.add_foundation(depthMm, widthMm, heightMm);
     addedElements.foundation = true;
     updateSummaryTable();
-  } else { debugLog(` window.sketchup.add_foundation не доступний`, 'error'); }
+    
+    debugLog(` Фундамент додано успішно`, 'success');
+  } else {
+    debugLog(` window.sketchup.add_foundation не доступний`, 'error');
+  }
 }
 
+// --- ПЛИТКА ---
+// Функції для створення плитки та облицювання
 
-
+// Додавання плитки
 function addTiles() {
-  const mode = getSelectedTilingMode();
-  debugLog(`🏗️ Додавання плитки, режим: ${mode}`, 'info');
+  const thickness = getSelectedThickness();
+  const borderWidth = document.getElementById('tile-border-width').value;
+  const overhang = document.getElementById('tile-overhang').value;
+  const modularThickness = document.getElementById('modular-thickness').value;
+  const modularSeam = getSelectedSeam();
+  const modularOverhang = document.getElementById('modular-overhang').value;
   
   if (window.sketchup && window.sketchup.add_tiles) {
-    if (mode === 'frame') {
-      const borderWidthElement = document.getElementById('tile-border-width');
-      const overhangElement = document.getElementById('tile-overhang');
-      
-      if (!borderWidthElement) {
-        debugLog(` Не знайдено поле ширини рамки (tile-border-width)`, 'error');
-        return;
-      }
-      if (!overhangElement) {
-        debugLog(` Не знайдено поле виступу (tile-overhang)`, 'error');
-        return;
-      }
-      
-      const thickness = getSelectedThickness();
-      const borderWidth = borderWidthElement.value;
-      const overhang = overhangElement.value;
-      const seam = getSelectedSeam();
-      
-      debugLog(` Параметри рамки: товщина=${thickness}, ширина=${borderWidth}, виступ=${overhang}, шов=${seam}`, 'info');
-      
-      // Конвертуємо в мм
-      const thicknessMm = convertToMm(thickness);
-      const borderWidthMm = convertToMm(borderWidth);
-      const overhangMm = convertToMm(overhang);
-      const seamMm = convertToMm(seam, true); // Шви завжди в мм
-      
-      debugLog(` Параметри в мм: товщина=${thicknessMm}, ширина=${borderWidthMm}, виступ=${overhangMm}, шов=${seamMm}`, 'info');
-      
-      window.sketchup.add_tiles('frame', thicknessMm, borderWidthMm, overhangMm, seamMm);
-    } else {
-      const sizeElement = document.getElementById('modular-tile-size');
-      const thicknessElement = document.getElementById('modular-thickness');
-      const overhangElement = document.getElementById('modular-overhang');
-      
-      if (!sizeElement) {
-        debugLog(` Не знайдено поле розміру плитки (modular-tile-size)`, 'error');
-        return;
-      }
-      if (!thicknessElement) {
-        debugLog(` Не знайдено поле товщини модульної плитки (modular-thickness)`, 'error');
-        return;
-      }
-      if (!overhangElement) {
-        debugLog(` Не знайдено поле виступу модульної плитки (modular-overhang)`, 'error');
-        return;
-      }
-      
-      const size = sizeElement.value;
-      const thickness = thicknessElement.value;
-      const seam = getSelectedSeam();
-      const overhang = overhangElement.value;
-      
-      debugLog(` Параметри модульної: розмір=${size}, товщина=${thickness}, шов=${seam}, виступ=${overhang}`, 'info');
-      
-      // Конвертуємо в мм
-      const thicknessMm = convertToMm(thickness);
-      const seamMm = convertToMm(seam, true); // Шви завжди в мм
-      const overhangMm = convertToMm(overhang);
-      
-      debugLog(` Параметри в мм: товщина=${thicknessMm}, шов=${seamMm}, виступ=${overhangMm}`, 'info');
-      
-      window.sketchup.add_tiles('modular', size, thicknessMm, seamMm, overhangMm);
-    }
+    const thicknessMm = convertToMm(thickness);
+    const borderWidthMm = convertToMm(borderWidth);
+    const overhangMm = convertToMm(overhang);
+    const modularThicknessMm = convertToMm(modularThickness);
+    const modularSeamMm = convertToMm(modularSeam, true); // Шов завжди в мм
+    const modularOverhangMm = convertToMm(modularOverhang);
+    
+    debugLog(` Додаємо плитку: товщина=${thicknessMm}мм, бордюр=${borderWidthMm}мм`, 'info');
+    
+    window.sketchup.add_tiles(
+      thicknessMm, 
+      borderWidthMm, 
+      overhangMm, 
+      modularThicknessMm, 
+      modularSeamMm, 
+      modularOverhangMm
+    );
     addedElements.tiling = true;
     updateSummaryTable();
+    
     debugLog(` Плитка додана успішно`, 'success');
   } else {
     debugLog(` window.sketchup.add_tiles не доступний`, 'error');
   }
 }
 
-
-
+// Додавання облицювання
 function addSideCladding() {
   const thickness = document.getElementById('cladding-thickness').value;
   
   if (window.sketchup && window.sketchup.add_side_cladding) {
-    // Конвертуємо в мм
     const thicknessMm = convertToMm(thickness);
+    
+    debugLog(` Додаємо облицювання: товщина=${thicknessMm}мм`, 'info');
+    
     window.sketchup.add_side_cladding(thicknessMm);
     addedElements.cladding = true;
     updateSummaryTable();
+    
+    debugLog(` Облицювання додано успішно`, 'success');
+  } else {
+    debugLog(` window.sketchup.add_side_cladding не доступний`, 'error');
   }
 }
+
+// --- ОГОРІЖІ ---
+// Функції для створення огорож (кутові, периметральні, декоративні)
+
+// Додавання кутової огорожі
+function addFenceCorner() {
+  const postHeight = document.getElementById('fence-corner-post-height').value;
+  const postSize = document.getElementById('fence-corner-post-size').value;
+  const sideHeight = document.getElementById('fence-corner-side-height').value;
+  const sideLength = document.getElementById('fence-corner-side-length').value;
+  const sideThickness = document.getElementById('fence-corner-side-thickness').value;
+  const decorativeSize = 100; // Фіксоване значення
+  
+  if (window.sketchup && window.sketchup.add_fence_corner) {
+    const postHeightMm = convertToMm(postHeight);
+    const postSizeMm = convertToMm(postSize);
+    const sideHeightMm = convertToMm(sideHeight);
+    const sideLengthMm = convertToMm(sideLength);
+    const sideThicknessMm = convertToMm(sideThickness);
+    
+    debugLog(` Додаємо кутову огорожу: стовп=${postHeightMm}×${postSizeMm}мм`, 'info');
+    
+    window.sketchup.add_fence_corner(
+      postHeightMm, 
+      postSizeMm, 
+      sideHeightMm, 
+      sideLengthMm, 
+      sideThicknessMm, 
+      decorativeSize
+    );
+    addedElements.fence_corner = true;
+    updateSummaryTable();
+    
+    debugLog(` Кутова огорожа додана успішно`, 'success');
+  } else {
+    debugLog(` window.sketchup.add_fence_corner не доступний`, 'error');
+  }
+}
+
+// Додавання периметральної огорожі
+function addFencePerimeter() {
+  const postHeight = document.getElementById('fence-perimeter-post-height').value;
+  const postSize = document.getElementById('fence-perimeter-post-size').value;
+  const northCount = document.getElementById('fence-perimeter-north-count').value;
+  const southCount = document.getElementById('fence-perimeter-south-count').value;
+  const eastWestCount = document.getElementById('fence-perimeter-east-west-count').value;
+  const decorativeHeight = 100; // Фіксоване значення
+  const decorativeThickness = 100; // Фіксоване значення
+  
+  if (window.sketchup && window.sketchup.add_fence_perimeter) {
+    const postHeightMm = convertToMm(postHeight);
+    const postSizeMm = convertToMm(postSize);
+    
+    debugLog(` Додаємо периметральну огорожу: стовпи=${postHeightMm}×${postSizeMm}мм`, 'info');
+    
+    window.sketchup.add_fence_perimeter(
+      postHeightMm, 
+      postSizeMm, 
+      parseInt(northCount), 
+      parseInt(southCount), 
+      parseInt(eastWestCount), 
+      decorativeHeight, 
+      decorativeThickness
+    );
+    addedElements.fence_perimeter = true;
+    updateSummaryTable();
+    
+    debugLog(` Периметральна огорожа додана успішно`, 'success');
+  } else {
+    debugLog(` window.sketchup.add_fence_perimeter не доступний`, 'error');
+  }
+}
+
+// Додавання декоративної огорожі
+function addFenceDecor() {
+  if (window.sketchup && window.sketchup.add_fence_decor) {
+    debugLog(` Додаємо декоративну огорожу`, 'info');
+    
+    window.sketchup.add_fence_decor();
+    addedElements.fence_decor = true;
+    updateSummaryTable();
+    
+    debugLog(` Декоративна огорожа додана успішно`, 'success');
+  } else {
+    debugLog(` window.sketchup.add_fence_decor не доступний`, 'error');
+  }
+}
+
+// --- СТЕЛИ ---
+// Функції для створення стел та підставок
+
+// Додавання підставки з кастомними розмірами
+function addStandWithCustomSize() {
+  const height = document.getElementById('stands-height').value;
+  const width = document.getElementById('stands-width').value;
+  const depth = document.getElementById('stands-depth').value;
+  
+  if (window.sketchup && window.sketchup.add_stand_with_custom_size) {
+    const heightMm = convertToMm(height);
+    const widthMm = convertToMm(width);
+    const depthMm = convertToMm(depth);
+    
+    debugLog(` Додаємо підставку: ${heightMm}×${widthMm}×${depthMm} мм`, 'info');
+    
+    window.sketchup.add_stand_with_custom_size(heightMm, widthMm, depthMm);
+    addedElements.stands = true;
+    updateSummaryTable();
+    
+    debugLog(` Підставка додана успішно`, 'success');
+  } else {
+    debugLog(` window.sketchup.add_stand_with_custom_size не доступний`, 'error');
+  }
+}
+
+// --- ВІДМОСТКА ---
+// Функції для створення відмостки
+
+// Додавання відмостки
+function addBlindArea() {
+  const thickness = document.getElementById('blind-area-thickness').value;
+  const mode = getSelectedBlindAreaMode();
+  
+  if (mode === 'uniform') {
+    const width = document.getElementById('blind-area-uniform-width').value;
+    
+    if (window.sketchup && window.sketchup.add_blind_area_uniform) {
+      const thicknessMm = convertToMm(thickness);
+      const widthMm = convertToMm(width);
+      
+      debugLog(` Додаємо відмостку (однакова ширина): ${widthMm}мм, товщина: ${thicknessMm}мм`, 'info');
+      
+      window.sketchup.add_blind_area_uniform(widthMm, thicknessMm);
+      addedElements.blindArea = true;
+      updateSummaryTable();
+      
+      debugLog(` Відмостка додана успішно`, 'success');
+    } else {
+      debugLog(` window.sketchup.add_blind_area_uniform не доступний`, 'error');
+    }
+  } else {
+    const north = document.getElementById('blind-area-north').value;
+    const south = document.getElementById('blind-area-south').value;
+    const east = document.getElementById('blind-area-east').value;
+    const west = document.getElementById('blind-area-west').value;
+    
+    if (window.sketchup && window.sketchup.add_blind_area_custom) {
+      const thicknessMm = convertToMm(thickness);
+      const northMm = convertToMm(north);
+      const southMm = convertToMm(south);
+      const eastMm = convertToMm(east);
+      const westMm = convertToMm(west);
+      
+      debugLog(` Додаємо відмостку (різна ширина): П:${northMm}мм, Пд:${southMm}мм, С:${eastMm}мм, З:${westMm}мм, товщина: ${thicknessMm}мм`, 'info');
+      
+      window.sketchup.add_blind_area_custom(northMm, southMm, eastMm, westMm, thicknessMm);
+      addedElements.blindArea = true;
+      updateSummaryTable();
+      
+      debugLog(` Відмостка додана успішно`, 'success');
+    } else {
+      debugLog(` window.sketchup.add_blind_area_custom не доступний`, 'error');
+    }
+  }
+}
+
+
+
+
+
+
 
 
 
