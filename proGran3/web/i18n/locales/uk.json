@@ -122,6 +122,7 @@
   },
   "labels": {
     "width_mode": "Режим ширини",
+    "custom_width_mode": "Різна ширина",
     "thickness_mm": "Товщина (мм)",
     "width_mm": "Ширина (мм)",
     "depth_mm": "Довжина (мм)",

@@ -77,13 +77,13 @@
           <span id="blind-area-dimensions-display" class="header-dimensions"></span>
         </div>
         <div class="panel-content">
-          <!-- Режим ширини вгорі -->
-          <div>
-            <label data-i18n="labels.width_mode">Режим ширини:</label>
-            <div class="button-group-tiling-mode">
-              <button type="button" class="tiling-mode-btn active" data-value="uniform" onclick="selectBlindAreaMode(this)" data-i18n="buttons.uniform_width">Однакова ширина</button>
-              <button type="button" class="tiling-mode-btn" data-value="custom" onclick="selectBlindAreaMode(this)" data-i18n="buttons.custom_width">Різна ширина</button>
-            </div>
+          <!-- Перемикач різної ширини -->
+          <div class="toggle-with-label">
+            <span class="toggle-label-text" data-i18n="labels.custom_width_mode">Різна ширина</span>
+            <label class="modern-toggle">
+              <input type="checkbox" id="blind-area-custom-mode" onchange="toggleBlindAreaCustomMode(this)">
+              <span class="toggle-slider"></span>
+            </label>
           </div>
           
           <!-- Ширина і товщина в один ряд -->
@@ -98,11 +98,11 @@
             </div>
           </div>
           
-          <div id="uniform-controls">
+          <div id="blind-area-uniform-controls">
             <!-- Порожній блок для однакової ширини (вже є в ряді вище) -->
           </div>
           
-          <div id="custom-controls" class="hidden">
+          <div id="blind-area-custom-controls" class="hidden">
             <div class="input-row">
               <div class="input-wrapper">
                 <label id="blind-area-north-label" data-i18n="labels.north_side_mm">Північна сторона (мм)</label>

@@ -1881,15 +1881,12 @@ function selectBlindAreaMode(button) {
   updateBlindAreaControls();
 }
 
-function getSelectedBlindAreaMode() {
-  const activeButton = document.querySelector('.button-group-tiling-mode .tiling-mode-btn.active');
-  return activeButton ? activeButton.dataset.value : 'uniform';
-}
+// Функція видалена - замінена на нову версію нижче
 
 function updateBlindAreaControls() {
   const mode = getSelectedBlindAreaMode();
-  const uniformControls = document.getElementById('uniform-controls');
-  const customControls = document.getElementById('custom-controls');
+  const uniformControls = document.getElementById('blind-area-uniform-controls');
+  const customControls = document.getElementById('blind-area-custom-controls');
   
   if (mode === 'uniform') {
     uniformControls.classList.remove('hidden');
@@ -1898,8 +1895,6 @@ function updateBlindAreaControls() {
     uniformControls.classList.add('hidden');
     customControls.classList.remove('hidden');
   }
-  
-  // updateAllDisplays() видалено - функція не існує
 }
 
 
@@ -3011,29 +3006,34 @@ function updateSeamButtons() {
 // --- КОНТРОЛИ ВІДМОСТКИ ---
 // Функції для вибору режиму відмостки
 
-// Вибір режиму відмостки
-function selectBlindAreaMode(button) {
-  // Видаляємо активний клас з усіх кнопок режиму ширини
-  document.querySelectorAll('.button-group-tiling-mode .tiling-mode-btn').forEach(btn => {
-    btn.classList.remove('active');
-  });
-
-  // Додаємо активний клас до натиснутої кнопки
-  button.classList.add('active');
-
+// Перемикач режиму відмостки
+function toggleBlindAreaCustomMode(checkbox) {
+  const customControls = document.getElementById('blind-area-custom-controls');
+  const uniformControls = document.getElementById('blind-area-uniform-controls');
+  
+  if (checkbox.checked) {
+    // Вмикаємо режим різної ширини
+    customControls.classList.remove('hidden');
+    uniformControls.classList.add('hidden');
+    debugLog(' Увімкнено режим різної ширини відмостки', 'info');
+  } else {
+    // Вимікаємо режим різної ширини (однакова ширина)
+    customControls.classList.add('hidden');
+    uniformControls.classList.remove('hidden');
+    debugLog(' Увімкнено режим однакової ширини відмостки', 'info');
+  }
+  
   // Оновлюємо контроли відмостки
   updateBlindAreaControls();
-
-  debugLog(` Вибрано режим відмостки: ${button.dataset.value}`, 'success');
 }
 
 // Отримання вибраного режиму відмостки
 function getSelectedBlindAreaMode() {
-  const activeButton = document.querySelector('.button-group-tiling-mode .tiling-mode-btn.active');
-  if (activeButton) {
-    return activeButton.dataset.value;
+  const customModeCheckbox = document.getElementById('blind-area-custom-mode');
+  if (customModeCheckbox && customModeCheckbox.checked) {
+    return 'custom';
   }
-  return 'uniform'; // Значення за замовчуванням
+  return 'uniform'; // За замовчуванням однакова ширина
 }
 
 // Функція для вибору товщини плитки

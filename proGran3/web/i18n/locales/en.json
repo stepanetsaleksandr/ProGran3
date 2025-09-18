@@ -113,6 +113,7 @@
   },
   "labels": {
     "width_mode": "Width mode",
+    "custom_width_mode": "Different width",
     "thickness_mm": "Thickness (mm)",
     "width_mm": "Width (mm)",
     "depth_mm": "Length (mm)",
