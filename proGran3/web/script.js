@@ -2589,8 +2589,7 @@ function changeUnit(newUnit) {
   convertAllValues(oldValues, oldUnit, newUnit);
   
   // Оновлюємо відображення
-  // updateAllDisplays() видалено - функція не існує
-  // updateUnitLabels() видалено - функція не існує
+  updateUnitLabels();
   updateThicknessButtons();
   updateSeamButtons();
   
@@ -2602,7 +2601,68 @@ function changeUnit(newUnit) {
   debugLog(` Одиниця вимірювання змінена на: ${newUnit}`, 'success');
 }
 
+// Оновлення лейблів одиниць вимірювання
+function updateUnitLabels() {
+  const unitSuffix = currentUnit === 'mm' ? 'мм' : 'см';
+  
+  // Лейбли фундаменту
+  updateLabelText('foundation-depth-label', `Довжина (${unitSuffix})`);
+  updateLabelText('foundation-width-label', `Ширина (${unitSuffix})`);
+  updateLabelText('foundation-height-label', `Висота (${unitSuffix})`);
+  
+  // Лейбли відмостки
+  updateLabelText('blind-area-thickness-label', `Товщина (${unitSuffix})`);
+  updateLabelText('blind-area-uniform-width-label', `Ширина (${unitSuffix})`);
+  updateLabelText('blind-area-north-label', `Північна сторона (${unitSuffix})`);
+  updateLabelText('blind-area-south-label', `Південна сторона (${unitSuffix})`);
+  updateLabelText('blind-area-east-label', `Східна сторона (${unitSuffix})`);
+  updateLabelText('blind-area-west-label', `Західна сторона (${unitSuffix})`);
+  
+  // Лейбли плитки
+  updateLabelText('tile-border-width-label', `Ширина рамки (${unitSuffix})`);
+  updateLabelText('tile-overhang-label', `Виступ (${unitSuffix})`);
+  updateLabelText('modular-thickness-label', `Товщина (${unitSuffix})`);
+  updateLabelText('modular-overhang-label', `Виступ (${unitSuffix})`);
+  
+  // Лейбли облицювання
+  updateLabelText('cladding-thickness-label', `Товщина (${unitSuffix})`);
+  
+  // Лейбли підставки
+  updateLabelText('stands-depth-label', `Довжина (${unitSuffix})`);
+  updateLabelText('stands-width-label', `Ширина (${unitSuffix})`);
+  updateLabelText('stands-height-label', `Висота (${unitSuffix})`);
+  updateLabelText('gaps-depth-label', `Довжина проміжки (${unitSuffix})`);
+  updateLabelText('gaps-width-label', `Ширина проміжки (${unitSuffix})`);
+  updateLabelText('gaps-height-label', `Висота проміжки (${unitSuffix})`);
+  
+  // Лейбли стели
+  updateLabelText('stele-distance-label', `Відстань між стелами (${unitSuffix})`);
+  updateLabelText('stele-width-label', `Ширина стели (${unitSuffix})`);
+  updateLabelText('stele-height-label', `Висота стели (${unitSuffix})`);
+  updateLabelText('stele-depth-label', `Глибина стели (${unitSuffix})`);
+  updateLabelText('central-detail-width-label', `Ширина (${unitSuffix})`);
+  updateLabelText('central-detail-depth-label', `Товщина (${unitSuffix})`);
+  updateLabelText('central-detail-height-label', `Висота (${unitSuffix})`);
+  
+  // Лейбли огорожі
+  updateLabelText('fence-corner-post-height-label', `Висота стовпа (${unitSuffix})`);
+  updateLabelText('fence-corner-post-size-label', `Розмір стовпа (${unitSuffix})`);
+  updateLabelText('fence-corner-side-height-label', `Висота панелі (${unitSuffix})`);
+  updateLabelText('fence-corner-side-length-label', `Довжина панелі (${unitSuffix})`);
+  updateLabelText('fence-corner-side-thickness-label', `Товщина панелі (${unitSuffix})`);
+  updateLabelText('fence-perimeter-post-height-label', `Висота стовпа (${unitSuffix})`);
+  updateLabelText('fence-perimeter-post-size-label', `Розмір стовпа (${unitSuffix})`);
+  
+  debugLog(`Лейбли одиниць оновлено на: ${unitSuffix}`, 'info');
+}
 
+// Допоміжна функція для оновлення тексту лейбла
+function updateLabelText(labelId, newText) {
+  const label = document.getElementById(labelId);
+  if (label) {
+    label.textContent = newText;
+  }
+}
 
 // ============================================================================
 // 🔧 УТИЛІТИ
@@ -2927,12 +2987,21 @@ function getSelectedThickness() {
 // Оновлення кнопок товщини
 function updateThicknessButtons() {
   const buttons = document.querySelectorAll('.thickness-btn');
-  buttons.forEach(btn => {
-    const value = parseFloat(btn.dataset.value);
+  buttons.forEach(button => {
+    const originalValue = button.dataset.originalValue || button.dataset.value;
+    
+    // Зберігаємо оригінальне значення в мм при першому виклику
+    if (!button.dataset.originalValue) {
+      button.dataset.originalValue = button.dataset.value;
+    }
+    
     if (currentUnit === 'mm') {
-      btn.textContent = `${value}мм`;
-    } else if (currentUnit === 'cm') {
-      btn.textContent = `${(value / 10).toFixed(1)}см`;
+      button.textContent = `${originalValue} мм`;
+      button.dataset.value = originalValue;
+    } else {
+      const cmValue = (originalValue / 10).toFixed(0); // Прибираємо десяткові знаки для см
+      button.textContent = `${cmValue} см`;
+      button.dataset.value = cmValue;
     }
   });
 }
@@ -3111,26 +3180,6 @@ function getSelectedSeam() {
 }
 
 // Функція для оновлення тексту кнопок товщини при зміні одиниць
-function updateThicknessButtons() {
-  const buttons = document.querySelectorAll('.thickness-btn');
-  buttons.forEach(button => {
-    const originalValue = button.dataset.originalValue || button.dataset.value;
-    
-    // Зберігаємо оригінальне значення в мм при першому виклику
-    if (!button.dataset.originalValue) {
-      button.dataset.originalValue = button.dataset.value;
-    }
-    
-    if (currentUnit === 'mm') {
-      button.textContent = `${originalValue} мм`;
-      button.dataset.value = originalValue;
-    } else {
-      const cmValue = (originalValue / 10).toFixed(0); // Прибираємо десяткові знаки для см
-      button.textContent = `${cmValue} см`;
-      button.dataset.value = cmValue;
-    }
-  });
-}
 
 // Функція для оновлення тексту кнопок шву при зміні одиниць
 // Дублікат функції updateSeamButtons видалено
