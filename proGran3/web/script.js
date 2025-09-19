@@ -4371,3 +4371,155 @@ function resetSteleScaling() {
   
   debugLog('Скинуто масштабування стели до оригінальних розмірів', 'info');
 }
+
+// ============================================================================
+// СИСТЕМА АВТОМАТИЧНОЇ ПЕРЕБУДОВИ ЗАЛЕЖНИХ КОМПОНЕНТІВ
+// ============================================================================
+
+// Збереження параметрів користувача для залежних компонентів
+function saveUserParametersForDependents(baseCategory) {
+  debugLog(`💾 Збереження параметрів користувача для залежних компонентів: ${baseCategory}`, 'info');
+  
+  const userParams = {};
+  
+  // Зберігаємо параметри підставки
+  if (addedElements.stands) {
+    userParams.stands = {
+      filename: carouselState.stands.currentModel,
+      gaps: carouselState.stands.gaps || false
+    };
+  }
+  
+  // Зберігаємо параметри стел
+  if (addedElements.steles) {
+    userParams.steles = {
+      filename: carouselState.steles.currentModel,
+      type: carouselState.steles.type || 'single',
+      distance: carouselState.steles.distance || 200,
+      centralDetail: carouselState.steles.centralDetail || false,
+      centralDetailWidth: carouselState.steles.centralDetailWidth || 200,
+      centralDetailDepth: carouselState.steles.centralDetailDepth || 50,
+      centralDetailHeight: carouselState.steles.centralDetailHeight || 1200
+    };
+  }
+  
+  // Зберігаємо параметри квітників
+  if (addedElements.flowerbeds) {
+    userParams.flowerbeds = {
+      filename: carouselState.flowerbeds.currentModel
+    };
+  }
+  
+  // Зберігаємо параметри надгробків
+  if (addedElements.gravestones) {
+    userParams.gravestones = {
+      filename: carouselState.gravestones.currentModel
+    };
+  }
+  
+  // Зберігаємо параметри лампадок
+  if (addedElements.lamps) {
+    userParams.lamps = {
+      filename: carouselState.lamps.currentModel,
+      positionType: carouselState.lamps.positionType || 'center'
+    };
+  }
+  
+  debugLog(`💾 Збережено параметри для компонентів: ${Object.keys(userParams).join(', ')}`, 'success');
+  return userParams;
+}
+
+// Перебудова залежних компонентів з збереженими параметрами
+function rebuildDependentComponentsWithParams(userParams) {
+  debugLog(`🔄 Перебудова залежних компонентів з параметрами`, 'info');
+  
+  Object.keys(userParams).forEach(component => {
+    const params = userParams[component];
+    debugLog(`🔄 Перебудова компонента ${component} з параметрами: ${Object.keys(params).join(', ')}`, 'info');
+    
+    // Відправляємо команду в SketchUp для перебудови
+    if (window.sketchup) {
+      window.sketchup.rebuild_component_with_params(component, JSON.stringify(params));
+    }
+  });
+  
+  debugLog(`✅ Перебудова залежних компонентів завершена`, 'success');
+}
+
+// Обробка зміни фундаменту з автоматичною перебудовою
+function handleFoundationChangeWithRebuild(newParams) {
+  debugLog(`🏗️ Зміна фундаменту з автоматичною перебудовою`, 'info');
+  
+  // Зберігаємо параметри користувача для залежних компонентів
+  const userParams = saveUserParametersForDependents('foundation');
+  
+  if (Object.keys(userParams).length === 0) {
+    debugLog(`ℹ️ Немає залежних компонентів для перебудови`, 'info');
+    return;
+  }
+  
+  debugLog(`💾 Збережено параметри для ${Object.keys(userParams).length} компонентів`, 'info');
+  
+  // Відправляємо команду в SketchUp для перебудови
+  if (window.sketchup) {
+    window.sketchup.rebuild_after_foundation_change(JSON.stringify(newParams), JSON.stringify(userParams));
+  }
+  
+  // Оновлюємо UI після перебудови
+  setTimeout(() => {
+    updateSummaryTable();
+    debugLog(`✅ Перебудова завершена, UI оновлено`, 'success');
+  }, 2000);
+}
+
+// Обробка зміни підставки з автоматичною перебудовою
+function handleStandsChangeWithRebuild(newParams) {
+  debugLog(`🏗️ Зміна підставки з автоматичною перебудовою`, 'info');
+  
+  // Зберігаємо параметри користувача для залежних компонентів
+  const userParams = saveUserParametersForDependents('stands');
+  
+  if (Object.keys(userParams).length === 0) {
+    debugLog(`ℹ️ Немає залежних компонентів для перебудови`, 'info');
+    return;
+  }
+  
+  debugLog(`💾 Збережено параметри для ${Object.keys(userParams).length} компонентів`, 'info');
+  
+  // Відправляємо команду в SketchUp для перебудови
+  if (window.sketchup) {
+    window.sketchup.rebuild_after_stands_change(JSON.stringify(newParams), JSON.stringify(userParams));
+  }
+  
+  // Оновлюємо UI після перебудови
+  setTimeout(() => {
+    updateSummaryTable();
+    debugLog(`✅ Перебудова завершена, UI оновлено`, 'success');
+  }, 2000);
+}
+
+// Універсальна функція для обробки зміни базового компонента
+function handleBaseComponentChangeWithRebuild(componentType, newParams) {
+  debugLog(`🏗️ Зміна ${componentType} з автоматичною перебудовою`, 'info');
+  
+  // Зберігаємо параметри користувача для залежних компонентів
+  const userParams = saveUserParametersForDependents(componentType);
+  
+  if (Object.keys(userParams).length === 0) {
+    debugLog(`ℹ️ Немає залежних компонентів для перебудови`, 'info');
+    return;
+  }
+  
+  debugLog(`💾 Збережено параметри для ${Object.keys(userParams).length} компонентів`, 'info');
+  
+  // Відправляємо команду в SketchUp для перебудови
+  if (window.sketchup) {
+    window.sketchup.rebuild_after_component_change(componentType, JSON.stringify(newParams), JSON.stringify(userParams));
+  }
+  
+  // Оновлюємо UI після перебудови
+  setTimeout(() => {
+    updateSummaryTable();
+    debugLog(`✅ Перебудова ${componentType} завершена, UI оновлено`, 'success');
+  }, 2000);
+}

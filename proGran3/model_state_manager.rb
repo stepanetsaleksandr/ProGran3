@@ -458,6 +458,89 @@ class ModelStateManager
       }
     end
     
+    # Збереження параметрів користувача для залежних компонентів
+    def save_user_parameters_for_dependents(base_category)
+      ProGran3::Logger.info("Збереження параметрів користувача для залежних компонентів: #{base_category}", "ModelState")
+      
+      user_params = {}
+      dependent_components = find_dependent_components(base_category)
+      
+      dependent_components.each do |component|
+        if @model_state[component][:exists]
+          user_params[component] = {
+            filename: @model_state[component][:filename],
+            params: @model_state[component][:params].dup,
+            position: @model_state[component][:position].dup,
+            bounds: @model_state[component][:bounds].dup
+          }
+          
+          # Спеціальні параметри для різних компонентів
+          case component
+          when :stands
+            user_params[component][:gaps] = get_stands_gaps_setting
+          when :steles
+            user_params[component][:type] = get_steles_type_setting
+            user_params[component][:distance] = get_steles_distance_setting
+            user_params[component][:central_detail] = get_central_detail_setting
+          when :lamps
+            user_params[component][:position_type] = get_lamp_position_type
+          end
+          
+          ProGran3::Logger.info("Збережено параметри для #{component}: #{user_params[component].keys.join(', ')}", "ModelState")
+        end
+      end
+      
+      log_change(:user_params_saved, base_category, { saved_components: user_params.keys })
+      user_params
+    end
+    
+    # Перебудова залежних компонентів з збереженими параметрами
+    def rebuild_dependent_components_with_user_params(base_category, user_params)
+      ProGran3::Logger.info("Перебудова залежних компонентів для #{base_category}", "ModelState")
+      
+      dependent_components = find_dependent_components(base_category)
+      
+      dependent_components.each do |component|
+        if user_params[component]
+          ProGran3::Logger.info("Перебудова компонента: #{component}", "ModelState")
+          
+          # Видаляємо старий компонент
+          component_removed(component)
+          
+          # Перебудовуємо з збереженими параметрами
+          rebuild_component_with_params(component, user_params[component])
+        end
+      end
+      
+      log_change(:components_rebuilt, base_category, { rebuilt_components: dependent_components })
+      true
+    end
+    
+    # Перебудова одного компонента з параметрами
+    def rebuild_component_with_params(component, params)
+      ProGran3::Logger.info("Перебудова компонента #{component} з параметрами", "ModelState")
+      
+      # Відновлюємо стан компонента
+      @model_state[component][:exists] = true
+      @model_state[component][:filename] = params[:filename]
+      @model_state[component][:params] = params[:params]
+      @model_state[component][:position] = params[:position]
+      @model_state[component][:bounds] = params[:bounds]
+      
+      # Спеціальна логіка для різних компонентів
+      case component
+      when :stands
+        apply_stands_gaps_setting(params[:gaps]) if params[:gaps]
+      when :steles
+        apply_steles_settings(params) if params[:type]
+      when :lamps
+        apply_lamp_position_setting(params[:position_type]) if params[:position_type]
+      end
+      
+      log_change(:component_rebuilt, component, { params: params })
+      true
+    end
+    
     private
     
     # Пошук компонента в моделі
@@ -511,6 +594,76 @@ class ModelStateManager
       # Обмеження розміру історії
       if @change_history.count > 1000
         @change_history = @change_history.last(500)
+      end
+    end
+    
+    # Отримання налаштувань підставки (проміжки)
+    def get_stands_gaps_setting
+      # Отримуємо з UI або збереженого стану
+      if defined?(carouselState) && carouselState[:stands]
+        carouselState[:stands][:gaps] || false
+      else
+        false
+      end
+    end
+    
+    # Отримання налаштувань стел
+    def get_steles_type_setting
+      if defined?(carouselState) && carouselState[:steles]
+        carouselState[:steles][:type] || 'single'
+      else
+        'single'
+      end
+    end
+    
+    def get_steles_distance_setting
+      if defined?(carouselState) && carouselState[:steles]
+        carouselState[:steles][:distance] || 200
+      else
+        200
+      end
+    end
+    
+    def get_central_detail_setting
+      if defined?(carouselState) && carouselState[:steles]
+        carouselState[:steles][:centralDetail] || false
+      else
+        false
+      end
+    end
+    
+    # Отримання типу позиції лампадки
+    def get_lamp_position_type
+      if defined?(carouselState) && carouselState[:lamps]
+        carouselState[:lamps][:position_type] || 'center'
+      else
+        'center'
+      end
+    end
+    
+    # Застосування налаштувань підставки
+    def apply_stands_gaps_setting(gaps)
+      if defined?(carouselState) && carouselState[:stands]
+        carouselState[:stands][:gaps] = gaps
+        ProGran3::Logger.info("Застосовано налаштування проміжків підставки: #{gaps}", "ModelState")
+      end
+    end
+    
+    # Застосування налаштувань стел
+    def apply_steles_settings(params)
+      if defined?(carouselState) && carouselState[:steles]
+        carouselState[:steles][:type] = params[:type] if params[:type]
+        carouselState[:steles][:distance] = params[:distance] if params[:distance]
+        carouselState[:steles][:centralDetail] = params[:central_detail] if params[:central_detail]
+        ProGran3::Logger.info("Застосовано налаштування стел: #{params.keys.join(', ')}", "ModelState")
+      end
+    end
+    
+    # Застосування позиції лампадки
+    def apply_lamp_position_setting(position_type)
+      if defined?(carouselState) && carouselState[:lamps]
+        carouselState[:lamps][:position_type] = position_type
+        ProGran3::Logger.info("Застосовано позицію лампадки: #{position_type}", "ModelState")
       end
     end
 

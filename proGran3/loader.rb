@@ -132,6 +132,13 @@ module ProGran3
       return false
     end
     
+    # Перевіряємо, чи потрібно перебудовувати залежні компоненти
+    if needs_rebuild_dependents?(category)
+      ProGran3::Logger.info("Потрібна перебудова залежних компонентів для: #{category}", "Loader")
+      rebuild_dependents_after_change(category, filename)
+      return true
+    end
+    
     model = Sketchup.active_model
     entities = model.active_entities
     all_instances_by_category(category).each(&:erase!)
@@ -743,6 +750,162 @@ module ProGran3
       ProGran3::Logger.error("Помилка при створенні проміжної: #{e.message}", "Loader")
       ProGran3::Logger.error("Stack trace: #{e.backtrace.join('\n')}", "Loader")
     end
+  end
+
+  # Перевірка, чи потрібно перебудовувати залежні компоненти
+  def needs_rebuild_dependents?(category)
+    # Компоненти, які потребують перебудови залежних елементів
+    rebuild_required_categories = [:foundation, :stands, :steles, :gravestones]
+    
+    return false unless rebuild_required_categories.include?(category.to_sym)
+    
+    # Перевіряємо, чи є залежні компоненти
+    dependent_components = ModelStateManager.find_dependent_components(category.to_sym)
+    has_dependents = dependent_components.any? { |comp| ModelStateManager.model_state[comp][:exists] }
+    
+    ProGran3::Logger.info("Перевірка перебудови для #{category}: залежні компоненти = #{dependent_components}, існують = #{has_dependents}", "Loader")
+    has_dependents
+  end
+  
+  # Перебудова залежних компонентів після зміни базового
+  def rebuild_dependents_after_change(category, filename)
+    ProGran3::Logger.info("Початок перебудови залежних компонентів для #{category}", "Loader")
+    
+    begin
+      # Зберігаємо параметри користувача для залежних компонентів
+      user_params = ModelStateManager.save_user_parameters_for_dependents(category.to_sym)
+      
+      if user_params.empty?
+        ProGran3::Logger.info("Немає залежних компонентів для перебудови", "Loader")
+        return true
+      end
+      
+      ProGran3::Logger.info("Збережено параметри для компонентів: #{user_params.keys.join(', ')}", "Loader")
+      
+      # Оновлюємо базовий компонент
+      update_base_component(category, filename)
+      
+      # Перебудовуємо залежні компоненти з збереженими параметрами
+      rebuild_dependent_components_with_params(user_params)
+      
+      ProGran3::Logger.info("Перебудова залежних компонентів завершена успішно", "Loader")
+      true
+      
+    rescue => e
+      ProGran3::Logger.error("Помилка перебудови залежних компонентів: #{e.message}", "Loader")
+      ProGran3::Logger.error("Stack trace: #{e.backtrace.join('\n')}", "Loader")
+      false
+    end
+  end
+  
+  # Оновлення базового компонента
+  def update_base_component(category, filename)
+    ProGran3::Logger.info("Оновлення базового компонента: #{category}", "Loader")
+    
+    model = Sketchup.active_model
+    entities = model.active_entities
+    
+    # Видаляємо старі екземпляри
+    all_instances_by_category(category).each(&:erase!)
+    
+    # Завантажуємо новий компонент
+    comp_def = load_component(category, filename)
+    return false unless comp_def
+    
+    # Розраховуємо нову позицію
+    x, y, z = calculate_component_position(category, comp_def, entities)
+    
+    # Додаємо новий екземпляр
+    trans = Geom::Transformation.new([x, y, z])
+    instance = entities.add_instance(comp_def, trans)
+    
+    # Оновлюємо стан в ModelStateManager
+    ModelStateManager.component_added(category.to_sym, { filename: filename })
+    
+    ProGran3::Logger.info("Базовий компонент #{category} оновлено", "Loader")
+    true
+  end
+  
+  # Перебудова залежних компонентів з параметрами
+  def rebuild_dependent_components_with_params(user_params)
+    ProGran3::Logger.info("Перебудова залежних компонентів з параметрами", "Loader")
+    
+    user_params.each do |component, params|
+      ProGran3::Logger.info("Перебудова компонента #{component} з параметрами: #{params.keys.join(', ')}", "Loader")
+      
+      begin
+        # Видаляємо старий компонент
+        all_instances_by_category(component.to_s).each(&:erase!)
+        
+        # Завантажуємо компонент з збереженим ім'ям файлу
+        if params[:filename]
+          comp_def = load_component(component.to_s, params[:filename])
+          if comp_def
+            # Розраховуємо позицію
+            x, y, z = calculate_component_position(component.to_s, comp_def, Sketchup.active_model.active_entities)
+            
+            # Додаємо новий екземпляр
+            trans = Geom::Transformation.new([x, y, z])
+            instance = Sketchup.active_model.active_entities.add_instance(comp_def, trans)
+            
+            # Оновлюємо стан
+            ModelStateManager.component_added(component, params[:params] || {})
+            
+            # Застосовуємо спеціальні налаштування
+            apply_component_specific_settings(component, params)
+            
+            ProGran3::Logger.info("Компонент #{component} перебудовано успішно", "Loader")
+          else
+            ProGran3::Logger.warn("Не вдалося завантажити компонент #{component} з файлу #{params[:filename]}", "Loader")
+          end
+        end
+        
+      rescue => e
+        ProGran3::Logger.error("Помилка перебудови компонента #{component}: #{e.message}", "Loader")
+      end
+    end
+    
+    true
+  end
+  
+  # Застосування спеціальних налаштувань компонента
+  def apply_component_specific_settings(component, params)
+    case component
+    when :stands
+      if params[:gaps]
+        # Застосовуємо налаштування проміжків
+        apply_stands_gaps_settings(params[:gaps])
+      end
+    when :steles
+      if params[:type] || params[:distance] || params[:central_detail]
+        # Застосовуємо налаштування стел
+        apply_steles_specific_settings(params)
+      end
+    when :lamps
+      if params[:position_type]
+        # Застосовуємо позицію лампадки
+        apply_lamp_position_settings(params[:position_type])
+      end
+    end
+  end
+  
+  # Застосування налаштувань проміжків підставки
+  def apply_stands_gaps_settings(gaps)
+    # Логіка застосування проміжків
+    ProGran3::Logger.info("Застосування налаштувань проміжків підставки: #{gaps}", "Loader")
+    # Тут можна додати специфічну логіку для проміжків
+  end
+  
+  # Застосування специфічних налаштувань стел
+  def apply_steles_specific_settings(params)
+    ProGran3::Logger.info("Застосування налаштувань стел: #{params.keys.join(', ')}", "Loader")
+    # Тут можна додати специфічну логіку для стел
+  end
+  
+  # Застосування налаштувань позиції лампадки
+  def apply_lamp_position_settings(position_type)
+    ProGran3::Logger.info("Застосування позиції лампадки: #{position_type}", "Loader")
+    # Тут можна додати специфічну логіку для позиції лампадки
   end
 
   private
