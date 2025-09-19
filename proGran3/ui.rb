@@ -110,30 +110,6 @@ module ProGran3
         CallbackManager.add_lamp_callback(dialog, category, filename, position)
       end
 
-             # Старі callback'и для сумісності (делегування до CallbackManager)
-       @dialog.add_action_callback("insert_foundation") do |dialog, params_json|
-         params = JSON.parse(params_json)
-         CallbackManager.add_foundation_callback(dialog, params["depth"], params["width"], params["height"])
-       end
-
-       @dialog.add_action_callback("insert_component") do |dialog, params|
-         category, filename = params.split("|")
-         CallbackManager.add_model_callback(dialog, category, filename)
-       end
-
-       @dialog.add_action_callback("insert_tiles") do |dialog, params_json|
-         params = JSON.parse(params_json)
-         if params["type"] == "frame"
-           CallbackManager.add_tiles_frame_callback(dialog, params["thickness"], params["borderWidth"], params["overhang"])
-         elsif params["type"] == "modular"
-           CallbackManager.add_tiles_modular_callback(dialog, params["tileSize"], params["thickness"], params["seam"], params["overhang"])
-         end
-       end
-       
-       @dialog.add_action_callback("insert_side_cladding") do |dialog, params_json|
-         params = JSON.parse(params_json)
-         CallbackManager.add_cladding_callback(dialog, params["thickness"])
-       end
 
       @dialog.add_action_callback("reload_plugin") do |dialog, _|
         # Валідація перед перезавантаженням

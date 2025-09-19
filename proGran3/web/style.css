@@ -60,24 +60,7 @@
   margin-bottom: 15px;
 }
 
-.gaps-toggle .toggle-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 6px;
-  background: var(--input-bg, #f8f9fa);
-  border: 2px solid var(--border-color, #e9ecef);
-  transition: all 0.2s ease;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.gaps-toggle .toggle-label:hover {
-  background: var(--input-hover-bg, #e9ecef);
-  border-color: var(--accent-color, #007bff);
-}
+/* .gaps-toggle .toggle-label використовує стилі .toggle-label */
 
 .gaps-toggle input[type="checkbox"] {
   margin: 0;

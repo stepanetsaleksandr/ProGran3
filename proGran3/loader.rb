@@ -137,121 +137,10 @@ module ProGran3
     all_instances_by_category(category).each(&:erase!)
     comp_def = load_component(category, filename)
     return false unless comp_def
-    foundation = model.entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name == "Foundation" }
-    x, y, z = 0, 0, 0
-    foundation_z = 0
-    foundation_bounds = nil
-    if foundation
-      foundation_bounds = foundation.bounds
-      foundation_z = foundation_bounds.max.z
-    end
     
-    # Якщо немає фундаменту, розміщуємо в центрі
-    if !foundation
-      x = 0 - comp_def.bounds.center.x
-      y = 0 - comp_def.bounds.center.y
-      z = 0 - comp_def.bounds.min.z
-    end
+    # Отримуємо позицію для компонента
+    x, y, z = calculate_component_position(category, comp_def, entities)
 
-    if category == "stands"
-      if foundation
-        placement_z = foundation_z
-        tile_instance = entities.grep(Sketchup::ComponentInstance).find { |inst| inst.definition.name.start_with?("Perimeter_Tile_") || inst.definition.name.start_with?("Modular_Tile") }
-        if tile_instance
-          placement_z = tile_instance.bounds.max.z
-        end
-        x = (foundation_bounds.min.x + 300.mm) - comp_def.bounds.min.x
-        y = foundation_bounds.center.y - comp_def.bounds.center.y
-        z = placement_z - comp_def.bounds.min.z
-      end
-      # Якщо немає фундаменту, координати вже встановлені вище
-    else
-      stand = last_base_stand_instance
-      if stand
-        stand_bounds = stand.bounds
-        comp_bounds = comp_def.bounds
-        if category == "steles"
-          # Використовуємо проміжну для розміщення стел, якщо вона є
-          placement_surface = get_steles_placement_surface
-          if placement_surface
-            surface_bounds = placement_surface.bounds
-            x = surface_bounds.center.x - comp_bounds.center.x
-            y = surface_bounds.center.y - comp_bounds.center.y
-            z = surface_bounds.max.z - comp_bounds.min.z
-          else
-            # Fallback до підставки
-            x = stand_bounds.center.x - comp_bounds.center.x
-            y = stand_bounds.center.y - comp_bounds.center.y
-            z = stand_bounds.max.z - comp_bounds.min.z
-          end
-        elsif category == "flowerbeds"
-          placement_z = foundation_z
-          tile_instance = entities.grep(Sketchup::ComponentInstance).find { |inst| inst.definition.name.start_with?("Perimeter_Tile_") || inst.definition.name.start_with?("Modular_Tile") }
-          if tile_instance
-            placement_z = tile_instance.bounds.max.z
-          end
-          insert_x = stand_bounds.min.x + stand_bounds.width
-          center_y_stand = stand_bounds.center.y
-          center_y_comp = comp_bounds.center.y
-          x = insert_x - comp_bounds.min.x
-          y = center_y_stand - center_y_comp
-          z = placement_z - comp_bounds.min.z
-        elsif category == "gravestones"
-          # Шукаємо квітник
-          flowerbed = entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('flowerbed') }
-          if flowerbed
-            # Позиціонуємо на південній стороні квітника з вирівнюванням країв
-            flowerbed_bounds = flowerbed.bounds
-            x = flowerbed_bounds.min.x - comp_bounds.min.x  # Південний край квітника збігається з південним краєм плити
-            y = flowerbed_bounds.center.y - comp_bounds.center.y  # По центру квітника
-            z = flowerbed_bounds.max.z - comp_bounds.min.z  # На верхній поверхні квітника
-          else
-            # Якщо немає квітника, позиціонуємо прилягаючи до південної площини підставки
-            x = stand_bounds.max.x - comp_bounds.min.x  # Південна сторона надгробки прилягає до північної сторони підставки
-            y = stand_bounds.center.y - comp_bounds.center.y  # По центру підставки відносно ЗХ-СХ
-            z = stand_bounds.min.z - comp_bounds.min.z  # На тому ж рівні що і підставка (по низу)
-          end
-        elsif category == "fence_decor"
-          # Для декору огорожі позиціонуємо на всіх стовпчиках огорожі
-          # Шукаємо стовпчики огорожі
-          fence_posts = entities.grep(Sketchup::ComponentInstance).find_all { |c| 
-            c.definition.name.include?('Fence') && c.definition.name.include?('Post')
-          }
-          if fence_posts.any?
-            # Позиціонуємо на першому знайденому стовпчику (основний екземпляр)
-            post = fence_posts.first
-            post_bounds = post.bounds
-            x = post_bounds.center.x - comp_bounds.center.x
-            y = post_bounds.center.y - comp_bounds.center.y
-            z = post_bounds.max.z - comp_bounds.min.z  # На верхній частині стовпчика
-          else
-            # Якщо немає стовпчиків, розміщуємо в центрі фундаменту
-            if foundation
-              x = foundation_bounds.center.x - comp_bounds.center.x
-              y = foundation_bounds.center.y - comp_bounds.center.y
-              z = foundation_bounds.max.z - comp_bounds.min.z
-            end
-          end
-        end
-      elsif category == "gravestones"
-        # Якщо немає підставки, розміщуємо на фундаменті
-        if foundation
-          x = foundation_bounds.center.x - comp_def.bounds.center.x
-          y = foundation_bounds.center.y - comp_def.bounds.center.y
-          z = foundation_bounds.max.z - comp_def.bounds.min.z
-        end
-        # Якщо немає фундаменту, координати вже встановлені вище
-      elsif category == "fence_decor"
-        # Якщо немає підставки, розміщуємо на фундаменті
-        if foundation
-          x = foundation_bounds.center.x - comp_def.bounds.center.x
-          y = foundation_bounds.center.y - comp_def.bounds.center.y
-          z = foundation_bounds.max.z - comp_def.bounds.min.z
-        end
-        # Якщо немає фундаменту, координати вже встановлені вище
-      end
-      # Якщо немає підставки для інших категорій, координати вже встановлені вище
-    end
     trans = Geom::Transformation.new([x, y, z])
     instance = entities.add_instance(comp_def, trans)
     
@@ -854,5 +743,157 @@ module ProGran3
       ProGran3::Logger.error("Помилка при створенні проміжної: #{e.message}", "Loader")
       ProGran3::Logger.error("Stack trace: #{e.backtrace.join('\n')}", "Loader")
     end
+  end
+
+  private
+
+  # Розрахунок позиції компонента (усуває дублювання логіки)
+  def calculate_component_position(category, comp_def, entities)
+    foundation = entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name == "Foundation" }
+    
+    if !foundation
+      # Якщо немає фундаменту, розміщуємо в центрі
+      return [
+        0 - comp_def.bounds.center.x,
+        0 - comp_def.bounds.center.y,
+        0 - comp_def.bounds.min.z
+      ]
+    end
+    
+    foundation_bounds = foundation.bounds
+    foundation_z = foundation_bounds.max.z
+    
+    case category
+    when "stands"
+      calculate_stand_position(comp_def, foundation_bounds, foundation_z, entities)
+    when "steles"
+      calculate_stele_position(comp_def, entities)
+    when "flowerbeds"
+      calculate_flowerbed_position(comp_def, foundation_z, entities)
+    when "gravestones"
+      calculate_gravestone_position(comp_def, entities)
+    when "fence_decor"
+      calculate_fence_decor_position(comp_def, foundation_bounds, foundation_z, entities)
+    else
+      [0, 0, 0]
+    end
+  end
+
+  # Розрахунок позиції підставки
+  def calculate_stand_position(comp_def, foundation_bounds, foundation_z, entities)
+    placement_z = get_placement_z(foundation_z, entities)
+    [
+      (foundation_bounds.min.x + 300.mm) - comp_def.bounds.min.x,
+      foundation_bounds.center.y - comp_def.bounds.center.y,
+      placement_z - comp_def.bounds.min.z
+    ]
+  end
+
+  # Розрахунок позиції стели
+  def calculate_stele_position(comp_def, entities)
+    placement_surface = get_steles_placement_surface
+    if placement_surface
+      surface_bounds = placement_surface.bounds
+      [
+        surface_bounds.center.x - comp_def.bounds.center.x,
+        surface_bounds.center.y - comp_def.bounds.center.y,
+        surface_bounds.max.z - comp_def.bounds.min.z
+      ]
+    else
+      stand = last_base_stand_instance
+      if stand
+        stand_bounds = stand.bounds
+        [
+          stand_bounds.center.x - comp_def.bounds.center.x,
+          stand_bounds.center.y - comp_def.bounds.center.y,
+          stand_bounds.max.z - comp_def.bounds.min.z
+        ]
+      else
+        [0, 0, 0]
+      end
+    end
+  end
+
+  # Розрахунок позиції квітника
+  def calculate_flowerbed_position(comp_def, foundation_z, entities)
+    placement_z = get_placement_z(foundation_z, entities)
+    stand = last_base_stand_instance
+    if stand
+      stand_bounds = stand.bounds
+      comp_bounds = comp_def.bounds
+      insert_x = stand_bounds.min.x + stand_bounds.width
+      center_y_stand = stand_bounds.center.y
+      center_y_comp = comp_bounds.center.y
+      [
+        insert_x - comp_bounds.min.x,
+        center_y_stand - center_y_comp,
+        placement_z - comp_bounds.min.z
+      ]
+    else
+      [0, 0, 0]
+    end
+  end
+
+  # Розрахунок позиції надгробної плити
+  def calculate_gravestone_position(comp_def, entities)
+    stand = last_base_stand_instance
+    if stand
+      stand_bounds = stand.bounds
+      comp_bounds = comp_def.bounds
+      
+      # Шукаємо квітник
+      flowerbed = entities.grep(Sketchup::ComponentInstance).find { |c| c.definition.name.downcase.include?('flowerbed') }
+      if flowerbed
+        flowerbed_bounds = flowerbed.bounds
+        [
+          flowerbed_bounds.min.x - comp_bounds.min.x,
+          flowerbed_bounds.center.y - comp_bounds.center.y,
+          flowerbed_bounds.max.z - comp_bounds.min.z
+        ]
+      else
+        [
+          stand_bounds.max.x - comp_bounds.min.x,
+          stand_bounds.center.y - comp_bounds.center.y,
+          stand_bounds.min.z - comp_bounds.min.z
+        ]
+      end
+    else
+      [0, 0, 0]
+    end
+  end
+
+  # Розрахунок позиції декору огорожі
+  def calculate_fence_decor_position(comp_def, foundation_bounds, foundation_z, entities)
+    fence_posts = entities.grep(Sketchup::ComponentInstance).find_all { |c| 
+      c.definition.name.include?('Fence') && c.definition.name.include?('Post')
+    }
+    
+    if fence_posts.any?
+      post = fence_posts.first
+      post_bounds = post.bounds
+      [
+        post_bounds.center.x - comp_def.bounds.center.x,
+        post_bounds.center.y - comp_def.bounds.center.y,
+        post_bounds.max.z - comp_def.bounds.min.z
+      ]
+    else
+      [
+        foundation_bounds.center.x - comp_def.bounds.center.x,
+        foundation_bounds.center.y - comp_def.bounds.center.y,
+        foundation_bounds.max.z - comp_def.bounds.min.z
+      ]
+    end
+  end
+
+  # Отримання Z координати для розміщення (усуває дублювання)
+  def get_placement_z(foundation_z, entities)
+    placement_z = foundation_z
+    tile_instance = entities.grep(Sketchup::ComponentInstance).find { |inst| 
+      inst.definition.name.start_with?("Perimeter_Tile_") || inst.definition.name.start_with?("Modular_Tile") 
+    }
+    if tile_instance
+      placement_z = tile_instance.bounds.max.z
+    end
+    placement_z
   end
 end
