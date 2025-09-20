@@ -117,7 +117,7 @@ export async function getAllPlugins() {
 
     // Додаємо логіку визначення активності на основі часу останнього heartbeat
     const now = new Date();
-    const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000); // 10 хвилин тому
+    const oneMinuteAgo = new Date(now.getTime() - 1 * 60 * 1000); // 1 хвилина тому
 
     const pluginsWithActivity = (data || []).map(plugin => {
       const lastHeartbeat = new Date(plugin.last_heartbeat);
@@ -131,7 +131,7 @@ export async function getAllPlugins() {
       }
       
       // Інакше перевіряємо час останнього heartbeat
-      const isActuallyActive = lastHeartbeat > tenMinutesAgo;
+      const isActuallyActive = lastHeartbeat > oneMinuteAgo;
       
       return {
         ...plugin,
@@ -179,12 +179,12 @@ export async function getPluginStats() {
     
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-    const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000);
+    const oneMinuteAgo = new Date(now.getTime() - 1 * 60 * 1000);
 
     const total = plugins.length;
     const active = plugins.filter(plugin => {
       const lastHeartbeat = new Date(plugin.last_heartbeat);
-      return lastHeartbeat > tenMinutesAgo;
+      return lastHeartbeat > oneMinuteAgo;
     }).length;
     const recent = plugins.filter(plugin => {
       const lastHeartbeat = new Date(plugin.last_heartbeat);
