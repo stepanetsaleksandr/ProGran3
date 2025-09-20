@@ -115,7 +115,21 @@ export async function getAllPlugins() {
       throw error;
     }
 
-    return data || [];
+    // Додаємо логіку визначення активності на основі часу останнього heartbeat
+    const now = new Date();
+    const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000); // 10 хвилин тому
+
+    const pluginsWithActivity = (data || []).map(plugin => {
+      const lastHeartbeat = new Date(plugin.last_heartbeat);
+      const isActuallyActive = lastHeartbeat > tenMinutesAgo;
+      
+      return {
+        ...plugin,
+        is_active: isActuallyActive
+      };
+    });
+
+    return pluginsWithActivity;
   } catch (error) {
     console.error('❌ Get all plugins failed:', error);
     throw error;
@@ -125,29 +139,27 @@ export async function getAllPlugins() {
 // Отримання статистики
 export async function getPluginStats() {
   try {
-    const { count: total, error: totalError } = await supabase
-      .from('plugins')
-      .select('*', { count: 'exact', head: true });
+    // Отримуємо всі плагіни для розрахунку реальної статистики
+    const plugins = await getAllPlugins();
+    
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000);
 
-    const { count: active, error: activeError } = await supabase
-      .from('plugins')
-      .select('*', { count: 'exact', head: true })
-      .eq('is_active', true);
-
-    const { count: recent, error: recentError } = await supabase
-      .from('plugins')
-      .select('*', { count: 'exact', head: true })
-      .gt('last_heartbeat', new Date(Date.now() - 60 * 60 * 1000).toISOString());
-
-    if (totalError || activeError || recentError) {
-      console.error('❌ Get plugin stats failed:', totalError || activeError || recentError);
-      throw totalError || activeError || recentError;
-    }
+    const total = plugins.length;
+    const active = plugins.filter(plugin => {
+      const lastHeartbeat = new Date(plugin.last_heartbeat);
+      return lastHeartbeat > tenMinutesAgo;
+    }).length;
+    const recent = plugins.filter(plugin => {
+      const lastHeartbeat = new Date(plugin.last_heartbeat);
+      return lastHeartbeat > oneHourAgo;
+    }).length;
 
     return {
-      total_plugins: total || 0,
-      active_plugins: active || 0,
-      recent_plugins: recent || 0
+      total_plugins: total,
+      active_plugins: active,
+      recent_plugins: recent
     };
   } catch (error) {
     console.error('❌ Get plugin stats failed:', error);
