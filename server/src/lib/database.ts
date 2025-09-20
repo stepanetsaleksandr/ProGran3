@@ -1,10 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase клієнт
+// Supabase клієнт для серверних операцій (з SERVICE_ROLE_KEY)
 const supabaseUrl = process.env.STORAGE_SUPABASE_URL!;
-const supabaseKey = process.env.STORAGE_NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseServiceKey = process.env.STORAGE_SUPABASE_SERVICE_ROLE_KEY!;
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
 
 // Ініціалізація бази даних
 export async function initializeDatabase() {
