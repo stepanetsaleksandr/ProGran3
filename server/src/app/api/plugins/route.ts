@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const response: PluginsResponse = {
       success: true,
       data: {
-        plugins,
+        plugins: plugins as PluginRecord[],
         stats,
         last_updated: new Date().toISOString()
       }
