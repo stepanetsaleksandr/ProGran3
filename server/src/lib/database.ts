@@ -136,6 +136,31 @@ export async function getAllPlugins() {
   }
 }
 
+// Позначення плагіна як неактивного
+export async function markPluginInactive(pluginId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('plugins')
+      .update({ 
+        is_active: false,
+        updated_at: new Date().toISOString()
+      })
+      .eq('plugin_id', pluginId)
+      .select('id, plugin_id, last_heartbeat, is_active')
+      .single();
+
+    if (error) {
+      console.error('❌ Mark plugin inactive failed:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('❌ Mark plugin inactive failed:', error);
+    throw error;
+  }
+}
+
 // Отримання статистики
 export async function getPluginStats() {
   try {
