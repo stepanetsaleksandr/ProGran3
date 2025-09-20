@@ -53,8 +53,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
-    // Оновлюємо дані кожні 30 секунд
-    const interval = setInterval(fetchData, 30000);
+    // Оновлюємо дані кожні 10 секунд
+    const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -65,30 +65,30 @@ export default function Dashboard() {
   const getStatusColor = (isActive: boolean, lastHeartbeat: string) => {
     const now = new Date();
     const lastBeat = new Date(lastHeartbeat);
-    const diffMinutes = (now.getTime() - lastBeat.getTime()) / (1000 * 60);
+    const diffSeconds = (now.getTime() - lastBeat.getTime()) / 1000;
     
-    if (diffMinutes > 10) return 'bg-red-100 text-red-800 border-red-200'; // Неактивний > 10 хв
-    if (diffMinutes > 5) return 'bg-yellow-100 text-yellow-800 border-yellow-200'; // Попередження > 5 хв
-    return 'bg-green-100 text-green-800 border-green-200'; // Активний < 5 хв
+    if (diffSeconds > 60) return 'bg-red-100 text-red-800 border-red-200'; // Неактивний > 60 сек
+    if (diffSeconds > 30) return 'bg-yellow-100 text-yellow-800 border-yellow-200'; // Попередження > 30 сек
+    return 'bg-green-100 text-green-800 border-green-200'; // Активний < 30 сек
   };
 
   const getStatusText = (isActive: boolean, lastHeartbeat: string) => {
     const now = new Date();
     const lastBeat = new Date(lastHeartbeat);
-    const diffMinutes = (now.getTime() - lastBeat.getTime()) / (1000 * 60);
+    const diffSeconds = (now.getTime() - lastBeat.getTime()) / 1000;
     
-    if (diffMinutes > 10) return 'Неактивний';
-    if (diffMinutes > 5) return 'Попередження';
+    if (diffSeconds > 60) return 'Неактивний';
+    if (diffSeconds > 30) return 'Попередження';
     return 'Активний';
   };
 
   const getStatusIcon = (isActive: boolean, lastHeartbeat: string) => {
     const now = new Date();
     const lastBeat = new Date(lastHeartbeat);
-    const diffMinutes = (now.getTime() - lastBeat.getTime()) / (1000 * 60);
+    const diffSeconds = (now.getTime() - lastBeat.getTime()) / 1000;
     
-    if (diffMinutes > 10) return '🔴';
-    if (diffMinutes > 5) return '🟡';
+    if (diffSeconds > 60) return '🔴';
+    if (diffSeconds > 30) return '🟡';
     return '🟢';
   };
 
@@ -270,7 +270,7 @@ export default function Dashboard() {
         {/* Auto-refresh indicator */}
         <div className="mt-4 text-center">
           <p className="text-sm text-gray-500">
-            Автоматичне оновлення кожні 30 секунд
+            Автоматичне оновлення кожні 10 секунд
           </p>
         </div>
       </div>
