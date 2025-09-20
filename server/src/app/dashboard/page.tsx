@@ -65,30 +65,30 @@ export default function Dashboard() {
   const getStatusColor = (isActive: boolean, lastHeartbeat: string) => {
     const now = new Date();
     const lastBeat = new Date(lastHeartbeat);
-    const diffSeconds = (now.getTime() - lastBeat.getTime()) / 1000;
+    const diffMinutes = (now.getTime() - lastBeat.getTime()) / (1000 * 60);
     
-    if (diffSeconds > 60) return 'bg-red-100 text-red-800 border-red-200'; // Неактивний > 60 сек
-    if (diffSeconds > 30) return 'bg-yellow-100 text-yellow-800 border-yellow-200'; // Попередження > 30 сек
-    return 'bg-green-100 text-green-800 border-green-200'; // Активний < 30 сек
+    if (diffMinutes > 3) return 'bg-red-100 text-red-800 border-red-200'; // Неактивний > 3 хв
+    if (diffMinutes > 2) return 'bg-yellow-100 text-yellow-800 border-yellow-200'; // Попередження > 2 хв
+    return 'bg-green-100 text-green-800 border-green-200'; // Активний < 2 хв
   };
 
   const getStatusText = (isActive: boolean, lastHeartbeat: string) => {
     const now = new Date();
     const lastBeat = new Date(lastHeartbeat);
-    const diffSeconds = (now.getTime() - lastBeat.getTime()) / 1000;
+    const diffMinutes = (now.getTime() - lastBeat.getTime()) / (1000 * 60);
     
-    if (diffSeconds > 60) return 'Неактивний';
-    if (diffSeconds > 30) return 'Попередження';
+    if (diffMinutes > 3) return 'Неактивний';
+    if (diffMinutes > 2) return 'Попередження';
     return 'Активний';
   };
 
   const getStatusIcon = (isActive: boolean, lastHeartbeat: string) => {
     const now = new Date();
     const lastBeat = new Date(lastHeartbeat);
-    const diffSeconds = (now.getTime() - lastBeat.getTime()) / 1000;
+    const diffMinutes = (now.getTime() - lastBeat.getTime()) / (1000 * 60);
     
-    if (diffSeconds > 60) return '🔴';
-    if (diffSeconds > 30) return '🟡';
+    if (diffMinutes > 3) return '🔴';
+    if (diffMinutes > 2) return '🟡';
     return '🟢';
   };
 

@@ -41,7 +41,7 @@ class ProGran3Tracker
     @heartbeat_thread = Thread.new do
       loop do
         break unless @is_running
-        sleep(10) 
+        sleep(60) # 60 секунд = 1 хвилина
         send_heartbeat if @is_running
       end
     end
