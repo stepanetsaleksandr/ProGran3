@@ -115,9 +115,58 @@ export async function getAllPlugins() {
       throw error;
     }
 
-    return data || [];
+    // Додаємо логіку визначення активності на основі часу останнього heartbeat
+    const now = new Date();
+    const oneMinuteAgo = new Date(now.getTime() - 1 * 60 * 1000); // 1 хвилина тому
+
+    const pluginsWithActivity = (data || []).map(plugin => {
+      const lastHeartbeat = new Date(plugin.last_heartbeat);
+      
+      // Якщо плагін вже позначений як неактивний в базі даних, залишаємо його неактивним
+      if (plugin.is_active === false) {
+        return {
+          ...plugin,
+          is_active: false
+        };
+      }
+      
+      // Інакше перевіряємо час останнього heartbeat
+      const isActuallyActive = lastHeartbeat > oneMinuteAgo;
+      
+      return {
+        ...plugin,
+        is_active: isActuallyActive
+      };
+    });
+
+    return pluginsWithActivity;
   } catch (error) {
     console.error('❌ Get all plugins failed:', error);
+    throw error;
+  }
+}
+
+// Позначення плагіна як неактивного
+export async function markPluginInactive(pluginId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('plugins')
+      .update({ 
+        is_active: false,
+        updated_at: new Date().toISOString()
+      })
+      .eq('plugin_id', pluginId)
+      .select('id, plugin_id, last_heartbeat, is_active')
+      .single();
+
+    if (error) {
+      console.error('❌ Mark plugin inactive failed:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('❌ Mark plugin inactive failed:', error);
     throw error;
   }
 }
@@ -125,29 +174,27 @@ export async function getAllPlugins() {
 // Отримання статистики
 export async function getPluginStats() {
   try {
-    const { count: total, error: totalError } = await supabase
-      .from('plugins')
-      .select('*', { count: 'exact', head: true });
+    // Отримуємо всі плагіни для розрахунку реальної статистики
+    const plugins = await getAllPlugins();
+    
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const oneMinuteAgo = new Date(now.getTime() - 1 * 60 * 1000);
 
-    const { count: active, error: activeError } = await supabase
-      .from('plugins')
-      .select('*', { count: 'exact', head: true })
-      .eq('is_active', true);
-
-    const { count: recent, error: recentError } = await supabase
-      .from('plugins')
-      .select('*', { count: 'exact', head: true })
-      .gt('last_heartbeat', new Date(Date.now() - 60 * 60 * 1000).toISOString());
-
-    if (totalError || activeError || recentError) {
-      console.error('❌ Get plugin stats failed:', totalError || activeError || recentError);
-      throw totalError || activeError || recentError;
-    }
+    const total = plugins.length;
+    const active = plugins.filter(plugin => {
+      const lastHeartbeat = new Date(plugin.last_heartbeat);
+      return lastHeartbeat > oneMinuteAgo;
+    }).length;
+    const recent = plugins.filter(plugin => {
+      const lastHeartbeat = new Date(plugin.last_heartbeat);
+      return lastHeartbeat > oneHourAgo;
+    }).length;
 
     return {
-      total_plugins: total || 0,
-      active_plugins: active || 0,
-      recent_plugins: recent || 0
+      total_plugins: total,
+      active_plugins: active,
+      recent_plugins: recent
     };
   } catch (error) {
     console.error('❌ Get plugin stats failed:', error);

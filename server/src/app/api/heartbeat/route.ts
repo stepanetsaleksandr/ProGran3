@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { upsertPlugin } from '@/lib/database';
+import { upsertPlugin, markPluginInactive } from '@/lib/database';
 import { HeartbeatRequest, HeartbeatResponse, ErrorResponse } from '@/lib/types';
 
 export async function POST(request: NextRequest) {
@@ -47,13 +47,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 400 });
     }
 
-    // Оновлюємо або створюємо запис в базі даних
-    const result = await upsertPlugin(data, ipAddress);
+    // Перевіряємо тип дії
+    const action = data.action || 'heartbeat_update';
+    
+    let result;
+    let message;
+    
+    if (action === 'plugin_shutdown') {
+      // Обробляємо сигнал закриття плагіна
+      result = await markPluginInactive(data.plugin_id);
+      message = 'Plugin shutdown signal received';
+    } else {
+      // Звичайний heartbeat
+      result = await upsertPlugin(data, ipAddress);
+      message = 'Heartbeat updated successfully';
+    }
 
     // Формуємо відповідь
     const response: HeartbeatResponse = {
       success: true,
-      message: 'Heartbeat updated successfully',
+      message: message,
       plugin: {
         id: result.id,
         plugin_id: result.plugin_id,

@@ -50,12 +50,19 @@ class ProGran3Tracker
   end
 
   def stop_tracking
+    puts "🔄 Початок зупинки відстеження..."
     @is_running = false
+    
+    # Відправляємо сигнал про закриття плагіна
+    puts "📤 Спроба відправки сигналу закриття..."
+    send_shutdown_signal
     
     if @heartbeat_thread
       # Graceful shutdown - чекаємо до 5 секунд
+      puts "⏳ Очікування завершення heartbeat потоку..."
       @heartbeat_thread.join(5)
       @heartbeat_thread.kill if @heartbeat_thread.alive?
+      puts "✅ Heartbeat потік завершено"
     end
     
     puts "⏹️ Відстеження зупинено"
@@ -63,6 +70,51 @@ class ProGran3Tracker
 
   def send_heartbeat
     send_heartbeat_with_retry
+  end
+
+  def send_shutdown_signal
+    begin
+      uri = URI.parse("#{@base_url}/api/heartbeat")
+      
+      data = {
+        plugin_id: @plugin_id,
+        plugin_name: "ProGran3",
+        version: get_plugin_version,
+        user_id: get_user_identifier,
+        computer_name: Socket.gethostname,
+        system_info: get_system_info,
+        timestamp: Time.now.iso8601,
+        action: "plugin_shutdown",  # Сигнал про закриття
+        source: "sketchup_plugin",
+        update_existing: true,
+        force_update: false
+      }
+      
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true if uri.scheme == 'https'
+      http.read_timeout = 5
+      http.open_timeout = 5
+      
+      request = Net::HTTP::Post.new(uri)
+      request['Content-Type'] = 'application/json'
+      request['User-Agent'] = "ProGran3-Plugin/#{get_plugin_version}"
+      request.body = data.to_json
+      
+      puts "📤 Відправка сигналу закриття до: #{@base_url}/api/heartbeat"
+      puts "📊 Plugin ID: #{data[:plugin_id]}"
+      puts "📋 Action: #{data[:action]}"
+      
+      response = http.request(request)
+      
+      if response.code == '200'
+        puts "✅ Сигнал закриття відправлено: #{Time.now.strftime('%H:%M:%S')}"
+      else
+        puts "⚠️ Помилка відправки сигналу закриття: #{response.code}"
+      end
+      
+    rescue => e
+      puts "⚠️ Помилка при відправці сигналу закриття: #{e.message}"
+    end
   end
 
   private
