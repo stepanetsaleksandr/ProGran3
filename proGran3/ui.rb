@@ -7,6 +7,13 @@ module ProGran3
     extend self
 
     def show_dialog
+      # Запускаємо відстеження при відкритті UI (активне використання)
+      begin
+        ProGran3.start_tracking
+      rescue => e
+        puts "⚠️ Не вдалося запустити відстеження: #{e.message}"
+      end
+      
       html_path = File.join(File.dirname(__FILE__), "web", "index.html")
       categories = {
         stands: Dir.glob(File.join(ProGran3::ASSETS_PATH, "stands", "*.skp")).map { |f| File.basename(f) },
@@ -18,6 +25,12 @@ module ProGran3
       }
 
       if @dialog && @dialog.visible?
+        # Зупиняємо відстеження при закритті діалогу
+        begin
+          ProGran3.stop_tracking
+        rescue => e
+          puts "⚠️ Не вдалося зупинити відстеження: #{e.message}"
+        end
         @dialog.close
         @dialog = nil
       end
@@ -38,6 +51,16 @@ module ProGran3
       @dialog.add_action_callback("ready") do |d, _|
         @dialog.execute_script("loadModelLists(#{categories.to_json});")
       end
+      
+      # Callback для закриття діалогу (зупинка відстеження)
+      @dialog.set_on_closed {
+        begin
+          ProGran3.stop_tracking
+          puts "📊 Відстеження зупинено при закритті діалогу"
+        rescue => e
+          puts "⚠️ Не вдалося зупинити відстеження при закритті: #{e.message}"
+        end
+      }
 
       # Callback'и для JavaScript (використовуємо CallbackManager)
       @dialog.add_action_callback("add_foundation") do |dialog, depth, width, height|
