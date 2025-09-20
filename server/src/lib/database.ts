@@ -9,9 +9,16 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
 // Ініціалізація бази даних
 export async function initializeDatabase() {
   try {
-    // Створюємо таблицю plugins якщо не існує
-    const { error } = await supabase.rpc('exec_sql', {
-      sql: `
+    // Перевіряємо чи існує таблиця plugins
+    const { data, error } = await supabase
+      .from('plugins')
+      .select('id')
+      .limit(1);
+
+    if (error && error.code === 'PGRST116') {
+      // Таблиця не існує - потрібно створити вручну
+      console.log('⚠️ Table "plugins" does not exist. Please create it manually in Supabase Dashboard:');
+      console.log(`
         CREATE TABLE IF NOT EXISTS plugins (
           id SERIAL PRIMARY KEY,
           plugin_id VARCHAR(255) UNIQUE NOT NULL,
@@ -30,15 +37,17 @@ export async function initializeDatabase() {
         CREATE INDEX IF NOT EXISTS idx_plugins_plugin_id ON plugins(plugin_id);
         CREATE INDEX IF NOT EXISTS idx_plugins_last_heartbeat ON plugins(last_heartbeat);
         CREATE INDEX IF NOT EXISTS idx_plugins_is_active ON plugins(is_active);
-      `
-    });
+      `);
+      throw new Error('Table "plugins" does not exist. Please create it manually in Supabase Dashboard.');
+    }
 
     if (error) {
       console.error('❌ Database initialization failed:', error);
       throw error;
     }
 
-    console.log('✅ Database initialized successfully');
+    console.log('✅ Database initialized successfully - table "plugins" exists');
+    return true;
   } catch (error) {
     console.error('❌ Database initialization failed:', error);
     throw error;
