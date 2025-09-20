@@ -201,13 +201,9 @@ export async function getPluginStats() {
     
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-    const oneMinuteAgo = new Date(now.getTime() - 1 * 60 * 1000);
 
     const total = plugins.length;
-    const active = plugins.filter(plugin => {
-      const lastHeartbeat = new Date(plugin.last_heartbeat);
-      return lastHeartbeat > oneMinuteAgo;
-    }).length;
+    const active = plugins.filter(plugin => plugin.is_active).length;
     const recent = plugins.filter(plugin => {
       const lastHeartbeat = new Date(plugin.last_heartbeat);
       return lastHeartbeat > oneHourAgo;
