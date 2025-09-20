@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllPlugins, getPluginStats } from '@/lib/database';
-import { PluginsResponse, ErrorResponse } from '@/lib/types';
+import { PluginsResponse, ErrorResponse, PluginRecord } from '@/lib/types';
 
 export async function GET(request: NextRequest) {
   try {
