@@ -50,15 +50,19 @@ class ProGran3Tracker
   end
 
   def stop_tracking
+    puts "🔄 Початок зупинки відстеження..."
     @is_running = false
     
     # Відправляємо сигнал про закриття плагіна
+    puts "📤 Спроба відправки сигналу закриття..."
     send_shutdown_signal
     
     if @heartbeat_thread
       # Graceful shutdown - чекаємо до 5 секунд
+      puts "⏳ Очікування завершення heartbeat потоку..."
       @heartbeat_thread.join(5)
       @heartbeat_thread.kill if @heartbeat_thread.alive?
+      puts "✅ Heartbeat потік завершено"
     end
     
     puts "⏹️ Відстеження зупинено"
