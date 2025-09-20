@@ -171,6 +171,28 @@ export async function markPluginInactive(pluginId: string) {
   }
 }
 
+// Видалення плагіна
+export async function deletePlugin(pluginId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('plugins')
+      .delete()
+      .eq('plugin_id', pluginId)
+      .select('id, plugin_id')
+      .single();
+
+    if (error) {
+      console.error('❌ Delete plugin failed:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('❌ Delete plugin failed:', error);
+    throw error;
+  }
+}
+
 // Отримання статистики
 export async function getPluginStats() {
   try {

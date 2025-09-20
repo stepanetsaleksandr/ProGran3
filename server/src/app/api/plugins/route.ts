@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllPlugins, getPluginStats } from '@/lib/database';
+import { getAllPlugins, getPluginStats, deletePlugin } from '@/lib/database';
 import { PluginsResponse, ErrorResponse, PluginRecord } from '@/lib/types';
 
 export async function GET(request: NextRequest) {
@@ -41,13 +41,49 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Видалення плагіна
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const pluginId = searchParams.get('plugin_id');
+    
+    if (!pluginId) {
+      const errorResponse: ErrorResponse = {
+        success: false,
+        error: 'Plugin ID is required',
+        code: 'MISSING_PLUGIN_ID'
+      };
+      return NextResponse.json(errorResponse, { status: 400 });
+    }
+
+    const result = await deletePlugin(pluginId);
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Plugin deleted successfully',
+      data: result
+    });
+
+  } catch (error) {
+    console.error('❌ Delete plugin API error:', error);
+    
+    const errorResponse: ErrorResponse = {
+      success: false,
+      error: 'Failed to delete plugin',
+      code: 'DELETE_ERROR'
+    };
+    
+    return NextResponse.json(errorResponse, { status: 500 });
+  }
+}
+
 // Обробка OPTIONS запиту для CORS
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },
   });
