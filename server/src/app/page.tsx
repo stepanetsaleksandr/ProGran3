@@ -8,8 +8,8 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-xl shadow-xl max-w-2xl w-full">
+    <div className="min-h-screen bg-red-500 flex items-center justify-center p-4">
+      <div className="bg-yellow-400 p-8 rounded-xl shadow-xl max-w-2xl w-full">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
             ProGran3 Tracking Server
