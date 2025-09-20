@@ -7,12 +7,13 @@ module ProGran3
     extend self
 
     def show_dialog
-      # Запускаємо відстеження при відкритті UI (активне використання)
-      begin
-        ProGran3.start_tracking
-      rescue => e
-        puts "⚠️ Не вдалося запустити відстеження: #{e.message}"
-      end
+      # Тимчасово відключено відстеження через проблеми з Vercel Deployment Protection
+      # begin
+      #   ProGran3.start_tracking
+      # rescue => e
+      #   puts "⚠️ Не вдалося запустити відстеження: #{e.message}"
+      # end
+      puts "ℹ️ Відстеження тимчасово відключено (Deployment Protection)"
       
       html_path = File.join(File.dirname(__FILE__), "web", "index.html")
       categories = {
@@ -25,12 +26,12 @@ module ProGran3
       }
 
       if @dialog && @dialog.visible?
-        # Зупиняємо відстеження при закритті діалогу
-        begin
-          ProGran3.stop_tracking
-        rescue => e
-          puts "⚠️ Не вдалося зупинити відстеження: #{e.message}"
-        end
+        # Тимчасово відключено відстеження
+        # begin
+        #   ProGran3.stop_tracking
+        # rescue => e
+        #   puts "⚠️ Не вдалося зупинити відстеження: #{e.message}"
+        # end
         @dialog.close
         @dialog = nil
       end
@@ -52,14 +53,14 @@ module ProGran3
         @dialog.execute_script("loadModelLists(#{categories.to_json});")
       end
       
-      # Callback для закриття діалогу (зупинка відстеження)
+      # Callback для закриття діалогу (тимчасово відключено відстеження)
       @dialog.set_on_closed {
-        begin
-          ProGran3.stop_tracking
-          puts "📊 Відстеження зупинено при закритті діалогу"
-        rescue => e
-          puts "⚠️ Не вдалося зупинити відстеження при закритті: #{e.message}"
-        end
+        # begin
+        #   ProGran3.stop_tracking
+        #   puts "📊 Відстеження зупинено при закритті діалогу"
+        # rescue => e
+        #   puts "⚠️ Не вдалося зупинити відстеження при закритті: #{e.message}"
+        # end
       }
 
       # Callback'и для JavaScript (використовуємо CallbackManager)
