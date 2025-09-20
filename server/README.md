@@ -1,105 +1,61 @@
 # ProGran3 Tracking Server
 
-Сервер для відстеження активності плагіна ProGran3 для SketchUp.
+Сервер для відстеження активності плагінів ProGran3 в SketchUp.
 
-## 🚀 Технології
+## 🚀 Швидкий старт
 
-- **Next.js 14** - React framework
-- **TypeScript** - Type safety
-- **Vercel Postgres** - Database
-- **Vercel** - Deployment platform
-- **Tailwind CSS** - Styling
+### Встановлення залежностей
 
-## 📁 Структура проекту
-
-```
-server/
-├── src/
-│   ├── app/
-│   │   ├── api/
-│   │   │   ├── heartbeat/route.ts    # POST /api/heartbeat
-│   │   │   ├── plugins/route.ts      # GET /api/plugins
-│   │   │   └── init/route.ts         # GET /api/init (DB setup)
-│   │   ├── layout.tsx
-│   │   ├── page.tsx
-│   │   └── globals.css
-│   └── lib/
-│       ├── database.ts               # Database functions
-│       └── types.ts                  # TypeScript types
-├── package.json
-├── tsconfig.json
-├── tailwind.config.js
-└── next.config.js
+```bash
+npm install
 ```
 
-## 🔌 API Endpoints
+### Налаштування змінних середовища
 
-### POST /api/heartbeat
-Відстеження активності плагіна.
+Скопіюйте `env.example` в `.env.local` та налаштуйте:
 
-**Request Body:**
-```json
-{
-  "plugin_id": "progran3-desktop-60aqeiu-provis3d",
-  "plugin_name": "ProGran3",
-  "version": "1.0.0",
-  "user_id": "ProVis3D@DESKTOP-60AQEIU",
-  "computer_name": "DESKTOP-60AQEIU",
-  "system_info": {
-    "os": "x64-mswin64_140",
-    "ruby_version": "3.0.0",
-    "sketchup_version": "2024.0.0",
-    "architecture": "64-bit"
-  },
-  "timestamp": "2025-09-20T13:27:09.295+00:00",
-  "action": "heartbeat_update",
-  "source": "sketchup_plugin",
-  "update_existing": true,
-  "force_update": false
-}
+```bash
+cp env.example .env.local
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Heartbeat updated successfully",
-  "plugin": {
-    "id": 14,
-    "plugin_id": "progran3-desktop-60aqeiu-provis3d",
-    "last_heartbeat": "2025-09-20T13:27:09.295+00:00",
-    "is_active": true
-  }
-}
+Заповніть змінні:
+- `STORAGE_SUPABASE_URL` - URL вашого Supabase проекту
+- `STORAGE_SUPABASE_SERVICE_ROLE_KEY` - Service Role Key з Supabase
+
+### Запуск в режимі розробки
+
+```bash
+npm run dev
 ```
 
-### GET /api/plugins
-Отримання статистики плагінів.
+Сервер буде доступний на `http://localhost:3000`
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "plugins": [...],
-    "stats": {
-      "total_plugins": 10,
-      "active_plugins": 5,
-      "recent_plugins": 3
-    },
-    "last_updated": "2025-09-20T13:27:55.090Z"
-  }
-}
+### Збірка для продакшену
+
+```bash
+npm run build
+npm start
 ```
 
-### GET /api/init
-Ініціалізація бази даних (створення таблиць).
+## 📊 Функціональність
+
+### API Endpoints
+
+- **POST /api/heartbeat** - Відстеження активності плагіна
+- **GET /api/plugins** - Отримання статистики плагінів
+
+### Dashboard
+
+- Моніторинг активних плагінів
+- Статистика використання
+- Реальний час оновлення
 
 ## 🗄️ База даних
 
-### Таблиця plugins
+Сервер використовує Supabase для зберігання даних. Створіть таблицю `plugins`:
+
 ```sql
-CREATE TABLE plugins (
+CREATE TABLE IF NOT EXISTS plugins (
   id SERIAL PRIMARY KEY,
   plugin_id VARCHAR(255) UNIQUE NOT NULL,
   plugin_name VARCHAR(255) NOT NULL,
@@ -113,107 +69,81 @@ CREATE TABLE plugins (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS idx_plugins_plugin_id ON plugins(plugin_id);
+CREATE INDEX IF NOT EXISTS idx_plugins_last_heartbeat ON plugins(last_heartbeat);
+CREATE INDEX IF NOT EXISTS idx_plugins_is_active ON plugins(is_active);
 ```
 
-## 🛠️ Розробка
+## 🛠️ Технології
 
-### Локальний запуск
+- **Next.js 14** - React фреймворк
+- **TypeScript** - Типізація
+- **Tailwind CSS** - Стилізація
+- **Supabase** - База даних
+- **Vercel** - Хостинг
+
+## 📱 Інтерфейс
+
+- **Головна сторінка** (`/`) - Статус сервера та швидкі дії
+- **Dashboard** (`/dashboard`) - Моніторинг плагінів
+- **API** (`/api/*`) - REST API endpoints
+
+## 🔧 Розробка
+
+### Структура проекту
+
+```
+src/
+├── app/
+│   ├── api/
+│   │   ├── heartbeat/route.ts
+│   │   └── plugins/route.ts
+│   ├── dashboard/page.tsx
+│   ├── layout.tsx
+│   └── page.tsx
+├── lib/
+│   ├── database.ts
+│   └── types.ts
+└── globals.css
+```
+
+### Додавання нових endpoints
+
+1. Створіть папку в `src/app/api/`
+2. Додайте `route.ts` з функціями HTTP методів
+3. Експортуйте функції (GET, POST, PUT, DELETE)
+
+### Стилізація
+
+Використовуйте Tailwind CSS класи для стилізації. Конфігурація в `tailwind.config.js`.
+
+## 🚀 Деплой
+
+### Vercel (рекомендовано)
+
+1. Підключіть репозиторій до Vercel
+2. Налаштуйте змінні середовища в Vercel Dashboard
+3. Деплой автоматично
+
+### Інші платформи
+
 ```bash
-# Встановлення залежностей
-npm install
-
-# Запуск в режимі розробки
-npm run dev
-
-# Збірка для продакшена
 npm run build
-
-# Запуск продакшн версії
 npm start
 ```
 
-### Змінні середовища
-Скопіюйте `env.example` в `.env.local` та налаштуйте:
+## 📈 Моніторинг
 
-```bash
-cp env.example .env.local
-```
+Dashboard автоматично оновлюється кожні 30 секунд та показує:
+- Кількість активних плагінів
+- Статус кожного плагіна
+- Час останнього heartbeat
+- IP адреси користувачів
 
-Додайте змінні Vercel Postgres з вашого Dashboard.
+## 🔒 Безпека
 
-## 🚀 Деплой на Vercel
-
-1. **Підключіть GitHub репозиторій** до Vercel
-2. **Додайте змінні середовища** в Vercel Dashboard
-3. **Налаштуйте Vercel Postgres** базу даних
-4. **Деплой автоматично** через GitHub
-
-### Налаштування Vercel Postgres
-
-1. Перейдіть до Vercel Dashboard
-2. Виберіть ваш проект
-3. Перейдіть до **Storage** → **Postgres**
-4. Створіть нову базу даних
-5. Скопіюйте змінні середовища в **Environment Variables**
-
-### Ініціалізація бази даних
-
-Після деплою, відвідайте:
-```
-https://your-app.vercel.app/api/init
-```
-
-Це створить необхідні таблиці та індекси.
-
-## 🧪 Тестування
-
-### Тест heartbeat API
-```bash
-curl -X POST https://your-app.vercel.app/api/heartbeat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "plugin_id": "test-plugin",
-    "plugin_name": "Test Plugin",
-    "version": "1.0.0",
-    "user_id": "test@example.com",
-    "computer_name": "TEST-PC",
-    "system_info": {"os": "test"},
-    "timestamp": "2025-01-01T00:00:00Z",
-    "action": "test",
-    "source": "test",
-    "update_existing": true,
-    "force_update": false
-  }'
-```
-
-### Тест plugins API
-```bash
-curl https://your-app.vercel.app/api/plugins
-```
-
-## 📊 Моніторинг
-
-- **Vercel Dashboard** - метрики та логи
-- **Vercel Postgres** - статистика бази даних
-- **API endpoints** - статус сервера
-
-## 🔧 Налагодження
-
-### Перевірка логів
-```bash
-# Vercel CLI
-vercel logs
-
-# Або через Dashboard
-# https://vercel.com/dashboard
-```
-
-### Тестування локально
-```bash
-# Запуск з debug логами
-DEBUG=* npm run dev
-```
-
-## 📝 Ліцензія
-
-MIT License
+- Валідація всіх вхідних даних
+- Захист від SQL injection (Supabase)
+- CORS налаштування
+- Rate limiting (рекомендується додати)

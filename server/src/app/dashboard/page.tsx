@@ -67,9 +67,9 @@ export default function Dashboard() {
     const lastBeat = new Date(lastHeartbeat);
     const diffMinutes = (now.getTime() - lastBeat.getTime()) / (1000 * 60);
     
-    if (diffMinutes > 10) return 'text-red-600'; // Неактивний > 10 хв
-    if (diffMinutes > 5) return 'text-yellow-600'; // Попередження > 5 хв
-    return 'text-green-600'; // Активний < 5 хв
+    if (diffMinutes > 10) return 'bg-red-100 text-red-800 border-red-200'; // Неактивний > 10 хв
+    if (diffMinutes > 5) return 'bg-yellow-100 text-yellow-800 border-yellow-200'; // Попередження > 5 хв
+    return 'bg-green-100 text-green-800 border-green-200'; // Активний < 5 хв
   };
 
   const getStatusText = (isActive: boolean, lastHeartbeat: string) => {
@@ -80,6 +80,16 @@ export default function Dashboard() {
     if (diffMinutes > 10) return 'Неактивний';
     if (diffMinutes > 5) return 'Попередження';
     return 'Активний';
+  };
+
+  const getStatusIcon = (isActive: boolean, lastHeartbeat: string) => {
+    const now = new Date();
+    const lastBeat = new Date(lastHeartbeat);
+    const diffMinutes = (now.getTime() - lastBeat.getTime()) / (1000 * 60);
+    
+    if (diffMinutes > 10) return '🔴';
+    if (diffMinutes > 5) return '🟡';
+    return '🟢';
   };
 
   if (loading) {
@@ -94,19 +104,43 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            ProGran3 Dashboard
-          </h1>
-          <p className="text-gray-600">
-            Моніторинг активності плагінів ProGran3
-          </p>
-          <p className="text-sm text-gray-500 mt-2">
-            Останнє оновлення: {formatDate(lastUpdate)}
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                ProGran3 Dashboard
+              </h1>
+              <p className="text-gray-600 text-lg">
+                Моніторинг активності плагінів ProGran3
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Останнє оновлення: {formatDate(lastUpdate)}
+              </p>
+            </div>
+            <div className="flex space-x-4">
+              <button 
+                onClick={fetchData}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Оновити
+              </button>
+              <a 
+                href="/"
+                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Назад
+              </a>
+            </div>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -157,9 +191,12 @@ export default function Dashboard() {
         )}
 
         {/* Plugins Table */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Активні плагіни</h2>
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600">
+            <h2 className="text-xl font-semibold text-white">Активні плагіни</h2>
+            <p className="text-blue-100 text-sm mt-1">
+              {plugins.length} плагінів знайдено
+            </p>
           </div>
           
           {plugins.length === 0 ? (
@@ -211,7 +248,8 @@ export default function Dashboard() {
                         {plugin.system_info.sketchup_version}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`text-sm font-medium ${getStatusColor(plugin.is_active, plugin.last_heartbeat)}`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(plugin.is_active, plugin.last_heartbeat)}`}>
+                          <span className="mr-1">{getStatusIcon(plugin.is_active, plugin.last_heartbeat)}</span>
                           {getStatusText(plugin.is_active, plugin.last_heartbeat)}
                         </span>
                       </td>
