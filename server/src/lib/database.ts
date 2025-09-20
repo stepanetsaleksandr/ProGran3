@@ -121,6 +121,16 @@ export async function getAllPlugins() {
 
     const pluginsWithActivity = (data || []).map(plugin => {
       const lastHeartbeat = new Date(plugin.last_heartbeat);
+      
+      // Якщо плагін вже позначений як неактивний в базі даних, залишаємо його неактивним
+      if (plugin.is_active === false) {
+        return {
+          ...plugin,
+          is_active: false
+        };
+      }
+      
+      // Інакше перевіряємо час останнього heartbeat
       const isActuallyActive = lastHeartbeat > tenMinutesAgo;
       
       return {
