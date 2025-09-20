@@ -8,7 +8,7 @@ require 'timeout'
 # Клас для відстеження активності плагіна
 class ProGran3Tracker
   def initialize(base_url = nil)
-    @base_url = base_url || ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-90uwkjzpv-provis3ds-projects.vercel.app'
+    @base_url = base_url || ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-28mrg43yn-provis3ds-projects.vercel.app'
     @plugin_id = generate_unique_plugin_id
     @is_running = false
     @heartbeat_thread = nil
