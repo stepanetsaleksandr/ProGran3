@@ -29,8 +29,6 @@ export async function GET(request: NextRequest) {
     return nextResponse;
 
   } catch (error) {
-    console.error('❌ Plugins API error:', error);
-    
     const errorResponse: ErrorResponse = {
       success: false,
       error: 'Internal server error',
@@ -65,8 +63,6 @@ export async function DELETE(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ Delete plugin API error:', error);
-    
     const errorResponse: ErrorResponse = {
       success: false,
       error: 'Failed to delete plugin',

@@ -29,21 +29,69 @@ class ProGran3Tracker
   public
 
   def start_tracking
-    return if @is_running
+    if @is_running
+      puts "📊 Відстеження вже запущено, пропускаємо повторний запуск"
+      return
+    end
     
     @is_running = true
     puts "🚀 Запуск відстеження ProGran3..."
     
     # Відправляємо перший heartbeat
+    puts "🚀 [#{Time.now.strftime('%H:%M:%S')}] Відправка першого heartbeat..."
     send_heartbeat
     
     # Запускаємо фонову задачу для регулярних heartbeat
     @heartbeat_thread = Thread.new do
+      puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Фонова задача heartbeat запущена"
+      puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Thread ID: #{Thread.current.object_id}"
+      puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Thread alive: #{Thread.current.alive?}"
+      
+      loop_count = 0
       loop do
+        loop_count += 1
+        puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Цикл #{loop_count}: @is_running = #{@is_running}"
+        
         break unless @is_running
+        
+        puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Засинаємо на 60 секунд..."
         sleep(60) # 60 секунд = 1 хвилина
-        send_heartbeat if @is_running
+        
+        puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Прокинулися після 60 секунд"
+        puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Перевіряємо @is_running = #{@is_running}"
+        
+        if @is_running
+          puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] ========== РЕГУЛЯРНИЙ HEARTBEAT =========="
+          puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Запуск регулярного heartbeat..."
+          send_heartbeat
+          puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Регулярний heartbeat завершено"
+        else
+          puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] @is_running = false, виходимо з циклу"
+        end
       end
+      puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Фонова задача heartbeat завершена"
+    end
+    
+    # Додаємо невелику затримку та перевірку
+    sleep(1)
+    puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Перевірка після запуску потоку:"
+    puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Thread alive: #{@heartbeat_thread.alive?}"
+    puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Thread status: #{@heartbeat_thread.status}"
+    
+    # Альтернативний підхід - використовуємо SketchUp timer якщо потрібно
+    if defined?(UI) && UI.respond_to?(:start_timer)
+      puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Запуск альтернативного таймера SketchUp..."
+      @sketchup_timer = UI.start_timer(60, true) do
+        if @is_running
+          puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] ========== TIMER HEARTBEAT =========="
+          puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Запуск heartbeat через SketchUp timer..."
+          send_heartbeat
+        else
+          puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] @is_running = false, зупиняємо timer"
+          UI.stop_timer(@sketchup_timer) if @sketchup_timer
+        end
+      end
+      puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] SketchUp timer запущено: #{@sketchup_timer}"
     end
     
     puts "✅ Відстеження активне. Plugin ID: #{@plugin_id}"
@@ -52,6 +100,13 @@ class ProGran3Tracker
   def stop_tracking
     puts "🔄 Початок зупинки відстеження..."
     @is_running = false
+    
+    # Зупиняємо SketchUp timer якщо він запущений
+    if @sketchup_timer
+      puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Зупиняємо SketchUp timer: #{@sketchup_timer}"
+      UI.stop_timer(@sketchup_timer) if defined?(UI) && UI.respond_to?(:stop_timer)
+      @sketchup_timer = nil
+    end
     
     # Відправляємо сигнал про закриття плагіна
     puts "📤 Спроба відправки сигналу закриття..."
@@ -69,6 +124,11 @@ class ProGran3Tracker
   end
 
   def send_heartbeat
+    timestamp = Time.now.strftime('%H:%M:%S')
+    puts "📡 [#{timestamp}] ========== HEARTBEAT ВІДПРАВКА =========="
+    puts "📡 [#{timestamp}] Plugin ID: #{@plugin_id}"
+    puts "📡 [#{timestamp}] Сервер: #{@base_url}"
+    puts "📡 [#{timestamp}] ==========================================="
     send_heartbeat_with_retry
   end
 
@@ -100,20 +160,24 @@ class ProGran3Tracker
       request['User-Agent'] = "ProGran3-Plugin/#{get_plugin_version}"
       request.body = data.to_json
       
-      puts "📤 Відправка сигналу закриття до: #{@base_url}/api/heartbeat"
-      puts "📊 Plugin ID: #{data[:plugin_id]}"
-      puts "📋 Action: #{data[:action]}"
+      timestamp = Time.now.strftime('%H:%M:%S')
+      puts "📤 [#{timestamp}] ========== СИГНАЛ ЗАКРИТТЯ =========="
+      puts "📤 [#{timestamp}] Відправка сигналу закриття до: #{@base_url}/api/heartbeat"
+      puts "📊 [#{timestamp}] Plugin ID: #{data[:plugin_id]}"
+      puts "📋 [#{timestamp}] Action: #{data[:action]}"
+      puts "📤 [#{timestamp}] ========================================"
       
       response = http.request(request)
       
       if response.code == '200'
-        puts "✅ Сигнал закриття відправлено: #{Time.now.strftime('%H:%M:%S')}"
+        puts "✅ [#{timestamp}] ✅ СИГНАЛ ЗАКРИТТЯ УСПІШНО ВІДПРАВЛЕНО!"
+        puts "✅ [#{timestamp}] ========== ПЛАГІН ЗАКРИТО =========="
       else
-        puts "⚠️ Помилка відправки сигналу закриття: #{response.code}"
+        puts "⚠️ [#{timestamp}] Помилка відправки сигналу закриття: #{response.code}"
       end
       
     rescue => e
-      puts "⚠️ Помилка при відправці сигналу закриття: #{e.message}"
+      puts "⚠️ [#{Time.now.strftime('%H:%M:%S')}] Помилка при відправці сигналу закриття: #{e.message}"
     end
   end
 
@@ -121,6 +185,9 @@ class ProGran3Tracker
 
   def send_heartbeat_with_retry
     begin
+      timestamp = Time.now.strftime('%H:%M:%S')
+      puts "📡 [#{timestamp}] Підготовка HTTP запиту..."
+      
       uri = URI("#{@base_url}/api/heartbeat")
       
       # Валідація URL
@@ -155,31 +222,34 @@ class ProGran3Tracker
       request['User-Agent'] = "ProGran3-Plugin/#{get_plugin_version}"
       request.body = data.to_json
       
-        puts "📡 Відправка heartbeat до: #{@base_url}/api/heartbeat"
-        puts "📊 Plugin ID: #{data[:plugin_id]}"
-        puts "📋 Action: #{data[:action]}"
-        puts "📋 Update existing: #{data[:update_existing]}"
+        puts "📡 [#{timestamp}] Відправка heartbeat до: #{@base_url}/api/heartbeat"
+        puts "📊 [#{timestamp}] Plugin ID: #{data[:plugin_id]}"
+        puts "📋 [#{timestamp}] Action: #{data[:action]}"
+        puts "📋 [#{timestamp}] Update existing: #{data[:update_existing]}"
+        puts "📋 [#{timestamp}] Timestamp: #{data[:timestamp]}"
       
       response = http.request(request)
       
-      puts "📨 Відповідь сервера: #{response.code} #{response.message}"
-      puts "📄 Тіло відповіді: #{response.body}"
+      puts "📨 [#{timestamp}] Відповідь сервера: #{response.code} #{response.message}"
+      puts "📄 [#{timestamp}] Тіло відповіді: #{response.body}"
       
       if response.code == '200'
         # Для тестового сервера (httpbin.org) завжди успіх
         if @base_url.include?('httpbin.org')
-          puts "💓 Heartbeat відправлено: #{Time.now.strftime('%H:%M:%S')}"
+          puts "💓 [#{timestamp}] ✅ HEARTBEAT УСПІШНО ВІДПРАВЛЕНО!"
+          puts "💓 [#{timestamp}] ========== HEARTBEAT ЗАВЕРШЕНО УСПІШНО =========="
           @retry_count = 0 # Скидаємо лічильник при успіху
         elsif @base_url.include?('vercel.app')
           # Для Vercel сервера - перевіряємо відповідь
           begin
             result = JSON.parse(response.body)
             if result['success'] && result['plugin']
-              puts "💓 Heartbeat відправлено: #{Time.now.strftime('%H:%M:%S')}"
-              puts "📋 Сервер ID: #{result['plugin']['id']}"
-              puts "📋 Plugin ID: #{result['plugin']['plugin_id']}"
-              puts "📋 Last heartbeat: #{result['plugin']['last_heartbeat']}"
-              puts "📋 Is active: #{result['plugin']['is_active']}"
+              puts "💓 [#{timestamp}] ✅ HEARTBEAT УСПІШНО ВІДПРАВЛЕНО!"
+              puts "📋 [#{timestamp}] Сервер ID: #{result['plugin']['id']}"
+              puts "📋 [#{timestamp}] Plugin ID: #{result['plugin']['plugin_id']}"
+              puts "📋 [#{timestamp}] Last heartbeat: #{result['plugin']['last_heartbeat']}"
+              puts "📋 [#{timestamp}] Is active: #{result['plugin']['is_active']}"
+              puts "💓 [#{timestamp}] ========== HEARTBEAT ЗАВЕРШЕНО УСПІШНО =========="
               
               # Перевіряємо, чи plugin_id співпадає
               if result['plugin']['plugin_id'] != @plugin_id
@@ -201,19 +271,24 @@ class ProGran3Tracker
           # Для інших серверів перевіряємо JSON відповідь
           result = JSON.parse(response.body)
           if result['success'] || result['status'] == 'ok'
-            puts "💓 Heartbeat відправлено: #{Time.now.strftime('%H:%M:%S')}"
+            puts "💓 [#{timestamp}] ✅ HEARTBEAT УСПІШНО ВІДПРАВЛЕНО!"
+            puts "💓 [#{timestamp}] ========== HEARTBEAT ЗАВЕРШЕНО УСПІШНО =========="
             @retry_count = 0 # Скидаємо лічильник при успіху
           else
+            puts "❌ [#{timestamp}] Сервер повернув помилку: #{result['error'] || result['message']}"
             raise "Сервер повернув помилку: #{result['error'] || result['message']}"
           end
         end
       else
+        puts "❌ [#{timestamp}] HTTP помилка: #{response.code} - #{response.message}"
         raise "HTTP помилка: #{response.code} - #{response.message}"
       end
       
     rescue Timeout::Error
+      puts "⏰ [#{Time.now.strftime('%H:%M:%S')}] ❌ ТАЙМАУТ при відправці heartbeat"
       handle_heartbeat_error("Таймаут при відправці heartbeat")
     rescue => e
+      puts "💥 [#{Time.now.strftime('%H:%M:%S')}] ❌ ПОМИЛКА відправки heartbeat: #{e.message}"
       handle_heartbeat_error("Помилка відправки heartbeat: #{e.message}")
     end
   end
@@ -418,14 +493,17 @@ class ProGran3Tracker
 
   def handle_heartbeat_error(message)
     @retry_count += 1
-    puts "❌ #{message}"
+    timestamp = Time.now.strftime('%H:%M:%S')
+    puts "❌ [#{timestamp}] #{message}"
     
     if @retry_count < @max_retries
-      puts "🔄 Повторна спроба #{@retry_count}/#{@max_retries} через #{@retry_delay} секунд..."
+      puts "🔄 [#{timestamp}] Повторна спроба #{@retry_count}/#{@max_retries} через #{@retry_delay} секунд..."
       sleep(@retry_delay)
       send_heartbeat_with_retry
     else
-      puts "❌ Не вдалося відправити heartbeat після #{@max_retries} спроб"
+      puts "❌ [#{timestamp}] ❌❌❌ КРИТИЧНА ПОМИЛКА ❌❌❌"
+      puts "❌ [#{timestamp}] Не вдалося відправити heartbeat після #{@max_retries} спроб"
+      puts "❌ [#{timestamp}] Плагін продовжує працювати, але відстеження неактивне"
       @retry_count = 0 # Скидаємо лічильник
     end
   end
@@ -611,8 +689,8 @@ if defined?(Sketchup)
   # Створюємо глобальний трекер з конфігурацією
   $progran3_tracker = ProGran3Tracker.new
   
-  # НЕ запускаємо відстеження автоматично - тільки при активному використанні
-  puts "📊 Трекер ініціалізовано (запуск при використанні плагіна)"
+  # Трекер ініціалізовано, але відстеження запускається тільки при відкритті UI
+  puts "📊 Трекер ініціалізовано (відстеження запуститься при відкритті UI)"
   
   # Зупиняємо при закритті SketchUp
   at_exit do
@@ -634,6 +712,21 @@ if defined?(Sketchup)
   
   def self.send_heartbeat
     $progran3_tracker&.send_heartbeat
+  end
+  
+  # Метод для тестування heartbeat
+  def self.test_heartbeat
+    puts "🧪 Тестування heartbeat..."
+    if $progran3_tracker
+      puts "📊 Статус перед тестом:"
+      tracking_status
+      puts "\n📡 Відправка тестового heartbeat..."
+      $progran3_tracker.send_heartbeat
+      puts "\n📊 Статус після тесту:"
+      tracking_status
+    else
+      puts "⚠️ Трекер не ініціалізовано"
+    end
   end
   
   # Тестовий метод для перевірки різних типів запитів
@@ -788,9 +881,19 @@ if defined?(Sketchup)
   
   def self.tracking_status
     if $progran3_tracker
+      is_running = $progran3_tracker.instance_variable_get(:@is_running)
+      plugin_id = $progran3_tracker.instance_variable_get(:@plugin_id)
+      thread_alive = $progran3_tracker.instance_variable_get(:@heartbeat_thread)&.alive?
+      
+      puts "📊 Статус відстеження:"
+      puts "   🔄 Відстеження активне: #{is_running ? '✅ ТАК' : '❌ НІ'}"
+      puts "   🆔 Plugin ID: #{plugin_id}"
+      puts "   🧵 Фонова задача: #{thread_alive ? '✅ ПРАЦЮЄ' : '❌ НЕ ПРАЦЮЄ'}"
+      
       {
-        running: $progran3_tracker.instance_variable_get(:@is_running),
-        plugin_id: $progran3_tracker.instance_variable_get(:@plugin_id),
+        running: is_running,
+        plugin_id: plugin_id,
+        thread_alive: thread_alive,
         base_url: $progran3_tracker.instance_variable_get(:@base_url),
         retry_count: $progran3_tracker.instance_variable_get(:@retry_count),
         max_retries: $progran3_tracker.instance_variable_get(:@max_retries),

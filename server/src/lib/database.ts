@@ -22,8 +22,7 @@ export async function initializeDatabase() {
 
     if (error && error.code === 'PGRST116') {
       // Таблиця не існує - потрібно створити вручну
-      console.log('⚠️ Table "plugins" does not exist. Please create it manually in Supabase Dashboard:');
-      console.log(`
+      const createTableSQL = `
         CREATE TABLE IF NOT EXISTS plugins (
           id SERIAL PRIMARY KEY,
           plugin_id VARCHAR(255) UNIQUE NOT NULL,
@@ -42,19 +41,17 @@ export async function initializeDatabase() {
         CREATE INDEX IF NOT EXISTS idx_plugins_plugin_id ON plugins(plugin_id);
         CREATE INDEX IF NOT EXISTS idx_plugins_last_heartbeat ON plugins(last_heartbeat);
         CREATE INDEX IF NOT EXISTS idx_plugins_is_active ON plugins(is_active);
-      `);
-      throw new Error('Table "plugins" does not exist. Please create it manually in Supabase Dashboard.');
+      `;
+      throw new Error(`Table "plugins" does not exist. Please create it manually in Supabase Dashboard:\n${createTableSQL}`);
     }
 
     if (error) {
-      console.error('❌ Database initialization failed:', error);
       throw error;
     }
 
-    console.log('✅ Database initialized successfully - table "plugins" exists');
+    // Database initialized successfully
     return true;
   } catch (error) {
-    console.error('❌ Database initialization failed:', error);
     throw error;
   }
 }
@@ -91,13 +88,11 @@ export async function upsertPlugin(data: any, ipAddress: string) {
       .single();
 
     if (error) {
-      console.error('❌ Upsert plugin failed:', error);
       throw error;
     }
 
     return result;
   } catch (error) {
-    console.error('❌ Upsert plugin failed:', error);
     throw error;
   }
 }
@@ -111,7 +106,6 @@ export async function getAllPlugins() {
       .order('last_heartbeat', { ascending: false });
 
     if (error) {
-      console.error('❌ Get all plugins failed:', error);
       throw error;
     }
 
@@ -141,7 +135,6 @@ export async function getAllPlugins() {
 
     return pluginsWithActivity;
   } catch (error) {
-    console.error('❌ Get all plugins failed:', error);
     throw error;
   }
 }
@@ -160,13 +153,11 @@ export async function markPluginInactive(pluginId: string) {
       .single();
 
     if (error) {
-      console.error('❌ Mark plugin inactive failed:', error);
       throw error;
     }
 
     return data;
   } catch (error) {
-    console.error('❌ Mark plugin inactive failed:', error);
     throw error;
   }
 }
@@ -182,13 +173,11 @@ export async function deletePlugin(pluginId: string) {
       .single();
 
     if (error) {
-      console.error('❌ Delete plugin failed:', error);
       throw error;
     }
 
     return data;
   } catch (error) {
-    console.error('❌ Delete plugin failed:', error);
     throw error;
   }
 }
@@ -215,7 +204,6 @@ export async function getPluginStats() {
       recent_plugins: recent
     };
   } catch (error) {
-    console.error('❌ Get plugin stats failed:', error);
     throw error;
   }
 }

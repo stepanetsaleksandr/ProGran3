@@ -84,8 +84,6 @@ export async function POST(request: NextRequest) {
     return nextResponse;
 
   } catch (error) {
-    console.error('❌ Heartbeat API error:', error);
-    
     const errorResponse: ErrorResponse = {
       success: false,
       error: 'Internal server error',

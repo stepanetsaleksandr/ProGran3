@@ -10,8 +10,6 @@ export async function GET() {
       message: 'Database initialized successfully'
     });
   } catch (error) {
-    console.error('❌ Database initialization failed:', error);
-    
     return NextResponse.json({
       success: false,
       error: 'Database initialization failed'

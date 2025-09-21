@@ -848,8 +848,9 @@ window.onload = async function () {
   
   // Запускаємо готовність
   if (window.sketchup && window.sketchup.ready) {
-    debugLog(`📞 Викликаємо window.sketchup.ready()`, 'info');
+    debugLog(`📞 Викликаємо window.sketchup.ready() для запуску heartbeat`, 'info');
     window.sketchup.ready();
+    debugLog(`✅ Callback ready викликано - heartbeat має запуститися`, 'success');
   } else {
     debugLog(` window.sketchup.ready не доступний`, 'error');
   }

@@ -45,7 +45,7 @@ export default function Dashboard() {
         setLastUpdate(data.data.last_updated);
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      // Handle error silently - could be network issue or server problem
     } finally {
       setLoading(false);
     }
