@@ -1208,4 +1208,161 @@ header {
   color: var(--text-secondary);
 }
 
+/* ========== BLOCKING CARD STYLES ========== */
+
+.blocking-card {
+  margin: var(--spacing-lg) 0;
+  padding: var(--spacing-xl);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 2px solid #ffc107;
+  border-radius: var(--border-radius-lg);
+  box-shadow: 0 8px 32px rgba(255, 193, 7, 0.15);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.blocking-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, rgba(255, 193, 7, 0.03) 100%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.blocking-content {
+  position: relative;
+  z-index: 1;
+}
+
+.blocking-icon {
+  font-size: 3em;
+  margin-bottom: var(--spacing-md);
+  animation: pulse 2s infinite;
+}
+
+.blocking-title {
+  font-size: 1.5em;
+  font-weight: 600;
+  color: #856404;
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.blocking-message {
+  font-size: 1em;
+  color: var(--text-secondary);
+  margin: 0 0 var(--spacing-lg) 0;
+  line-height: 1.5;
+}
+
+.blocking-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.blocking-btn {
+  padding: var(--spacing-md) var(--spacing-xl);
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 160px;
+}
+
+.blocking-btn.primary {
+  background: #ffc107;
+  color: #212529;
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+
+.blocking-btn.primary:hover {
+  background: #e0a800;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+}
+
+.blocking-btn.secondary {
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.blocking-btn.secondary:hover {
+  background: var(--background-hover);
+  border-color: var(--border-color-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Dark theme support for blocking card */
+.dark .blocking-card {
+  background: var(--glass-bg-dark);
+  border-color: #ffc107;
+  box-shadow: 0 8px 32px rgba(255, 193, 7, 0.2);
+}
+
+.dark .blocking-card::before {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.12) 0%, rgba(255, 193, 7, 0.06) 100%);
+}
+
+.dark .blocking-title {
+  color: #ffc107;
+}
+
+.dark .blocking-message {
+  color: var(--text-secondary-dark);
+}
+
+.dark .blocking-btn.secondary {
+  background: var(--glass-bg-dark);
+  color: var(--text-primary-dark);
+  border-color: var(--border-color-dark);
+}
+
+.dark .blocking-btn.secondary:hover {
+  background: var(--background-hover-dark);
+  border-color: var(--border-color-hover-dark);
+}
+
+/* Responsive design for blocking card */
+@media (max-width: 768px) {
+  .blocking-card {
+    margin: var(--spacing-md) 0;
+    padding: var(--spacing-lg);
+  }
+  
+  .blocking-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .blocking-btn {
+    width: 100%;
+    max-width: 250px;
+  }
+  
+  .blocking-icon {
+    font-size: 2.5em;
+  }
+  
+  .blocking-title {
+    font-size: 1.3em;
+  }
+}
+
 

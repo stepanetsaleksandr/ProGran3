@@ -30,6 +30,7 @@ export interface PluginRecord {
   ip_address: string;
   last_heartbeat: string;
   is_active: boolean;
+  is_blocked?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -42,6 +43,7 @@ export interface HeartbeatResponse {
     plugin_id: string;
     last_heartbeat: string;
     is_active: boolean;
+    is_blocked?: boolean;
   };
 }
 
@@ -62,4 +64,17 @@ export interface ErrorResponse {
   success: false;
   error: string;
   code?: string;
+}
+
+export interface BlockPluginRequest {
+  plugin_id: string;
+  action: 'block' | 'unblock';
+}
+
+export interface BlockPluginResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+  plugin_id?: string;
+  action?: string;
 }

@@ -18,6 +18,7 @@ interface Plugin {
   ip_address: string;
   last_heartbeat: string;
   is_active: boolean;
+  is_blocked?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -80,6 +81,39 @@ export default function Dashboard() {
     if (diffMinutes > 3) return 'Неактивний';
     if (diffMinutes > 2) return 'Попередження';
     return 'Активний';
+  };
+
+  const toggleBlockStatus = async (pluginId: string, currentBlocked: boolean) => {
+    try {
+      const action = currentBlocked ? 'unblock' : 'block';
+      const response = await fetch('/api/plugins/block', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          plugin_id: pluginId,
+          action: action
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Оновлюємо локальний стан
+        setPlugins(prevPlugins => 
+          prevPlugins.map(plugin => 
+            plugin.plugin_id === pluginId 
+              ? { ...plugin, is_blocked: !currentBlocked }
+              : plugin
+          )
+        );
+      } else {
+        console.error('Failed to update plugin status:', result.error);
+      }
+    } catch (error) {
+      console.error('Error updating plugin status:', error);
+    }
   };
 
   const getStatusIcon = (isActive: boolean, lastHeartbeat: string) => {
@@ -226,6 +260,9 @@ export default function Dashboard() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       IP адреса
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Дії
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -258,6 +295,18 @@ export default function Dashboard() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {plugin.ip_address}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() => toggleBlockStatus(plugin.plugin_id, plugin.is_blocked || false)}
+                          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                            plugin.is_blocked
+                              ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                              : 'bg-red-100 text-red-800 hover:bg-red-200'
+                          }`}
+                        >
+                          {plugin.is_blocked ? 'Розблокувати' : 'Заблокувати'}
+                        </button>
                       </td>
                     </tr>
                   ))}

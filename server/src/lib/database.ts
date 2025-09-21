@@ -56,8 +56,17 @@ export async function initializeDatabase() {
   }
 }
 
+// Тип для результату upsert операції
+interface UpsertResult {
+  id: number;
+  plugin_id: string;
+  last_heartbeat: string;
+  is_active: boolean;
+  is_blocked?: boolean;
+}
+
 // Upsert плагіна (оновлення або створення)
-export async function upsertPlugin(data: any, ipAddress: string) {
+export async function upsertPlugin(data: any, ipAddress: string): Promise<UpsertResult> {
   const {
     plugin_id,
     plugin_name,
@@ -69,6 +78,24 @@ export async function upsertPlugin(data: any, ipAddress: string) {
   } = data;
 
   try {
+    // Спочатку отримуємо поточний стан плагіна
+    const { data: existingPlugin } = await supabase
+      .from('plugins')
+      .select('is_blocked')
+      .eq('plugin_id', plugin_id)
+      .single();
+
+    // Якщо плагін заблокований, він не може бути активним
+    const isBlocked = existingPlugin?.is_blocked === true;
+    const isActive = !isBlocked; // Активний тільки якщо НЕ заблокований
+
+    console.log('UpsertPlugin debug:', {
+      plugin_id,
+      existingPlugin,
+      isBlocked,
+      isActive
+    });
+
     const { data: result, error } = await supabase
       .from('plugins')
       .upsert({
@@ -80,11 +107,12 @@ export async function upsertPlugin(data: any, ipAddress: string) {
         system_info,
         ip_address: ipAddress,
         last_heartbeat: timestamp,
-        is_active: true
+        is_active: isActive // Активний тільки якщо не заблокований
       }, {
-        onConflict: 'plugin_id'
+        onConflict: 'plugin_id',
+        ignoreDuplicates: false
       })
-      .select('id, plugin_id, last_heartbeat, is_active')
+      .select('id, plugin_id, last_heartbeat, is_active, is_blocked')
       .single();
 
     if (error) {
@@ -115,6 +143,14 @@ export async function getAllPlugins() {
 
     const pluginsWithActivity = (data || []).map(plugin => {
       const lastHeartbeat = new Date(plugin.last_heartbeat);
+      
+      // Якщо плагін заблокований сервером, він НЕ може бути активним
+      if (plugin.is_blocked === true) {
+        return {
+          ...plugin,
+          is_active: false // Заблоковані плагіни завжди неактивні
+        };
+      }
       
       // Якщо плагін вже позначений як неактивний в базі даних, залишаємо його неактивним
       if (plugin.is_active === false) {
@@ -205,5 +241,73 @@ export async function getPluginStats() {
     };
   } catch (error) {
     throw error;
+  }
+}
+
+// Заблокувати плагін
+export async function blockPlugin(pluginId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('plugins')
+      .update({ is_blocked: true })
+      .eq('plugin_id', pluginId)
+      .select('plugin_id, is_blocked')
+      .single();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : String(error) 
+    };
+  }
+}
+
+// Розблокувати плагін
+export async function unblockPlugin(pluginId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('plugins')
+      .update({ is_blocked: false })
+      .eq('plugin_id', pluginId)
+      .select('plugin_id, is_blocked')
+      .single();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : String(error) 
+    };
+  }
+}
+
+// Перевірити чи заблокований плагін
+export async function isPluginBlocked(pluginId: string): Promise<{ blocked: boolean; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('plugins')
+      .select('is_blocked')
+      .eq('plugin_id', pluginId)
+      .single();
+
+    if (error) {
+      return { blocked: false, error: error.message };
+    }
+
+    return { blocked: data.is_blocked || false };
+  } catch (error) {
+    return { 
+      blocked: false, 
+      error: error instanceof Error ? error.message : String(error) 
+    };
   }
 }

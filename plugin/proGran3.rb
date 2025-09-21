@@ -5,10 +5,15 @@ require 'json'
 require 'socket'
 require 'timeout'
 
+# Глобальна змінна для статусу блокування плагіна
+$plugin_blocked = false
+
 # Клас для відстеження активності плагіна
 class ProGran3Tracker
   def initialize(base_url = nil)
-    @base_url = base_url || ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-6zrzg5xo3-provis3ds-projects.vercel.app'
+    # ⚠️ ВАЖЛИВО: Після кожного деплою сервера оновити URL нижче!
+    # Команда для перевірки: vercel ls
+    @base_url = base_url || ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-2fojxdkzj-provis3ds-projects.vercel.app'
     @plugin_id = generate_unique_plugin_id
     @is_running = false
     @heartbeat_thread = nil
@@ -249,6 +254,26 @@ class ProGran3Tracker
               puts "📋 [#{timestamp}] Plugin ID: #{result['plugin']['plugin_id']}"
               puts "📋 [#{timestamp}] Last heartbeat: #{result['plugin']['last_heartbeat']}"
               puts "📋 [#{timestamp}] Is active: #{result['plugin']['is_active']}"
+              puts "📋 [#{timestamp}] Is blocked: #{result['plugin']['is_blocked']}"
+              
+              # Перевіряємо статус блокування
+              is_blocked = result['plugin']['is_blocked']
+              if is_blocked
+                puts "🚫 [#{timestamp}] ⚠️ ПЛАГІН ЗАБЛОКОВАНО СЕРВЕРОМ!"
+                @plugin_blocked = true
+                $plugin_blocked = true
+                
+                # Автоматично показуємо карточку блокування в UI
+                show_blocking_card_in_ui
+              else
+                puts "✅ [#{timestamp}] Плагін активний (не заблоковано)"
+                @plugin_blocked = false
+                $plugin_blocked = false
+                
+                # Приховуємо карточку блокування якщо плагін розблокований
+                hide_blocking_card_in_ui
+              end
+              
               puts "💓 [#{timestamp}] ========== HEARTBEAT ЗАВЕРШЕНО УСПІШНО =========="
               
               # Перевіряємо, чи plugin_id співпадає
@@ -488,6 +513,132 @@ class ProGran3Tracker
       if data[field].nil? || data[field].to_s.strip.empty?
         raise "Відсутнє обов'язкове поле: #{field}"
       end
+    end
+  end
+
+  def send_test_heartbeat_direct
+    begin
+      timestamp = Time.now.strftime('%H:%M:%S')
+      puts "📡 [#{timestamp}] Тестовий heartbeat для перевірки статусу блокування..."
+      
+      uri = URI("#{@base_url}/api/heartbeat")
+      
+      data = {
+        plugin_id: @plugin_id,
+        plugin_name: "ProGran3",
+        version: get_plugin_version,
+        user_id: get_user_identifier,
+        computer_name: Socket.gethostname,
+        system_info: get_system_info,
+        timestamp: Time.now.iso8601,
+        action: "heartbeat_update",
+        source: "sketchup_plugin",
+        update_existing: true,
+        force_update: false
+      }
+      
+      validate_heartbeat_data(data)
+      
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = (uri.scheme == 'https')
+      http.read_timeout = 30
+      http.open_timeout = 10
+      
+      request = Net::HTTP::Post.new(uri)
+      request['Content-Type'] = 'application/json'
+      request['User-Agent'] = "ProGran3-Plugin/#{get_plugin_version}"
+      request.body = data.to_json
+      
+      puts "📡 [#{timestamp}] Відправка тестового heartbeat до: #{@base_url}/api/heartbeat"
+      
+      response = http.request(request)
+      
+      puts "📨 [#{timestamp}] Відповідь сервера: #{response.code} #{response.message}"
+      puts "📄 [#{timestamp}] Тіло відповіді: #{response.body}"
+      
+      if response.code == '200'
+        begin
+          result = JSON.parse(response.body)
+          if result['success'] && result['plugin']
+            is_blocked = result['plugin']['is_blocked'] || false
+            is_active = result['plugin']['is_active'] || false
+            puts "📡 [#{timestamp}] Статус блокування: #{is_blocked ? 'ЗАБЛОКОВАНО' : 'АКТИВНИЙ'}"
+            puts "📡 [#{timestamp}] Статус активності: #{is_active ? 'АКТИВНИЙ' : 'НЕАКТИВНИЙ'}"
+            
+            # Оновлюємо локальні змінні
+            @plugin_blocked = is_blocked
+            $plugin_blocked = is_blocked
+            
+            # Автоматично показуємо/приховуємо карточку блокування
+            if is_blocked
+              show_blocking_card_in_ui
+            else
+              hide_blocking_card_in_ui
+            end
+            
+            return {
+              success: true,
+              blocked: is_blocked,
+              plugin_id: @plugin_id
+            }
+          else
+            return {
+              success: false,
+              error: "Неочікувана відповідь від сервера",
+              blocked: false
+            }
+          end
+        rescue JSON::ParserError => e
+          return {
+            success: false,
+            error: "Помилка парсингу JSON: #{e.message}",
+            blocked: false
+          }
+        end
+      else
+        return {
+          success: false,
+          error: "HTTP помилка: #{response.code} - #{response.message}",
+          blocked: false
+        }
+      end
+    rescue => e
+      puts "❌ [#{timestamp}] Помилка тестового heartbeat: #{e.message}"
+      return {
+        success: false,
+        error: e.message,
+        blocked: false
+      }
+    end
+  end
+
+  # Показати карточку блокування в UI
+  def show_blocking_card_in_ui
+    begin
+      # Перевіряємо чи UI відкрито
+      if defined?(ProGran3::UI) && ProGran3::UI.instance_variable_get(:@dialog) && ProGran3::UI.instance_variable_get(:@dialog).visible?
+        puts "📱 Показуємо карточку блокування в UI..."
+        ProGran3::UI.instance_variable_get(:@dialog).execute_script("showBlockingCard();")
+        puts "✅ Карточка блокування показана"
+      else
+        puts "📱 UI не відкрито - карточка блокування буде показана при відкритті"
+      end
+    rescue => e
+      puts "❌ Помилка показу карточки блокування: #{e.message}"
+    end
+  end
+
+  # Приховати карточку блокування в UI
+  def hide_blocking_card_in_ui
+    begin
+      # Перевіряємо чи UI відкрито
+      if defined?(ProGran3::UI) && ProGran3::UI.instance_variable_get(:@dialog) && ProGran3::UI.instance_variable_get(:@dialog).visible?
+        puts "📱 Приховуємо карточку блокування в UI..."
+        ProGran3::UI.instance_variable_get(:@dialog).execute_script("hideBlockingCard();")
+        puts "✅ Карточка блокування прихована"
+      end
+    rescue => e
+      puts "❌ Помилка приховування карточки блокування: #{e.message}"
     end
   end
 
@@ -917,6 +1068,25 @@ if defined?(Sketchup)
     puts "✅ Новий трекер створено та запущено"
   end
   
+  # Метод для тестової перевірки статусу блокування
+  def self.send_test_heartbeat
+    begin
+      # Створюємо тимчасовий трекер якщо основний не ініціалізований
+      tracker = $progran3_tracker || ProGran3Tracker.new
+      
+      # Відправляємо тестовий heartbeat напряму
+      result = tracker.send(:send_test_heartbeat_direct)
+      
+      return result
+    rescue => e
+      return {
+        success: false,
+        error: e.message,
+        blocked: false
+      }
+    end
+  end
+
   # НЕ запускаємо відстеження автоматично - тільки після відкриття UI
   puts "🔄 Завантаження всіх модулів завершено"
 end

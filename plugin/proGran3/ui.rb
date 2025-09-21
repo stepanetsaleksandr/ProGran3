@@ -46,6 +46,14 @@ module ProGran3
       @dialog.add_action_callback("ready") do |d, _|
         puts "📱 UI повністю завантажено - запуск відстеження heartbeat..."
         
+        # Перевіряємо чи плагін заблокований перед запуском
+        if $plugin_blocked
+          puts "🚫 Плагін заблокований - показуємо карточку блокування"
+          @dialog.execute_script("showBlockingCard();")
+        else
+          puts "✅ Плагін активний - запускаємо нормальну роботу"
+        end
+        
         # Запускаємо відстеження після повного завантаження UI
         begin
           ProGran3.start_tracking
@@ -434,6 +442,9 @@ module ProGran3
           0
         end
       end
+      
+      # Додаємо callback для перевірки статусу блокування
+      add_blocking_status_callback(@dialog)
 
       @dialog.show
     end
@@ -472,6 +483,33 @@ module ProGran3
         ProGran3::Logger.error("Помилка генерації превью: #{e.message}", "UI")
         ProGran3::Logger.error("Stack trace: #{e.backtrace.join("\n")}", "UI")
         return { success: false, error: "Помилка генерації превью: #{e.message}" }
+      end
+    end
+
+    # Callback для перевірки статусу блокування з сервера
+    def self.add_blocking_status_callback(dialog)
+      dialog.add_action_callback("checkBlockingStatus") do |action_context, _|
+        puts "🔍 Перевірка статусу блокування з сервера..."
+        
+        begin
+          # Використовуємо метод send_test_heartbeat для перевірки статусу
+          result = ProGran3.send_test_heartbeat
+          
+          if result[:success]
+            is_blocked = result[:blocked] || false
+            puts "📡 Статус з сервера: #{is_blocked ? 'ЗАБЛОКОВАНО' : 'АКТИВНИЙ'}"
+            
+            # Відправляємо результат в JavaScript через @dialog
+            @dialog.execute_script("updateBlockingStatusFromServer(#{is_blocked});")
+          else
+            puts "⚠️ Не вдалося отримати статус з сервера: #{result[:error]}"
+            @dialog.execute_script("debugLog('❌ Помилка отримання статусу: #{result[:error]}', 'error');")
+          end
+        rescue => e
+          puts "❌ Помилка при перевірці статусу блокування: #{e.message}"
+          puts "❌ Backtrace: #{e.backtrace.join('\n')}"
+          @dialog.execute_script("debugLog('❌ Помилка Ruby callback: #{e.message}', 'error');")
+        end
       end
     end
   end

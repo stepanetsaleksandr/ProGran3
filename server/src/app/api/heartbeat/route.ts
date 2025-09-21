@@ -61,6 +61,9 @@ export async function POST(request: NextRequest) {
       // Звичайний heartbeat
       result = await upsertPlugin(data, ipAddress);
       message = 'Heartbeat updated successfully';
+      
+      // Логування для діагностики
+      console.log('Heartbeat result:', JSON.stringify(result, null, 2));
     }
 
     // Формуємо відповідь
@@ -71,9 +74,18 @@ export async function POST(request: NextRequest) {
         id: result.id,
         plugin_id: result.plugin_id,
         last_heartbeat: result.last_heartbeat,
-        is_active: result.is_active
+        is_active: result.is_active,
+        is_blocked: (result as any).is_blocked || false
       }
     };
+
+    // Додаткове логування для діагностики блокування
+    console.log('Heartbeat response:', JSON.stringify({
+      plugin_id: result.plugin_id,
+      is_active: result.is_active,
+      is_blocked: (result as any).is_blocked,
+      full_result: result
+    }, null, 2));
 
     // Додаємо заголовки для уникнення кешування
     const nextResponse = NextResponse.json(response);

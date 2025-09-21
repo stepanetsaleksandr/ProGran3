@@ -34,6 +34,19 @@
       </div>
     </header>
 
+    <!-- Карточка блокування (показується коли плагін заблокований) -->
+    <div id="blocking-card" class="blocking-card" style="display: none;">
+      <div class="blocking-content">
+        <div class="blocking-icon">⚠️</div>
+        <h2 class="blocking-title">Потрібна активація</h2>
+        <p class="blocking-message">Для продовження роботи з плагіном необхідно активувати ліцензію або перевірити підключення до інтернету</p>
+        <div class="blocking-actions">
+          <button onclick="openPurchasePage()" class="blocking-btn primary">Активувати ліцензію</button>
+          <button onclick="retryConnection()" class="blocking-btn secondary">Перевірити підключення</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Навігація табів -->
     <div class="tabs-navigation">
       <button class="tab-button active" data-tab="base" onclick="switchTab('base')" data-i18n="tabs.base">База</button>
@@ -679,6 +692,9 @@
   <!-- 7. Головний файл в кінці -->
   <script src="script.js"></script>
   
+  <!-- 8. Функції блокування -->
+  <script src="blocking-functions.js"></script>
+  
   <!-- Debug Log -->
   <div id="debug-log" style="
     position: fixed;
@@ -710,5 +726,36 @@
     cursor: pointer;
     z-index: 10001;
   ">Debug</button>
+  
+  <!-- Test Blocking Buttons -->
+  <button id="test-block-btn" onclick="testBlockPlugin()" style="
+    position: fixed;
+    bottom: 80px;
+    right: 10px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 10001;
+    font-size: 12px;
+    white-space: nowrap;
+  ">Тест: Блок</button>
+  
+  <button id="test-unblock-btn" onclick="testUnblockPlugin()" style="
+    position: fixed;
+    bottom: 120px;
+    right: 10px;
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 10001;
+    font-size: 12px;
+    white-space: nowrap;
+  ">Тест: Розблокувати</button>
 </body>
 </html>
