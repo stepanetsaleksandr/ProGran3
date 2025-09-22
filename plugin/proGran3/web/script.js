@@ -842,47 +842,7 @@ const CarouselManager = {
  * debugLog('Фундамент створено', 'success');
  * debugLog('Помилка валідації', 'error');
  */
-function debugLog(message, type = 'info') {
-  // Тільки в development режимі
-  const isDevelopment = typeof window !== 'undefined' && window.location && 
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-  
-  if (!isDevelopment && type !== 'error') {
-    return; // Пропускаємо non-error логи в production
-  }
-  
-  const debugLog = document.getElementById('debug-log');
-  if (!debugLog) return;
-  
-  const timestamp = new Date().toLocaleTimeString();
-  const color = type === 'error' ? '#ff6b6b' : type === 'success' ? '#51cf66' : type === 'warning' ? '#ffd43b' : '#339af0';
-  
-  const logEntry = document.createElement('div');
-  logEntry.style.color = color;
-  logEntry.style.marginBottom = '2px';
-  logEntry.innerHTML = `<span style="color: #868e96;">[${timestamp}]</span> ${message}`;
-  
-  debugLog.appendChild(logEntry);
-  debugLog.scrollTop = debugLog.scrollHeight;
-  
-  // Console логування тільки для критичних помилок
-  if (type === 'error') {
-    console.error(`[ProGran3] ${message}`);
-  }
-  
-  // Обмежуємо кількість записів
-  while (debugLog.children.length > 50) {
-    debugLog.removeChild(debugLog.firstChild);
-  }
-}
-
-// Функція для очищення debug логу
-function clearDebugLog() {
-  const debugLog = document.getElementById('debug-log');
-  if (debugLog) {
-    debugLog.innerHTML = '<div> Очікування логів...</div>';
-  }
-}
+// DebugManager винесено в modules/core/DebugManager.js
 
 // --- ІНІЦІАЛІЗАЦІЯ ---
 window.onload = async function () {
@@ -3375,19 +3335,7 @@ function updateFenceCornerDisplay() {
 }
 
 // Оновлення відображення розмірів підставки
-// Функція для перемикання debug логу
-function toggleDebugLog() {
-  const debugLog = document.getElementById('debug-log');
-  const debugToggle = document.getElementById('debug-toggle');
-  
-  if (debugLog.style.display === 'none') {
-    debugLog.style.display = 'block';
-    debugToggle.textContent = 'Hide Debug';
-  } else {
-    debugLog.style.display = 'none';
-    debugToggle.textContent = 'Debug';
-  }
-}
+// toggleDebugLog винесено в modules/core/DebugManager.js
 
 
 function updateStandsDisplay() {
