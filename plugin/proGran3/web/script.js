@@ -31,6 +31,9 @@
 // ============================================================================
 // Функції для переключення між табами та ініціалізації каруселей
 
+// Поточний активний таб
+let activeTab = 'base';
+
 // Функція переключення табів
 function switchTab(tabName) {
   // Приховуємо всі таби
@@ -63,24 +66,19 @@ function switchTab(tabName) {
   // Оновлюємо каруселі в активному табі
   setTimeout(() => {
     updateCarouselsInActiveTab();
-    // Ініціалізуємо каруселі для нового таба
     initializeCarouselsForTab(tabName);
   }, 50);
-    
-    
 }
 
 // Оновлення каруселей в активному табі
 function updateCarouselsInActiveTab() {
   const activeTabContent = document.querySelector('.tab-content.active');
   if (activeTabContent) {
-    // Знаходимо всі каруселі в активному табі
     const carousels = activeTabContent.querySelectorAll('.carousel-container');
     carousels.forEach(carousel => {
-      // Перевіряємо, чи карусель видима
       const viewport = carousel.querySelector('.carousel-viewport');
-      if (viewport && viewport.offsetParent !== null) {
-        // Тільки оновлюємо видимі каруселі
+      if (viewport) {
+        // Тригеримо оновлення каруселі
         viewport.style.display = 'none';
         setTimeout(() => {
           viewport.style.display = 'block';
@@ -92,60 +90,54 @@ function updateCarouselsInActiveTab() {
 
 // Ініціалізація каруселей для конкретного таба
 function initializeCarouselsForTab(tabName) {
-  debugLog(`🎠 Ініціалізація каруселей для таба: ${tabName}`, 'info');
+  debugLog(`Ініціалізація каруселей для таба: ${tabName}`, 'info');
   
   const tabCarousels = {
     'base': ['stands', 'flowerbeds'],
-    'monument': ['stands', 'steles'],
-    'gravestone': ['flowerbeds', 'gravestones'],
-    'fence': ['fence_decor']
+    'monument': ['steles'],
+    'gravestone': ['gravestones'],
+    'fence': ['fence_decor'],
+    'view': []
   };
   
-  const carouselTypes = tabCarousels[tabName] || [];
-  carouselTypes.forEach(category => {
+  const carousels = tabCarousels[tabName] || [];
+  
+  carousels.forEach(category => {
     debugLog(`Перевіряємо карусель ${category} для таба ${tabName}`, 'info');
     
-    // Перевіряємо, чи вже ініціалізована карусель (тимчасово відключено для діагностики)
-    // if (CarouselManager.isInitialized(category)) {
-    //   debugLog(`Карусель ${category} вже ініціалізована, пропускаємо`, 'info');
-    //   return;
-    // }
+    const trackElement = document.getElementById(`${category}-carousel-track`);
+    const viewportElement = document.getElementById(`${category}-carousel-viewport`);
     
-    if (CarouselManager.hasCarousel(category) && modelLists[category]) {
-      const trackElement = document.getElementById(CarouselManager.getCarouselElementId(category, 'track'));
-      const viewportElement = document.getElementById(CarouselManager.getCarouselElementId(category, 'viewport'));
+    if (trackElement && viewportElement && modelLists && modelLists[category]) {
+      debugLog(`Ініціалізуємо карусель ${category} для таба ${tabName}`, 'success');
       
-      if (trackElement && viewportElement) {
-        debugLog(`Ініціалізуємо карусель ${category} для таба ${tabName}`, 'success');
+      if (CarouselManager && CarouselManager.initialize) {
         CarouselManager.initialize(category);
-      } else {
-        debugLog(`Не знайдено елементи каруселі ${category} для таба ${tabName}`, 'error');
       }
     } else {
-      debugLog(`Карусель ${category} не доступна або немає моделей для таба ${tabName}`, 'warning');
+      debugLog(`Не знайдено елементи каруселі ${category} для таба ${tabName}`, 'error');
     }
   });
 }
 
 // Ініціалізація табів
 function initializeTabs() {
-  debugLog(`Ініціалізація табів`, 'info');
-  
   // Перевіряємо наявність навігації табів
   const tabsNavigation = document.querySelector('.tabs-navigation');
   if (!tabsNavigation) {
-    debugLog(`Не знайдено навігацію табів`, 'error');
     return;
   }
   
   // Перевіряємо наявність контенту табів
   const tabContents = document.querySelectorAll('.tab-content');
   if (tabContents.length === 0) {
-    debugLog(`Не знайдено контент табів`, 'error');
     return;
   }
   
-  debugLog(`Знайдено ${tabContents.length} табів`, 'success');
+  // Спочатку приховуємо всі таби
+  tabContents.forEach(tab => {
+    tab.classList.remove('active');
+  });
   
   // Встановлюємо активний таб за замовчуванням
   switchTab('base');
@@ -157,13 +149,10 @@ function initializeTabs() {
       e.preventDefault();
       const tabName = this.getAttribute('data-tab');
       if (tabName) {
-        debugLog(` Переключення на таб: ${tabName}`, 'info');
         switchTab(tabName);
       }
     });
   });
-  
-  debugLog(` Таби ініціалізовані успішно`, 'success');
 }
 
 // Ініціалізація floating labels
