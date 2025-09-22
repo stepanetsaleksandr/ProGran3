@@ -844,6 +844,49 @@ const CarouselManager = {
  */
 // DebugManager винесено в modules/core/DebugManager.js
 
+// Функція для примусового оновлення каруселі
+function forceRefreshCarousel() {
+  debugLog('🔄 Примусове оновлення каруселі', 'info');
+  
+  // Очищуємо кеш моделей
+  if (typeof modelLists !== 'undefined') {
+    modelLists = {};
+  }
+  
+  // Очищуємо стан каруселі
+  if (typeof carouselState !== 'undefined') {
+    carouselState = {};
+  }
+  
+  // Очищуємо localStorage
+  localStorage.removeItem('progran3_models');
+  localStorage.removeItem('progran3_carousel');
+  
+  // Перезавантажуємо сторінку
+  location.reload();
+}
+
+// Функція для оновлення конкретної категорії
+function refreshCategory(category) {
+  debugLog(`🔄 Оновлення категорії: ${category}`, 'info');
+  
+  // Очищуємо track
+  const track = document.getElementById(`${category}-carousel-track`);
+  if (track) {
+    track.innerHTML = '';
+  }
+  
+  // Скидаємо стан каруселі
+  if (carouselState && carouselState[category]) {
+    carouselState[category] = { index: 0, initialized: false };
+  }
+  
+  // Перезавантажуємо карусель
+  if (CarouselManager && CarouselManager.initialize) {
+    CarouselManager.initialize(category);
+  }
+}
+
 // --- ІНІЦІАЛІЗАЦІЯ ---
 window.onload = async function () {
   debugLog(` window.onload викликано`, 'info');
@@ -1441,8 +1484,19 @@ function selectSteleType(button) {
     steleOptionsSection.style.display = 'none';
     
     // Показуємо секцію масштабування для однієї стели
-    if (steleScalingSection && carouselState.steles.modelCreated) {
+    if (steleScalingSection) {
       steleScalingSection.style.display = 'block';
+      debugLog('Показано секцію масштабування для одинарної стели', 'info');
+      
+      // Додаткова перевірка через затримку
+      setTimeout(() => {
+        if (steleScalingSection.style.display !== 'block') {
+          steleScalingSection.style.display = 'block';
+          debugLog('Примусово показано секцію масштабування (через затримку)', 'info');
+        }
+      }, 50);
+    } else {
+      debugLog('stele-scaling-section не знайдено в DOM при виборі single', 'error');
     }
     
     // Видаляємо центральну деталь, якщо вона була створена
@@ -1634,9 +1688,15 @@ function initializeSteleType() {
       centralDetailCreated: false,
       modelCreated: false
     };
-    debugLog('Ініціалізовано стан стел', 'info');
+    debugLog('Ініціалізовано стан стел з типом single', 'info');
   } else {
     debugLog(`Стан стел вже існує: ${JSON.stringify(carouselState.steles)}`, 'info');
+  }
+  
+  // Примусово встановлюємо тип single, якщо не встановлений
+  if (!carouselState.steles.type) {
+    carouselState.steles.type = 'single';
+    debugLog('Примусово встановлено тип стел: single', 'info');
   }
   
   const steleTypeInputs = document.querySelectorAll('input[name="stele-type"]');
@@ -1651,6 +1711,19 @@ function initializeSteleType() {
   
   // Ініціалізуємо нову Apple-style структуру
   initializeSteleSections();
+  
+  // Показуємо секцію масштабування для одинарної стели, якщо вона вже вибрана
+  setTimeout(() => {
+    if (carouselState.steles.type === 'single') {
+      const steleScalingSection = document.getElementById('stele-scaling-section');
+      if (steleScalingSection) {
+        steleScalingSection.style.display = 'block';
+        debugLog('Показано секцію масштабування при ініціалізації (з затримкою)', 'info');
+      } else {
+        debugLog('stele-scaling-section не знайдено в DOM', 'error');
+      }
+    }
+  }, 200);
 }
 
 // Ініціалізація центральної деталі
@@ -1666,11 +1739,14 @@ function initializeCentralDetail() {
 
 // Ініціалізація нової Apple-style структури стел
 function initializeSteleSections() {
-  // Встановлюємо початковий стан сегментів
-  const singleButton = document.querySelector('.segment[data-value="single"]');
-  if (singleButton && !singleButton.classList.contains('active')) {
-    selectSteleType(singleButton);
-  }
+  // Встановлюємо початковий стан сегментів з затримкою
+  setTimeout(() => {
+    const singleButton = document.querySelector('.segment[data-value="single"]');
+    if (singleButton && !singleButton.classList.contains('active')) {
+      debugLog('initializeSteleSections: викликаємо selectSteleType для single', 'info');
+      selectSteleType(singleButton);
+    }
+  }, 100);
   
   // Ініціалізуємо центральну деталь
   initializeCentralDetail();
@@ -4144,6 +4220,8 @@ async function showSteleScalingSection() {
     debugLog('Секція масштабування доступна тільки для однієї стели', 'info');
     return;
   }
+  
+  debugLog('showSteleScalingSection: показуємо секцію масштабування', 'info');
   
   const scalingSection = document.getElementById('stele-scaling-section');
   if (scalingSection) {

@@ -23,7 +23,9 @@ module ProGran3
     begin
       comp_def = defs.load(path)
       comp_def.name = filename
-      comp_def
+      
+      # Нормалізуємо bounds компонента
+      normalize_component_bounds(comp_def)
     rescue IOError
       ::UI.messagebox("Помилка: Неможливо завантажити файл #{filename}. Перевірте, що це правильний .skp файл.")
       nil
@@ -75,13 +77,23 @@ module ProGran3
 
   # Функція для отримання поверхні для розміщення стел (проміжна або підставка)
   def get_steles_placement_surface
+    ProGran3::Logger.info("🔍 Пошук поверхні для розміщення стел", "Loader")
+    
     gaps = last_gaps_instance
     if gaps
-      ProGran3::Logger.info("Використовуємо проміжну для розміщення стел", "Loader")
+      ProGran3::Logger.info("✅ Знайдено проміжну для розміщення стел", "Loader")
+      ProGran3::Logger.info("📐 Проміжна bounds: #{gaps.bounds}", "Loader")
       gaps
     else
-      ProGran3::Logger.info("Використовуємо підставку для розміщення стел", "Loader")
-      last_base_stand_instance
+      stand = last_base_stand_instance
+      if stand
+        ProGran3::Logger.info("✅ Знайдено підставку для розміщення стел", "Loader")
+        ProGran3::Logger.info("📐 Підставка bounds: #{stand.bounds}", "Loader")
+        stand
+      else
+        ProGran3::Logger.error("❌ Не знайдено поверхню для розміщення стел!", "Loader")
+        nil
+      end
     end
   end
 
@@ -954,24 +966,45 @@ module ProGran3
 
   # Розрахунок позиції стели
   def calculate_stele_position(comp_def, entities)
+    ProGran3::Logger.info("🔍 Розрахунок позиції стели: #{comp_def.name}", "Loader")
+    
+    # Діагностика bounds компонента
+    bounds = comp_def.bounds
+    ProGran3::Logger.info("📐 Bounds стели: width=#{bounds.width.to_mm.round}mm, height=#{bounds.height.to_mm.round}mm, depth=#{bounds.depth.to_mm.round}mm", "Loader")
+    ProGran3::Logger.info("📐 Bounds min: #{bounds.min}", "Loader")
+    ProGran3::Logger.info("📐 Bounds max: #{bounds.max}", "Loader")
+    
+    # Перевіряємо, чи bounds не занадто великий
+    if bounds.width > 2000.mm || bounds.height > 2000.mm || bounds.depth > 2000.mm
+      ProGran3::Logger.warn("⚠️ Bounds стели занадто великий! Можливо, потрібна нормалізація", "Loader")
+    end
+    
     placement_surface = get_steles_placement_surface
     if placement_surface
       surface_bounds = placement_surface.bounds
-      [
+      position = [
         surface_bounds.center.x - comp_def.bounds.center.x,
         surface_bounds.center.y - comp_def.bounds.center.y,
         surface_bounds.max.z - comp_def.bounds.min.z
       ]
+      ProGran3::Logger.info("✅ Позиція на поверхні: #{position}", "Loader")
+      ProGran3::Logger.info("📐 Поверхня: center(#{surface_bounds.center.x}, #{surface_bounds.center.y}, #{surface_bounds.center.z})", "Loader")
+      ProGran3::Logger.info("📐 Компонент: center(#{comp_def.bounds.center.x}, #{comp_def.bounds.center.y}, #{comp_def.bounds.center.z})", "Loader")
+      position
     else
       stand = last_base_stand_instance
       if stand
         stand_bounds = stand.bounds
-        [
+        position = [
           stand_bounds.center.x - comp_def.bounds.center.x,
           stand_bounds.center.y - comp_def.bounds.center.y,
           stand_bounds.max.z - comp_def.bounds.min.z
         ]
+        ProGran3::Logger.info("✅ Позиція на підставці: #{position}", "Loader")
+        ProGran3::Logger.info("📐 Підставка: center(#{stand_bounds.center.x}, #{stand_bounds.center.y}, #{stand_bounds.center.z})", "Loader")
+        position
       else
+        ProGran3::Logger.error("❌ Немає поверхні для позиціонування стели! Розміщуємо в [0,0,0]", "Loader")
         [0, 0, 0]
       end
     end
@@ -1045,6 +1078,206 @@ module ProGran3
         foundation_bounds.center.y - comp_def.bounds.center.y,
         foundation_bounds.max.z - comp_def.bounds.min.z
       ]
+    end
+  end
+
+  # Нормалізація bounds компонента (виправляє занадто великі bounds)
+  def normalize_component_bounds(comp_def)
+    ProGran3::Logger.info("🔧 Нормалізація bounds компонента: #{comp_def.name}", "Loader")
+    
+    bounds = comp_def.bounds
+    original_bounds = {
+      width: bounds.width,
+      height: bounds.height,
+      depth: bounds.depth
+    }
+    
+    ProGran3::Logger.info("📐 Оригінальні bounds: width=#{bounds.width.to_mm.round}mm, height=#{bounds.height.to_mm.round}mm, depth=#{bounds.depth.to_mm.round}mm", "Loader")
+    
+    # Якщо bounds занадто великий, намагаємося його виправити
+    if bounds.width > 2000.mm || bounds.height > 2000.mm || bounds.depth > 2000.mm
+      ProGran3::Logger.warn("⚠️ Bounds занадто великий, намагаємося виправити", "Loader")
+      
+      # Очищаємо bounds компонента
+      clean_component_bounds(comp_def)
+    end
+    
+    ProGran3::Logger.info("✅ Bounds нормалізовано", "Loader")
+    comp_def
+  end
+
+  # Очищення bounds компонента (видаляє зайві елементи)
+  def clean_component_bounds(comp_def)
+    ProGran3::Logger.info("🧹 Очищення bounds компонента: #{comp_def.name}", "Loader")
+    
+    # Спочатку видаляємо Section planes
+    remove_section_planes_from_component(comp_def)
+    
+    entities = comp_def.entities
+    all_entities = entities.to_a
+    
+    ProGran3::Logger.info("📊 Всього елементів в компоненті: #{all_entities.length}", "Loader")
+    
+    # Знаходимо тільки видимі геометрії (без прихованих, допоміжних ліній, тощо)
+    visible_entities = all_entities.select do |entity|
+      # Пропускаємо приховані елементи
+      next false if entity.hidden?
+      
+      # Пропускаємо допоміжні лінії та точки
+      next false if entity.is_a?(Sketchup::ConstructionLine) || entity.is_a?(Sketchup::ConstructionPoint)
+      
+      # Пропускаємо тексти та анотації
+      next false if entity.is_a?(Sketchup::Text) || entity.is_a?(Sketchup::Dimension)
+      
+      # Пропускаємо групи без геометрії
+      if entity.is_a?(Sketchup::Group)
+        next false if entity.entities.length == 0
+      end
+      
+      # Пропускаємо компоненти без геометрії
+      if entity.is_a?(Sketchup::ComponentInstance)
+        next false if entity.definition.entities.length == 0
+      end
+      
+      true
+    end
+    
+    ProGran3::Logger.info("📊 Видимих елементів: #{visible_entities.length}", "Loader")
+    
+    if visible_entities.any?
+      # Розраховуємо нові bounds на основі тільки видимої геометрії
+      min_point = Geom::Point3d.new(Float::INFINITY, Float::INFINITY, Float::INFINITY)
+      max_point = Geom::Point3d.new(-Float::INFINITY, -Float::INFINITY, -Float::INFINITY)
+      
+      visible_entities.each do |entity|
+        if entity.respond_to?(:bounds)
+          entity_bounds = entity.bounds
+          min_point.x = [min_point.x, entity_bounds.min.x].min
+          min_point.y = [min_point.y, entity_bounds.min.y].min
+          min_point.z = [min_point.z, entity_bounds.min.z].min
+          max_point.x = [max_point.x, entity_bounds.max.x].max
+          max_point.y = [max_point.y, entity_bounds.max.y].max
+          max_point.z = [max_point.z, entity_bounds.max.z].max
+        end
+      end
+      
+      # Якщо знайшли реальні bounds
+      if min_point.x != Float::INFINITY
+        new_bounds = Geom::BoundingBox.new
+        new_bounds.add(min_point)
+        new_bounds.add(max_point)
+        
+        ProGran3::Logger.info("✅ Очищені bounds: width=#{new_bounds.width.to_mm.round}mm, height=#{new_bounds.height.to_mm.round}mm, depth=#{new_bounds.depth.to_mm.round}mm", "Loader")
+        
+        # Порівняння з оригінальними bounds
+        original_bounds = comp_def.bounds
+        ProGran3::Logger.info("📊 Порівняння bounds:", "Loader")
+        ProGran3::Logger.info("  Оригінал: width=#{original_bounds.width.to_mm.round}mm, height=#{original_bounds.height.to_mm.round}mm, depth=#{original_bounds.depth.to_mm.round}mm", "Loader")
+        ProGran3::Logger.info("  Очищено: width=#{new_bounds.width.to_mm.round}mm, height=#{new_bounds.height.to_mm.round}mm, depth=#{new_bounds.depth.to_mm.round}mm", "Loader")
+        
+        # Розрахунок економії простору
+        width_saved = original_bounds.width - new_bounds.width
+        height_saved = original_bounds.height - new_bounds.height
+        depth_saved = original_bounds.depth - new_bounds.depth
+        
+        ProGran3::Logger.info("💰 Економія простору: width=#{width_saved.to_mm.round}mm, height=#{height_saved.to_mm.round}mm, depth=#{depth_saved.to_mm.round}mm", "Loader")
+      else
+        ProGran3::Logger.warn("⚠️ Не вдалося розрахувати нові bounds", "Loader")
+      end
+    else
+      ProGran3::Logger.warn("⚠️ Не знайдено видимих елементів для розрахунку bounds", "Loader")
+    end
+  end
+
+  # Видалення Section planes з компонента
+  def remove_section_planes_from_component(comp_def)
+    ProGran3::Logger.info("✂️ Видалення Section planes з компонента: #{comp_def.name}", "Loader")
+    
+    begin
+      entities = comp_def.entities
+      all_entities = entities.to_a
+      
+      # Знаходимо всі Section planes
+      section_planes = all_entities.select { |entity| entity.is_a?(Sketchup::SectionPlane) }
+      
+      if section_planes.any?
+        ProGran3::Logger.info("📊 Знайдено Section planes: #{section_planes.length}", "Loader")
+        
+        # Видаляємо всі Section planes
+        section_planes.each do |section_plane|
+          if section_plane && section_plane.valid?
+            section_plane.erase!
+            ProGran3::Logger.info("✅ Section plane видалено", "Loader")
+          end
+        end
+        
+        ProGran3::Logger.success("✅ Видалено #{section_planes.length} Section planes", "Loader")
+      else
+        ProGran3::Logger.info("ℹ️ Section planes не знайдено", "Loader")
+      end
+      
+      # Також перевіряємо в підкомпонентах
+      component_instances = all_entities.select { |entity| entity.is_a?(Sketchup::ComponentInstance) }
+      component_instances.each do |instance|
+        if instance.definition && instance.definition.valid?
+          remove_section_planes_from_component(instance.definition)
+        end
+      end
+      
+    rescue => e
+      ProGran3::Logger.error("❌ Помилка при видаленні Section planes: #{e.message}", "Loader")
+    end
+  end
+
+  # Примусове оновлення bounds компонента (створює новий компонент з правильними bounds)
+  def force_update_component_bounds(comp_def)
+    ProGran3::Logger.info("🔄 Примусове оновлення bounds компонента: #{comp_def.name}", "Loader")
+    
+    begin
+      # Спочатку видаляємо Section planes з оригінального компонента
+      remove_section_planes_from_component(comp_def)
+      
+      # Створюємо новий компонент з тим же ім'ям
+      model = Sketchup.active_model
+      defs = model.definitions
+      
+      # Зберігаємо оригінальне ім'я
+      original_name = comp_def.name
+      
+      # Створюємо тимчасове ім'я
+      temp_name = "#{original_name}_temp_#{Time.now.to_i}"
+      
+      # Копіюємо компонент з новим ім'ям
+      new_comp_def = defs.add(temp_name)
+      
+      # Копіюємо всі елементи (крім Section planes)
+      comp_def.entities.each do |entity|
+        # Пропускаємо Section planes
+        next if entity.is_a?(Sketchup::SectionPlane)
+        
+        if entity.is_a?(Sketchup::ComponentInstance)
+          new_comp_def.entities.add_instance(entity.definition, entity.transformation)
+        elsif entity.is_a?(Sketchup::Group)
+          new_group = new_comp_def.entities.add_group
+          new_group.entities.add_face(entity.entities.grep(Sketchup::Face))
+        else
+          # Копіюємо інші елементи
+          new_comp_def.entities.add_face(entity.entities.grep(Sketchup::Face)) if entity.respond_to?(:entities)
+        end
+      end
+      
+      # Видаляємо старий компонент
+      defs.purge(comp_def)
+      
+      # Перейменовуємо новий компонент
+      new_comp_def.name = original_name
+      
+      ProGran3::Logger.success("✅ Bounds компонента оновлено примусово", "Loader")
+      new_comp_def
+      
+    rescue => e
+      ProGran3::Logger.error("❌ Помилка примусового оновлення bounds: #{e.message}", "Loader")
+      comp_def
     end
   end
 
