@@ -16,8 +16,8 @@
           <div class="unit-toggle">
             <input type="radio" id="unit-mm" name="unit" value="mm" checked onchange="changeUnit('mm')">
             <input type="radio" id="unit-cm" name="unit" value="cm" onchange="changeUnit('cm')">
-            <label for="unit-mm" class="unit-label" onclick="changeUnit('mm')" data-i18n="units.mm">мм</label>
-            <label for="unit-cm" class="unit-label" onclick="changeUnit('cm')" data-i18n="units.cm">см</label>
+            <label for="unit-mm" class="unit-label" data-unit="mm" data-i18n="units.mm">мм</label>
+            <label for="unit-cm" class="unit-label" data-unit="cm" data-i18n="units.cm">см</label>
             <div class="unit-slider"></div>
           </div>
         </div>
@@ -25,7 +25,7 @@
       
       <!-- Центр - заголовок -->
       <div class="header-center">
-        <h1 onclick="toggleTheme()" style="cursor: pointer;">ProGran</h1>
+        <h1 id="theme-toggle" style="cursor: pointer;">ProGran</h1>
       </div>
       
       <!-- Правий верхній кут - вибір мови -->
@@ -41,8 +41,8 @@
         <h2 class="blocking-title">Потрібна активація</h2>
         <p class="blocking-message">Для продовження роботи з плагіном необхідно активувати ліцензію або перевірити підключення до інтернету</p>
         <div class="blocking-actions">
-          <button onclick="openPurchasePage()" class="blocking-btn primary">Активувати ліцензію</button>
-          <button onclick="retryConnection()" class="blocking-btn secondary">Перевірити підключення</button>
+          <button id="open-purchase-btn" class="blocking-btn primary">Активувати ліцензію</button>
+          <button id="retry-connection-btn" class="blocking-btn secondary">Перевірити підключення</button>
         </div>
       </div>
     </div>

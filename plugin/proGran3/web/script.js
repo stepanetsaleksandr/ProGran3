@@ -39,6 +39,7 @@ function switchTab(tabName) {
   // Приховуємо всі таби
   const tabContents = document.querySelectorAll('.tab-content');
   tabContents.forEach(tab => {
+    tab.style.display = 'none';
     tab.classList.remove('active');
   });
   
@@ -51,6 +52,7 @@ function switchTab(tabName) {
   // Показуємо вибраний таб
   const selectedTab = document.getElementById(tabName + '-tab');
   if (selectedTab) {
+    selectedTab.style.display = 'block';
     selectedTab.classList.add('active');
   }
   
@@ -62,12 +64,6 @@ function switchTab(tabName) {
   
   // Зберігаємо активний таб
   activeTab = tabName;
-  
-  // Оновлюємо каруселі в активному табі
-  setTimeout(() => {
-    updateCarouselsInActiveTab();
-    initializeCarouselsForTab(tabName);
-  }, 50);
 }
 
 // Оновлення каруселей в активному табі
@@ -136,6 +132,7 @@ function initializeTabs() {
   
   // Спочатку приховуємо всі таби
   tabContents.forEach(tab => {
+    tab.style.display = 'none';
     tab.classList.remove('active');
   });
   
@@ -153,6 +150,57 @@ function initializeTabs() {
       }
     });
   });
+}
+
+// Loading state management
+function showLoadingState(elementId, message = 'Завантаження...') {
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.disabled = true;
+    element.dataset.originalText = element.textContent;
+    element.innerHTML = `<span class="loading-spinner"></span> ${message}`;
+  }
+}
+
+function hideLoadingState(elementId) {
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.disabled = false;
+    if (element.dataset.originalText) {
+      element.textContent = element.dataset.originalText;
+    }
+  }
+}
+
+// Ініціалізація обробників подій
+function initializeEventHandlers() {
+  // Обробники для перемикача одиниць
+  const unitLabels = document.querySelectorAll('.unit-label');
+  unitLabels.forEach(label => {
+    label.addEventListener('click', function() {
+      const unit = this.getAttribute('data-unit');
+      if (unit) {
+        changeUnit(unit);
+      }
+    });
+  });
+  
+  // Обробник для перемикача теми
+  const themeToggle = document.getElementById('theme-toggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', toggleTheme);
+  }
+  
+  // Обробники для блокуючих кнопок
+  const openPurchaseBtn = document.getElementById('open-purchase-btn');
+  if (openPurchaseBtn) {
+    openPurchaseBtn.addEventListener('click', openPurchasePage);
+  }
+  
+  const retryConnectionBtn = document.getElementById('retry-connection-btn');
+  if (retryConnectionBtn) {
+    retryConnectionBtn.addEventListener('click', retryConnection);
+  }
 }
 
 // Ініціалізація floating labels
@@ -795,6 +843,14 @@ const CarouselManager = {
  * debugLog('Помилка валідації', 'error');
  */
 function debugLog(message, type = 'info') {
+  // Тільки в development режимі
+  const isDevelopment = typeof window !== 'undefined' && window.location && 
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  
+  if (!isDevelopment && type !== 'error') {
+    return; // Пропускаємо non-error логи в production
+  }
+  
   const debugLog = document.getElementById('debug-log');
   if (!debugLog) return;
   
@@ -808,6 +864,11 @@ function debugLog(message, type = 'info') {
   
   debugLog.appendChild(logEntry);
   debugLog.scrollTop = debugLog.scrollHeight;
+  
+  // Console логування тільки для критичних помилок
+  if (type === 'error') {
+    console.error(`[ProGran3] ${message}`);
+  }
   
   // Обмежуємо кількість записів
   while (debugLog.children.length > 50) {
@@ -853,6 +914,9 @@ window.onload = async function () {
 // Ініціалізація додатку
 function initializeApp() {
   debugLog(` initializeApp викликано`, 'info');
+  
+  // Ініціалізація обробників подій
+  initializeEventHandlers();
   
   // Ініціалізація табів
   initializeTabs();
@@ -2894,15 +2958,46 @@ function convertToMm(value, isSeam = false) {
 // Функції для форматування значень
 
 // Форматування значення для відображення
-function formatValue(value, unit = null) {
-  const u = unit || currentUnit;
-  const numValue = parseFloat(value);
-  if (isNaN(numValue)) return value;
+// Валідація числових значень
+function validateNumericInput(value, min = 0, max = 10000, allowDecimals = true) {
+  if (value === null || value === undefined || value === '') {
+    return { valid: false, error: 'Значення не може бути порожнім' };
+  }
   
-  if (u === 'mm') {
-    return `${Math.round(numValue)}мм`;
-  } else if (u === 'cm') {
-    return `${numValue.toFixed(0)}см`; // Прибираємо десяткові знаки для см
+  const numValue = parseFloat(value);
+  if (isNaN(numValue)) {
+    return { valid: false, error: 'Введіть коректне число' };
+  }
+  
+  if (numValue < min) {
+    return { valid: false, error: `Значення не може бути менше ${min}` };
+  }
+  
+  if (numValue > max) {
+    return { valid: false, error: `Значення не може бути більше ${max}` };
+  }
+  
+  if (!allowDecimals && numValue % 1 !== 0) {
+    return { valid: false, error: 'Введіть ціле число' };
+  }
+  
+  return { valid: true, value: numValue };
+}
+
+function formatValue(value, unit = null) {
+  try {
+    const u = unit || currentUnit;
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return value;
+    
+    if (u === 'mm') {
+      return `${Math.round(numValue)}мм`;
+    } else if (u === 'cm') {
+      return `${numValue.toFixed(0)}см`; // Прибираємо десяткові знаки для см
+    }
+  } catch (error) {
+    debugLog(`Помилка форматування значення: ${error.message}`, 'error');
+    return value;
   }
   
   return value;
