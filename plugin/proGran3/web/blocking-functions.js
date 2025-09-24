@@ -87,17 +87,6 @@ function retryConnection() {
   checkServerBlockingStatus();
 }
 
-// Тест блокування плагіна
-function testBlockPlugin() {
-  debugLog('🧪 Тест: Блокуємо плагін', 'info');
-  showBlockingCard();
-}
-
-// Тест розблокування плагіна
-function testUnblockPlugin() {
-  debugLog('🧪 Тест: Розблоковуємо плагін', 'info');
-  hideBlockingCard();
-}
 
 // Перевірити чи заблокований плагін
 function isPluginBlocked() {

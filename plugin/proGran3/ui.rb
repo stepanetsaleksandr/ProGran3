@@ -492,8 +492,8 @@ module ProGran3
         puts "🔍 Перевірка статусу блокування з сервера..."
         
         begin
-          # Використовуємо метод send_test_heartbeat для перевірки статусу
-          result = ProGran3.send_test_heartbeat
+          # Використовуємо метод check_blocking_status для перевірки статусу
+          result = ProGran3.check_blocking_status
           
           if result[:success]
             is_blocked = result[:blocked] || false

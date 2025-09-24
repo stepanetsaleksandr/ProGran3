@@ -32,13 +32,22 @@ export async function POST(request: NextRequest) {
 
     let result;
     if (action === 'block') {
-      console.log(`Blocking plugin: ${plugin_id}`);
+      // Debug логування (тільки в development)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Blocking plugin: ${plugin_id}`);
+      }
       result = await blockPlugin(plugin_id);
-      console.log('Block result:', result);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Block result:', result);
+      }
     } else {
-      console.log(`Unblocking plugin: ${plugin_id}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Unblocking plugin: ${plugin_id}`);
+      }
       result = await unblockPlugin(plugin_id);
-      console.log('Unblock result:', result);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Unblock result:', result);
+      }
     }
 
     if (result.success) {

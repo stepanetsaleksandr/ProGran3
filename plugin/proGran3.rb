@@ -13,7 +13,7 @@ class ProGran3Tracker
   def initialize(base_url = nil)
     # ⚠️ ВАЖЛИВО: Після кожного деплою сервера оновити URL нижче!
     # Команда для перевірки: vercel ls
-    @base_url = base_url || ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-e2xsjp9we-provis3ds-projects.vercel.app'
+    @base_url = base_url || ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-7nm5dyi3b-provis3ds-projects.vercel.app'
     @plugin_id = generate_unique_plugin_id
     @is_running = false
     @heartbeat_thread = nil
@@ -214,6 +214,8 @@ class ProGran3Tracker
         force_update: false          # Не примусово створювати новий
       }
       
+      puts "📡 Дані heartbeat: #{data.inspect}"
+      
       # Валідація даних
       validate_heartbeat_data(data)
       
@@ -376,109 +378,7 @@ class ProGran3Tracker
     end
   end
   
-  # Тестовий метод для відправки heartbeat з різними action
-  def test_heartbeat_with_action(action_type)
-    begin
-      uri = URI("#{@base_url}/api/heartbeat")
-      
-      # Валідація URL
-      unless uri.scheme == 'https' || uri.scheme == 'http'
-        raise "Невірний URL: #{@base_url}"
-      end
-      
-      data = {
-        plugin_id: @plugin_id,
-        plugin_name: "ProGran3",
-        version: get_plugin_version,
-        user_id: get_user_identifier,
-        computer_name: Socket.gethostname,
-        system_info: get_system_info,
-        timestamp: Time.now.iso8601,
-        action: action_type,           # Тестовий action
-        source: "sketchup_plugin",
-        update_existing: true,
-        force_update: false
-      }
-      
-      # Валідація даних
-      validate_heartbeat_data(data)
-      
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = (uri.scheme == 'https')
-      http.read_timeout = 30
-      http.open_timeout = 10
-      
-      request = Net::HTTP::Post.new(uri)
-      request['Content-Type'] = 'application/json'
-      request['User-Agent'] = "ProGran3-Plugin/#{get_plugin_version}"
-      request.body = data.to_json
-      
-      puts "📡 Тестова відправка heartbeat з action='#{action_type}'"
-      puts "📊 Plugin ID: #{data[:plugin_id]}"
-      
-      response = http.request(request)
-      
-      puts "📨 Відповідь сервера: #{response.code} #{response.message}"
-      puts "📄 Тіло відповіді: #{response.body}"
-      
-      if response.code == '200'
-        begin
-          result = JSON.parse(response.body)
-          if result['success'] && result['plugin']
-            puts "✅ Тестовий heartbeat успішний"
-            puts "📋 Сервер ID: #{result['plugin']['id']}"
-            puts "📋 Plugin ID: #{result['plugin']['plugin_id']}"
-            puts "📋 Last heartbeat: #{result['plugin']['last_heartbeat']}"
-          else
-            puts "⚠️ Тестовий heartbeat не повернув очікувану відповідь"
-          end
-        rescue => e
-          puts "⚠️ Помилка парсингу тестової відповіді: #{e.message}"
-        end
-      else
-        puts "❌ Тестовий heartbeat невдалий: #{response.code}"
-      end
-      
-    rescue => e
-      puts "❌ Помилка при тестовій відправці heartbeat: #{e.message}"
-    end
-  end
   
-  # Тестування довільного API endpoint
-  def test_api_endpoint(endpoint)
-    begin
-      uri = URI("#{@base_url}#{endpoint}")
-      
-      # Валідація URL
-      unless uri.scheme == 'https' || uri.scheme == 'http'
-        raise "Невірний URL: #{@base_url}#{endpoint}"
-      end
-      
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = (uri.scheme == 'https')
-      http.read_timeout = 30
-      http.open_timeout = 10
-      
-      request = Net::HTTP::Get.new(uri)
-      request['User-Agent'] = "ProGran3-Plugin/#{get_plugin_version}"
-      
-      puts "📡 Тестування endpoint: #{@base_url}#{endpoint}"
-      
-      response = http.request(request)
-      
-      puts "📨 Відповідь сервера: #{response.code} #{response.message}"
-      puts "📄 Тіло відповіді: #{response.body[0..500]}#{response.body.length > 500 ? '...' : ''}"
-      
-      if response.code == '200'
-        puts "✅ Endpoint #{endpoint} працює"
-      else
-        puts "❌ Endpoint #{endpoint} невдалий: #{response.code}"
-      end
-      
-    rescue => e
-      puts "❌ Помилка при тестуванні #{endpoint}: #{e.message}"
-    end
-  end
 
   private
 
@@ -507,6 +407,7 @@ class ProGran3Tracker
     }
   end
 
+
   def validate_heartbeat_data(data)
     required_fields = [:plugin_id, :plugin_name, :version, :user_id, :computer_name]
     required_fields.each do |field|
@@ -516,10 +417,10 @@ class ProGran3Tracker
     end
   end
 
-  def send_test_heartbeat_direct
+  def send_heartbeat_direct
     begin
       timestamp = Time.now.strftime('%H:%M:%S')
-      puts "📡 [#{timestamp}] Тестовий heartbeat для перевірки статусу блокування..."
+      puts "📡 [#{timestamp}] Heartbeat для перевірки статусу блокування..."
       
       uri = URI("#{@base_url}/api/heartbeat")
       
@@ -549,7 +450,7 @@ class ProGran3Tracker
       request['User-Agent'] = "ProGran3-Plugin/#{get_plugin_version}"
       request.body = data.to_json
       
-      puts "📡 [#{timestamp}] Відправка тестового heartbeat до: #{@base_url}/api/heartbeat"
+      puts "📡 [#{timestamp}] Відправка heartbeat до: #{@base_url}/api/heartbeat"
       
       response = http.request(request)
       
@@ -785,54 +686,6 @@ module ProGran3
     CoordinationManager.update_all_elements
   end
 
-  # Тестовий метод для генерації превью поточної моделі
-  def self.test_model_preview
-    Logger.info("🧪 Тестування генерації превью поточної моделі", "Main")
-    
-    begin
-      # Тестуємо різні розміри та якості
-      test_cases = [
-        { size: 256, quality: 'low' },
-        { size: 512, quality: 'medium' },
-        { size: 1024, quality: 'high' }
-      ]
-      
-      test_cases.each do |params|
-        Logger.info("📐 Тестуємо: розмір=#{params[:size]}, якість=#{params[:quality]}", "Main")
-        
-        result = SkpPreviewExtractor.generate_current_model_preview(params[:size], params[:quality])
-        
-        if result
-          Logger.success("✅ Тест успішний для #{params[:size]}x#{params[:size]} (#{params[:quality]})", "Main")
-        else
-          Logger.error("❌ Тест невдалий для #{params[:size]}x#{params[:size]} (#{params[:quality]})", "Main")
-        end
-      end
-      
-    rescue => e
-      Logger.error("Помилка тестування превью: #{e.message}", "Main")
-    end
-  end
-
-  # Простий тест генерації превью
-  def self.test_simple_preview
-    Logger.info("🧪 Простий тест генерації превью", "Main")
-    
-    begin
-      result = SkpPreviewExtractor.generate_current_model_preview(256, 'low')
-      
-      if result
-        Logger.success("✅ Простий тест успішний", "Main")
-        Logger.info("📏 Довжина результату: #{result.length}", "Main")
-      else
-        Logger.error("❌ Простий тест невдалий", "Main")
-      end
-      
-    rescue => e
-      Logger.error("Помилка простого тесту: #{e.message}", "Main")
-      Logger.error("Stack trace: #{e.backtrace.join("\n")}", "Main")
-    end
-  end
 
 
 # Ініціалізація відстеження
@@ -865,170 +718,44 @@ if defined?(Sketchup)
     $progran3_tracker&.send_heartbeat
   end
   
-  # Метод для тестування heartbeat
-  def self.test_heartbeat
-    puts "🧪 Тестування heartbeat..."
-    if $progran3_tracker
-      puts "📊 Статус перед тестом:"
-      tracking_status
-      puts "\n📡 Відправка тестового heartbeat..."
-      $progran3_tracker.send_heartbeat
-      puts "\n📊 Статус після тесту:"
-      tracking_status
-    else
-      puts "⚠️ Трекер не ініціалізовано"
+  # Метод для перевірки статусу блокування з сервера
+  def self.check_blocking_status
+    begin
+      if $progran3_tracker
+        result = $progran3_tracker.send_heartbeat_direct
+        
+        if result && result[:success]
+          return {
+            success: true,
+            blocked: result[:blocked] || false,
+            active: !result[:blocked] # Активний якщо не заблокований
+          }
+        else
+          return {
+            success: false,
+            blocked: false,
+            active: false,
+            error: result ? result[:error] : "No response from server"
+          }
+        end
+      else
+        return {
+          success: false,
+          blocked: false,
+          active: false,
+          error: "Tracker not initialized"
+        }
+      end
+    rescue => e
+      return {
+        success: false,
+        blocked: false,
+        active: false,
+        error: e.message
+      }
     end
   end
   
-  # Тестовий метод для перевірки різних типів запитів
-  def self.test_heartbeat_variants
-    if $progran3_tracker
-      puts "🧪 Тестування різних варіантів heartbeat..."
-      
-      # Тест 1: Звичайний heartbeat
-      puts "\n📋 Тест 1: Звичайний heartbeat"
-      $progran3_tracker.send_heartbeat
-      
-      # Тест 2: Heartbeat з іншим action
-      puts "\n📋 Тест 2: Heartbeat з action='update'"
-      $progran3_tracker.test_heartbeat_with_action("update")
-      
-      # Тест 3: Heartbeat з action='upsert'
-      puts "\n📋 Тест 3: Heartbeat з action='upsert'"
-      $progran3_tracker.test_heartbeat_with_action("upsert")
-    else
-      puts "⚠️ Трекер не ініціалізовано"
-    end
-  end
-  
-  # Метод для перевірки статусу на сервері
-  def self.check_server_status
-    if $progran3_tracker
-      puts "🔍 Перевірка статусу на сервері..."
-      $progran3_tracker.check_server_status
-    else
-      puts "⚠️ Трекер не ініціалізовано"
-    end
-  end
-  
-  # Метод для повного тестування сервера
-  def self.test_server_complete
-    if $progran3_tracker
-      puts "🧪 Повне тестування сервера..."
-      
-      # 1. Перевіряємо поточний статус
-      puts "\n📋 Крок 1: Перевірка поточного статусу"
-      $progran3_tracker.check_server_status
-      
-      # 2. Відправляємо heartbeat
-      puts "\n📋 Крок 2: Відправка heartbeat"
-      $progran3_tracker.send_heartbeat
-      
-      # 3. Знову перевіряємо статус
-      puts "\n📋 Крок 3: Перевірка статусу після heartbeat"
-      $progran3_tracker.check_server_status
-      
-      # 4. Тестуємо різні action
-      puts "\n📋 Крок 4: Тестування різних action"
-      $progran3_tracker.test_heartbeat_with_action("update")
-      $progran3_tracker.test_heartbeat_with_action("upsert")
-      
-    else
-      puts "⚠️ Трекер не ініціалізовано"
-    end
-  end
-  
-  # Метод для перевірки, чи сервер має логіку для оновлення
-  def self.test_server_update_logic
-    if $progran3_tracker
-      puts "🔍 Тестування логіки оновлення сервера..."
-      
-      # 1. Відправляємо перший heartbeat
-      puts "\n📋 Крок 1: Перший heartbeat"
-      $progran3_tracker.send_heartbeat
-      
-      # 2. Чекаємо 2 секунди
-      puts "\n📋 Крок 2: Очікування 2 секунди..."
-      sleep(2)
-      
-      # 3. Відправляємо другий heartbeat
-      puts "\n📋 Крок 3: Другий heartbeat"
-      $progran3_tracker.send_heartbeat
-      
-      # 4. Перевіряємо статус
-      puts "\n📋 Крок 4: Перевірка статусу"
-      $progran3_tracker.check_server_status
-      
-    else
-      puts "⚠️ Трекер не ініціалізовано"
-    end
-  end
-  
-  # Тестування всіх API сервера
-  def self.test_all_apis
-    if $progran3_tracker
-      puts "🧪 Тестування всіх API сервера..."
-      
-      base_url = $progran3_tracker.instance_variable_get(:@base_url)
-      
-      # Тест 1: API heartbeat
-      puts "\n📋 Тест 1: /api/heartbeat"
-      $progran3_tracker.send_heartbeat
-      
-      # Тест 2: API plugins
-      puts "\n📋 Тест 2: /api/plugins"
-      $progran3_tracker.check_server_status
-      
-      # Тест 3: API health (якщо є)
-      puts "\n📋 Тест 3: /api/health"
-      $progran3_tracker.test_api_endpoint("/api/health")
-      
-      # Тест 4: API status (якщо є)
-      puts "\n📋 Тест 4: /api/status"
-      $progran3_tracker.test_api_endpoint("/api/status")
-      
-      # Тест 5: Root API
-      puts "\n📋 Тест 5: /"
-      $progran3_tracker.test_api_endpoint("/")
-      
-    else
-      puts "⚠️ Трекер не ініціалізовано"
-    end
-  end
-  
-  # Тестування затримок оновлення
-  def self.test_update_delays
-    if $progran3_tracker
-      puts "⏱️ Тестування затримок оновлення..."
-      
-      # 1. Відправляємо heartbeat
-      puts "\n📋 Крок 1: Відправка heartbeat"
-      $progran3_tracker.send_heartbeat
-      
-      # 2. Перевіряємо відразу
-      puts "\n📋 Крок 2: Перевірка відразу"
-      $progran3_tracker.check_server_status
-      
-      # 3. Чекаємо 5 секунд
-      puts "\n📋 Крок 3: Очікування 5 секунд..."
-      sleep(5)
-      
-      # 4. Перевіряємо знову
-      puts "\n📋 Крок 4: Перевірка після 5 секунд"
-      $progran3_tracker.check_server_status
-      
-      # 5. Чекаємо ще 10 секунд
-      puts "\n📋 Крок 5: Очікування ще 10 секунд..."
-      sleep(10)
-      
-      # 6. Перевіряємо знову
-      puts "\n📋 Крок 6: Перевірка після 15 секунд"
-      $progran3_tracker.check_server_status
-      
-    else
-      puts "⚠️ Трекер не ініціалізовано"
-    end
-  end
   
   def self.tracking_status
     if $progran3_tracker
@@ -1068,24 +795,6 @@ if defined?(Sketchup)
     puts "✅ Новий трекер створено та запущено"
   end
   
-  # Метод для тестової перевірки статусу блокування
-  def self.send_test_heartbeat
-    begin
-      # Створюємо тимчасовий трекер якщо основний не ініціалізований
-      tracker = $progran3_tracker || ProGran3Tracker.new
-      
-      # Відправляємо тестовий heartbeat напряму
-      result = tracker.send(:send_test_heartbeat_direct)
-      
-      return result
-    rescue => e
-      return {
-        success: false,
-        error: e.message,
-        blocked: false
-      }
-    end
-  end
 
   # НЕ запускаємо відстеження автоматично - тільки після відкриття UI
   puts "🔄 Завантаження всіх модулів завершено"

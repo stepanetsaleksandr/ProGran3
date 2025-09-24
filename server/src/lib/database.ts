@@ -89,12 +89,15 @@ export async function upsertPlugin(data: any, ipAddress: string): Promise<Upsert
     const isBlocked = existingPlugin?.is_blocked === true;
     const isActive = !isBlocked; // Активний тільки якщо НЕ заблокований
 
-    console.log('UpsertPlugin debug:', {
-      plugin_id,
-      existingPlugin,
-      isBlocked,
-      isActive
-    });
+    // Debug логування (тільки в development)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('UpsertPlugin debug:', {
+        plugin_id,
+        existingPlugin,
+        isBlocked,
+        isActive
+      });
+    }
 
     const { data: result, error } = await supabase
       .from('plugins')

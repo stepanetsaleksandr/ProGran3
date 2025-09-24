@@ -11,6 +11,7 @@ export async function POST(request: NextRequest) {
 
     // Парсимо дані з запиту
     const data: HeartbeatRequest = await request.json();
+    
 
     // Валідація обов'язкових полів
     const requiredFields = ['plugin_id', 'plugin_name', 'version', 'user_id', 'computer_name'];
@@ -25,6 +26,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(errorResponse, { status: 400 });
       }
     }
+
 
     // Валідація plugin_id формату
     if (!data.plugin_id.match(/^progran3-[a-z0-9-]+$/)) {
@@ -62,8 +64,10 @@ export async function POST(request: NextRequest) {
       result = await upsertPlugin(data, ipAddress);
       message = 'Heartbeat updated successfully';
       
-      // Логування для діагностики
-      console.log('Heartbeat result:', JSON.stringify(result, null, 2));
+      // Логування для діагностики (тільки в development)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Heartbeat result:', JSON.stringify(result, null, 2));
+      }
     }
 
     // Формуємо відповідь
@@ -79,13 +83,15 @@ export async function POST(request: NextRequest) {
       }
     };
 
-    // Додаткове логування для діагностики блокування
-    console.log('Heartbeat response:', JSON.stringify({
-      plugin_id: result.plugin_id,
-      is_active: result.is_active,
-      is_blocked: (result as any).is_blocked,
-      full_result: result
-    }, null, 2));
+    // Додаткове логування для діагностики блокування (тільки в development)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Heartbeat response:', JSON.stringify({
+        plugin_id: result.plugin_id,
+        is_active: result.is_active,
+        is_blocked: (result as any).is_blocked,
+        full_result: result
+      }, null, 2));
+    }
 
     // Додаємо заголовки для уникнення кешування
     const nextResponse = NextResponse.json(response);
