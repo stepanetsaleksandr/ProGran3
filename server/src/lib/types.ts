@@ -17,6 +17,11 @@ export interface HeartbeatRequest {
   source: string;
   update_existing: boolean;
   force_update: boolean;
+  license_info?: {
+    email?: string;
+    license_key?: string;
+    hardware_id?: string;
+  };
 }
 
 export interface PluginRecord {

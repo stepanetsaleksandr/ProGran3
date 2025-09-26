@@ -1,5 +1,39 @@
 # progran3.rb
+# VERSION: 2025-09-25-19:50 - FIX_SERVER_URL_INTERNAL
 require 'sketchup.rb'
+
+# Автоматичне перезавантаження плагіна при змінах
+def self.reload_plugin
+  puts "🔄 Перезавантаження плагіна ProGran3..."
+  
+  # Видаляємо глобальні змінні
+  $plugin_blocked = nil
+  $license_manager = nil
+  $progran3_tracker = nil
+  $tracker = nil
+  
+  # Видаляємо модуль
+  Object.send(:remove_const, :ProGran3) if defined?(ProGran3)
+  
+  # Перезавантажуємо
+  load __FILE__
+  
+  puts "✅ Плагін перезавантажено"
+end
+
+# Зберігаємо час останньої зміни файлу
+$last_plugin_mtime = File.mtime(__FILE__)
+
+# Автоматична перевірка змін при запуску UI
+def self.check_for_updates
+  current_mtime = File.mtime(__FILE__)
+  if current_mtime > $last_plugin_mtime
+    puts "🔄 Виявлено зміни в плагіні - перезавантаження..."
+    reload_plugin
+    return true
+  end
+  false
+end
 require 'net/http'
 require 'json'
 require 'socket'
@@ -8,12 +42,15 @@ require 'timeout'
 # Глобальна змінна для статусу блокування плагіна
 $plugin_blocked = false
 
+# Глобальна змінна для менеджера ліцензій
+$license_manager = nil
+
 # Клас для відстеження активності плагіна
 class ProGran3Tracker
   def initialize(base_url = nil)
-    # ⚠️ ВАЖЛИВО: Після кожного деплою сервера оновити URL нижче!
-    # Команда для перевірки: vercel ls
-    @base_url = base_url || ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-7nm5dyi3b-provis3ds-projects.vercel.app'
+        # ⚠️ ВАЖЛИВО: Після кожного деплою сервера оновити URL нижче!
+        # Команда для перевірки: vercel ls
+               @base_url = base_url || ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-dydv5vbld-provis3ds-projects.vercel.app'
     @plugin_id = generate_unique_plugin_id
     @is_running = false
     @heartbeat_thread = nil
@@ -59,10 +96,10 @@ class ProGran3Tracker
         
         break unless @is_running
         
-        puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Засинаємо на 60 секунд..."
-        sleep(60) # 60 секунд = 1 хвилина
+        puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Засинаємо на 1 годину..."
+        sleep(3600) # 3600 секунд = 1 година
         
-        puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Прокинулися після 60 секунд"
+        puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Прокинулися після 1 години"
         puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Перевіряємо @is_running = #{@is_running}"
         
         if @is_running
@@ -193,6 +230,13 @@ class ProGran3Tracker
       timestamp = Time.now.strftime('%H:%M:%S')
       puts "📡 [#{timestamp}] Підготовка HTTP запиту..."
       
+      # Перевіряємо fallback для відсутності інтернету
+      if should_use_offline_fallback?
+        puts "📡 [#{timestamp}] Використовуємо offline fallback (немає інтернету)"
+        handle_offline_fallback
+        return
+      end
+      
       uri = URI("#{@base_url}/api/heartbeat")
       
       # Валідація URL
@@ -200,6 +244,17 @@ class ProGran3Tracker
         raise "Невірний URL: #{@base_url}"
       end
       
+      # Додаємо інформацію про ліцензію
+      license_info = nil
+      if $license_manager && $license_manager.has_license?
+        begin
+          license_info = $license_manager.get_license_info_for_heartbeat
+        rescue => e
+          puts "❌ Помилка отримання license_info: #{e.message}"
+          license_info = nil
+        end
+      end
+
       data = {
         plugin_id: @plugin_id,
         plugin_name: "ProGran3",
@@ -211,7 +266,8 @@ class ProGran3Tracker
         action: "heartbeat_update",  # Додаємо тип дії
         source: "sketchup_plugin",   # Додаємо джерело
         update_existing: true,       # Явно вказуємо, що потрібно оновити існуючий
-        force_update: false          # Не примусово створювати новий
+        force_update: false,         # Не примусово створювати новий
+        license_info: license_info   # Додаємо інформацію про ліцензію
       }
       
       puts "📡 Дані heartbeat: #{data.inspect}"
@@ -260,15 +316,31 @@ class ProGran3Tracker
               
               # Перевіряємо статус блокування
               is_blocked = result['plugin']['is_blocked']
-              if is_blocked
-                puts "🚫 [#{timestamp}] ⚠️ ПЛАГІН ЗАБЛОКОВАНО СЕРВЕРОМ!"
+              
+              # Перевіряємо локальну ліцензію тільки для fallback при відсутності інтернету
+              has_local_license = $license_manager && $license_manager.has_license?
+              
+              # Додаткова перевірка: валідуємо ліцензію на сервері якщо вона є локально
+              server_license_valid = true
+              if has_local_license && $license_manager
+                puts "🔐 [#{timestamp}] Перевіряємо валідність ліцензії на сервері..."
+                server_license_valid = $license_manager.validate_license
+                puts "🔐 [#{timestamp}] Ліцензія на сервері: #{server_license_valid ? 'ВАЛІДНА' : 'НЕВАЛІДНА'}"
+              end
+              
+              # Блокуємо плагін якщо:
+              # 1. Сервер блокує плагін
+              # 2. Немає локальної ліцензії
+              # 3. Ліцензія є локально, але невалідна на сервері
+              if is_blocked || !has_local_license || (has_local_license && !server_license_valid)
+                puts "🚫 [#{timestamp}] ⚠️ ПЛАГІН ЗАБЛОКОВАНО (сервер: #{is_blocked}, локальна ліцензія: #{has_local_license}, серверна ліцензія: #{server_license_valid ? 'валідна' : 'невалідна'})!"
                 @plugin_blocked = true
                 $plugin_blocked = true
                 
                 # Автоматично показуємо карточку блокування в UI
                 show_blocking_card_in_ui
               else
-                puts "✅ [#{timestamp}] Плагін активний (не заблоковано)"
+                puts "✅ [#{timestamp}] Плагін активний (сервер: #{is_blocked ? 'заблоковано' : 'не заблоковано'}, локальна ліцензія: #{has_local_license}, серверна ліцензія: #{server_license_valid ? 'валідна' : 'немає'})"
                 @plugin_blocked = false
                 $plugin_blocked = false
                 
@@ -277,6 +349,9 @@ class ProGran3Tracker
               end
               
               puts "💓 [#{timestamp}] ========== HEARTBEAT ЗАВЕРШЕНО УСПІШНО =========="
+              
+              # Зберігаємо час успішного heartbeat для offline fallback
+              save_last_heartbeat_time
               
               # Перевіряємо, чи plugin_id співпадає
               if result['plugin']['plugin_id'] != @plugin_id
@@ -424,6 +499,33 @@ class ProGran3Tracker
       
       uri = URI("#{@base_url}/api/heartbeat")
       
+      # Додаємо логування для діагностики
+      puts "🔐 ========== LICENSE DEBUG START =========="
+      puts "🔐 Перевірка LicenseManager перед heartbeat..."
+      puts "🔐 $license_manager доступний: #{$license_manager ? 'так' : 'ні'}"
+      puts "🔐 Глобальні змінні:"
+      puts "🔐   $license_manager: #{$license_manager.inspect}"
+      puts "🔐   $plugin_blocked: #{$plugin_blocked}"
+      puts "🔐 ========================================="
+      
+      license_info = nil
+      if $license_manager
+        puts "🔐 LicenseManager доступний, отримуємо інформацію про ліцензію..."
+        begin
+          license_info = $license_manager.get_license_info_for_heartbeat
+          puts "🔐 Інформація про ліцензію: #{license_info ? 'є' : 'немає'}"
+          if license_info
+            puts "🔐 License key: #{license_info[:license_key]}"
+            puts "🔐 License type: #{license_info[:license_type]}"
+          end
+        rescue => e
+          puts "❌ Помилка отримання license_info: #{e.message}"
+          license_info = nil
+        end
+      else
+        puts "❌ LicenseManager не доступний"
+      end
+
       data = {
         plugin_id: @plugin_id,
         plugin_name: "ProGran3",
@@ -435,7 +537,8 @@ class ProGran3Tracker
         action: "heartbeat_update",
         source: "sketchup_plugin",
         update_existing: true,
-        force_update: false
+        force_update: false,
+        license_info: license_info
       }
       
       validate_heartbeat_data(data)
@@ -466,14 +569,29 @@ class ProGran3Tracker
             puts "📡 [#{timestamp}] Статус блокування: #{is_blocked ? 'ЗАБЛОКОВАНО' : 'АКТИВНИЙ'}"
             puts "📡 [#{timestamp}] Статус активності: #{is_active ? 'АКТИВНИЙ' : 'НЕАКТИВНИЙ'}"
             
-            # Оновлюємо локальні змінні
-            @plugin_blocked = is_blocked
-            $plugin_blocked = is_blocked
+            # БЛОКУЄМО ПЛАГІН НА ОСНОВІ ВІДПОВІДІ СЕРВЕРА
+            # Але також перевіряємо валідність ліцензії на сервері
+            has_local_license = $license_manager && $license_manager.has_license?
+            server_license_valid = true
             
-            # Автоматично показуємо/приховуємо карточку блокування
-            if is_blocked
+            if has_local_license && $license_manager
+              puts "🔐 [#{timestamp}] Перевіряємо валідність ліцензії на сервері..."
+              server_license_valid = $license_manager.validate_license
+              puts "🔐 [#{timestamp}] Ліцензія на сервері: #{server_license_valid ? 'ВАЛІДНА' : 'НЕВАЛІДНА'}"
+            end
+            
+            # Блокуємо плагін якщо:
+            # 1. Сервер блокує плагін
+            # 2. Ліцензія є локально, але невалідна на сервері
+            if is_blocked || (has_local_license && !server_license_valid)
+              $plugin_blocked = true
+              @plugin_blocked = true
+              puts "🔐 [#{timestamp}] Плагін ЗАБЛОКОВАНО (сервер: #{is_blocked}, ліцензія: #{server_license_valid ? 'валідна' : 'невалідна'})"
               show_blocking_card_in_ui
             else
+              $plugin_blocked = false
+              @plugin_blocked = false
+              puts "🔐 [#{timestamp}] Плагін РОЗБЛОКОВАНО (сервер: #{is_blocked ? 'заблоковано' : 'не заблоковано'}, ліцензія: #{server_license_valid ? 'валідна' : 'немає'})"
               hide_blocking_card_in_ui
             end
             
@@ -559,6 +677,62 @@ class ProGran3Tracker
       @retry_count = 0 # Скидаємо лічильник
     end
   end
+  
+  # Перевіряємо чи потрібно використовувати offline fallback
+  def should_use_offline_fallback?
+    # Якщо є локальна ліцензія та останній успішний heartbeat був менше 48 годин тому
+    if $license_manager && $license_manager.has_license?
+      last_heartbeat_file = get_last_heartbeat_file_path
+      if File.exist?(last_heartbeat_file)
+        begin
+          last_heartbeat_time = Time.parse(File.read(last_heartbeat_file))
+          hours_since_last = (Time.now - last_heartbeat_time) / 3600
+          return hours_since_last < 48
+        rescue
+          return false
+        end
+      end
+    end
+    false
+  end
+  
+  # Обробляємо offline fallback
+  def handle_offline_fallback
+    timestamp = Time.now.strftime('%H:%M:%S')
+    puts "📡 [#{timestamp}] OFFLINE FALLBACK: Плагін працює з локальною ліцензією"
+    
+    # Не блокуємо плагін при offline fallback
+    @plugin_blocked = false
+    $plugin_blocked = false
+    
+    # Приховуємо карточку блокування
+    hide_blocking_card_in_ui
+    
+    puts "✅ [#{timestamp}] Плагін активний (offline fallback)"
+  end
+  
+  # Зберігаємо час останнього успішного heartbeat
+  def save_last_heartbeat_time
+    begin
+      last_heartbeat_file = get_last_heartbeat_file_path
+      File.write(last_heartbeat_file, Time.now.iso8601)
+    rescue => e
+      puts "⚠️ Помилка збереження часу heartbeat: #{e.message}"
+    end
+  end
+  
+  # Отримуємо шлях до файлу останнього heartbeat
+  def get_last_heartbeat_file_path
+    if RUBY_PLATFORM =~ /win32|win64|mingw|mswin/
+      appdata = ENV['APPDATA'] || File.join(ENV['USERPROFILE'], 'AppData', 'Roaming')
+      heartbeat_dir = File.join(appdata, 'ProGran3')
+    else
+      heartbeat_dir = File.join(ENV['HOME'], '.progran3')
+    end
+    
+    FileUtils.mkdir_p(heartbeat_dir) unless File.exist?(heartbeat_dir)
+    File.join(heartbeat_dir, 'last_heartbeat.txt')
+  end
 end
 
 module ProGran3
@@ -579,6 +753,9 @@ module ProGran3
   require_relative 'progran3/builders/blind_area_builder'
   require_relative 'progran3/ui'
   require_relative 'progran3/skp_preview_extractor'
+  
+  # Підключаємо модуль безпеки
+  require_relative 'progran3/security/license_manager'
 
   # Метод для створення панелі інструментів
   def self.create_toolbar
@@ -589,6 +766,7 @@ module ProGran3
       # Команда для запуску плагіна
       cmd = ::UI::Command.new("ProGran3 Конструктор") {
         ErrorHandler.safe_execute("UI", "Запуск діалогу") do
+          # Завжди показуємо UI - HTML UI обробить блокування
           ProGran3::UI.show_dialog
         end
       }
@@ -722,7 +900,7 @@ if defined?(Sketchup)
   def self.check_blocking_status
     begin
       if $progran3_tracker
-        result = $progran3_tracker.send_heartbeat_direct
+        result = $progran3_tracker.send(:send_heartbeat_direct)
         
         if result && result[:success]
           return {
@@ -756,6 +934,91 @@ if defined?(Sketchup)
     end
   end
   
+  # Методи для роботи з ліцензіями
+  def self.activate_license(license_key)
+    $license_manager&.activate_license(license_key)
+  end
+  
+  def self.validate_license
+    $license_manager&.validate_license
+  end
+  
+  def self.has_license?
+    result = $license_manager&.has_license? || false
+    puts "🔐 [DEBUG] has_license? повертає: #{result}"
+    result
+  end
+  
+  def self.license_days_remaining
+    $license_manager&.days_remaining || 0
+  end
+  
+  def self.license_info
+    result = $license_manager&.get_license_info_for_heartbeat
+    puts "🔐 [DEBUG] license_info повертає: #{result}"
+    result
+  end
+  
+  def self.clear_license
+    $license_manager&.clear_license
+  end
+  
+  # Функція активації ліцензії
+  def self.activate_license(license_key, email = nil)
+    begin
+      puts "🔐 Спроба активації ліцензії: #{license_key[0..8]}..."
+      
+      if $license_manager
+        # Якщо email не передано, використовуємо email з форми або за замовчуванням
+        email_to_use = email || "demo@progran3.com"
+        puts "🔐 Використовуємо email: #{email_to_use}"
+        
+        result = $license_manager.register_license(email_to_use, license_key)
+        if result[:success]
+          puts "✅ Ліцензія успішно активована"
+          # Розблоковуємо плагін після успішної активації
+          unblock_plugin
+          return { success: true, message: "Ліцензія активована" }
+        else
+          puts "❌ Помилка активації: #{result[:error]}"
+          return { success: false, error: result[:error] }
+        end
+      else
+        puts "❌ LicenseManager не ініціалізований"
+        return { success: false, error: "LicenseManager не ініціалізований" }
+      end
+    rescue => e
+      puts "❌ Помилка активації ліцензії: #{e.message}"
+      return { success: false, error: e.message }
+    end
+  end
+  
+  # Функція перевірки статусу блокування
+  def self.check_blocking_status
+    begin
+      puts "🔍 Перевірка статусу блокування..."
+      
+      if $license_manager
+        # Перевіряємо локальний статус
+        is_blocked = $license_manager.is_blocked?
+        puts "🔍 Локальний статус блокування: #{is_blocked ? 'ЗАБЛОКОВАНО' : 'НЕ ЗАБЛОКОВАНО'}"
+        
+        return { 
+          success: true, 
+          blocked: is_blocked,
+          has_license: $license_manager.has_license?,
+          license_info: $license_manager.get_license_info_for_heartbeat
+        }
+      else
+        puts "❌ LicenseManager не ініціалізований"
+        return { success: false, error: "LicenseManager не ініціалізований" }
+      end
+    rescue => e
+      puts "❌ Помилка перевірки статусу: #{e.message}"
+      return { success: false, error: e.message }
+    end
+  end
+  
   
   def self.tracking_status
     if $progran3_tracker
@@ -786,6 +1049,13 @@ if defined?(Sketchup)
     # Зупиняємо старий трекер
     $progran3_tracker&.stop_tracking
     
+    # Перевіряємо ліцензію перед запуском (LicenseManager вже ініціалізований)
+    unless $license_manager&.has_license?
+      puts "🚫 Ліцензія не знайдена - плагін заблокований"
+      $plugin_blocked = true
+      return false
+    end
+    
     # Створюємо новий трекер з правильним URL
     $progran3_tracker = ProGran3Tracker.new(server_url)
     
@@ -795,8 +1065,28 @@ if defined?(Sketchup)
     puts "✅ Новий трекер створено та запущено"
   end
   
+  # Функція для розблокування плагіна після активації ліцензії
+  def self.unblock_plugin
+    puts "🔓 Розблокування плагіна після активації ліцензії"
+    $plugin_blocked = false
+    
+    # Запускаємо відстеження
+    if $license_manager&.has_license?
+      create_new_tracker
+    end
+  end
+  
 
+  # Ініціалізуємо менеджер ліцензій одразу після завантаження
+  $license_manager = ProGran3::Security::LicenseManager.new
+  puts "🔐 LicenseManager ініціалізовано"
+  
+  # Початковий статус - плагін заблокований до першого heartbeat
+  puts "🔐 Плагін заблокований до перевірки ліцензії на сервері"
+  $plugin_blocked = true
+  
   # НЕ запускаємо відстеження автоматично - тільки після відкриття UI
   puts "🔄 Завантаження всіх модулів завершено"
 end
+
 end

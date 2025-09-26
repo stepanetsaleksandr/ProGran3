@@ -907,6 +907,10 @@ window.onload = async function () {
   } else {
     debugLog(` window.sketchup.ready не доступний`, 'error');
   }
+  
+  // Оновлюємо статус ліцензії
+  debugLog(`🔐 Оновлюємо статус ліцензії`, 'info');
+  updateLicenseStatus();
 };
 
 // ============================================================================
@@ -4633,4 +4637,159 @@ function handleBaseComponentChangeWithRebuild(componentType, newParams) {
     updateSummaryTable();
     debugLog(`✅ Перебудова ${componentType} завершена, UI оновлено`, 'success');
   }, 2000);
+}
+
+// ============================================================================
+// 🔐 ЛІЦЕНЗІЙНІ ФУНКЦІЇ
+// ============================================================================
+
+// Оновлення статусу ліцензії в UI
+function updateLicenseStatus() {
+  try {
+    console.log('🔐 [DEBUG] updateLicenseStatus викликано');
+    console.log('🔐 [DEBUG] window.sketchup:', window.sketchup);
+    
+    // Отримуємо інформацію про ліцензію з Ruby
+    if (window.sketchup && window.sketchup.has_license) {
+      console.log('🔐 [DEBUG] Викликаємо has_license()');
+      const hasLicense = window.sketchup.has_license();
+      console.log('🔐 [DEBUG] hasLicense:', hasLicense);
+      
+      const licenseInfo = window.sketchup.license_info ? window.sketchup.license_info() : null;
+      console.log('🔐 [DEBUG] licenseInfo:', licenseInfo);
+      
+      if (hasLicense && licenseInfo) {
+        // Ліцензія активна - оновлюємо тільки footer
+        const footerEmail = document.getElementById('license-footer-email');
+        const footerKey = document.getElementById('license-footer-key');
+        footerEmail.textContent = licenseInfo.email || 'Невідомий email';
+        footerKey.textContent = licenseInfo.license_key ? licenseInfo.license_key.substring(0, 8) + '...' : '';
+      } else {
+        // Демо режим - оновлюємо тільки footer
+        console.log('🔐 [DEBUG] Демо режим - оновлюємо footer');
+        const footerEmail = document.getElementById('license-footer-email');
+        const footerKey = document.getElementById('license-footer-key');
+        console.log('🔐 [DEBUG] footerEmail element:', footerEmail);
+        console.log('🔐 [DEBUG] footerKey element:', footerKey);
+        
+        if (footerEmail) {
+          footerEmail.textContent = 'Не активована';
+          console.log('🔐 [DEBUG] Встановлено footerEmail: Не активована');
+        } else {
+          console.log('🔐 [DEBUG] Помилка: footerEmail element не знайдено');
+        }
+        
+        if (footerKey) {
+          footerKey.textContent = '';
+          console.log('🔐 [DEBUG] Встановлено footerKey: порожньо');
+        } else {
+          console.log('🔐 [DEBUG] Помилка: footerKey element не знайдено');
+        }
+      }
+    } else {
+      // Fallback - демо режим
+      console.log('🔐 [DEBUG] Fallback - демо режим');
+      const footerEmail = document.getElementById('license-footer-email');
+      const footerKey = document.getElementById('license-footer-key');
+      console.log('🔐 [DEBUG] footerEmail element:', footerEmail);
+      console.log('🔐 [DEBUG] footerKey element:', footerKey);
+      
+      if (footerEmail) {
+        footerEmail.textContent = 'Не активована';
+        console.log('🔐 [DEBUG] Встановлено footerEmail: Не активована');
+      } else {
+        console.log('🔐 [DEBUG] Помилка: footerEmail element не знайдено');
+      }
+      
+      if (footerKey) {
+        footerKey.textContent = '';
+        console.log('🔐 [DEBUG] Встановлено footerKey: порожньо');
+      } else {
+        console.log('🔐 [DEBUG] Помилка: footerKey element не знайдено');
+      }
+    }
+  } catch (error) {
+    console.error('Помилка оновлення статусу ліцензії:', error);
+    // Fallback - демо режим
+    const footerEmail = document.getElementById('license-footer-email');
+    const footerKey = document.getElementById('license-footer-key');
+    footerEmail.textContent = 'Не активована';
+    footerKey.textContent = '';
+  }
+}
+
+// Функція активації ліцензії
+function activateLicense() {
+  const emailInput = document.getElementById('email-input');
+  const licenseKeyInput = document.getElementById('license-key-input');
+  
+  const email = emailInput.value.trim();
+  const licenseKey = licenseKeyInput.value.trim();
+  
+  if (!email || !licenseKey) {
+    alert('Будь ласка, введіть email та ключ ліцензії');
+    return;
+  }
+  
+  try {
+    // Викликаємо Ruby функцію активації з email та license_key
+    if (window.sketchup && window.sketchup.activate_license) {
+      const result = window.sketchup.activate_license(licenseKey, email);
+      
+      if (result && result.success) {
+        alert('Ліцензія успішно активована!');
+        updateLicenseStatus();
+        hideBlockingCard();
+        // Оновлюємо статус після успішної активації
+        setTimeout(() => {
+          updateLicenseStatus();
+        }, 1000);
+      } else {
+        alert('Помилка активації ліцензії: ' + (result.error || 'Невідома помилка'));
+      }
+    } else {
+      alert('Функція активації ліцензії недоступна');
+    }
+  } catch (error) {
+    console.error('Помилка активації ліцензії:', error);
+    alert('Помилка активації ліцензії: ' + error.message);
+  }
+}
+
+// Функція перевірки статусу блокування з сервера
+function checkServerBlockingStatus() {
+  try {
+    if (window.sketchup && window.sketchup.check_blocking_status) {
+      const result = window.sketchup.check_blocking_status();
+      
+      if (result && result.success) {
+        if (result.blocked) {
+          showBlockingCard();
+        } else {
+          hideBlockingCard();
+        }
+        updateLicenseStatus();
+      } else {
+        console.warn('Не вдалося перевірити статус блокування:', result.error);
+      }
+    }
+  } catch (error) {
+    console.error('Помилка перевірки статусу блокування:', error);
+  }
+}
+
+// Показ карточки блокування
+function showBlockingCard() {
+  const blockingCard = document.getElementById('blocking-card');
+  if (blockingCard) {
+    blockingCard.style.display = 'block';
+  }
+}
+
+// Приховування карточки блокування
+function hideBlockingCard() {
+  const blockingCard = document.getElementById('blocking-card');
+  if (blockingCard) {
+    blockingCard.style.display = 'none';
+  }
 }

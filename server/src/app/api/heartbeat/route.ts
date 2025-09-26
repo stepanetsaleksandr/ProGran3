@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { upsertPlugin, markPluginInactive } from '@/lib/database';
 import { HeartbeatRequest, HeartbeatResponse, ErrorResponse } from '@/lib/types';
+import { ErrorHandler } from '@/lib/error-handler';
+import { SecureLogger } from '@/lib/secure-logger';
+import { LicenseValidator } from '@/lib/license-validator';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.STORAGE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.STORAGE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,48 +20,26 @@ export async function POST(request: NextRequest) {
     // Парсимо дані з запиту
     const data: HeartbeatRequest = await request.json();
     
+    // Безпечне логування heartbeat
+    SecureLogger.logHeartbeat(data);
 
     // Валідація обов'язкових полів
-    const requiredFields = ['plugin_id', 'plugin_name', 'version', 'user_id', 'computer_name'];
-    for (const field of requiredFields) {
-      if (!data[field as keyof HeartbeatRequest] || 
-          String(data[field as keyof HeartbeatRequest]).trim() === '') {
-        const errorResponse: ErrorResponse = {
-          success: false,
-          error: `Missing required field: ${field}`,
-          code: 'MISSING_FIELD'
-        };
-        return NextResponse.json(errorResponse, { status: 400 });
-      }
-    }
-
+    ErrorHandler.validateRequiredFields(data, [
+      'plugin_id', 'plugin_name', 'version', 'user_id', 'computer_name'
+    ]);
 
     // Валідація plugin_id формату
-    if (!data.plugin_id.match(/^progran3-[a-z0-9-]+$/)) {
-      const errorResponse: ErrorResponse = {
-        success: false,
-        error: 'Invalid plugin_id format',
-        code: 'INVALID_PLUGIN_ID'
-      };
-      return NextResponse.json(errorResponse, { status: 400 });
-    }
+    ErrorHandler.validatePluginId(data.plugin_id);
 
     // Валідація timestamp формату
-    const timestamp = new Date(data.timestamp);
-    if (isNaN(timestamp.getTime())) {
-      const errorResponse: ErrorResponse = {
-        success: false,
-        error: 'Invalid timestamp format',
-        code: 'INVALID_TIMESTAMP'
-      };
-      return NextResponse.json(errorResponse, { status: 400 });
-    }
+    ErrorHandler.validateTimestamp(data.timestamp);
 
     // Перевіряємо тип дії
     const action = data.action || 'heartbeat_update';
     
     let result;
     let message;
+    let isBlocked = false;
     
     if (action === 'plugin_shutdown') {
       // Обробляємо сигнал закриття плагіна
@@ -63,6 +49,35 @@ export async function POST(request: NextRequest) {
       // Звичайний heartbeat
       result = await upsertPlugin(data, ipAddress);
       message = 'Heartbeat updated successfully';
+      
+      // Перевірка ліцензії в новій системі (тільки якщо є дані ліцензії)
+      if (data.license_info && data.license_info.email && data.license_info.license_key && data.license_info.hardware_id) {
+        // Валідуємо ліцензію
+        const licenseValidation = await LicenseValidator.validateLicense({
+          email: data.license_info.email,
+          license_key: data.license_info.license_key,
+          hardware_id: data.license_info.hardware_id
+        });
+
+        if (!licenseValidation.isValid) {
+          SecureLogger.warn('License validation failed', {
+            email: data.license_info.email,
+            reason: licenseValidation.reason
+          }, 'HEARTBEAT');
+          isBlocked = true;
+        } else {
+          // Оновлюємо heartbeat
+          await LicenseValidator.updateHeartbeat({
+            email: data.license_info.email,
+            license_key: data.license_info.license_key,
+            hardware_id: data.license_info.hardware_id
+          });
+        }
+      } else {
+        // БЛОКУЄМО плагін якщо немає даних ліцензії - вимагаємо активацію
+        console.log('🚫 [API] Відсутні дані ліцензії в heartbeat - плагін заблокований');
+        isBlocked = true; // БЛОКУЄМО без ліцензії
+      }
       
       // Логування для діагностики (тільки в development)
       if (process.env.NODE_ENV === 'development') {
@@ -79,7 +94,7 @@ export async function POST(request: NextRequest) {
         plugin_id: result.plugin_id,
         last_heartbeat: result.last_heartbeat,
         is_active: result.is_active,
-        is_blocked: (result as any).is_blocked || false
+        is_blocked: isBlocked
       }
     };
 
@@ -102,13 +117,7 @@ export async function POST(request: NextRequest) {
     return nextResponse;
 
   } catch (error) {
-    const errorResponse: ErrorResponse = {
-      success: false,
-      error: 'Internal server error',
-      code: 'INTERNAL_ERROR'
-    };
-    
-    return NextResponse.json(errorResponse, { status: 500 });
+    return ErrorHandler.handle(error, 'HEARTBEAT');
   }
 }
 

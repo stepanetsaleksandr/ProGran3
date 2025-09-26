@@ -1,5 +1,4 @@
 import { Metadata } from 'next';
-import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'ProGran3 Tracking Server',
@@ -8,77 +7,190 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-xl shadow-xl max-w-2xl w-full">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+    <div style={{ 
+      minHeight: '100vh', 
+      background: 'linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '20px',
+      fontFamily: 'Arial, sans-serif'
+    }}>
+      <div style={{
+        backgroundColor: 'white',
+        padding: '40px',
+        borderRadius: '12px',
+        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        maxWidth: '600px',
+        width: '100%'
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <h1 style={{ 
+            fontSize: '36px', 
+            fontWeight: 'bold', 
+            color: '#1f2937', 
+            margin: '0 0 10px 0' 
+          }}>
             ProGran3 Tracking Server
           </h1>
-          <p className="text-gray-600">
+          <p style={{ color: '#6b7280', fontSize: '18px', margin: '0' }}>
             Моніторинг активності плагінів ProGran3
           </p>
         </div>
         
-        <div className="space-y-6">
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
+        <div style={{ marginBottom: '30px' }}>
+          <div style={{
+            backgroundColor: '#f0fdf4',
+            border: '1px solid #bbf7d0',
+            borderRadius: '8px',
+            padding: '16px',
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            <div style={{ marginRight: '12px' }}>
+              <div style={{
+                width: '20px',
+                height: '20px',
+                backgroundColor: '#22c55e',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <span style={{ color: 'white', fontSize: '12px', fontWeight: 'bold' }}>✓</span>
               </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-green-800">
-                  Сервер працює успішно!
-                </p>
+            </div>
+            <div>
+              <p style={{ 
+                fontSize: '14px', 
+                fontWeight: '500', 
+                color: '#166534',
+                margin: '0'
+              }}>
+                Сервер працює успішно!
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+          gap: '20px',
+          marginBottom: '30px'
+        }}>
+          <div style={{
+            backgroundColor: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            borderRadius: '8px',
+            padding: '20px'
+          }}>
+            <h3 style={{ 
+              fontWeight: '600', 
+              color: '#1e40af', 
+              margin: '0 0 15px 0',
+              fontSize: '16px'
+            }}>
+              API Endpoints
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <span style={{
+                  fontFamily: 'monospace',
+                  backgroundColor: '#dbeafe',
+                  color: '#1e40af',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: '500'
+                }}>
+                  POST /api/heartbeat
+                </span>
+                <span style={{ color: '#1e40af', marginLeft: '8px', fontSize: '14px' }}>
+                  Відстеження активності
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <span style={{
+                  fontFamily: 'monospace',
+                  backgroundColor: '#dcfce7',
+                  color: '#166534',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: '500'
+                }}>
+                  GET /api/plugins
+                </span>
+                <span style={{ color: '#166534', marginLeft: '8px', fontSize: '14px' }}>
+                  Статистика плагінів
+                </span>
               </div>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="font-semibold text-blue-800 mb-2">API Endpoints</h3>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-center">
-                  <span className="font-mono bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
-                    POST /api/heartbeat
-                  </span>
-                  <span className="text-blue-600 ml-2">Відстеження активності</span>
-                </li>
-                <li className="flex items-center">
-                  <span className="font-mono bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
-                    GET /api/plugins
-                  </span>
-                  <span className="text-green-600 ml-2">Статистика плагінів</span>
-                </li>
-              </ul>
-            </div>
-            
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-              <h3 className="font-semibold text-purple-800 mb-2">Швидкі дії</h3>
-              <div className="space-y-2">
-                <Link 
-                  href="/dashboard" 
-                  className="block w-full bg-purple-600 text-white text-center py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors"
-                >
-                  Перейти до Dashboard
-                </Link>
-                <a 
-                  href="/api/plugins" 
-                  target="_blank"
-                  className="block w-full bg-gray-600 text-white text-center py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  Перевірити API
-                </a>
-              </div>
+          <div style={{
+            backgroundColor: '#faf5ff',
+            border: '1px solid #d8b4fe',
+            borderRadius: '8px',
+            padding: '20px'
+          }}>
+            <h3 style={{ 
+              fontWeight: '600', 
+              color: '#7c3aed', 
+              margin: '0 0 15px 0',
+              fontSize: '16px'
+            }}>
+              Швидкі дії
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <a 
+                href="/dashboard" 
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  backgroundColor: '#7c3aed',
+                  color: 'white',
+                  textAlign: 'center',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Перейти до Dashboard
+              </a>
+              <a 
+                href="/api/plugins" 
+                target="_blank"
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  backgroundColor: '#6b7280',
+                  color: 'white',
+                  textAlign: 'center',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Перевірити API
+              </a>
             </div>
           </div>
-          
-          <div className="text-center">
-            <p className="text-xs text-gray-500">
-              Побудовано з Next.js 14 + TypeScript + Supabase
-            </p>
-          </div>
+        </div>
+        
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ 
+            fontSize: '12px', 
+            color: '#9ca3af',
+            margin: '0'
+          }}>
+            Побудовано з Next.js 14 + TypeScript + Supabase
+          </p>
         </div>
       </div>
     </div>

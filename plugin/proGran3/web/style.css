@@ -7,6 +7,222 @@
 
 /* ========== SPECIFIC STYLES ========== */
 
+/* ========== ЛІЦЕНЗІЙНІ СТИЛІ ========== */
+
+
+/* Footer з інформацією про ліцензію */
+.license-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 1rem;
+  z-index: 1000;
+}
+
+.license-footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.license-footer-text {
+  font-weight: 600;
+}
+
+.license-footer-email {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.license-footer-key {
+  color: rgba(255, 255, 255, 0.6);
+  font-family: monospace;
+  font-size: 0.75rem;
+}
+
+/* Форма активації ліцензії */
+.license-activation-form {
+  margin: 1.5rem 0;
+  text-align: left;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+/* Статус ліцензії */
+.license-status {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.license-status-active {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #4ade80;
+}
+
+.license-details {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Повідомлення про ліцензію */
+.license-message {
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.license-message.success {
+  background: rgba(74, 222, 128, 0.2);
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  color: #4ade80;
+}
+
+.license-message.error {
+  background: rgba(248, 113, 113, 0.2);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  color: #f87171;
+}
+
+.license-message.info {
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #3b82f6;
+}
+
+/* Діалог email */
+.email-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.email-dialog-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+}
+
+.email-dialog-content h3 {
+  margin: 0 0 1rem 0;
+  color: #1f2937;
+  font-size: 1.25rem;
+}
+
+.email-dialog-content p {
+  margin: 0 0 1.5rem 0;
+  color: #6b7280;
+}
+
+.email-dialog-content input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  transition: border-color 0.3s ease;
+}
+
+.email-dialog-content input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.email-dialog-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.email-dialog-buttons button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.email-dialog-buttons .btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.email-dialog-buttons .btn-primary:hover {
+  background: #2563eb;
+}
+
+.email-dialog-buttons .btn-secondary {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.email-dialog-buttons .btn-secondary:hover {
+  background: #d1d5db;
+}
+
 /* Стилі для перемикача типу стел */
 .stele-type-toggle {
   display: flex;
@@ -435,6 +651,43 @@ header {
 
 .dark .carousel-item-dimensions {
   color: #ccc;
+}
+
+/* License Footer */
+.license-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 4px 8px;
+  font-size: 10px;
+  z-index: 1000;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.license-footer-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.license-footer-text {
+  color: #ccc;
+  font-weight: normal;
+}
+
+.license-footer-email {
+  color: #4ade80;
+  font-weight: bold;
+}
+
+.license-footer-key {
+  color: #60a5fa;
+  font-family: monospace;
+  font-size: 9px;
 }
 
 /* Button Group Styles */

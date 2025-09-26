@@ -46,6 +46,43 @@ module ProGran3
       @dialog.add_action_callback("ready") do |d, _|
         puts "📱 UI повністю завантажено - запуск відстеження heartbeat..."
         
+        # Оновлюємо статус ліцензії в UI з затримкою
+        @dialog.execute_script("
+          setTimeout(() => {
+            console.log('🔐 [DELAYED] Викликаємо updateLicenseStatus через 1 секунду...');
+            updateLicenseStatus();
+          }, 1000);
+        ")
+        
+        # Додатковий тест footer з затримкою
+        @dialog.execute_script("
+          setTimeout(() => {
+            console.log('🔐 [TEST] Тест footer з затримкою...');
+            console.log('🔐 [TEST] document.body:', document.body);
+            console.log('🔐 [TEST] document.readyState:', document.readyState);
+            
+            const footer = document.getElementById('license-footer');
+            const footerEmail = document.getElementById('license-footer-email');
+            const footerKey = document.getElementById('license-footer-key');
+            
+            console.log('🔐 [TEST] footer:', footer);
+            console.log('🔐 [TEST] footerEmail:', footerEmail);
+            console.log('🔐 [TEST] footerKey:', footerKey);
+            
+            if (footer) {
+              console.log('🔐 [TEST] Footer знайдено, встановлюємо тестовий email');
+              if (footerEmail) {
+                footerEmail.textContent = 'ТЕСТОВИЙ EMAIL';
+                console.log('🔐 [TEST] Встановлено тестовий email');
+              } else {
+                console.log('🔐 [TEST] Помилка: footerEmail не знайдено');
+              }
+            } else {
+              console.log('🔐 [TEST] Помилка: footer не знайдено');
+            }
+          }, 2000);
+        ")
+        
         # Перевіряємо чи плагін заблокований перед запуском
         if $plugin_blocked
           puts "🚫 Плагін заблокований - показуємо карточку блокування"
@@ -53,6 +90,29 @@ module ProGran3
         else
           puts "✅ Плагін активний - запускаємо нормальну роботу"
         end
+        
+        # Додатковий тест видимості footer
+        @dialog.execute_script("
+          setTimeout(() => {
+            console.log('🔐 [VISIBILITY] Перевірка видимості footer...');
+            const footer = document.getElementById('license-footer');
+            if (footer) {
+              console.log('🔐 [VISIBILITY] Footer знайдено');
+              console.log('🔐 [VISIBILITY] Footer style.display:', footer.style.display);
+              console.log('🔐 [VISIBILITY] Footer computed style:', window.getComputedStyle(footer).display);
+              console.log('🔐 [VISIBILITY] Footer offsetHeight:', footer.offsetHeight);
+              console.log('🔐 [VISIBILITY] Footer offsetWidth:', footer.offsetWidth);
+              
+              // Примусово показуємо footer
+              footer.style.display = 'block';
+              footer.style.visibility = 'visible';
+              footer.style.opacity = '1';
+              console.log('🔐 [VISIBILITY] Footer примусово показано');
+            } else {
+              console.log('🔐 [VISIBILITY] Footer не знайдено');
+            }
+          }, 3000);
+        ")
         
         # Запускаємо відстеження після повного завантаження UI
         begin
@@ -142,6 +202,23 @@ module ProGran3
         CallbackManager.add_lamp_callback(dialog, category, filename, position)
       end
 
+
+      # Callback'и для ліцензійних функцій
+      @dialog.add_action_callback("has_license") do |dialog, _|
+        ProGran3.has_license?
+      end
+      
+      @dialog.add_action_callback("license_info") do |dialog, _|
+        ProGran3.license_info
+      end
+      
+      @dialog.add_action_callback("activate_license") do |dialog, license_key, email|
+        ProGran3.activate_license(license_key, email)
+      end
+      
+      @dialog.add_action_callback("check_blocking_status") do |dialog, _|
+        ProGran3.check_blocking_status
+      end
 
       @dialog.add_action_callback("reload_plugin") do |dialog, _|
         # Валідація перед перезавантаженням
@@ -400,6 +477,127 @@ module ProGran3
         42
       end
 
+      # ========== ЛІЦЕНЗІЙНІ CALLBACK'И ==========
+      
+      # Callback для активації ліцензії
+      @dialog.add_action_callback("activate_license") do |action_context, license_key|
+        begin
+          puts "🔐 [UI] Callback активації ліцензії: #{license_key[0..8]}..."
+          
+          if $license_manager
+            if !$license_manager.has_license?
+              puts "🔐 [UI] Перша активація - потрібен email"
+              {
+                success: false,
+                requires_email: true,
+                message: "Введіть email для реєстрації ліцензії"
+              }
+            else
+              puts "🔐 [UI] Ліцензія вже зареєстрована"
+              {
+                success: true,
+                message: "Ліцензія вже зареєстрована",
+                email: $license_manager.get_license_info_for_heartbeat[:email],
+                license_info: $license_manager.get_license_display_info
+              }
+            end
+          else
+            {
+              success: false,
+              error: "License manager not initialized"
+            }
+          end
+        rescue => e
+          {
+            success: false,
+            error: e.message
+          }
+        end
+      end
+      
+      # Callback для реєстрації ліцензії з email
+      @dialog.add_action_callback("register_license_with_email") do |action_context, email, license_key|
+        begin
+          puts "🔐 [UI] Callback реєстрації ліцензії: #{email} + #{license_key[0..8]}..."
+          
+          if $license_manager
+            result = $license_manager.register_license(email, license_key)
+            
+            if result[:success]
+              puts "✅ [UI] Ліцензія успішно зареєстрована"
+              {
+                success: true,
+                message: result[:message],
+                user_license: result[:user_license]
+              }
+            else
+              puts "❌ [UI] Помилка реєстрації: #{result[:error]}"
+              {
+                success: false,
+                error: result[:error]
+              }
+            end
+          else
+            {
+              success: false,
+              error: "License manager not initialized"
+            }
+          end
+        rescue => e
+          {
+            success: false,
+            error: e.message
+          }
+        end
+      end
+      
+      # Callback для отримання інформації про ліцензію
+      @dialog.add_action_callback("get_license_info") do |action_context, _|
+        begin
+          if $license_manager
+            license_info = $license_manager.get_license_display_info
+            {
+              success: true,
+              license_info: license_info,
+              email: $license_manager.email
+            }
+          else
+            {
+              success: false,
+              error: "License manager not initialized"
+            }
+          end
+        rescue => e
+          {
+            success: false,
+            error: e.message
+          }
+        end
+      end
+      
+      # Callback для очищення ліцензії
+      @dialog.add_action_callback("clear_license") do |action_context, _|
+        begin
+          if $license_manager
+            $license_manager.clear_license
+            {
+              success: true,
+              message: "Ліцензія очищена"
+            }
+          else
+            {
+              success: false,
+              error: "License manager not initialized"
+            }
+          end
+        rescue => e
+          {
+            success: false,
+            error: e.message
+          }
+        end
+      end
+      
       # Callback для генерації превью моделі
       @dialog.add_action_callback("generate_model_preview") do |action_context, size, quality|
         begin
