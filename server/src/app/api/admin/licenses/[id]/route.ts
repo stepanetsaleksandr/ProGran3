@@ -23,16 +23,26 @@ export async function DELETE(
 
     console.log('Deleting license:', licenseId);
 
-    // Спочатку видаляємо всі user_licenses для цієї ліцензії
+    // Спочатку отримуємо license_key з ліцензії
+    const { data: license, error: licenseError } = await supabase
+      .from('licenses')
+      .select('license_key')
+      .eq('id', licenseId)
+      .single();
+
+    if (licenseError) {
+      console.error('Error fetching license:', licenseError);
+      return NextResponse.json({
+        success: false,
+        error: 'License not found'
+      }, { status: 404 });
+    }
+
+    // Видаляємо всі user_licenses для цієї ліцензії
     const { data: userLicenses, error: userLicensesError } = await supabase
       .from('user_licenses')
-      .select('license_key')
-      .eq('license_key', (await supabase
-        .from('licenses')
-        .select('license_key')
-        .eq('id', licenseId)
-        .single()
-      ).data?.license_key);
+      .select('id')
+      .eq('license_key', license.license_key);
 
     if (userLicensesError) {
       console.error('Error fetching user licenses:', userLicensesError);
@@ -41,7 +51,7 @@ export async function DELETE(
       const { error: deleteUserLicensesError } = await supabase
         .from('user_licenses')
         .delete()
-        .eq('license_key', userLicenses[0].license_key);
+        .eq('license_key', license.license_key);
 
       if (deleteUserLicensesError) {
         console.error('Error deleting user licenses:', deleteUserLicensesError);
@@ -51,7 +61,7 @@ export async function DELETE(
         }, { status: 500 });
       }
 
-      console.log(`Deleted ${userLicenses.length} user license(s)`);
+      console.log(`Deleted ${userLicenses.length} user license(s) for license_key: ${license.license_key}`);
     }
 
     // Тепер видаляємо саму ліцензію

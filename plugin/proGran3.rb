@@ -50,7 +50,7 @@ class ProGran3Tracker
   def initialize(base_url = nil)
         # ⚠️ ВАЖЛИВО: Після кожного деплою сервера оновити URL нижче!
         # Команда для перевірки: vercel ls
-               @base_url = base_url || ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-qflxj41tp-provis3ds-projects.vercel.app'
+               @base_url = base_url || ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-6ictznqok-provis3ds-projects.vercel.app'
     @plugin_id = generate_unique_plugin_id
     @is_running = false
     @heartbeat_thread = nil
@@ -338,9 +338,9 @@ class ProGran3Tracker
                 @plugin_blocked = true
                 $plugin_blocked = true
                 
-                # Очищаємо локальну ліцензію при блокуванні
-                if is_blocked && $license_manager
-                  puts "🧹 [#{timestamp}] Очищаємо локальну ліцензію через блокування сервера"
+                # Очищаємо локальну ліцензію при блокуванні або невалідній серверній ліцензії
+                if (is_blocked || !server_license_valid) && $license_manager
+                  puts "🧹 [#{timestamp}] Очищаємо локальну ліцензію через блокування сервера або невалідну ліцензію"
                   $license_manager.clear_saved_license
                 end
                 
@@ -596,9 +596,9 @@ class ProGran3Tracker
               @plugin_blocked = true
               puts "🔐 [#{timestamp}] Плагін ЗАБЛОКОВАНО (сервер: #{is_blocked}, ліцензія: #{server_license_valid ? 'валідна' : 'невалідна'})"
               
-              # Очищаємо локальну ліцензію при блокуванні
-              if is_blocked && $license_manager
-                puts "🧹 [#{timestamp}] Очищаємо локальну ліцензію через блокування сервера"
+              # Очищаємо локальну ліцензію при блокуванні або невалідній серверній ліцензії
+              if (is_blocked || !server_license_valid) && $license_manager
+                puts "🧹 [#{timestamp}] Очищаємо локальну ліцензію через блокування сервера або невалідну ліцензію"
                 $license_manager.clear_saved_license
               end
               

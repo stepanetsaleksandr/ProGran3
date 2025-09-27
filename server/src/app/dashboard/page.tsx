@@ -13,7 +13,7 @@ export default function ComprehensiveDashboard() {
   const [newLicense, setNewLicense] = useState({
     license_key: '',
     max_activations: 1,
-    days_valid: '' // Кількість днів (порожня = безстрокова)
+    days_valid: '' // Кількість хвилин (порожня = безстрокова)
   });
 
   const fetchData = async () => {
@@ -547,6 +547,9 @@ export default function ComprehensiveDashboard() {
                             Макс. активацій
                           </th>
                           <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
+                            Використано
+                          </th>
+                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
                             Термін дії
                           </th>
                           <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
@@ -569,7 +572,10 @@ export default function ComprehensiveDashboard() {
                               {license.max_activations || 'Невідомо'}
                             </td>
                             <td style={{ padding: '12px', color: '#333' }}>
-                              {license.days_valid ? `${license.days_valid} днів` : 'Без обмежень'}
+                              {license.activation_count || 0} / {license.max_activations || '∞'}
+                            </td>
+                            <td style={{ padding: '12px', color: '#333' }}>
+                              {license.days_valid ? `${license.days_valid} хв` : 'Без обмежень'}
                             </td>
                             <td style={{ padding: '12px' }}>
                               <span style={{
@@ -582,6 +588,28 @@ export default function ComprehensiveDashboard() {
                               }}>
                                 {license.is_active ? '🟢 Активна' : '🔴 Неактивна'}
                               </span>
+                              {license.days_valid && (
+                                <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
+                                  {(() => {
+                                    // Знаходимо user_license для цієї ліцензії
+                                    const userLicense = userLicenses.find(ul => ul.license_key === license.license_key);
+                                    if (userLicense && userLicense.activated_at) {
+                                      const activatedAt = new Date(userLicense.activated_at);
+                                      const expirationDate = new Date(activatedAt.getTime() + (license.days_valid * 60 * 1000));
+                                      const now = new Date();
+                                      const isExpired = now > expirationDate;
+                                      const minutesRemaining = Math.max(0, Math.floor((expirationDate.getTime() - now.getTime()) / (1000 * 60)));
+                                      
+                                      if (isExpired) {
+                                        return `⏰ Прострочена (${Math.abs(minutesRemaining)} хв тому)`;
+                                      } else {
+                                        return `⏰ Залишилось: ${minutesRemaining} хв`;
+                                      }
+                                    }
+                                    return '⏰ Не активована';
+                                  })()}
+                                </div>
+                              )}
                             </td>
                             <td style={{ padding: '12px' }}>
                               <div style={{ display: 'flex', gap: '8px' }}>
@@ -795,13 +823,13 @@ export default function ComprehensiveDashboard() {
               
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  Кількість днів (залишити порожнім для безстрокової):
+                  Кількість хвилин (залишити порожнім для безстрокової):
                 </label>
                 <input
                   type="number"
                   value={newLicense.days_valid || ''}
                   onChange={(e) => setNewLicense({...newLicense, days_valid: e.target.value})}
-                  placeholder="Наприклад: 30, 90, 365"
+                  placeholder="Наприклад: 1, 60, 1440 (1 день)"
                   min="1"
                   style={{
                     width: '100%',
@@ -812,7 +840,7 @@ export default function ComprehensiveDashboard() {
                   }}
                 />
                 <small style={{ color: '#666', fontSize: '12px' }}>
-                  Залишити порожнім для безстрокової ліцензії
+                  Залишити порожнім для безстрокової ліцензії. 1 хв = 1, 1 год = 60, 1 день = 1440
                 </small>
               </div>
               

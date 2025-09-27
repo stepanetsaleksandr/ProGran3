@@ -56,6 +56,12 @@ export class LicenseValidator {
           max_activations: license.max_activations
         }, 'LICENSE_VALIDATOR');
         
+        // Оновлюємо статус ліцензії на неактивну
+        await supabase
+          .from('licenses')
+          .update({ is_active: false })
+          .eq('id', license.id);
+        
         return {
           isValid: false,
           isBlocked: true,
@@ -64,7 +70,7 @@ export class LicenseValidator {
       }
 
       // 3. Перевіряємо реєстрацію користувача
-      const { data: userLicense, error: userLicenseError } = await supabase
+      let { data: userLicense, error: userLicenseError } = await supabase
         .from('user_licenses')
         .select('*')
         .eq('email', licenseInfo.email)
@@ -73,33 +79,92 @@ export class LicenseValidator {
         .eq('is_active', true)
         .single();
 
+      // Якщо користувача не знайдено з новим license_key, створюємо новий запис
       if (userLicenseError || !userLicense) {
-        SecureLogger.warn('User license not found', { 
+        SecureLogger.info('Creating new user license record', { 
           email: licenseInfo.email,
           license_key: licenseInfo.license_key,
-          hardware_id: licenseInfo.hardware_id,
-          error: userLicenseError?.message
+          hardware_id: licenseInfo.hardware_id
         }, 'LICENSE_VALIDATOR');
-        
-        return {
-          isValid: false,
-          isBlocked: true,
-          reason: 'User license not found or inactive'
-        };
+
+        // Спочатку деактивуємо старі user_licenses для цього користувача та hardware_id
+        await supabase
+          .from('user_licenses')
+          .update({ is_active: false })
+          .eq('email', licenseInfo.email)
+          .eq('hardware_id', licenseInfo.hardware_id);
+
+        // Створюємо новий запис user_license
+        const { data: newUserLicense, error: createError } = await supabase
+          .from('user_licenses')
+          .insert({
+            email: licenseInfo.email,
+            license_key: licenseInfo.license_key,
+            hardware_id: licenseInfo.hardware_id,
+            last_heartbeat: new Date().toISOString(),
+            offline_count: 0,
+            max_offline_hours: license.features?.max_offline_hours || 24,
+            is_active: true,
+            activated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (createError || !newUserLicense) {
+          SecureLogger.warn('Failed to create user license', { 
+            email: licenseInfo.email,
+            license_key: licenseInfo.license_key,
+            hardware_id: licenseInfo.hardware_id,
+            error: createError?.message
+          }, 'LICENSE_VALIDATOR');
+          
+          return {
+            isValid: false,
+            isBlocked: true,
+            reason: 'Failed to create user license'
+          };
+        }
+
+        userLicense = newUserLicense;
+
+        // Оновлюємо лічильник активацій
+        const { error: updateError } = await supabase
+          .from('licenses')
+          .update({ 
+            activation_count: license.activation_count + 1,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', license.id);
+
+        if (updateError) {
+          SecureLogger.error('Failed to update activation count', 'LICENSE_VALIDATOR');
+        }
       }
 
-      // 4. Перевіряємо термін дії (нова логіка з days_valid)
+      // 4. Перевіряємо термін дії (нова логіка з days_valid як хвилини для тестування)
       if (license.days_valid && userLicense.activated_at) {
         const activatedAt = new Date(userLicense.activated_at);
-        const expirationDate = new Date(activatedAt.getTime() + (license.days_valid * 24 * 60 * 60 * 1000));
+        const expirationDate = new Date(activatedAt.getTime() + (license.days_valid * 60 * 1000)); // хвилини * 60 * 1000 мс
         
         if (new Date() > expirationDate) {
           SecureLogger.warn('License expired', { 
             license_key: licenseInfo.license_key,
-            days_valid: license.days_valid,
+            minutes_valid: license.days_valid,
             activated_at: userLicense.activated_at,
             expiration_date: expirationDate.toISOString()
           }, 'LICENSE_VALIDATOR');
+          
+          // Оновлюємо статус ліцензії на неактивну
+          await supabase
+            .from('licenses')
+            .update({ is_active: false })
+            .eq('id', license.id);
+          
+          // Деактивуємо user_license
+          await supabase
+            .from('user_licenses')
+            .update({ is_active: false })
+            .eq('id', userLicense.id);
           
           return {
             isValid: false,
@@ -122,6 +187,18 @@ export class LicenseValidator {
             hours_since_last_heartbeat: hoursSinceLastHeartbeat,
             max_offline_hours: maxOfflineHours
           }, 'LICENSE_VALIDATOR');
+          
+          // Оновлюємо статус ліцензії на неактивну
+          await supabase
+            .from('licenses')
+            .update({ is_active: false })
+            .eq('id', license.id);
+          
+          // Деактивуємо user_license
+          await supabase
+            .from('user_licenses')
+            .update({ is_active: false })
+            .eq('id', userLicense.id);
           
           return {
             isValid: false,
@@ -303,14 +380,14 @@ export class LicenseValidator {
       const totalLicenses = licenses.length;
       const activeLicenses = userLicenses.filter(ul => ul.is_active).length;
       
-      // Перевіряємо закінчені ліцензії на основі days_valid та activated_at
+      // Перевіряємо закінчені ліцензії на основі days_valid (як хвилини) та activated_at
       const expiredLicenses = userLicenses.filter(ul => {
         if (!ul.activated_at) return false;
         const license = licenses.find(l => l.license_key === ul.license_key);
         if (!license || !license.days_valid) return false;
         
         const activatedAt = new Date(ul.activated_at);
-        const expirationDate = new Date(activatedAt.getTime() + (license.days_valid * 24 * 60 * 60 * 1000));
+        const expirationDate = new Date(activatedAt.getTime() + (license.days_valid * 60 * 1000)); // хвилини
         return now > expirationDate;
       }).length;
       

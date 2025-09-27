@@ -92,6 +92,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Створення запису активації
+    console.log('Creating user license record:', { email, license_key: license_key.substring(0, 8) + '...', hardware_id });
+    
     const { data: userLicense, error: createError } = await supabase
       .from('user_licenses')
       .insert({
@@ -99,7 +101,10 @@ export async function POST(request: NextRequest) {
         license_key: license_key,
         hardware_id: hardware_id,
         activated_at: new Date().toISOString(),
-        is_active: true
+        is_active: true,
+        last_heartbeat: new Date().toISOString(),
+        offline_count: 0,
+        max_offline_hours: 24
       })
       .select()
       .single();
@@ -108,11 +113,27 @@ export async function POST(request: NextRequest) {
       console.error('Error creating user license:', createError);
       return NextResponse.json({
         success: false,
-        error: 'Failed to activate license'
+        error: 'Failed to activate license',
+        details: createError.message
       }, { status: 500 });
     }
 
-    console.log('License activated successfully:', { id: userLicense.id, email, license_key: license_key.substring(0, 8) + '...' });
+    console.log('User license created successfully:', { id: userLicense.id, email, license_key: license_key.substring(0, 8) + '...' });
+
+    // Оновлюємо лічильник активацій в ліцензії
+    const { error: updateError } = await supabase
+      .from('licenses')
+      .update({ 
+        activation_count: license.activation_count + 1,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', license.id);
+
+    if (updateError) {
+      console.error('Error updating activation count:', updateError);
+    } else {
+      console.log('Activation count updated:', license.activation_count + 1);
+    }
 
     return NextResponse.json({
       success: true,
