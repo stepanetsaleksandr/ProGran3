@@ -1,38 +1,44 @@
-// Очищення активацій для тестування
+// Очищення всіх активацій ліцензій
 const https = require('https');
 
-const API_BASE = 'https://progran3-tracking-server-cuy1q2xn9-provis3ds-projects.vercel.app';
+const BASE_URL = 'https://progran3-tracking-server-h38r1e8vt-provis3ds-projects.vercel.app';
 
-async function makeRequest(path, method = 'GET', data = null) {
+function makeRequest(path, method = 'GET', data = null) {
   return new Promise((resolve, reject) => {
+    const url = new URL(path, BASE_URL);
     const options = {
-      hostname: 'progran3-tracking-server-cuy1q2xn9-provis3ds-projects.vercel.app',
-      port: 443,
-      path: path,
+      hostname: url.hostname,
+      port: url.port || 443,
+      path: url.pathname + url.search,
       method: method,
       headers: {
         'Content-Type': 'application/json',
-      }
+      },
     };
 
+    if (data) {
+      options.headers['Content-Length'] = Buffer.byteLength(JSON.stringify(data));
+    }
+
     const req = https.request(options, (res) => {
-      let body = '';
-      res.on('data', (chunk) => {
-        body += chunk;
-      });
+      let responseBody = '';
+      res.on('data', (chunk) => (responseBody += chunk));
       res.on('end', () => {
         try {
-          const result = JSON.parse(body);
-          resolve({ status: res.statusCode, data: result });
+          resolve({
+            status: res.statusCode,
+            data: JSON.parse(responseBody),
+          });
         } catch (e) {
-          resolve({ status: res.statusCode, data: body });
+          resolve({
+            status: res.statusCode,
+            data: responseBody,
+          });
         }
       });
     });
 
-    req.on('error', (err) => {
-      reject(err);
-    });
+    req.on('error', (e) => reject(e));
 
     if (data) {
       req.write(JSON.stringify(data));
@@ -42,65 +48,46 @@ async function makeRequest(path, method = 'GET', data = null) {
 }
 
 async function clearActivations() {
-  console.log('🧹 Очищення активацій для тестування');
-  console.log('=' * 50);
+  console.log('🧹 Очищення всіх активацій ліцензій...');
   
-  // Тестуємо активацію з існуючою ліцензією
-  console.log('\n📝 Тестування активації з існуючою ліцензією:');
-  
-  const testLicenses = [
-    'TQ58-IKVR-9X2M-7N4P',
-    'DEMO-1234-5678-9ABC', 
-    'FULL-ABCD-EFGH-IJKL'
-  ];
-  
-  for (const licenseKey of testLicenses) {
-    console.log(`\n🔑 Тестування ліцензії: ${licenseKey}`);
-    
-    try {
-      const activationData = {
-        email: 'test@progran3.com',
-        license_key: licenseKey,
-        hardware_id: 'test-hardware-id-123'
-      };
+  try {
+    // Спочатку перевіряємо поточні активації
+    const checkResponse = await makeRequest('/api/debug/check-user-licenses');
+    if (checkResponse.status === 200 && checkResponse.data.success) {
+      const activations = checkResponse.data.userLicenses || [];
+      console.log(`📋 Знайдено ${activations.length} активацій для очищення`);
       
-      const response = await makeRequest('/api/license/register-simple', 'POST', activationData);
-      
-      console.log(`   Статус: ${response.status}`);
-      console.log(`   Відповідь: ${JSON.stringify(response.data, null, 2)}`);
-      
-      if (response.status === 200) {
-        console.log(`   ✅ Ліцензія ${licenseKey} активована успішно!`);
-        console.log('\n🎯 Для тестування в SketchUp використовуйте:');
-        console.log(`   Email: test@progran3.com`);
-        console.log(`   Ключ: ${licenseKey}`);
-        break;
-      } else if (response.status === 400 && response.data.error === 'License activation limit exceeded') {
-        console.log(`   ⚠️ Ліцензія ${licenseKey} вже активована (ліміт перевищено)`);
-      } else if (response.status === 400 && response.data.error === 'License already activated on this device') {
-        console.log(`   ⚠️ Ліцензія ${licenseKey} вже активована на цьому пристрої`);
-      } else {
-        console.log(`   ❌ Ліцензія ${licenseKey} не працює: ${response.data.error}`);
+      if (activations.length === 0) {
+        console.log('✅ Активації вже очищені');
+        return;
       }
-    } catch (error) {
-      console.log(`   ❌ Помилка: ${error.message}`);
+      
+      // Показуємо що буде очищено
+      activations.forEach((activation, index) => {
+        console.log(`   ${index + 1}. ${activation.email} - ${activation.license_key.substring(0, 8)}...`);
+      });
+      
+      console.log('\n⚠️ ВСІ АКТИВАЦІЇ БУДУТЬ ВИДАЛЕНІ!');
+      console.log('💡 Це дозволить переактивувати ліцензії з новими email');
+      
+      // Очищаємо активації (видаляємо всі записи з user_licenses)
+      console.log('\n🧹 Видаляємо всі активації...');
+      
+      // Тут потрібно було б API для видалення, але його немає
+      // Тому просто повідомляємо користувача
+      console.log('❌ API для видалення активацій не реалізовано');
+      console.log('💡 Використайте дашборд для ручного видалення:');
+      console.log('   https://progran3-tracking-server-h38r1e8vt-provis3ds-projects.vercel.app/dashboard');
+      console.log('   Перейдіть на вкладку "👥 Активації"');
+      console.log('   Видаліть потрібні активації вручну');
+      
+    } else {
+      console.log('❌ Помилка отримання активацій:', checkResponse.data);
     }
+    
+  } catch (error) {
+    console.log('❌ Помилка:', error.message);
   }
-  
-  console.log('\n' + '=' * 50);
-  console.log('✅ Тест завершено');
-  
-  console.log('\n📋 ІНСТРУКЦІЇ ДЛЯ ТЕСТУВАННЯ:');
-  console.log('1. Відкрийте SketchUp');
-  console.log('2. Запустіть: ProGran3::UI.show_dialog');
-  console.log('3. Спробуйте активувати з існуючими ліцензіями:');
-  testLicenses.forEach(license => {
-    console.log(`   - ${license}`);
-  });
-  console.log('4. Якщо отримаєте помилку "ліміт перевищено" - це нормально');
-  console.log('5. Якщо отримаєте помилку "вже активована" - це нормально');
-  console.log('6. Якщо отримаєте помилку 404 - ліцензія не існує');
-  console.log('7. Якщо отримаєте помилку 500 - проблема на сервері');
 }
 
 clearActivations();

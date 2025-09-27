@@ -50,7 +50,7 @@ class ProGran3Tracker
   def initialize(base_url = nil)
         # ⚠️ ВАЖЛИВО: Після кожного деплою сервера оновити URL нижче!
         # Команда для перевірки: vercel ls
-               @base_url = base_url || ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-dydv5vbld-provis3ds-projects.vercel.app'
+               @base_url = base_url || ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-5neqouuxp-provis3ds-projects.vercel.app'
     @plugin_id = generate_unique_plugin_id
     @is_running = false
     @heartbeat_thread = nil
@@ -959,25 +959,53 @@ if defined?(Sketchup)
     result
   end
   
+  # Функція для отримання повної інформації про ліцензію (включаючи термін дії)
+  def self.license_info_full
+    result = $license_manager&.get_license_info_full
+    puts "🔐 [DEBUG] license_info_full повертає: #{result}"
+    result
+  end
+  
+  # Функція для отримання інформації для відображення в UI
+  def self.license_display_info
+    result = $license_manager&.get_license_display_info
+    puts "🔐 [DEBUG] license_display_info повертає: #{result}"
+    
+    # Конвертуємо Ruby hash в JSON для JavaScript
+    if result
+      require 'json'
+      json_result = result.to_json
+      puts "🔐 [DEBUG] license_display_info JSON: #{json_result}"
+      json_result
+    else
+      nil
+    end
+  end
+  
   def self.clear_license
     $license_manager&.clear_license
   end
   
   # Функція активації ліцензії
-  def self.activate_license(license_key, email = nil)
+  def self.activate_license(email, license_key)
     begin
       puts "🔐 Спроба активації ліцензії: #{license_key[0..8]}..."
       
       if $license_manager
-        # Якщо email не передано, використовуємо email з форми або за замовчуванням
-        email_to_use = email || "demo@progran3.com"
-        puts "🔐 Використовуємо email: #{email_to_use}"
+        puts "🔐 Використовуємо email: #{email}"
         
-        result = $license_manager.register_license(email_to_use, license_key)
+        result = $license_manager.register_license(email, license_key)
         if result[:success]
           puts "✅ Ліцензія успішно активована"
+          puts "🔐 [DEBUG] Після активації has_license?: #{$license_manager.has_license?}"
+          puts "🔐 [DEBUG] Після активації license_info: #{$license_manager.get_license_info_for_heartbeat}"
           # Розблоковуємо плагін після успішної активації
           unblock_plugin
+          # Примусово відправляємо heartbeat з новими даними ліцензії
+          puts "🔄 [DEBUG] Примусово відправляємо heartbeat після активації"
+          puts "🔄 [DEBUG] has_license? перед heartbeat: #{$license_manager.has_license?}"
+          puts "🔄 [DEBUG] license_info перед heartbeat: #{$license_manager.get_license_info_for_heartbeat}"
+          $progran3_tracker&.send_heartbeat_with_retry
           return { success: true, message: "Ліцензія активована" }
         else
           puts "❌ Помилка активації: #{result[:error]}"

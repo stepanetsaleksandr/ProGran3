@@ -7,8 +7,8 @@ const rateLimit = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_CONFIG = {
   windowMs: 60 * 1000, // 1 хвилина
   maxRequests: 100, // Максимум 100 запитів на хвилину
-  heartbeatMaxRequests: 20, // Максимум 20 heartbeat на хвилину
-  licenseMaxRequests: 5, // Максимум 5 реєстрацій ліцензій на хвилину
+  heartbeatMaxRequests: 60, // Максимум 60 heartbeat на хвилину (1 на секунду)
+  licenseMaxRequests: 20, // Максимум 20 реєстрацій ліцензій на хвилину
 };
 
 // Очищення застарілих записів кожні 5 хвилин
@@ -72,6 +72,9 @@ export function middleware(request: NextRequest) {
   const rateLimitResult = checkRateLimit(ip, maxRequests);
   
   if (!rateLimitResult.allowed) {
+    // Логування для діагностики
+    console.log(`🚫 [RATE_LIMIT] IP: ${ip}, Path: ${pathname}, Limit: ${maxRequests}, Reset: ${new Date(rateLimitResult.resetTime).toISOString()}`);
+    
     const response = NextResponse.json(
       {
         success: false,
@@ -95,6 +98,11 @@ export function middleware(request: NextRequest) {
   response.headers.set('X-RateLimit-Limit', maxRequests.toString());
   response.headers.set('X-RateLimit-Remaining', rateLimitResult.remaining.toString());
   response.headers.set('X-RateLimit-Reset', rateLimitResult.resetTime.toString());
+  
+  // Логування для діагностики (тільки для license endpoints)
+  if (pathname.startsWith('/api/license/register')) {
+    console.log(`✅ [RATE_LIMIT] IP: ${ip}, Path: ${pathname}, Remaining: ${rateLimitResult.remaining}/${maxRequests}`);
+  }
   
   return response;
 }

@@ -6,9 +6,11 @@ export default function ComprehensiveDashboard() {
   const [plugins, setPlugins] = useState<any[]>([]);
   const [licenses, setLicenses] = useState<any[]>([]);
   const [userLicenses, setUserLicenses] = useState<any[]>([]);
+  const [connections, setConnections] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'plugins' | 'licenses' | 'users'>('plugins');
+  const [activeTab, setActiveTab] = useState<'plugins' | 'licenses' | 'users' | 'connections'>('connections');
   const [showCreateLicense, setShowCreateLicense] = useState(false);
   const [newLicense, setNewLicense] = useState({
     license_key: '',
@@ -46,6 +48,16 @@ export default function ComprehensiveDashboard() {
         const userLicensesData = await userLicensesResponse.json();
         if (userLicensesData.success) {
           setUserLicenses(userLicensesData.userLicenses || []);
+        }
+      }
+      
+      // Fetch license connections
+      const connectionsResponse = await fetch('/api/dashboard/license-connections-fallback');
+      if (connectionsResponse.ok) {
+        const connectionsData = await connectionsResponse.json();
+        if (connectionsData.success) {
+          setConnections(connectionsData.data.connections || []);
+          setStats(connectionsData.data.stats || {});
         }
       }
       
@@ -228,6 +240,20 @@ export default function ComprehensiveDashboard() {
             borderBottom: '1px solid #e0e0e0'
           }}>
             <button
+              onClick={() => setActiveTab('connections')}
+              style={{
+                padding: '10px 20px',
+                border: 'none',
+                backgroundColor: activeTab === 'connections' ? '#007bff' : '#f8f9fa',
+                color: activeTab === 'connections' ? 'white' : '#333',
+                borderRadius: '4px 4px 0 0',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              🔗 Зв'язки ({connections.length})
+            </button>
+            <button
               onClick={() => setActiveTab('plugins')}
               style={{
                 padding: '10px 20px',
@@ -239,7 +265,7 @@ export default function ComprehensiveDashboard() {
                 fontSize: '14px'
               }}
             >
-              Плагіни ({plugins.length})
+              🔌 Плагіни ({plugins.length})
             </button>
             <button
               onClick={() => setActiveTab('licenses')}
@@ -407,6 +433,113 @@ export default function ComprehensiveDashboard() {
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
             overflow: 'hidden'
           }}>
+            {/* Connections Tab */}
+            {activeTab === 'connections' && (
+              <>
+                <div style={{ 
+                  backgroundColor: '#28a745', 
+                  color: 'white', 
+                  padding: '15px 20px' 
+                }}>
+                  <h2 style={{ margin: '0', fontSize: '18px' }}>Зв'язки плагін ↔ ліцензія</h2>
+                  <p style={{ margin: '5px 0 0 0', fontSize: '14px', opacity: 0.9 }}>
+                    Підключено: {stats.connected_plugins || 0} | Не підключено: {stats.unconnected_plugins || 0}
+                  </p>
+                </div>
+                
+                {connections.length === 0 ? (
+                  <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+                    Зв'язки не знайдені
+                  </div>
+                ) : (
+                  <div style={{ 
+                    backgroundColor: 'white', 
+                    border: '1px solid #dee2e6', 
+                    borderRadius: '0 0 8px 8px', 
+                    overflowX: 'auto' 
+                  }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#f8f9fa' }}>
+                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
+                            Плагін
+                          </th>
+                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
+                            Email
+                          </th>
+                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
+                            Ліцензія
+                          </th>
+                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
+                            Статус
+                          </th>
+                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
+                            Останній Heartbeat
+                          </th>
+                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
+                            Hardware ID
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {connections.map((connection, index) => (
+                          <tr key={connection.plugin.id || index} style={{ borderBottom: '1px solid #dee2e6' }}>
+                            <td style={{ padding: '12px' }}>
+                              <div style={{ fontWeight: 'bold', color: '#333' }}>
+                                {connection.plugin.plugin_name}
+                              </div>
+                              <div style={{ fontSize: '12px', color: '#666' }}>
+                                {connection.plugin.plugin_id}
+                              </div>
+                            </td>
+                            <td style={{ padding: '12px', color: '#333' }}>
+                              {connection.user_license ? connection.user_license.email : 'Немає'}
+                            </td>
+                            <td style={{ padding: '12px', color: '#333', fontFamily: 'monospace' }}>
+                              {connection.user_license ? connection.user_license.license_key.substring(0, 8) + '...' : 'Немає'}
+                              {connection.debug_info && connection.debug_info.match_type !== 'no_match' && (
+                                <div style={{ fontSize: '10px', color: '#666', marginTop: '2px' }}>
+                                  Тип зв'язку: {connection.debug_info.match_type}
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ padding: '12px' }}>
+                              <span style={{
+                                padding: '4px 8px',
+                                borderRadius: '12px',
+                                fontSize: '12px',
+                                fontWeight: 'bold',
+                                backgroundColor: connection.connection_status === 'connected' ? '#28a745' : '#dc3545',
+                                color: 'white'
+                              }}>
+                                {connection.connection_status === 'connected' ? 'ПІДКЛЮЧЕНО' : 'НЕ ПІДКЛЮЧЕНО'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '12px', color: '#333' }}>
+                              {connection.plugin.last_heartbeat ? 
+                                new Date(connection.plugin.last_heartbeat).toLocaleString() : 
+                                'Немає'
+                              }
+                            </td>
+                            <td style={{ padding: '12px', color: '#333', fontFamily: 'monospace', fontSize: '11px' }}>
+                              <div>Plugin: {connection.plugin.plugin_id}</div>
+                              <div>Computer: {connection.plugin.computer_name}</div>
+                              <div>User: {connection.plugin.user_id}</div>
+                              {connection.user_license && (
+                                <div style={{ color: '#28a745', marginTop: '4px' }}>
+                                  License HW: {connection.user_license.hardware_id}
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </>
+            )}
+
             {/* Plugins Tab */}
             {activeTab === 'plugins' && (
               <>

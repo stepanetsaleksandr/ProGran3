@@ -4649,72 +4649,167 @@ function updateLicenseStatus() {
     console.log('🔐 [DEBUG] updateLicenseStatus викликано');
     console.log('🔐 [DEBUG] window.sketchup:', window.sketchup);
     
-    // Отримуємо інформацію про ліцензію з Ruby
-    if (window.sketchup && window.sketchup.has_license) {
-      console.log('🔐 [DEBUG] Викликаємо has_license()');
-      const hasLicense = window.sketchup.has_license();
-      console.log('🔐 [DEBUG] hasLicense:', hasLicense);
+    // Отримуємо повну інформацію про ліцензію з Ruby
+    console.log('🔐 [DEBUG] window.sketchup:', window.sketchup);
+    console.log('🔐 [DEBUG] window.sketchup.license_display_info:', window.sketchup?.license_display_info);
+    
+    // Встановлюємо callback для отримання даних з Ruby
+    window.licenseDisplayInfoCallback = function(jsonData) {
+      console.log('🔐 [DEBUG] licenseDisplayInfoCallback отримав:', jsonData);
+      updateLicenseStatusWithData(jsonData);
+    };
+    
+    console.log('🔐 [DEBUG] window.sketchup доступний:', !!window.sketchup);
+    console.log('🔐 [DEBUG] window.sketchup.license_display_info доступний:', !!window.sketchup?.license_display_info);
+    
+    if (window.sketchup && window.sketchup.license_display_info) {
+      console.log('🔐 [DEBUG] Викликаємо license_display_info()');
+      try {
+        window.sketchup.license_display_info();
+        console.log('🔐 [DEBUG] license_display_info() викликано успішно');
+      } catch (e) {
+        console.log('🔐 [DEBUG] Помилка виклику license_display_info():', e);
+        updateLicenseStatusWithData(null);
+      }
+    } else {
+      console.log('🔐 [DEBUG] window.sketchup.license_display_info недоступний');
+      updateLicenseStatusWithData(null);
+    }
+  } catch (error) {
+    console.error('Помилка в updateLicenseStatus:', error);
+    updateLicenseStatusWithData(null);
+  }
+}
+  
+  function updateLicenseStatusWithData(licenseDisplayInfoRaw) {
+    try {
+      console.log('🔐 [DEBUG] updateLicenseStatusWithData викликано з:', licenseDisplayInfoRaw);
+      console.log('🔐 [DEBUG] licenseDisplayInfoRaw type:', typeof licenseDisplayInfoRaw);
+      console.log('🔐 [DEBUG] licenseDisplayInfoRaw length:', licenseDisplayInfoRaw?.length);
       
-      const licenseInfo = window.sketchup.license_info ? window.sketchup.license_info() : null;
-      console.log('🔐 [DEBUG] licenseInfo:', licenseInfo);
+      // Callback працює правильно - прибираємо debug alert
       
-      if (hasLicense && licenseInfo) {
-        // Ліцензія активна - оновлюємо тільки footer
-        const footerEmail = document.getElementById('license-footer-email');
-        const footerKey = document.getElementById('license-footer-key');
-        footerEmail.textContent = licenseInfo.email || 'Невідомий email';
-        footerKey.textContent = licenseInfo.license_key ? licenseInfo.license_key.substring(0, 8) + '...' : '';
+      let licenseDisplayInfo;
+      if (licenseDisplayInfoRaw && licenseDisplayInfoRaw !== 'null' && licenseDisplayInfoRaw !== 'undefined') {
+        console.log('🔐 [DEBUG] Спроба парсингу JSON...');
+        licenseDisplayInfo = JSON.parse(licenseDisplayInfoRaw);
+        console.log('🔐 [DEBUG] licenseDisplayInfo parsed:', licenseDisplayInfo);
+        console.log('🔐 [DEBUG] licenseDisplayInfo type:', typeof licenseDisplayInfo);
+        console.log('🔐 [DEBUG] licenseDisplayInfo.email після парсингу:', licenseDisplayInfo.email);
       } else {
-        // Демо режим - оновлюємо тільки footer
-        console.log('🔐 [DEBUG] Демо режим - оновлюємо footer');
+        console.log('🔐 [DEBUG] licenseDisplayInfoRaw is null/undefined/empty');
+        licenseDisplayInfo = null;
+      }
+      
+      if (licenseDisplayInfo && licenseDisplayInfo.status !== 'inactive') {
+        // Ліцензія активна - оновлюємо footer з повною інформацією
         const footerEmail = document.getElementById('license-footer-email');
         const footerKey = document.getElementById('license-footer-key');
+        
+        console.log('🔐 [DEBUG] Ліцензія активна, встановлюємо footer');
+        console.log('🔐 [DEBUG] licenseDisplayInfo:', licenseDisplayInfo);
+        console.log('🔐 [DEBUG] licenseDisplayInfo.email:', licenseDisplayInfo.email);
+        console.log('🔐 [DEBUG] licenseDisplayInfo.email type:', typeof licenseDisplayInfo.email);
+        console.log('🔐 [DEBUG] licenseDisplayInfo.email length:', licenseDisplayInfo.email?.length);
+        console.log('🔐 [DEBUG] licenseDisplayInfo.days_remaining:', licenseDisplayInfo.days_remaining);
+        console.log('🔐 [DEBUG] licenseDisplayInfo.expires_at:', licenseDisplayInfo.expires_at);
         console.log('🔐 [DEBUG] footerEmail element:', footerEmail);
-        console.log('🔐 [DEBUG] footerKey element:', footerKey);
         
         if (footerEmail) {
-          footerEmail.textContent = 'Не активована';
-          console.log('🔐 [DEBUG] Встановлено footerEmail: Не активована');
-        } else {
-          console.log('🔐 [DEBUG] Помилка: footerEmail element не знайдено');
+          console.log('🔐 [DEBUG] Поточний текст footerEmail ПЕРЕД зміною:', footerEmail.textContent);
+          
+          let emailText = licenseDisplayInfo.email || 'Невідомий email';
+          console.log('🔐 [DEBUG] emailText після ||:', emailText);
+          console.log('🔐 [DEBUG] licenseDisplayInfo.email truthy:', !!licenseDisplayInfo.email);
+          console.log('🔐 [DEBUG] licenseDisplayInfo.email === "":', licenseDisplayInfo.email === '');
+          console.log('🔐 [DEBUG] licenseDisplayInfo.email === null:', licenseDisplayInfo.email === null);
+          console.log('🔐 [DEBUG] licenseDisplayInfo.email === undefined:', licenseDisplayInfo.email === undefined);
+          console.log('🔐 [DEBUG] licenseDisplayInfo.email length:', licenseDisplayInfo.email?.length);
+          console.log('🔐 [DEBUG] licenseDisplayInfo.email trim:', licenseDisplayInfo.email?.trim());
+          console.log('🔐 [DEBUG] licenseDisplayInfo.email trim length:', licenseDisplayInfo.email?.trim()?.length);
+          
+          // Email отримано правильно - прибираємо debug alert
+          
+          // Обробляємо дні до закінчення
+          if (licenseDisplayInfo.days_remaining !== null && licenseDisplayInfo.days_remaining !== undefined) {
+            emailText += ` (${licenseDisplayInfo.days_remaining} днів)`;
+          } else if (licenseDisplayInfo.expires_at && licenseDisplayInfo.expires_at.trim() !== '') {
+            // Є дата закінчення, але не вдалося розрахувати дні
+            emailText += ' (термін дії встановлено)';
+          } else {
+            // Безстрокова ліцензія
+            emailText += ' (безстрокова)';
+          }
+          
+          footerEmail.textContent = emailText;
+          console.log('🔐 [DEBUG] ВСТАНОВЛЕНО footerEmail НА:', emailText);
+          
+          // Зберігаємо правильний текст для захисту від перезапису
+          footerEmail.dataset.correctText = emailText;
+          
+          // Перевіряємо через мілісекунду, чи не перезаписав хтось
+          setTimeout(() => {
+            console.log('🔐 [DEBUG] Перевірка footerEmail через 100мс:', footerEmail.textContent);
+            if (footerEmail.textContent !== emailText && footerEmail.textContent.includes('ТЕСТОВИЙ')) {
+              console.log('🔐 [DEBUG] ⚠️ ВИЯВЛЕНО ПЕРЕЗАПИС НА ТЕСТОВИЙ EMAIL! Відновлюємо правильний текст');
+              footerEmail.textContent = emailText;
+            }
+          }, 100);
+          
+          setTimeout(() => {
+            console.log('🔐 [DEBUG] Перевірка footerEmail через 1сек:', footerEmail.textContent);
+            if (footerEmail.textContent !== emailText && footerEmail.textContent.includes('ТЕСТОВИЙ')) {
+              console.log('🔐 [DEBUG] ⚠️ ВИЯВЛЕНО ПЕРЕЗАПИС НА ТЕСТОВИЙ EMAIL! Відновлюємо правильний текст');
+              footerEmail.textContent = emailText;
+            }
+          }, 1000);
+          
+          setTimeout(() => {
+            console.log('🔐 [DEBUG] Перевірка footerEmail через 3сек:', footerEmail.textContent);
+            if (footerEmail.textContent !== emailText && footerEmail.textContent.includes('ТЕСТОВИЙ')) {
+              console.log('🔐 [DEBUG] ⚠️ ВИЯВЛЕНО ПЕРЕЗАПИС НА ТЕСТОВИЙ EMAIL! Відновлюємо правильний текст');
+              footerEmail.textContent = emailText;
+            }
+          }, 3000);
+        }
+        
+        if (footerKey) {
+          footerKey.textContent = licenseDisplayInfo.license_key ? licenseDisplayInfo.license_key.substring(0, 8) + '...' : '';
+          console.log('🔐 [DEBUG] Встановлено footerKey:', licenseDisplayInfo.license_key ? licenseDisplayInfo.license_key.substring(0, 8) + '...' : '');
+        }
+      } else {
+        // Ліцензія неактивна або дані не отримані - оновлюємо footer
+        console.log('🔐 [DEBUG] Ліцензія неактивна або дані не отримані - оновлюємо footer');
+        console.log('🔐 [DEBUG] licenseDisplayInfo:', licenseDisplayInfo);
+        console.log('🔐 [DEBUG] licenseDisplayInfo status:', licenseDisplayInfo?.status);
+        
+        const footerEmail = document.getElementById('license-footer-email');
+        const footerKey = document.getElementById('license-footer-key');
+        
+        if (footerEmail) {
+          if (licenseDisplayInfo && licenseDisplayInfo.email) {
+            // Є дані про email, але статус inactive
+            footerEmail.textContent = `${licenseDisplayInfo.email} (неактивна)`;
+            console.log('🔐 [DEBUG] Встановлено footerEmail:', `${licenseDisplayInfo.email} (неактивна)`);
+          } else {
+            // Немає даних взагалі
+            footerEmail.textContent = 'Не активована';
+            console.log('🔐 [DEBUG] Встановлено footerEmail: Не активована');
+          }
         }
         
         if (footerKey) {
           footerKey.textContent = '';
           console.log('🔐 [DEBUG] Встановлено footerKey: порожньо');
-        } else {
-          console.log('🔐 [DEBUG] Помилка: footerKey element не знайдено');
         }
       }
-    } else {
-      // Fallback - демо режим
-      console.log('🔐 [DEBUG] Fallback - демо режим');
-      const footerEmail = document.getElementById('license-footer-email');
-      const footerKey = document.getElementById('license-footer-key');
-      console.log('🔐 [DEBUG] footerEmail element:', footerEmail);
-      console.log('🔐 [DEBUG] footerKey element:', footerKey);
-      
-      if (footerEmail) {
-        footerEmail.textContent = 'Не активована';
-        console.log('🔐 [DEBUG] Встановлено footerEmail: Не активована');
-      } else {
-        console.log('🔐 [DEBUG] Помилка: footerEmail element не знайдено');
-      }
-      
-      if (footerKey) {
-        footerKey.textContent = '';
-        console.log('🔐 [DEBUG] Встановлено footerKey: порожньо');
-      } else {
-        console.log('🔐 [DEBUG] Помилка: footerKey element не знайдено');
-      }
-    }
   } catch (error) {
-    console.error('Помилка оновлення статусу ліцензії:', error);
+    console.error('Помилка в updateLicenseStatusWithData:', error);
     // Fallback - демо режим
     const footerEmail = document.getElementById('license-footer-email');
     const footerKey = document.getElementById('license-footer-key');
-    footerEmail.textContent = 'Не активована';
-    footerKey.textContent = '';
+    if (footerEmail) footerEmail.textContent = 'Не активована';
+    if (footerKey) footerKey.textContent = '';
   }
 }
 
@@ -4738,12 +4833,20 @@ function activateLicense() {
       
       if (result && result.success) {
         alert('Ліцензія успішно активована!');
-        updateLicenseStatus();
         hideBlockingCard();
-        // Оновлюємо статус після успішної активації
+        // Примусове оновлення статусу після активації
         setTimeout(() => {
+          console.log('🔐 [DEBUG] Примусове оновлення статусу після активації');
           updateLicenseStatus();
-        }, 1000);
+        }, 500);
+        setTimeout(() => {
+          console.log('🔐 [DEBUG] Повторне оновлення статусу');
+          updateLicenseStatus();
+        }, 2000);
+        setTimeout(() => {
+          console.log('🔐 [DEBUG] Фінальне оновлення статусу');
+          updateLicenseStatus();
+        }, 5000);
       } else {
         alert('Помилка активації ліцензії: ' + (result.error || 'Невідома помилка'));
       }

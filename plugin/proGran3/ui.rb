@@ -52,36 +52,14 @@ module ProGran3
             console.log('🔐 [DELAYED] Викликаємо updateLicenseStatus через 1 секунду...');
             updateLicenseStatus();
           }, 1000);
+          
+          // Додатковий виклик через 3 секунди для впевненості
+          setTimeout(() => {
+            console.log('🔐 [DELAYED] Додатковий виклик updateLicenseStatus через 3 секунди...');
+            updateLicenseStatus();
+          }, 3000);
         ")
         
-        # Додатковий тест footer з затримкою
-        @dialog.execute_script("
-          setTimeout(() => {
-            console.log('🔐 [TEST] Тест footer з затримкою...');
-            console.log('🔐 [TEST] document.body:', document.body);
-            console.log('🔐 [TEST] document.readyState:', document.readyState);
-            
-            const footer = document.getElementById('license-footer');
-            const footerEmail = document.getElementById('license-footer-email');
-            const footerKey = document.getElementById('license-footer-key');
-            
-            console.log('🔐 [TEST] footer:', footer);
-            console.log('🔐 [TEST] footerEmail:', footerEmail);
-            console.log('🔐 [TEST] footerKey:', footerKey);
-            
-            if (footer) {
-              console.log('🔐 [TEST] Footer знайдено, встановлюємо тестовий email');
-              if (footerEmail) {
-                footerEmail.textContent = 'ТЕСТОВИЙ EMAIL';
-                console.log('🔐 [TEST] Встановлено тестовий email');
-              } else {
-                console.log('🔐 [TEST] Помилка: footerEmail не знайдено');
-              }
-            } else {
-              console.log('🔐 [TEST] Помилка: footer не знайдено');
-            }
-          }, 2000);
-        ")
         
         # Перевіряємо чи плагін заблокований перед запуском
         if $plugin_blocked
@@ -212,8 +190,51 @@ module ProGran3
         ProGran3.license_info
       end
       
+      @dialog.add_action_callback("license_info_full") do |dialog, _|
+        ProGran3.license_info_full.to_json
+      end
+      
+      @dialog.add_action_callback("license_display_info") do |dialog, _|
+        result = ProGran3.license_display_info
+        puts "🔐 [UI] Callback license_display_info повертає: #{result}"
+        puts "🔐 [UI] Callback result type: #{result.class}"
+        puts "🔐 [UI] Callback result length: #{result&.length}"
+        
+        # SketchUp callback повертає кількість символів замість рядка
+        # Використовуємо execute_script для передачі даних
+        @dialog.execute_script("
+          if (window.licenseDisplayInfoCallback) {
+            window.licenseDisplayInfoCallback('#{result}');
+          }
+        ")
+        
+        # Повертаємо nil, щоб уникнути проблеми з return value
+        nil
+      end
+      
       @dialog.add_action_callback("activate_license") do |dialog, license_key, email|
-        ProGran3.activate_license(license_key, email)
+        result = ProGran3.activate_license(email, license_key)
+        # Примусове оновлення UI після активації
+        if result && result[:success]
+          puts "🔄 [UI] Примусове оновлення UI після активації"
+          @dialog.execute_script("
+            setTimeout(() => {
+              console.log('🔐 [UI] Примусове оновлення статусу з Ruby (1 сек)');
+              updateLicenseStatus();
+            }, 1000);
+            
+            setTimeout(() => {
+              console.log('🔐 [UI] Примусове оновлення статусу з Ruby (3 сек)');
+              updateLicenseStatus();
+            }, 3000);
+            
+            setTimeout(() => {
+              console.log('🔐 [UI] Примусове оновлення статусу з Ruby (5 сек)');
+              updateLicenseStatus();
+            }, 5000);
+          ")
+        end
+        result
       end
       
       @dialog.add_action_callback("check_blocking_status") do |dialog, _|

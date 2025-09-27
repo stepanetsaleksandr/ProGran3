@@ -11,13 +11,14 @@ module ProGran3
       attr_reader :email, :license_key, :hardware_id, :offline_count
       
       def initialize
-        @email = nil
-        @license_key = nil
         @hardware_id = get_hardware_id
         @offline_count = 0
         @max_offline_hours = 24
-        @base_url = ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-dydv5vbld-provis3ds-projects.vercel.app'
-        puts "🔐 [LicenseManager] Ініціалізовано нову систему без локального збереження"
+        @base_url = ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-5neqouuxp-provis3ds-projects.vercel.app'
+        
+        # Завантажуємо збережену ліцензію при ініціалізації
+        load_saved_license
+        puts "🔐 [LicenseManager] Ініціалізовано з локальним збереженням"
       end
       
       # Перевірка чи є ліцензія
@@ -54,9 +55,13 @@ module ProGran3
           if response.code == '200'
             result = JSON.parse(response.body)
             if result['success']
-              @email = email
-              @license_key = license_key
-              puts "✅ [LicenseManager] Ліцензія успішно зареєстрована"
+              # Зберігаємо ліцензію локально
+              expires_at = result['user_license'] && result['user_license']['expires_at'] ? result['user_license']['expires_at'] : nil
+              save_license_locally(email, license_key, expires_at)
+              
+              puts "✅ [LicenseManager] Ліцензія успішно зареєстрована та збережена"
+              puts "🔐 [DEBUG] LicenseManager після активації: email=#{@email}, license_key=#{@license_key[0..8]}..."
+              puts "🔐 [DEBUG] has_license? після активації: #{has_license?}"
               return {
                 success: true,
                 message: result['message'],
@@ -98,24 +103,165 @@ module ProGran3
         end
       end
       
-      # Отримання інформації для відображення в UI
-      def get_license_display_info
+      # Отримання повної інформації про ліцензію (включаючи термін дії)
+      def get_license_info_full
         if has_license?
           {
             email: @email,
-            license_key: "#{@license_key[0..8]}...",
+            license_key: @license_key,
             hardware_id: @hardware_id,
-            offline_count: @offline_count,
-            max_offline_hours: @max_offline_hours
+            expires_at: @expires_at,
+            days_remaining: calculate_days_remaining
+          }
+        else
+          nil
+        end
+      end
+      
+      # Збереження ліцензії локально
+      def save_license_locally(email, license_key, expires_at = nil)
+        begin
+          @email = email
+          @license_key = license_key
+          @expires_at = expires_at
+          
+          # Зберігаємо в Windows Registry
+          save_to_registry(email, license_key, expires_at)
+          puts "✅ [LicenseManager] Ліцензія збережена локально"
+        rescue => e
+          puts "❌ [LicenseManager] Помилка збереження: #{e.message}"
+        end
+      end
+      
+      # Завантаження збереженої ліцензії
+      def load_saved_license
+        begin
+          data = load_from_registry
+          if data && data[:email] && data[:license_key]
+            @email = data[:email]
+            @license_key = data[:license_key]
+            @expires_at = data[:expires_at]
+            puts "✅ [LicenseManager] Збережена ліцензія завантажена: #{@email}"
+          else
+            puts "ℹ️ [LicenseManager] Збережена ліцензія не знайдена"
+          end
+        rescue => e
+          puts "❌ [LicenseManager] Помилка завантаження: #{e.message}"
+        end
+      end
+      
+      # Очищення збереженої ліцензії
+      def clear_saved_license
+        begin
+          @email = nil
+          @license_key = nil
+          @expires_at = nil
+          clear_registry
+          puts "✅ [LicenseManager] Ліцензія очищена"
+        rescue => e
+          puts "❌ [LicenseManager] Помилка очищення: #{e.message}"
+        end
+      end
+      
+      # Розрахунок днів до закінчення
+      def calculate_days_remaining
+        return nil unless @expires_at && @expires_at.strip != ''
+        
+        begin
+          expiry_date = Date.parse(@expires_at)
+          remaining = (expiry_date - Date.today).to_i
+          remaining > 0 ? remaining : 0
+        rescue
+          nil
+        end
+      end
+      
+      # Отримання інформації для відображення в UI
+      def get_license_display_info
+        if has_license?
+          days_remaining = calculate_days_remaining
+          {
+            email: @email,
+            license_key: @license_key,
+            expires_at: @expires_at,
+            days_remaining: days_remaining,
+            status: days_remaining.nil? ? 'active' : (days_remaining > 0 ? 'active' : 'expired')
           }
         else
           {
-            email: nil,
-            license_key: nil,
-            hardware_id: @hardware_id,
-            offline_count: @offline_count,
-            max_offline_hours: @max_offline_hours
+            email: 'Не активована',
+            license_key: '',
+            expires_at: nil,
+            days_remaining: nil,
+            status: 'inactive'
           }
+        end
+      end
+      
+      private
+      
+      # Збереження в Windows Registry
+      def save_to_registry(email, license_key, expires_at)
+        begin
+          require 'win32/registry'
+          
+          # Створюємо ключ реєстру якщо не існує
+          Win32::Registry::HKEY_CURRENT_USER.create('Software\\ProGran3') do |reg|
+            reg['Email', Win32::Registry::REG_SZ] = email
+            reg['LicenseKey', Win32::Registry::REG_SZ] = license_key
+            reg['ExpiresAt', Win32::Registry::REG_SZ] = expires_at.to_s if expires_at
+            reg['HardwareId', Win32::Registry::REG_SZ] = @hardware_id
+            reg['LastUpdated', Win32::Registry::REG_SZ] = Time.now.to_s
+          end
+          
+          puts "✅ [LicenseManager] Ліцензія збережена в реєстрі"
+        rescue => e
+          puts "❌ [LicenseManager] Помилка збереження в реєстрі: #{e.message}"
+        end
+      end
+      
+      # Завантаження з Windows Registry
+      def load_from_registry
+        begin
+          require 'win32/registry'
+          
+          Win32::Registry::HKEY_CURRENT_USER.open('Software\\ProGran3', Win32::Registry::KEY_READ) do |reg|
+            email = reg['Email', Win32::Registry::REG_SZ] rescue nil
+            license_key = reg['LicenseKey', Win32::Registry::REG_SZ] rescue nil
+            expires_at = reg['ExpiresAt', Win32::Registry::REG_SZ] rescue nil
+            
+            if email && license_key
+              {
+                email: email,
+                license_key: license_key,
+                expires_at: expires_at
+              }
+            else
+              nil
+            end
+          end
+        rescue => e
+          puts "❌ [LicenseManager] Помилка завантаження з реєстру: #{e.message}"
+          nil
+        end
+      end
+      
+      # Очищення Windows Registry
+      def clear_registry
+        begin
+          require 'win32/registry'
+          
+          Win32::Registry::HKEY_CURRENT_USER.open('Software\\ProGran3', Win32::Registry::KEY_WRITE) do |reg|
+            reg.delete('Email') rescue nil
+            reg.delete('LicenseKey') rescue nil
+            reg.delete('ExpiresAt') rescue nil
+            reg.delete('HardwareId') rescue nil
+            reg.delete('LastUpdated') rescue nil
+          end
+          
+          puts "✅ [LicenseManager] Реєстр очищено"
+        rescue => e
+          puts "❌ [LicenseManager] Помилка очищення реєстру: #{e.message}"
         end
       end
       
