@@ -33,7 +33,6 @@ export class LicenseValidator {
         .from('licenses')
         .select('*')
         .eq('license_key', licenseInfo.license_key)
-        .eq('is_active', true)
         .single();
 
       if (licenseError || !license) {
@@ -110,19 +109,6 @@ export class LicenseValidator {
         }
       }
 
-      // 5. Перевіряємо чи не заблокована ліцензія адміністратором
-      if (userLicense.is_active === false) {
-        SecureLogger.warn('User license is blocked by admin', { 
-          email: licenseInfo.email,
-          license_key: licenseInfo.license_key
-        }, 'LICENSE_VALIDATOR');
-        
-        return {
-          isValid: false,
-          isBlocked: true,
-          reason: 'License blocked by administrator'
-        };
-      }
 
       // 6. Перевіряємо offline ліміт (тільки якщо є last_heartbeat)
       if (userLicense.last_heartbeat) {

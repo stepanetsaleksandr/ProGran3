@@ -69,12 +69,12 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const { license_key, max_activations, expires_at, is_active } = await request.json();
+    const { license_key, max_activations, days_valid } = await request.json();
 
     // Автогенерація ключа якщо не надано
     const finalLicenseKey = license_key || generateLicenseKey();
 
-    console.log('Creating license with:', { finalLicenseKey, max_activations, expires_at, is_active });
+    console.log('Creating license with:', { finalLicenseKey, max_activations, days_valid });
 
     // Перевірка чи не існує вже такий ключ
     const { data: existing } = await supabase
@@ -96,10 +96,9 @@ export async function POST(request: NextRequest) {
       .insert({
         license_key: finalLicenseKey,
         license_type: 'standard',
-        expires_at: expires_at || null,
+        days_valid: days_valid ? parseInt(days_valid) : null,
         max_activations: max_activations || 1,
-        features: {},
-        is_active: is_active !== false
+        features: {}
       })
       .select()
       .single();

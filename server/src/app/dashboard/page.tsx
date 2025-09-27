@@ -6,17 +6,14 @@ export default function ComprehensiveDashboard() {
   const [plugins, setPlugins] = useState<any[]>([]);
   const [licenses, setLicenses] = useState<any[]>([]);
   const [userLicenses, setUserLicenses] = useState<any[]>([]);
-  const [connections, setConnections] = useState<any[]>([]);
-  const [stats, setStats] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'plugins' | 'licenses' | 'users' | 'connections'>('connections');
+  const [activeTab, setActiveTab] = useState<'plugins' | 'licenses' | 'users'>('users');
   const [showCreateLicense, setShowCreateLicense] = useState(false);
   const [newLicense, setNewLicense] = useState({
     license_key: '',
     max_activations: 1,
-    expires_at: '', // Дата закінчення (порожня = безстрокова)
-    is_active: true
+    days_valid: '' // Кількість днів (порожня = безстрокова)
   });
 
   const fetchData = async () => {
@@ -51,15 +48,6 @@ export default function ComprehensiveDashboard() {
         }
       }
       
-      // Fetch license connections
-      const connectionsResponse = await fetch('/api/dashboard/license-connections-fallback');
-      if (connectionsResponse.ok) {
-        const connectionsData = await connectionsResponse.json();
-        if (connectionsData.success) {
-          setConnections(connectionsData.data.connections || []);
-          setStats(connectionsData.data.stats || {});
-        }
-      }
       
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -123,8 +111,7 @@ export default function ComprehensiveDashboard() {
           setNewLicense({
             license_key: '',
             max_activations: 1,
-            expires_at: '',
-            is_active: true
+            days_valid: ''
           });
           fetchData(); // Refresh data
           setError(''); // Clear any previous errors
@@ -239,20 +226,6 @@ export default function ComprehensiveDashboard() {
             marginBottom: '20px',
             borderBottom: '1px solid #e0e0e0'
           }}>
-            <button
-              onClick={() => setActiveTab('connections')}
-              style={{
-                padding: '10px 20px',
-                border: 'none',
-                backgroundColor: activeTab === 'connections' ? '#007bff' : '#f8f9fa',
-                color: activeTab === 'connections' ? 'white' : '#333',
-                borderRadius: '4px 4px 0 0',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
-            >
-              🔗 Зв'язки ({connections.length})
-            </button>
             <button
               onClick={() => setActiveTab('plugins')}
               style={{
@@ -389,7 +362,7 @@ export default function ComprehensiveDashboard() {
                 {plugins.length}
                 </div>
               <div style={{ fontSize: '12px', color: '#666' }}>
-                Активних: {plugins.filter(p => p.is_active).length}
+                Активних: {plugins.filter(p => p.is_active && !p.is_blocked).length} | Заблокованих: {plugins.filter(p => p.is_blocked).length}
               </div>
             </div>
             <div style={{ 
@@ -433,112 +406,6 @@ export default function ComprehensiveDashboard() {
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
             overflow: 'hidden'
           }}>
-            {/* Connections Tab */}
-            {activeTab === 'connections' && (
-              <>
-                <div style={{ 
-                  backgroundColor: '#28a745', 
-                  color: 'white', 
-                  padding: '15px 20px' 
-                }}>
-                  <h2 style={{ margin: '0', fontSize: '18px' }}>Зв'язки плагін ↔ ліцензія</h2>
-                  <p style={{ margin: '5px 0 0 0', fontSize: '14px', opacity: 0.9 }}>
-                    Підключено: {stats.connected_plugins || 0} | Не підключено: {stats.unconnected_plugins || 0}
-                  </p>
-                </div>
-                
-                {connections.length === 0 ? (
-                  <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
-                    Зв'язки не знайдені
-                  </div>
-                ) : (
-                  <div style={{ 
-                    backgroundColor: 'white', 
-                    border: '1px solid #dee2e6', 
-                    borderRadius: '0 0 8px 8px', 
-                    overflowX: 'auto' 
-                  }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead>
-                        <tr style={{ backgroundColor: '#f8f9fa' }}>
-                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
-                            Плагін
-                          </th>
-                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
-                            Email
-                          </th>
-                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
-                            Ліцензія
-                          </th>
-                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
-                            Статус
-                          </th>
-                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
-                            Останній Heartbeat
-                          </th>
-                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
-                            Hardware ID
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {connections.map((connection, index) => (
-                          <tr key={connection.plugin.id || index} style={{ borderBottom: '1px solid #dee2e6' }}>
-                            <td style={{ padding: '12px' }}>
-                              <div style={{ fontWeight: 'bold', color: '#333' }}>
-                                {connection.plugin.plugin_name}
-                              </div>
-                              <div style={{ fontSize: '12px', color: '#666' }}>
-                                {connection.plugin.plugin_id}
-                              </div>
-                            </td>
-                            <td style={{ padding: '12px', color: '#333' }}>
-                              {connection.user_license ? connection.user_license.email : 'Немає'}
-                            </td>
-                            <td style={{ padding: '12px', color: '#333', fontFamily: 'monospace' }}>
-                              {connection.user_license ? connection.user_license.license_key.substring(0, 8) + '...' : 'Немає'}
-                              {connection.debug_info && connection.debug_info.match_type !== 'no_match' && (
-                                <div style={{ fontSize: '10px', color: '#666', marginTop: '2px' }}>
-                                  Тип зв'язку: {connection.debug_info.match_type}
-                                </div>
-                              )}
-                            </td>
-                            <td style={{ padding: '12px' }}>
-                              <span style={{
-                                padding: '4px 8px',
-                                borderRadius: '12px',
-                                fontSize: '12px',
-                                fontWeight: 'bold',
-                                backgroundColor: connection.connection_status === 'connected' ? '#28a745' : '#dc3545',
-                                color: 'white'
-                              }}>
-                                {connection.connection_status === 'connected' ? 'ПІДКЛЮЧЕНО' : 'НЕ ПІДКЛЮЧЕНО'}
-                              </span>
-                            </td>
-                            <td style={{ padding: '12px', color: '#333' }}>
-                              {connection.plugin.last_heartbeat ? 
-                                new Date(connection.plugin.last_heartbeat).toLocaleString() : 
-                                'Немає'
-                              }
-                            </td>
-                            <td style={{ padding: '12px', color: '#333', fontFamily: 'monospace', fontSize: '11px' }}>
-                              <div>Plugin: {connection.plugin.plugin_id}</div>
-                              <div>Computer: {connection.plugin.computer_name}</div>
-                              <div>User: {connection.plugin.user_id}</div>
-                              {connection.user_license && (
-                                <div style={{ color: '#28a745', marginTop: '4px' }}>
-                                  License HW: {connection.user_license.hardware_id}
-                                </div>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </>
-            )}
 
             {/* Plugins Tab */}
             {activeTab === 'plugins' && (
@@ -612,11 +479,10 @@ export default function ComprehensiveDashboard() {
                                 borderRadius: '12px',
                                 fontSize: '12px',
                                 fontWeight: 'bold',
-                                backgroundColor: plugin.is_active ? '#d4edda' : '#f8d7da',
-                                color: plugin.is_active ? '#155724' : '#721c24'
+                                backgroundColor: plugin.is_blocked ? '#f8d7da' : (plugin.is_active ? '#d4edda' : '#f8d7da'),
+                                color: plugin.is_blocked ? '#721c24' : (plugin.is_active ? '#155724' : '#721c24')
                               }}>
-                                {plugin.is_active ? '🟢 Активний' : '🔴 Неактивний'}
-                                {plugin.is_blocked && ' (Заблокований)'}
+                                {plugin.is_blocked ? '🔴 Заблокований' : (plugin.is_active ? '🟢 Активний' : '🔴 Неактивний')}
                         </span>
                       </td>
                             <td style={{ padding: '12px', color: '#333' }}>
@@ -703,7 +569,7 @@ export default function ComprehensiveDashboard() {
                               {license.max_activations || 'Невідомо'}
                             </td>
                             <td style={{ padding: '12px', color: '#333' }}>
-                              {license.expires_at ? new Date(license.expires_at).toLocaleDateString() : 'Без обмежень'}
+                              {license.days_valid ? `${license.days_valid} днів` : 'Без обмежень'}
                             </td>
                             <td style={{ padding: '12px' }}>
                               <span style={{
@@ -929,12 +795,14 @@ export default function ComprehensiveDashboard() {
               
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  Дата закінчення (залишити порожнім для безстрокової):
+                  Кількість днів (залишити порожнім для безстрокової):
                 </label>
                 <input
-                  type="date"
-                  value={newLicense.expires_at || ''}
-                  onChange={(e) => setNewLicense({...newLicense, expires_at: e.target.value})}
+                  type="number"
+                  value={newLicense.days_valid || ''}
+                  onChange={(e) => setNewLicense({...newLicense, days_valid: e.target.value})}
+                  placeholder="Наприклад: 30, 90, 365"
+                  min="1"
                   style={{
                     width: '100%',
                     padding: '8px',
@@ -948,16 +816,6 @@ export default function ComprehensiveDashboard() {
                 </small>
               </div>
               
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <input
-                    type="checkbox"
-                    checked={newLicense.is_active}
-                    onChange={(e) => setNewLicense({...newLicense, is_active: e.target.checked})}
-                  />
-                  <span>Активна ліцензія</span>
-                </label>
-              </div>
               
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                 <button

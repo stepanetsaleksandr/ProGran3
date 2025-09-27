@@ -66,7 +66,7 @@ interface UpsertResult {
 }
 
 // Upsert плагіна (оновлення або створення)
-export async function upsertPlugin(data: any, ipAddress: string): Promise<UpsertResult> {
+export async function upsertPlugin(data: any, ipAddress: string, isBlocked: boolean = false): Promise<UpsertResult> {
   const {
     plugin_id,
     plugin_name,
@@ -85,9 +85,9 @@ export async function upsertPlugin(data: any, ipAddress: string): Promise<Upsert
       .eq('plugin_id', plugin_id)
       .single();
 
-    // Якщо плагін заблокований, він не може бути активним
-    const isBlocked = existingPlugin?.is_blocked === true;
-    const isActive = !isBlocked; // Активний тільки якщо НЕ заблокований
+    // Використовуємо тільки переданий параметр isBlocked (не зберігаємо попередній статус)
+    const shouldBeBlocked = isBlocked;
+    const isActive = !shouldBeBlocked; // Активний тільки якщо НЕ заблокований
 
     // Debug логування (тільки в development)
     if (process.env.NODE_ENV === 'development') {
@@ -110,7 +110,8 @@ export async function upsertPlugin(data: any, ipAddress: string): Promise<Upsert
         system_info,
         ip_address: ipAddress,
         last_heartbeat: timestamp,
-        is_active: isActive // Активний тільки якщо не заблокований
+        is_active: isActive, // Активний тільки якщо не заблокований
+        is_blocked: shouldBeBlocked // Зберігаємо статус блокування
       }, {
         onConflict: 'plugin_id',
         ignoreDuplicates: false

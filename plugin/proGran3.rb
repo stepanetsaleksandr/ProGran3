@@ -50,7 +50,7 @@ class ProGran3Tracker
   def initialize(base_url = nil)
         # ⚠️ ВАЖЛИВО: Після кожного деплою сервера оновити URL нижче!
         # Команда для перевірки: vercel ls
-               @base_url = base_url || ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-5neqouuxp-provis3ds-projects.vercel.app'
+               @base_url = base_url || ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-qflxj41tp-provis3ds-projects.vercel.app'
     @plugin_id = generate_unique_plugin_id
     @is_running = false
     @heartbeat_thread = nil
@@ -324,7 +324,8 @@ class ProGran3Tracker
               server_license_valid = true
               if has_local_license && $license_manager
                 puts "🔐 [#{timestamp}] Перевіряємо валідність ліцензії на сервері..."
-                server_license_valid = $license_manager.validate_license
+                license_validation = $license_manager.validate_license
+                server_license_valid = license_validation && license_validation[:valid]
                 puts "🔐 [#{timestamp}] Ліцензія на сервері: #{server_license_valid ? 'ВАЛІДНА' : 'НЕВАЛІДНА'}"
               end
               
@@ -336,6 +337,12 @@ class ProGran3Tracker
                 puts "🚫 [#{timestamp}] ⚠️ ПЛАГІН ЗАБЛОКОВАНО (сервер: #{is_blocked}, локальна ліцензія: #{has_local_license}, серверна ліцензія: #{server_license_valid ? 'валідна' : 'невалідна'})!"
                 @plugin_blocked = true
                 $plugin_blocked = true
+                
+                # Очищаємо локальну ліцензію при блокуванні
+                if is_blocked && $license_manager
+                  puts "🧹 [#{timestamp}] Очищаємо локальну ліцензію через блокування сервера"
+                  $license_manager.clear_saved_license
+                end
                 
                 # Автоматично показуємо карточку блокування в UI
                 show_blocking_card_in_ui
@@ -576,7 +583,8 @@ class ProGran3Tracker
             
             if has_local_license && $license_manager
               puts "🔐 [#{timestamp}] Перевіряємо валідність ліцензії на сервері..."
-              server_license_valid = $license_manager.validate_license
+              license_validation = $license_manager.validate_license
+              server_license_valid = license_validation && license_validation[:valid]
               puts "🔐 [#{timestamp}] Ліцензія на сервері: #{server_license_valid ? 'ВАЛІДНА' : 'НЕВАЛІДНА'}"
             end
             
@@ -587,6 +595,13 @@ class ProGran3Tracker
               $plugin_blocked = true
               @plugin_blocked = true
               puts "🔐 [#{timestamp}] Плагін ЗАБЛОКОВАНО (сервер: #{is_blocked}, ліцензія: #{server_license_valid ? 'валідна' : 'невалідна'})"
+              
+              # Очищаємо локальну ліцензію при блокуванні
+              if is_blocked && $license_manager
+                puts "🧹 [#{timestamp}] Очищаємо локальну ліцензію через блокування сервера"
+                $license_manager.clear_saved_license
+              end
+              
               show_blocking_card_in_ui
             else
               $plugin_blocked = false
@@ -680,14 +695,14 @@ class ProGran3Tracker
   
   # Перевіряємо чи потрібно використовувати offline fallback
   def should_use_offline_fallback?
-    # Якщо є локальна ліцензія та останній успішний heartbeat був менше 48 годин тому
+    # Якщо є локальна ліцензія та останній успішний heartbeat був менше 48 секунд тому (для тестування)
     if $license_manager && $license_manager.has_license?
       last_heartbeat_file = get_last_heartbeat_file_path
       if File.exist?(last_heartbeat_file)
         begin
           last_heartbeat_time = Time.parse(File.read(last_heartbeat_file))
-          hours_since_last = (Time.now - last_heartbeat_time) / 3600
-          return hours_since_last < 48
+          seconds_since_last = (Time.now - last_heartbeat_time)
+          return seconds_since_last < 48  # 48 секунд для тестування
         rescue
           return false
         end

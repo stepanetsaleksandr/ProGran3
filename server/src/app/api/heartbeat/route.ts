@@ -47,7 +47,6 @@ export async function POST(request: NextRequest) {
       message = 'Plugin shutdown signal received';
     } else {
       // Звичайний heartbeat
-      result = await upsertPlugin(data, ipAddress);
       message = 'Heartbeat updated successfully';
       
       // Перевірка ліцензії в новій системі (тільки якщо є дані ліцензії)
@@ -78,6 +77,9 @@ export async function POST(request: NextRequest) {
         console.log('🚫 [API] Відсутні дані ліцензії в heartbeat - плагін заблокований');
         isBlocked = true; // БЛОКУЄМО без ліцензії
       }
+      
+      // Оновлюємо плагін з урахуванням статусу блокування
+      result = await upsertPlugin(data, ipAddress, isBlocked);
       
       // Логування для діагностики (тільки в development)
       if (process.env.NODE_ENV === 'development') {
