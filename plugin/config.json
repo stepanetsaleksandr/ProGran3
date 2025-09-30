@@ -10,5 +10,13 @@
   "plugin_name": "proGran3",
   "auto_reload": true,
   "backup_enabled": true,
-  "backup_folder": "backups"
+  "backup_folder": "backups",
+  "tracking_server_url": "https://progran3-tracking-server-fxyguy2kt-provis3ds-projects.vercel.app",
+  "fallback_server_url": "https://httpbin.org/post",
+  "heartbeat_interval": 3600,
+  "max_retries": 3,
+  "retry_delay": 30,
+  "offline_fallback_enabled": true,
+  "offline_fallback_duration": 48,
+  "debug_mode": false
 }

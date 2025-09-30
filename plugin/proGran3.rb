@@ -48,9 +48,8 @@ $license_manager = nil
 # Клас для відстеження активності плагіна
 class ProGran3Tracker
   def initialize(base_url = nil)
-        # ⚠️ ВАЖЛИВО: Після кожного деплою сервера оновити URL нижче!
-        # Команда для перевірки: vercel ls
-               @base_url = base_url || ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-1rp48ns42-provis3ds-projects.vercel.app'
+        # Використовуємо конфігурований URL
+        @base_url = base_url || ProGran3::Config.get_tracking_server_url
     @plugin_id = generate_unique_plugin_id
     @is_running = false
     @heartbeat_thread = nil
@@ -761,6 +760,7 @@ module ProGran3
   require_relative 'progran3/dimensions_manager'
   require_relative 'progran3/coordination_manager'
   require_relative 'progran3/callback_manager'
+  require_relative 'progran3/config'
   
   # Підключаємо основні модулі
   require_relative 'progran3/loader'
@@ -1138,6 +1138,27 @@ if defined?(Sketchup)
     if $license_manager&.has_license?
       create_new_tracker
     end
+  end
+  
+  # Методи для управління конфігурацією сервера
+  def self.get_server_url
+    Config.get_tracking_server_url
+  end
+  
+  def self.set_server_url(url)
+    Config.set_tracking_server_url(url)
+  end
+  
+  def self.test_server_connection(url = nil)
+    Config.test_server_connection(url)
+  end
+  
+  def self.get_config
+    Config.get_all_settings
+  end
+  
+  def self.update_config(settings)
+    Config.update_settings(settings)
   end
   
 
