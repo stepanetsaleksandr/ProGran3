@@ -26,74 +26,85 @@ export default function ComprehensiveDashboard() {
       setLicenses([]);
       setUserLicenses([]);
       
-      // Використовуємо debug endpoint для отримання всієї інформації
-      const allInfoResponse = await fetch('/api/debug/all-info', {
+      // Використовуємо актуальні endpoints замість debug
+      console.log('🔄 Fetching data from production endpoints...');
+      
+      // Отримуємо плагіни з основного API
+      const pluginsResponse = await fetch('/api/plugins', {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate, private',
           'Pragma': 'no-cache',
-          'Expires': '0',
-          'If-Modified-Since': '0',
-          'If-None-Match': '*'
+          'Expires': '0'
         }
       });
-      if (allInfoResponse.ok) {
-        const allInfoData = await allInfoResponse.json();
-        if (allInfoData.success) {
-          setPlugins(allInfoData.data.plugins || []);
-          setLicenses(allInfoData.data.licenses || []);
-          setUserLicenses(allInfoData.data.user_licenses || []);
-          console.log('📊 Dashboard data loaded:', {
-            plugins: allInfoData.data.plugins?.length || 0,
-            licenses: allInfoData.data.licenses?.length || 0,
-            userLicenses: allInfoData.data.user_licenses?.length || 0,
-            summary: allInfoData.data.summary
-          });
+      if (pluginsResponse.ok) {
+        const pluginsData = await pluginsResponse.json();
+        if (pluginsData.success) {
+          setPlugins(pluginsData.data.plugins || []);
+          console.log('📊 Plugins loaded:', pluginsData.data.plugins?.length || 0);
         }
-      } else {
-        // Fallback до старих endpoints
-        const pluginsResponse = await fetch('/api/plugins', {
+      }
+      
+      // Отримуємо ліцензії
+      const licensesResponse = await fetch('/api/admin/licenses-simple', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate, private',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+      if (licensesResponse.ok) {
+        const licensesData = await licensesResponse.json();
+        if (licensesData.success) {
+          setLicenses(licensesData.data.licenses || []);
+          console.log('📊 Licenses loaded:', licensesData.data.licenses?.length || 0);
+        }
+      }
+      
+      // Отримуємо user licenses
+      const userLicensesResponse = await fetch('/api/debug/check-user-licenses', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate, private',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+      if (userLicensesResponse.ok) {
+        const userLicensesData = await userLicensesResponse.json();
+        if (userLicensesData.success) {
+          setUserLicenses(userLicensesData.userLicenses || []);
+          console.log('📊 User licenses loaded:', userLicensesData.userLicenses?.length || 0);
+        }
+      }
+      
+      // Fallback до debug endpoint тільки якщо основні API не працюють
+      if (!pluginsResponse.ok || !licensesResponse.ok) {
+        console.log('⚠️ Fallback to debug endpoint...');
+        const allInfoResponse = await fetch('/api/debug/all-info', {
           cache: 'no-store',
           headers: {
             'Cache-Control': 'no-cache, no-store, must-revalidate, private',
             'Pragma': 'no-cache',
-            'Expires': '0'
+            'Expires': '0',
+            'If-Modified-Since': '0',
+            'If-None-Match': '*'
           }
         });
-        if (pluginsResponse.ok) {
-          const pluginsData = await pluginsResponse.json();
-          if (pluginsData.success) {
-            setPlugins(pluginsData.data.plugins || []);
-          }
-        }
-        
-        const licensesResponse = await fetch('/api/admin/licenses-simple', {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate, private',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        });
-        if (licensesResponse.ok) {
-          const licensesData = await licensesResponse.json();
-          if (licensesData.success) {
-            setLicenses(licensesData.data.licenses || []);
-          }
-        }
-        
-        const userLicensesResponse = await fetch('/api/debug/check-user-licenses', {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate, private',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        });
-        if (userLicensesResponse.ok) {
-          const userLicensesData = await userLicensesResponse.json();
-          if (userLicensesData.success) {
-            setUserLicenses(userLicensesData.userLicenses || []);
+        if (allInfoResponse.ok) {
+          const allInfoData = await allInfoResponse.json();
+          if (allInfoData.success) {
+            setPlugins(allInfoData.data.plugins || []);
+            setLicenses(allInfoData.data.licenses || []);
+            setUserLicenses(allInfoData.data.user_licenses || []);
+            console.log('📊 Dashboard data loaded from debug:', {
+              plugins: allInfoData.data.plugins?.length || 0,
+              licenses: allInfoData.data.licenses?.length || 0,
+              userLicenses: allInfoData.data.user_licenses?.length || 0,
+              summary: allInfoData.data.summary
+            });
           }
         }
       }
