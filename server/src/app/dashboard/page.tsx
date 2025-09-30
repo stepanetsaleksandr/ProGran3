@@ -8,7 +8,7 @@ export default function ComprehensiveDashboard() {
   const [userLicenses, setUserLicenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'plugins' | 'licenses' | 'users'>('users');
+  const [activeTab, setActiveTab] = useState<'plugins' | 'licenses'>('licenses');
   const [showCreateLicense, setShowCreateLicense] = useState(false);
   const [newLicense, setNewLicense] = useState({
     license_key: '',
@@ -21,33 +21,53 @@ export default function ComprehensiveDashboard() {
       setError('');
       setLoading(true);
       
-      // Fetch plugins
-      const pluginsResponse = await fetch('/api/plugins');
-      if (pluginsResponse.ok) {
-        const pluginsData = await pluginsResponse.json();
-        if (pluginsData.success) {
-          setPlugins(pluginsData.data.plugins || []);
+      // Використовуємо debug endpoint для отримання всієї інформації
+      const allInfoResponse = await fetch('/api/debug/all-info', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      if (allInfoResponse.ok) {
+        const allInfoData = await allInfoResponse.json();
+        if (allInfoData.success) {
+          setPlugins(allInfoData.data.plugins || []);
+          setLicenses(allInfoData.data.licenses || []);
+          setUserLicenses(allInfoData.data.user_licenses || []);
+          console.log('📊 Dashboard data loaded:', {
+            plugins: allInfoData.data.plugins?.length || 0,
+            licenses: allInfoData.data.licenses?.length || 0,
+            userLicenses: allInfoData.data.user_licenses?.length || 0,
+            summary: allInfoData.data.summary
+          });
+        }
+      } else {
+        // Fallback до старих endpoints
+        const pluginsResponse = await fetch('/api/plugins');
+        if (pluginsResponse.ok) {
+          const pluginsData = await pluginsResponse.json();
+          if (pluginsData.success) {
+            setPlugins(pluginsData.data.plugins || []);
+          }
+        }
+        
+        const licensesResponse = await fetch('/api/admin/licenses-simple');
+        if (licensesResponse.ok) {
+          const licensesData = await licensesResponse.json();
+          if (licensesData.success) {
+            setLicenses(licensesData.data.licenses || []);
+          }
+        }
+        
+        const userLicensesResponse = await fetch('/api/debug/check-user-licenses');
+        if (userLicensesResponse.ok) {
+          const userLicensesData = await userLicensesResponse.json();
+          if (userLicensesData.success) {
+            setUserLicenses(userLicensesData.userLicenses || []);
+          }
         }
       }
-      
-      // Fetch licenses
-      const licensesResponse = await fetch('/api/admin/licenses-simple');
-      if (licensesResponse.ok) {
-        const licensesData = await licensesResponse.json();
-        if (licensesData.success) {
-          setLicenses(licensesData.data.licenses || []);
-        }
-      }
-      
-      // Fetch user licenses from debug endpoint
-      const userLicensesResponse = await fetch('/api/debug/check-user-licenses');
-      if (userLicensesResponse.ok) {
-        const userLicensesData = await userLicensesResponse.json();
-        if (userLicensesData.success) {
-          setUserLicenses(userLicensesData.userLicenses || []);
-        }
-      }
-      
       
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -254,20 +274,6 @@ export default function ComprehensiveDashboard() {
             >
               Ліцензії ({licenses.length})
             </button>
-            <button
-              onClick={() => setActiveTab('users')}
-              style={{
-                padding: '10px 20px',
-                border: 'none',
-                backgroundColor: activeTab === 'users' ? '#007bff' : '#f8f9fa',
-                color: activeTab === 'users' ? 'white' : '#333',
-                borderRadius: '4px 4px 0 0',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
-            >
-              Користувачі ({userLicenses.length})
-            </button>
             </div>
           
           <div style={{ display: 'flex', gap: '10px' }}>
@@ -301,6 +307,20 @@ export default function ComprehensiveDashboard() {
                 Створити ліцензію
               </button>
             )}
+            <button 
+              onClick={() => window.open('/api/debug/all-info', '_blank')}
+              style={{
+                backgroundColor: '#17a2b8',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              📊 Всі дані JSON
+            </button>
           </div>
         </div>
 
@@ -438,10 +458,16 @@ export default function ComprehensiveDashboard() {
                       Користувач
                     </th>
                           <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
+                      Email
+                    </th>
+                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
                       Комп'ютер
                     </th>
                           <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
                       SketchUp
+                    </th>
+                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
+                      IP адреса
                     </th>
                           <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
                       Статус
@@ -455,7 +481,14 @@ export default function ComprehensiveDashboard() {
                   </tr>
                 </thead>
                       <tbody>
-                        {plugins.map((plugin, index) => (
+                        {plugins.map((plugin, index) => {
+                          // Знаходимо email з user_licenses для цього плагіна
+                          const userLicense = userLicenses.find(ul => 
+                            ul.email && ul.hardware_id && 
+                            plugin.user_id && plugin.user_id.includes(ul.email.split('@')[0])
+                          );
+                          
+                          return (
                           <tr key={plugin.id || index} style={{ borderBottom: '1px solid #dee2e6' }}>
                             <td style={{ padding: '12px' }}>
                         <div>
@@ -468,10 +501,33 @@ export default function ComprehensiveDashboard() {
                         </div>
                       </td>
                             <td style={{ padding: '12px', color: '#333' }}>
+                              <div style={{ fontWeight: 'bold', color: '#007bff' }}>
+                                {userLicense?.email || 'Не активований'}
+                              </div>
+                              {userLicense && (
+                                <div style={{ fontSize: '11px', color: '#666' }}>
+                                  🖥️ {userLicense.hardware_id}
+                                </div>
+                              )}
+                      </td>
+                            <td style={{ padding: '12px', color: '#333' }}>
                               {plugin.computer_name || 'Невідомо'}
                       </td>
                             <td style={{ padding: '12px', color: '#333' }}>
-                              {plugin.system_info?.sketchup_version || 'Невідомо'}
+                              <div style={{ fontWeight: 'bold' }}>
+                                {plugin.system_info?.sketchup_version || 'Невідомо'}
+                              </div>
+                              <div style={{ fontSize: '11px', color: '#666' }}>
+                                {plugin.system_info?.ruby_version || 'Ruby N/A'}
+                              </div>
+                      </td>
+                            <td style={{ padding: '12px', color: '#333' }}>
+                              <div style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                                {plugin.ip_address || 'Невідомо'}
+                              </div>
+                              <div style={{ fontSize: '11px', color: '#666' }}>
+                                {plugin.system_info?.os || 'OS N/A'}
+                              </div>
                       </td>
                             <td style={{ padding: '12px' }}>
                               <span style={{
@@ -505,7 +561,8 @@ export default function ComprehensiveDashboard() {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                          );
+                        })}
                 </tbody>
               </table>
             </div>
@@ -556,6 +613,9 @@ export default function ComprehensiveDashboard() {
                             Статус
                           </th>
                           <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
+                            Активовані користувачі
+                          </th>
+                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
                             Дії
                           </th>
                         </tr>
@@ -575,7 +635,14 @@ export default function ComprehensiveDashboard() {
                               {license.activation_count || 0} / {license.max_activations || '∞'}
                             </td>
                             <td style={{ padding: '12px', color: '#333' }}>
-                              {license.days_valid ? `${license.days_valid} хв` : 'Без обмежень'}
+                              <div style={{ fontWeight: 'bold' }}>
+                                {license.days_valid ? `${license.days_valid} днів` : 'Без обмежень'}
+                              </div>
+                              {license.days_valid && (
+                                <div style={{ fontSize: '11px', color: '#666' }}>
+                                  {license.days_valid * 24 * 60} хв
+                                </div>
+                              )}
                             </td>
                             <td style={{ padding: '12px' }}>
                               <span style={{
@@ -595,21 +662,79 @@ export default function ComprehensiveDashboard() {
                                     const userLicense = userLicenses.find(ul => ul.license_key === license.license_key);
                                     if (userLicense && userLicense.activated_at) {
                                       const activatedAt = new Date(userLicense.activated_at);
-                                      const expirationDate = new Date(activatedAt.getTime() + (license.days_valid * 60 * 1000));
+                                      const expirationDate = new Date(activatedAt.getTime() + (license.days_valid * 24 * 60 * 60 * 1000));
                                       const now = new Date();
                                       const isExpired = now > expirationDate;
-                                      const minutesRemaining = Math.max(0, Math.floor((expirationDate.getTime() - now.getTime()) / (1000 * 60)));
+                                      const daysRemaining = Math.max(0, Math.floor((expirationDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)));
                                       
                                       if (isExpired) {
-                                        return `⏰ Прострочена (${Math.abs(minutesRemaining)} хв тому)`;
+                                        return `⏰ Прострочена (${Math.abs(daysRemaining)} днів тому)`;
                                       } else {
-                                        return `⏰ Залишилось: ${minutesRemaining} хв`;
+                                        return `⏰ Залишилось: ${daysRemaining} днів`;
                                       }
                                     }
                                     return '⏰ Не активована';
                                   })()}
                                 </div>
                               )}
+                            </td>
+                            <td style={{ padding: '12px' }}>
+                              {(() => {
+                                const activatedUsers = userLicenses.filter(ul => 
+                                  ul.license_key === license.license_key && ul.is_active
+                                );
+                                
+                                if (activatedUsers.length === 0) {
+                                  return (
+                                    <span style={{ color: '#666', fontSize: '12px' }}>
+                                      Не активована
+                                    </span>
+                                  );
+                                }
+                                
+                                return (
+                                  <div style={{ maxWidth: '200px' }}>
+                                    {activatedUsers.map((user, idx) => (
+                                      <div key={idx} style={{ 
+                                        marginBottom: '8px', 
+                                        padding: '6px', 
+                                        backgroundColor: '#f8f9fa', 
+                                        borderRadius: '4px',
+                                        border: '1px solid #e9ecef'
+                                      }}>
+                                        <div style={{ 
+                                          fontWeight: 'bold', 
+                                          color: '#333', 
+                                          fontSize: '12px',
+                                          marginBottom: '2px'
+                                        }}>
+                                          👤 {user.email}
+                                        </div>
+                                        <div style={{ 
+                                          fontSize: '10px', 
+                                          color: '#666',
+                                          marginBottom: '1px'
+                                        }}>
+                                          ID: {user.id}
+                                        </div>
+                                        <div style={{ 
+                                          fontSize: '10px', 
+                                          color: '#666',
+                                          marginBottom: '1px'
+                                        }}>
+                                          🖥️ {user.hardware_id}
+                                        </div>
+                                        <div style={{ 
+                                          fontSize: '10px', 
+                                          color: '#666'
+                                        }}>
+                                          📅 {formatDate(user.activated_at)}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                );
+                              })()}
                             </td>
                             <td style={{ padding: '12px' }}>
                               <div style={{ display: 'flex', gap: '8px' }}>
@@ -653,87 +778,6 @@ export default function ComprehensiveDashboard() {
               </>
             )}
 
-            {/* Users Tab */}
-            {activeTab === 'users' && (
-              <>
-                <div style={{ 
-                  backgroundColor: '#dc3545', 
-                  color: 'white', 
-                  padding: '15px 20px' 
-                }}>
-                  <h2 style={{ margin: '0', fontSize: '18px' }}>Користувачі з ліцензіями</h2>
-                  <p style={{ margin: '5px 0 0 0', fontSize: '14px', opacity: 0.9 }}>
-                    {userLicenses.length} користувачів знайдено
-                  </p>
-                </div>
-                
-                {userLicenses.length === 0 ? (
-                  <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
-                    Користувачі не знайдені
-                  </div>
-                ) : (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ 
-                      width: '100%', 
-                      borderCollapse: 'collapse',
-                      fontSize: '14px'
-                    }}>
-                      <thead style={{ backgroundColor: '#f8f9fa' }}>
-                        <tr>
-                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
-                            Email
-                          </th>
-                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
-                            Ліцензія
-                          </th>
-                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
-                            Hardware ID
-                          </th>
-                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
-                            Дата активації
-                          </th>
-                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>
-                            Статус
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {userLicenses.map((userLicense, index) => (
-                          <tr key={userLicense.id || index} style={{ borderBottom: '1px solid #dee2e6' }}>
-                            <td style={{ padding: '12px' }}>
-                              <div style={{ fontWeight: 'bold', color: '#333' }}>
-                                {userLicense.email || 'Невідомо'}
-                              </div>
-                            </td>
-                            <td style={{ padding: '12px', color: '#333' }}>
-                              {userLicense.license_key || 'Невідомо'}
-                            </td>
-                            <td style={{ padding: '12px', color: '#333' }}>
-                              {userLicense.hardware_id || 'Невідомо'}
-                            </td>
-                            <td style={{ padding: '12px', color: '#333' }}>
-                              {userLicense.activated_at ? formatDate(userLicense.activated_at) : 'Невідомо'}
-                            </td>
-                            <td style={{ padding: '12px' }}>
-                              <span style={{
-                                padding: '4px 8px',
-                                borderRadius: '12px',
-                                fontSize: '12px',
-                                fontWeight: 'bold',
-                                backgroundColor: userLicense.is_active ? '#d4edda' : '#f8d7da',
-                                color: userLicense.is_active ? '#155724' : '#721c24'
-                              }}>
-                                {userLicense.is_active ? '🟢 Активна' : '🔴 Неактивна'}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </>
-            )}
           </div>
         )}
 

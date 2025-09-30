@@ -50,7 +50,7 @@ class ProGran3Tracker
   def initialize(base_url = nil)
         # ⚠️ ВАЖЛИВО: Після кожного деплою сервера оновити URL нижче!
         # Команда для перевірки: vercel ls
-               @base_url = base_url || ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-6ictznqok-provis3ds-projects.vercel.app'
+               @base_url = base_url || ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-75vprdnav-provis3ds-projects.vercel.app'
     @plugin_id = generate_unique_plugin_id
     @is_running = false
     @heartbeat_thread = nil
@@ -65,7 +65,7 @@ class ProGran3Tracker
     hostname = Socket.gethostname.downcase.gsub(/[^a-z0-9]/, '-')
     username = ENV['USERNAME'] || ENV['USER'] || 'sketchup-user'
     # Створюємо стабільний ID на основі hostname та username
-    "progran3-#{hostname}-#{username}".downcase
+    "progran3-desktop-#{hostname}-#{username}".downcase
   end
 
   public
@@ -271,6 +271,8 @@ class ProGran3Tracker
       }
       
       puts "📡 Дані heartbeat: #{data.inspect}"
+      puts "📡 License info в даних: #{data[:license_info].inspect}"
+      puts "📡 JSON для відправки: #{data.to_json}"
       
       # Валідація даних
       validate_heartbeat_data(data)
@@ -1004,26 +1006,42 @@ if defined?(Sketchup)
   # Функція активації ліцензії
   def self.activate_license(email, license_key)
     begin
-      puts "🔐 Спроба активації ліцензії: #{license_key[0..8]}..."
+      puts "🔐 ========== ПОЧАТОК АКТИВАЦІЇ ЛІЦЕНЗІЇ =========="
+      puts "🔐 Email: #{email}"
+      puts "🔐 License Key: #{license_key[0..8]}..."
+      puts "🔐 LicenseManager доступний: #{$license_manager ? 'ТАК' : 'НІ'}"
       
       if $license_manager
-        puts "🔐 Використовуємо email: #{email}"
+        puts "🔐 Викликаємо register_license..."
         
         result = $license_manager.register_license(email, license_key)
+        puts "🔐 Результат register_license: #{result}"
+        
         if result[:success]
-          puts "✅ Ліцензія успішно активована"
+          puts "✅ ========== ЛІЦЕНЗІЯ УСПІШНО АКТИВОВАНА =========="
           puts "🔐 [DEBUG] Після активації has_license?: #{$license_manager.has_license?}"
           puts "🔐 [DEBUG] Після активації license_info: #{$license_manager.get_license_info_for_heartbeat}"
+          
           # Розблоковуємо плагін після успішної активації
+          puts "🔓 Розблоковуємо плагін..."
           unblock_plugin
+          
           # Примусово відправляємо heartbeat з новими даними ліцензії
           puts "🔄 [DEBUG] Примусово відправляємо heartbeat після активації"
           puts "🔄 [DEBUG] has_license? перед heartbeat: #{$license_manager.has_license?}"
           puts "🔄 [DEBUG] license_info перед heartbeat: #{$license_manager.get_license_info_for_heartbeat}"
-          $progran3_tracker&.send_heartbeat_with_retry
+          
+          if $progran3_tracker
+            puts "🔄 Трекер доступний, відправляємо heartbeat..."
+            $progran3_tracker.send_heartbeat_with_retry
+          else
+            puts "⚠️ Трекер недоступний!"
+          end
+          
           return { success: true, message: "Ліцензія активована" }
         else
-          puts "❌ Помилка активації: #{result[:error]}"
+          puts "❌ ========== ПОМИЛКА АКТИВАЦІЇ =========="
+          puts "❌ Помилка: #{result[:error]}"
           return { success: false, error: result[:error] }
         end
       else
@@ -1031,7 +1049,10 @@ if defined?(Sketchup)
         return { success: false, error: "LicenseManager не ініціалізований" }
       end
     rescue => e
-      puts "❌ Помилка активації ліцензії: #{e.message}"
+      puts "❌ ========== КРИТИЧНА ПОМИЛКА АКТИВАЦІЇ =========="
+      puts "❌ Exception: #{e.class}"
+      puts "❌ Message: #{e.message}"
+      puts "❌ Backtrace: #{e.backtrace.first(5).join("\n")}"
       return { success: false, error: e.message }
     end
   end

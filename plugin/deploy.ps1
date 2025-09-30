@@ -64,6 +64,7 @@ try {
         exit 1
     }
     
+    
     Write-Host "Plugin deployed successfully!" -ForegroundColor Green
     Write-Host "Location: $SKETCHUP_PLUGINS_PATH" -ForegroundColor Cyan
     Write-Host "Restart SketchUp or use ProGran3.reload in Ruby console" -ForegroundColor Yellow

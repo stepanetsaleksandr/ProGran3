@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase клієнт для серверних операцій (з SERVICE_ROLE_KEY)
-const supabaseUrl = process.env.STORAGE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.STORAGE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = process.env.SB_SUPABASE_URL || process.env.STORAGE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SB_SUPABASE_SERVICE_ROLE_KEY || process.env.STORAGE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
@@ -66,7 +66,7 @@ interface UpsertResult {
 }
 
 // Upsert плагіна (оновлення або створення)
-export async function upsertPlugin(data: any, ipAddress: string, isBlocked: boolean = false): Promise<UpsertResult> {
+export async function upsertPlugin(data: any, ipAddress: string, isBlocked: boolean | undefined = false): Promise<UpsertResult> {
   const {
     plugin_id,
     plugin_name,
@@ -85,8 +85,16 @@ export async function upsertPlugin(data: any, ipAddress: string, isBlocked: bool
       .eq('plugin_id', plugin_id)
       .single();
 
-    // Використовуємо тільки переданий параметр isBlocked (не зберігаємо попередній статус)
-    const shouldBeBlocked = isBlocked;
+    // Якщо isBlocked не передано (undefined), зберігаємо поточний статус
+    let shouldBeBlocked;
+    if (isBlocked === undefined) {
+      // Зберігаємо поточний статус блокування
+      shouldBeBlocked = existingPlugin?.is_blocked || false;
+    } else {
+      // Використовуємо переданий параметр isBlocked
+      shouldBeBlocked = isBlocked;
+    }
+    
     const isActive = !shouldBeBlocked; // Активний тільки якщо НЕ заблокований
 
     // Debug логування (тільки в development)
@@ -95,24 +103,32 @@ export async function upsertPlugin(data: any, ipAddress: string, isBlocked: bool
         plugin_id,
         existingPlugin,
         isBlocked,
+        shouldBeBlocked,
         isActive
       });
     }
 
+    // Створюємо об'єкт для upsert без user_id і computer_name до активації ліцензії
+    const upsertData: any = {
+      plugin_id,
+      plugin_name,
+      version,
+      system_info,
+      ip_address: ipAddress,
+      last_heartbeat: timestamp,
+      is_active: isActive,
+      is_blocked: shouldBeBlocked
+    };
+
+    // Додаємо user_id і computer_name тільки якщо є дані ліцензії
+    if (user_id && computer_name) {
+      upsertData.user_id = user_id;
+      upsertData.computer_name = computer_name;
+    }
+
     const { data: result, error } = await supabase
       .from('plugins')
-      .upsert({
-        plugin_id,
-        plugin_name,
-        version,
-        user_id,
-        computer_name,
-        system_info,
-        ip_address: ipAddress,
-        last_heartbeat: timestamp,
-        is_active: isActive, // Активний тільки якщо не заблокований
-        is_blocked: shouldBeBlocked // Зберігаємо статус блокування
-      }, {
+      .upsert(upsertData, {
         onConflict: 'plugin_id',
         ignoreDuplicates: false
       })

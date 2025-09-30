@@ -41,9 +41,10 @@ function activateLicense() {
         showLicenseMessage('✅ Ліцензія успішно зареєстрована!', 'success');
         setTimeout(() => {
           hideLicenseCard();
+          debugLog('🔄 Оновлюємо UI після активації ліцензії...', 'info');
           updateLicenseStatusInUI();
           checkServerBlockingStatus();
-        }, 2000);
+        }, 1000);
       } else {
         const errorMsg = result ? result.error : 'Невідома помилка';
         showLicenseMessage('❌ Помилка активації: ' + errorMsg, 'error');
@@ -132,13 +133,17 @@ function registerLicenseWithEmail(licenseKey) {
 
 // Оновити статус ліцензії в UI
 function updateLicenseStatusInUI() {
+  debugLog('🔄 updateLicenseStatusInUI викликано', 'info');
+  
   if (window.sketchup && window.sketchup.get_license_info) {
     try {
       const result = window.sketchup.get_license_info();
+      debugLog('📋 Результат get_license_info: ' + JSON.stringify(result), 'info');
       
       if (result && result.success) {
         const licenseInfo = result.license_info;
         const email = result.email;
+        debugLog('✅ Оновлюємо UI з email: ' + email, 'info');
         
         // Оновлюємо відображення в UI
         if (email) {

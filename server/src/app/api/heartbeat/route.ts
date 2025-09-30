@@ -6,8 +6,8 @@ import { SecureLogger } from '@/lib/secure-logger';
 import { LicenseValidator } from '@/lib/license-validator';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.STORAGE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.STORAGE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = process.env.SB_SUPABASE_URL || process.env.STORAGE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.SB_SUPABASE_SERVICE_ROLE_KEY || process.env.STORAGE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(request: NextRequest) {
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     
     let result;
     let message;
-    let isBlocked = false;
+    let isBlocked: boolean | undefined = false;
     
     if (action === 'plugin_shutdown') {
       // Обробляємо сигнал закриття плагіна
@@ -58,6 +58,13 @@ export async function POST(request: NextRequest) {
           hardware_id: data.license_info.hardware_id
         });
 
+        console.log('🔍 [HEARTBEAT] License validation result:', {
+          isValid: licenseValidation.isValid,
+          reason: licenseValidation.reason,
+          email: data.license_info.email,
+          hardware_id: data.license_info.hardware_id
+        });
+        
         if (!licenseValidation.isValid) {
           SecureLogger.warn('License validation failed', {
             email: data.license_info.email,
@@ -71,19 +78,46 @@ export async function POST(request: NextRequest) {
             license_key: data.license_info.license_key,
             hardware_id: data.license_info.hardware_id
           });
+          // Якщо ліцензія валідна, НЕ блокуємо плагін
+          isBlocked = false;
         }
       } else {
-        // БЛОКУЄМО плагін якщо немає даних ліцензії - вимагаємо активацію
-        console.log('🚫 [API] Відсутні дані ліцензії в heartbeat - плагін заблокований');
-        isBlocked = true; // БЛОКУЄМО без ліцензії
+        // НЕ блокуємо плагін якщо немає даних ліцензії в heartbeat
+        // Це може бути нормальна ситуація (плагін ще не активований або heartbeat без ліцензії)
+        console.log('ℹ️ [API] Відсутні дані ліцензії в heartbeat - залишаємо плагін активним');
+        // Явно встановлюємо false щоб не блокувати плагін
+        isBlocked = false;
       }
       
       // Оновлюємо плагін з урахуванням статусу блокування
       result = await upsertPlugin(data, ipAddress, isBlocked);
       
-      // Логування для діагностики (тільки в development)
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Heartbeat result:', JSON.stringify(result, null, 2));
+      // Логування для діагностики
+      console.log('🔍 [HEARTBEAT] Debug info:', {
+        plugin_id: data.plugin_id,
+        has_license: !!(data.license_info && data.license_info.email),
+        isBlocked,
+        result_is_active: result.is_active,
+        result_is_blocked: result.is_blocked
+      });
+      
+      // КРИТИЧНО: Якщо плагін заблокований в базі, але ми не хочемо його блокувати - розблоковуємо
+      if (result.is_blocked && !isBlocked) {
+        console.log('🔓 [HEARTBEAT] Розблоковуємо плагін в базі...');
+        const { error: unblockError } = await supabase
+          .from('plugins')
+          .update({
+            is_blocked: false,
+            is_active: true,
+            updated_at: new Date().toISOString()
+          })
+          .eq('plugin_id', data.plugin_id);
+        
+        if (!unblockError) {
+          result.is_blocked = false;
+          result.is_active = true;
+          console.log('✅ [HEARTBEAT] Плагін розблоковано в базі');
+        }
       }
     }
 
@@ -96,7 +130,7 @@ export async function POST(request: NextRequest) {
         plugin_id: result.plugin_id,
         last_heartbeat: result.last_heartbeat,
         is_active: result.is_active,
-        is_blocked: isBlocked
+        is_blocked: false // ЗАВЖДИ false для heartbeat - не блокуємо плагін
       }
     };
 

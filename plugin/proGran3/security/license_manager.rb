@@ -14,7 +14,7 @@ module ProGran3
         @hardware_id = get_hardware_id
         @offline_count = 0
         @max_offline_hours = 24
-        @base_url = ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-6ictznqok-provis3ds-projects.vercel.app'
+        @base_url = ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-75vprdnav-provis3ds-projects.vercel.app'
         
         # Завантажуємо збережену ліцензію при ініціалізації
         load_saved_license
@@ -23,7 +23,9 @@ module ProGran3
       
       # Перевірка чи є ліцензія
       def has_license?
-        !@email.nil? && !@license_key.nil?
+        result = !@email.nil? && !@license_key.nil?
+        puts "🔐 [LicenseManager] has_license? = #{result} (email: #{@email ? 'є' : 'немає'}, license_key: #{@license_key ? 'є' : 'немає'})"
+        result
       end
       
       # Перевірка чи заблокований плагін
@@ -34,32 +36,52 @@ module ProGran3
       # Реєстрація ліцензії на сервері
       def register_license(email, license_key)
         begin
-          puts "🔐 [LicenseManager] Реєстрація ліцензії: #{email} + #{license_key[0..8]}..."
+          puts "🔐 [LicenseManager] ========== ПОЧАТОК РЕЄСТРАЦІЇ ЛІЦЕНЗІЇ =========="
+          puts "🔐 [LicenseManager] Email: #{email}"
+          puts "🔐 [LicenseManager] License Key: #{license_key[0..8]}..."
+          puts "🔐 [LicenseManager] Hardware ID: #{@hardware_id}"
+          puts "🔐 [LicenseManager] Base URL: #{@base_url}"
           
           uri = URI("#{@base_url}/api/license/register-simple")
+          puts "🔐 [LicenseManager] URI: #{uri}"
+          
           http = Net::HTTP.new(uri.host, uri.port)
           http.use_ssl = true
           http.read_timeout = 10
           http.open_timeout = 10
           
-          request = Net::HTTP::Post.new(uri)
-          request['Content-Type'] = 'application/json'
-          request.body = {
+          request_data = {
             email: email,
             license_key: license_key,
             hardware_id: @hardware_id
-          }.to_json
+          }
           
+          puts "🔐 [LicenseManager] Request data: #{request_data.to_json}"
+          
+          request = Net::HTTP::Post.new(uri)
+          request['Content-Type'] = 'application/json'
+          request.body = request_data.to_json
+          
+          puts "🔐 [LicenseManager] Відправляємо HTTP запит..."
           response = http.request(request)
+          puts "🔐 [LicenseManager] HTTP відповідь отримана: #{response.code} #{response.message}"
+          
+          puts "🔐 [LicenseManager] Response body: #{response.body}"
           
           if response.code == '200'
+            puts "🔐 [LicenseManager] HTTP 200 - парсимо відповідь..."
             result = JSON.parse(response.body)
+            puts "🔐 [LicenseManager] Parsed result: #{result}"
+            
             if result['success']
+              puts "🔐 [LicenseManager] ✅ Успішна відповідь від сервера!"
               # Зберігаємо ліцензію локально
-              expires_at = result['user_license'] && result['user_license']['expires_at'] ? result['user_license']['expires_at'] : nil
+              expires_at = result['data'] && result['data']['expires_at'] ? result['data']['expires_at'] : nil
+              puts "🔐 [LicenseManager] Expires at: #{expires_at}"
+              
               save_license_locally(email, license_key, expires_at)
               
-              puts "✅ [LicenseManager] Ліцензія успішно зареєстрована та збережена"
+              puts "✅ [LicenseManager] ========== ЛІЦЕНЗІЯ УСПІШНО ЗАРЕЄСТРОВАНА =========="
               puts "🔐 [DEBUG] LicenseManager після активації: email=#{@email}, license_key=#{@license_key[0..8]}..."
               puts "🔐 [DEBUG] has_license? після активації: #{has_license?}"
               return {
@@ -68,21 +90,28 @@ module ProGran3
                 user_license: result['user_license']
               }
             else
-              puts "❌ [LicenseManager] Помилка реєстрації: #{result['error']}"
+              puts "❌ [LicenseManager] ========== ПОМИЛКА РЕЄСТРАЦІЇ =========="
+              puts "❌ [LicenseManager] Помилка: #{result['error']}"
               return {
                 success: false,
                 error: result['error']
               }
             end
           else
-            puts "❌ [LicenseManager] HTTP помилка: #{response.code}"
+            puts "❌ [LicenseManager] ========== HTTP ПОМИЛКА =========="
+            puts "❌ [LicenseManager] HTTP код: #{response.code}"
+            puts "❌ [LicenseManager] HTTP повідомлення: #{response.message}"
+            puts "❌ [LicenseManager] Response body: #{response.body}"
             return {
               success: false,
-              error: "HTTP помилка: #{response.code}"
+              error: "HTTP помилка: #{response.code} - #{response.message}"
             }
           end
         rescue => e
-          puts "❌ [LicenseManager] Помилка реєстрації: #{e.message}"
+          puts "❌ [LicenseManager] ========== КРИТИЧНА ПОМИЛКА =========="
+          puts "❌ [LicenseManager] Exception: #{e.class}"
+          puts "❌ [LicenseManager] Message: #{e.message}"
+          puts "❌ [LicenseManager] Backtrace: #{e.backtrace.first(5).join("\n")}"
           return {
             success: false,
             error: e.message
@@ -121,32 +150,54 @@ module ProGran3
       # Збереження ліцензії локально
       def save_license_locally(email, license_key, expires_at = nil)
         begin
+          puts "🔐 [LicenseManager] ========== ЗБЕРЕЖЕННЯ ЛІЦЕНЗІЇ ЛОКАЛЬНО =========="
+          puts "🔐 [LicenseManager] Email: #{email}"
+          puts "🔐 [LicenseManager] License Key: #{license_key[0..8]}..."
+          puts "🔐 [LicenseManager] Expires At: #{expires_at}"
+          
           @email = email
           @license_key = license_key
           @expires_at = expires_at
           
+          puts "🔐 [LicenseManager] Змінні встановлено:"
+          puts "🔐 [LicenseManager] @email: #{@email}"
+          puts "🔐 [LicenseManager] @license_key: #{@license_key[0..8]}..."
+          puts "🔐 [LicenseManager] @expires_at: #{@expires_at}"
+          
           # Зберігаємо в Windows Registry
           save_to_registry(email, license_key, expires_at)
-          puts "✅ [LicenseManager] Ліцензія збережена локально"
+          puts "✅ [LicenseManager] ========== ЛІЦЕНЗІЯ ЗБЕРЕЖЕНА ЛОКАЛЬНО =========="
         rescue => e
-          puts "❌ [LicenseManager] Помилка збереження: #{e.message}"
+          puts "❌ [LicenseManager] ========== ПОМИЛКА ЗБЕРЕЖЕННЯ =========="
+          puts "❌ [LicenseManager] Exception: #{e.class}"
+          puts "❌ [LicenseManager] Message: #{e.message}"
+          puts "❌ [LicenseManager] Backtrace: #{e.backtrace.first(3).join("\n")}"
         end
       end
       
       # Завантаження збереженої ліцензії
       def load_saved_license
         begin
+          puts "🔐 [LicenseManager] ========== ЗАВАНТАЖЕННЯ ЗБЕРЕЖЕНОЇ ЛІЦЕНЗІЇ =========="
           data = load_from_registry
+          puts "🔐 [LicenseManager] Дані з реєстру: #{data}"
+          
           if data && data[:email] && data[:license_key]
             @email = data[:email]
             @license_key = data[:license_key]
             @expires_at = data[:expires_at]
-            puts "✅ [LicenseManager] Збережена ліцензія завантажена: #{@email}"
+            puts "✅ [LicenseManager] ========== ЗБЕРЕЖЕНА ЛІЦЕНЗІЯ ЗАВАНТАЖЕНА =========="
+            puts "🔐 [LicenseManager] Email: #{@email}"
+            puts "🔐 [LicenseManager] License Key: #{@license_key[0..8]}..."
+            puts "🔐 [LicenseManager] Expires At: #{@expires_at}"
           else
             puts "ℹ️ [LicenseManager] Збережена ліцензія не знайдена"
           end
         rescue => e
-          puts "❌ [LicenseManager] Помилка завантаження: #{e.message}"
+          puts "❌ [LicenseManager] ========== ПОМИЛКА ЗАВАНТАЖЕННЯ =========="
+          puts "❌ [LicenseManager] Exception: #{e.class}"
+          puts "❌ [LicenseManager] Message: #{e.message}"
+          puts "❌ [LicenseManager] Backtrace: #{e.backtrace.first(3).join("\n")}"
         end
       end
       
@@ -322,6 +373,7 @@ module ProGran3
           # Використовуємо hostname + username для стабільності
           hostname = Socket.gethostname.downcase.gsub(/[^a-z0-9]/, '-')
           username = ENV['USERNAME'] || ENV['USER'] || 'sketchup-user'
+          # Hardware ID має бути унікальним для кожного комп'ютера+користувача
           "#{hostname}-#{username}".downcase
         rescue => e
           puts "⚠️ [LicenseManager] Помилка генерації hardware_id: #{e.message}"

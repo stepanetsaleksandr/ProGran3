@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 // Перевірка змінних середовища
-const supabaseUrl = process.env.STORAGE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-const supabaseKey = process.env.STORAGE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.SB_SUPABASE_URL || process.env.STORAGE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseKey = process.env.SB_SUPABASE_SERVICE_ROLE_KEY || process.env.STORAGE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
 export async function POST(request: NextRequest) {
   try {
@@ -111,10 +111,18 @@ export async function POST(request: NextRequest) {
 
     if (createError) {
       console.error('Error creating user license:', createError);
+      console.error('Error details:', {
+        message: createError.message,
+        code: createError.code,
+        hint: createError.hint,
+        details: createError.details
+      });
       return NextResponse.json({
         success: false,
         error: 'Failed to activate license',
-        details: createError.message
+        details: createError.message,
+        code: createError.code,
+        hint: createError.hint
       }, { status: 500 });
     }
 
@@ -135,6 +143,10 @@ export async function POST(request: NextRequest) {
       console.log('Activation count updated:', license.activation_count + 1);
     }
 
+    // Розраховуємо expires_at на основі days_valid
+    const activatedAt = new Date(userLicense.activated_at);
+    const expiresAt = new Date(activatedAt.getTime() + (license.days_valid * 24 * 60 * 60 * 1000));
+
     return NextResponse.json({
       success: true,
       message: 'License activated successfully',
@@ -142,7 +154,8 @@ export async function POST(request: NextRequest) {
         email: email,
         license_key: license_key,
         hardware_id: hardware_id,
-        activated_at: userLicense.activated_at
+        activated_at: userLicense.activated_at,
+        expires_at: expiresAt.toISOString()
       }
     });
 

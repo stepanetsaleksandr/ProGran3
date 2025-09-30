@@ -99,6 +99,15 @@ export function middleware(request: NextRequest) {
   response.headers.set('X-RateLimit-Remaining', rateLimitResult.remaining.toString());
   response.headers.set('X-RateLimit-Reset', rateLimitResult.resetTime.toString());
   
+  // Додаємо заголовки no-cache для всіх API endpoints
+  if (pathname.startsWith('/api/')) {
+    response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate, private');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+    response.headers.set('Last-Modified', new Date().toUTCString());
+    response.headers.set('ETag', `"${Date.now()}"`);
+  }
+  
   // Логування для діагностики (тільки для license endpoints)
   if (pathname.startsWith('/api/license/register')) {
     console.log(`✅ [RATE_LIMIT] IP: ${ip}, Path: ${pathname}, Remaining: ${rateLimitResult.remaining}/${maxRequests}`);
