@@ -21,12 +21,20 @@ export default function ComprehensiveDashboard() {
       setError('');
       setLoading(true);
       
+      // Очищаємо всі стани перед оновленням
+      setPlugins([]);
+      setLicenses([]);
+      setUserLicenses([]);
+      
       // Використовуємо debug endpoint для отримання всієї інформації
       const allInfoResponse = await fetch('/api/debug/all-info', {
         cache: 'no-store',
         headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
+          'Cache-Control': 'no-cache, no-store, must-revalidate, private',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'If-Modified-Since': '0',
+          'If-None-Match': '*'
         }
       });
       if (allInfoResponse.ok) {
@@ -44,7 +52,14 @@ export default function ComprehensiveDashboard() {
         }
       } else {
         // Fallback до старих endpoints
-        const pluginsResponse = await fetch('/api/plugins');
+        const pluginsResponse = await fetch('/api/plugins', {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate, private',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
         if (pluginsResponse.ok) {
           const pluginsData = await pluginsResponse.json();
           if (pluginsData.success) {
@@ -52,7 +67,14 @@ export default function ComprehensiveDashboard() {
           }
         }
         
-        const licensesResponse = await fetch('/api/admin/licenses-simple');
+        const licensesResponse = await fetch('/api/admin/licenses-simple', {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate, private',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
         if (licensesResponse.ok) {
           const licensesData = await licensesResponse.json();
           if (licensesData.success) {
@@ -60,7 +82,14 @@ export default function ComprehensiveDashboard() {
           }
         }
         
-        const userLicensesResponse = await fetch('/api/debug/check-user-licenses');
+        const userLicensesResponse = await fetch('/api/debug/check-user-licenses', {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate, private',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
         if (userLicensesResponse.ok) {
           const userLicensesData = await userLicensesResponse.json();
           if (userLicensesData.success) {
@@ -289,7 +318,7 @@ export default function ComprehensiveDashboard() {
                 fontSize: '14px'
               }}
             >
-              Оновити дані
+              🔄 Оновити дані (очистити кеші)
             </button>
             {activeTab === 'licenses' && (
               <button 
