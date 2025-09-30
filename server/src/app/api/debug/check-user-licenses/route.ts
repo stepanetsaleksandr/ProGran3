@@ -1,49 +1,43 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-// Перевірка змінних середовища
-const supabaseUrl = process.env.SB_SUPABASE_URL || process.env.SB_SUPABASE_URL || process.env.SB_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-const supabaseKey = process.env.SB_SUPABASE_SERVICE_ROLE_KEY || process.env.SB_SUPABASE_SERVICE_ROLE_KEY || process.env.SB_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+import { UserLicenseRepository } from '@/lib/database/repositories/user-license.repository';
+import { createSuccessResponse, getNoCacheHeaders } from '@/lib/utils/response.util';
+import { Logger } from '@/lib/utils/logger.util';
 
 export async function GET() {
   try {
-    if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json({
-        success: false,
-        error: 'Missing Supabase environment variables'
-      }, { status: 500 });
-    }
+    Logger.info('Fetching all user licenses');
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Створюємо репозиторій
+    const userLicenseRepo = new UserLicenseRepository();
 
-    // Перевірка чи існує таблиця user_licenses
-    const { data: userLicenses, error } = await supabase
-      .from('user_licenses')
-      .select('*')
-      .limit(5);
+    // Отримуємо всі user licenses
+    const userLicenses = await userLicenseRepo.findAll();
 
-    if (error) {
-      return NextResponse.json({
-        success: false,
-        error: 'Failed to access user_licenses table',
-        message: error.message,
-        code: error.code,
-        details: error.details
-      }, { status: 500 });
-    }
+    Logger.info('User licenses fetched successfully', { count: userLicenses.length });
 
-    return NextResponse.json({
-      success: true,
-      message: 'User licenses table accessible',
-      count: userLicenses?.length || 0,
-      userLicenses: userLicenses || []
-    });
+    return NextResponse.json(
+      createSuccessResponse({
+        userLicenses
+      }, 'User licenses fetched successfully'),
+      { 
+        status: 200,
+        headers: getNoCacheHeaders()
+      }
+    );
 
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      error: 'Failed to check user licenses',
-      message: (error as Error).message
-    }, { status: 500 });
+    Logger.error('Error fetching user licenses', error as Error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to fetch user licenses',
+        message: (error as Error).message,
+        timestamp: new Date().toISOString()
+      },
+      { 
+        status: 500,
+        headers: getNoCacheHeaders()
+      }
+    );
   }
 }

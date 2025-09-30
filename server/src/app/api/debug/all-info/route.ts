@@ -1,73 +1,64 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { createNoCacheResponse } from '@/lib/cache-control';
-
-// Перевірка змінних середовища
-const supabaseUrl = process.env.SB_SUPABASE_URL || process.env.STORAGE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-const supabaseKey = process.env.SB_SUPABASE_SERVICE_ROLE_KEY || process.env.STORAGE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+import { LicenseRepository } from '@/lib/database/repositories/license.repository';
+import { UserLicenseRepository } from '@/lib/database/repositories/user-license.repository';
+import { PluginRepository } from '@/lib/database/repositories/plugin.repository';
+import { createSuccessResponse, getNoCacheHeaders } from '@/lib/utils/response.util';
+import { Logger } from '@/lib/utils/logger.util';
 
 export async function GET() {
   try {
-    if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json({
-        success: false,
-        error: 'Missing Supabase environment variables'
-      }, { status: 500 });
-    }
+    Logger.info('Fetching all dashboard data');
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Створюємо репозиторії
+    const licenseRepo = new LicenseRepository();
+    const userLicenseRepo = new UserLicenseRepository();
+    const pluginRepo = new PluginRepository();
 
-    // Отримати всі плагіни
-    const { data: plugins, error: pluginsError } = await supabase
-      .from('plugins')
-      .select('*')
-      .order('created_at', { ascending: false });
+    // Отримуємо всі дані
+    const [plugins, licenses, userLicenses] = await Promise.all([
+      pluginRepo.findAll(),
+      licenseRepo.findAll(),
+      userLicenseRepo.findAll()
+    ]);
 
-    // Отримати всі ліцензії
-    const { data: licenses, error: licensesError } = await supabase
-      .from('licenses')
-      .select('*')
-      .order('created_at', { ascending: false });
+    // Формуємо summary
+    const summary = {
+      total_plugins: plugins.length,
+      total_licenses: licenses.length,
+      total_activations: userLicenses.length,
+      active_plugins: plugins.filter(p => p.is_active).length,
+      blocked_plugins: plugins.filter(p => p.is_blocked).length,
+      active_licenses: licenses.filter(l => l.is_active).length
+    };
 
-    // Отримати всі активації ліцензій
-    const { data: userLicenses, error: userLicensesError } = await supabase
-      .from('user_licenses')
-      .select('*')
-      .order('activated_at', { ascending: false });
+    Logger.info('Dashboard data fetched successfully', { summary });
 
-    if (pluginsError || licensesError || userLicensesError) {
-      return NextResponse.json({
-        success: false,
-        error: 'Failed to fetch data',
-        pluginsError: pluginsError?.message,
-        licensesError: licensesError?.message,
-        userLicensesError: userLicensesError?.message
-      }, { status: 500 });
-    }
-
-    return createNoCacheResponse({
-      success: true,
-      message: 'All data fetched successfully',
-      data: {
-        plugins: plugins || [],
-        licenses: licenses || [],
-        user_licenses: userLicenses || [],
-        summary: {
-          total_plugins: plugins?.length || 0,
-          total_licenses: licenses?.length || 0,
-          total_activations: userLicenses?.length || 0,
-          active_plugins: plugins?.filter(p => p.is_active).length || 0,
-          blocked_plugins: plugins?.filter(p => p.is_blocked).length || 0,
-          active_licenses: licenses?.filter(l => l.is_active).length || 0
-        }
+    return NextResponse.json(
+      createSuccessResponse({
+        plugins,
+        licenses,
+        user_licenses: userLicenses,
+        summary
+      }, 'All data fetched successfully'),
+      { 
+        status: 200,
+        headers: getNoCacheHeaders()
       }
-    });
+    );
 
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      error: 'Failed to fetch all data',
-      message: (error as Error).message
-    }, { status: 500 });
+    Logger.error('Error fetching dashboard data', error as Error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to fetch dashboard data',
+        message: (error as Error).message,
+        timestamp: new Date().toISOString()
+      },
+      { 
+        status: 500,
+        headers: getNoCacheHeaders()
+      }
+    );
   }
 }

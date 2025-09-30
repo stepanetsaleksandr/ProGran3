@@ -1,75 +1,98 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllPlugins, getPluginStats, deletePlugin } from '@/lib/database';
-import { PluginsResponse, ErrorResponse, PluginRecord } from '@/lib/types';
+import { PluginRepository } from '@/lib/database/repositories/plugin.repository';
+import { handleApiError, createSuccessResponse, getNoCacheHeaders } from '@/lib/utils/response.util';
+import { Logger } from '@/lib/utils/logger.util';
 
 export async function GET(request: NextRequest) {
   try {
-    // Отримуємо всі плагіни та статистику
-    const [plugins, stats] = await Promise.all([
-      getAllPlugins(),
-      getPluginStats()
-    ]);
+    Logger.info('Fetching all plugins');
 
-    // Формуємо відповідь
-    const response: PluginsResponse = {
-      success: true,
-      data: {
-        plugins: plugins as PluginRecord[],
-        stats,
-        last_updated: new Date().toISOString()
-      }
+    // Створюємо репозиторій
+    const pluginRepo = new PluginRepository();
+
+    // Отримуємо всі плагіни
+    const plugins = await pluginRepo.findAll();
+
+    // Формуємо статистику
+    const stats = {
+      total: plugins.length,
+      active: plugins.filter(p => p.is_active).length,
+      blocked: plugins.filter(p => p.is_blocked).length,
+      last_updated: new Date().toISOString()
     };
 
-    // Додаємо заголовки для уникнення кешування
-    const nextResponse = NextResponse.json(response);
-    nextResponse.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    nextResponse.headers.set('Pragma', 'no-cache');
-    nextResponse.headers.set('Expires', '0');
+    Logger.info('Plugins fetched successfully', { count: plugins.length });
 
-    return nextResponse;
+    return NextResponse.json(
+      createSuccessResponse({
+        plugins,
+        stats
+      }, 'Plugins fetched successfully'),
+      { 
+        status: 200,
+        headers: getNoCacheHeaders()
+      }
+    );
 
   } catch (error) {
-    const errorResponse: ErrorResponse = {
-      success: false,
-      error: 'Internal server error',
-      code: 'INTERNAL_ERROR'
-    };
-    
-    return NextResponse.json(errorResponse, { status: 500 });
+    Logger.error('Error fetching plugins', error as Error);
+    return handleApiError(error);
   }
 }
 
-// Видалення плагіна
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const pluginId = searchParams.get('plugin_id');
-    
+
     if (!pluginId) {
-      const errorResponse: ErrorResponse = {
-        success: false,
-        error: 'Plugin ID is required',
-        code: 'MISSING_PLUGIN_ID'
-      };
-      return NextResponse.json(errorResponse, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'MISSING_PLUGIN_ID',
+          message: 'Plugin ID is required'
+        },
+        { 
+          status: 400,
+          headers: getNoCacheHeaders()
+        }
+      );
     }
 
-    const result = await deletePlugin(pluginId);
-    
-    return NextResponse.json({
-      success: true,
-      message: 'Plugin deleted successfully',
-      data: result
-    });
+    Logger.info('Deleting plugin', { plugin_id: pluginId });
+
+    // Створюємо репозиторій
+    const pluginRepo = new PluginRepository();
+
+    // Видаляємо плагін
+    const success = await pluginRepo.deleteByPluginId(pluginId);
+
+    if (success) {
+      Logger.info('Plugin deleted successfully', { plugin_id: pluginId });
+      return NextResponse.json(
+        createSuccessResponse({ plugin_id: pluginId }, 'Plugin deleted successfully'),
+        { 
+          status: 200,
+          headers: getNoCacheHeaders()
+        }
+      );
+    } else {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'DELETE_FAILED',
+          message: 'Failed to delete plugin'
+        },
+        { 
+          status: 500,
+          headers: getNoCacheHeaders()
+        }
+      );
+    }
 
   } catch (error) {
-    const errorResponse: ErrorResponse = {
-      success: false,
-      error: 'Failed to delete plugin',
-      code: 'DELETE_ERROR'
-    };
-    
-    return NextResponse.json(errorResponse, { status: 500 });
+    Logger.error('Error deleting plugin', error as Error);
+    return handleApiError(error);
   }
 }
 

@@ -50,7 +50,7 @@ class ProGran3Tracker
   def initialize(base_url = nil)
         # ⚠️ ВАЖЛИВО: Після кожного деплою сервера оновити URL нижче!
         # Команда для перевірки: vercel ls
-               @base_url = base_url || ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-75vprdnav-provis3ds-projects.vercel.app'
+               @base_url = base_url || ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-1rp48ns42-provis3ds-projects.vercel.app'
     @plugin_id = generate_unique_plugin_id
     @is_running = false
     @heartbeat_thread = nil

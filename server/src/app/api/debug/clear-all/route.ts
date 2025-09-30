@@ -1,81 +1,91 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { createNoCacheResponse } from '@/lib/cache-control';
-
-// Перевірка змінних середовища
-const supabaseUrl = process.env.SB_SUPABASE_URL || process.env.STORAGE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-const supabaseKey = process.env.SB_SUPABASE_SERVICE_ROLE_KEY || process.env.STORAGE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+import { LicenseRepository } from '@/lib/database/repositories/license.repository';
+import { UserLicenseRepository } from '@/lib/database/repositories/user-license.repository';
+import { PluginRepository } from '@/lib/database/repositories/plugin.repository';
+import { createSuccessResponse, getNoCacheHeaders } from '@/lib/utils/response.util';
+import { Logger } from '@/lib/utils/logger.util';
 
 export async function POST() {
   try {
-    if (!supabaseUrl || !supabaseKey) {
-      return createNoCacheResponse({
-        success: false,
-        error: 'Missing Supabase environment variables'
-      }, 500);
-    }
+    Logger.info('Starting database cleanup');
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    console.log('🧹 [API] Початок очищення бази даних...');
-
-    // Очищення всіх таблиць в правильному порядку (з урахуванням Foreign Keys)
-    const tables = [
-      'plugins',
-      'user_licenses', 
-      'licenses'
-    ];
+    // Створюємо репозиторії
+    const licenseRepo = new LicenseRepository();
+    const userLicenseRepo = new UserLicenseRepository();
+    const pluginRepo = new PluginRepository();
 
     const results = [];
 
-    for (const table of tables) {
-      try {
-        console.log(`🗑️ [API] Очищення таблиці: ${table}`);
-        const { error } = await supabase
-          .from(table)
-          .delete()
-          .neq('id', 0); // Видаляємо всі записи
-
-        if (error) {
-          console.error(`❌ [API] Помилка очищення ${table}:`, error);
-          results.push({ table, success: false, error: error.message });
-        } else {
-          console.log(`✅ [API] Таблиця ${table} очищена`);
-          results.push({ table, success: true });
-        }
-      } catch (err) {
-        console.error(`❌ [API] Помилка очищення ${table}:`, err);
-        results.push({ table, success: false, error: (err as Error).message });
+    // Очищаємо всі таблиці в правильному порядку
+    try {
+      Logger.info('Clearing user_licenses table');
+      const userLicenses = await userLicenseRepo.findAll();
+      for (const userLicense of userLicenses) {
+        await userLicenseRepo.delete(userLicense.id);
       }
+      results.push({ table: 'user_licenses', success: true, deleted: userLicenses.length });
+    } catch (error) {
+      Logger.error('Error clearing user_licenses', error as Error);
+      results.push({ table: 'user_licenses', success: false, error: (error as Error).message });
     }
 
-    // Перевірка результатів
-    const { data: plugins } = await supabase.from('plugins').select('count').limit(1);
-    const { data: licenses } = await supabase.from('licenses').select('count').limit(1);
-    const { data: userLicenses } = await supabase.from('user_licenses').select('count').limit(1);
+    try {
+      Logger.info('Clearing plugins table');
+      const plugins = await pluginRepo.findAll();
+      for (const plugin of plugins) {
+        await pluginRepo.delete(plugin.id);
+      }
+      results.push({ table: 'plugins', success: true, deleted: plugins.length });
+    } catch (error) {
+      Logger.error('Error clearing plugins', error as Error);
+      results.push({ table: 'plugins', success: false, error: (error as Error).message });
+    }
 
+    try {
+      Logger.info('Clearing licenses table');
+      const licenses = await licenseRepo.findAll();
+      for (const license of licenses) {
+        await licenseRepo.delete(license.id);
+      }
+      results.push({ table: 'licenses', success: true, deleted: licenses.length });
+    } catch (error) {
+      Logger.error('Error clearing licenses', error as Error);
+      results.push({ table: 'licenses', success: false, error: (error as Error).message });
+    }
+
+    // Перевіряємо фінальні результати
     const finalCounts = {
-      plugins: plugins?.length || 0,
-      licenses: licenses?.length || 0,
-      user_licenses: userLicenses?.length || 0
+      plugins: (await pluginRepo.findAll()).length,
+      licenses: (await licenseRepo.findAll()).length,
+      user_licenses: (await userLicenseRepo.findAll()).length
     };
 
-    console.log('📊 [API] Фінальні результати:', finalCounts);
+    Logger.info('Database cleanup completed', { results, finalCounts });
 
-    return createNoCacheResponse({
-      success: true,
-      message: 'Database cleared successfully',
-      results,
-      final_counts: finalCounts
-    });
+    return NextResponse.json(
+      createSuccessResponse({
+        results,
+        final_counts: finalCounts
+      }, 'Database cleared successfully'),
+      { 
+        status: 200,
+        headers: getNoCacheHeaders()
+      }
+    );
 
   } catch (error) {
-    console.error('❌ [API] Помилка очищення бази:', error);
-    return createNoCacheResponse({
-      success: false,
-      error: 'Failed to clear database',
-      message: (error as Error).message
-    }, 500);
+    Logger.error('Error clearing database', error as Error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to clear database',
+        message: (error as Error).message,
+        timestamp: new Date().toISOString()
+      },
+      { 
+        status: 500,
+        headers: getNoCacheHeaders()
+      }
+    );
   }
 }
-

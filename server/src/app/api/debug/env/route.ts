@@ -5,8 +5,8 @@ export async function GET() {
     const envCheck = {
       SUPABASE_URL: !!process.env.SUPABASE_URL,
       SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY,
-      STORAGE_SUPABASE_URL: !!process.env.SB_SUPABASE_URL || process.env.SB_SUPABASE_URL || process.env.SB_SUPABASE_URL,
-      STORAGE_SUPABASE_SERVICE_ROLE_KEY: !!process.env.SB_SUPABASE_SERVICE_ROLE_KEY || process.env.SB_SUPABASE_SERVICE_ROLE_KEY || process.env.SB_SUPABASE_SERVICE_ROLE_KEY,
+      SB_SUPABASE_URL: !!process.env.SB_SUPABASE_URL,
+      SB_SUPABASE_SERVICE_ROLE_KEY: !!process.env.SB_SUPABASE_SERVICE_ROLE_KEY,
       NEXT_PUBLIC_SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
       SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
     };

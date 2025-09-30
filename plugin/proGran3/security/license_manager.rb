@@ -14,7 +14,7 @@ module ProGran3
         @hardware_id = get_hardware_id
         @offline_count = 0
         @max_offline_hours = 24
-        @base_url = ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-75vprdnav-provis3ds-projects.vercel.app'
+        @base_url = ENV['PROGRAN3_TRACKING_URL'] || 'https://progran3-tracking-server-1rp48ns42-provis3ds-projects.vercel.app'
         
         # Завантажуємо збережену ліцензію при ініціалізації
         load_saved_license
