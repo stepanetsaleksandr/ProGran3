@@ -9,15 +9,23 @@ export async function POST(request: NextRequest) {
                      '127.0.0.1';
 
     // Парсимо дані з запиту
-    const data = await request.json();
+    let data;
+    try {
+      data = await request.json();
+    } catch (error) {
+      console.error('Error parsing JSON:', error);
+      return NextResponse.json(
+        { success: false, error: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
     
     console.log('Processing heartbeat:', { plugin_id: data.plugin_id, ipAddress });
 
     // Створюємо Supabase клієнт
-    const supabase = createClient(
-      process.env.SB_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SB_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabaseUrl = process.env.SB_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://default.supabase.co';
+    const supabaseKey = process.env.SB_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || 'default-key';
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Обробляємо heartbeat
     let isBlocked = false;
