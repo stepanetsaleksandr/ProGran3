@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Tabs from './Tabs';
 import LicenseManager from './LicenseManager';
 import SystemMonitor from './SystemMonitor';
 
@@ -103,10 +104,21 @@ export default function Dashboard() {
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <LicenseManager />
-          <SystemMonitor />
-        </div>
+        <Tabs 
+          tabs={[
+            {
+              id: 'licenses',
+              label: 'Управління ліцензіями',
+              content: <LicenseManager />
+            },
+            {
+              id: 'monitoring',
+              label: 'Моніторинг систем',
+              content: <SystemMonitor />
+            }
+          ]} 
+          defaultTab="licenses" 
+        />
       </div>
     </div>
   );

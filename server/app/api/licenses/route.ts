@@ -27,14 +27,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { user_id, license_key, license_type, expires_at } = body;
+    const { user_id, license_key, duration_days, expires_at } = body;
 
     const { data: license, error } = await supabase
       .from('licenses')
       .insert({
         user_id,
         license_key,
-        license_type,
+        duration_days: duration_days || 30,
         expires_at: expires_at ? new Date(expires_at) : null
       })
       .select()
