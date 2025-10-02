@@ -34,40 +34,7 @@
       </div>
     </header>
 
-    <!-- Карточка блокування (показується коли плагін заблокований) -->
-    <div id="blocking-card" class="blocking-card" style="display: none;">
-      <div class="blocking-content">
-        <div class="blocking-icon">⚠️</div>
-        <h2 class="blocking-title">Потрібна активація ліцензії</h2>
-        <p class="blocking-message">Для продовження роботи з плагіном необхідно активувати ліцензію</p>
-        
-        <!-- Форма активації ліцензії -->
-        <div class="license-activation-form">
-          <div class="form-group">
-            <label for="email-input">Email:</label>
-            <input type="email" id="email-input" placeholder="Введіть ваш email" />
-          </div>
-          <div class="form-group">
-            <label for="license-key-input">Ключ ліцензії:</label>
-            <input type="text" id="license-key-input" placeholder="Введіть ключ ліцензії" />
-          </div>
-          <div class="form-actions">
-            <button id="activate-license-btn" onclick="activateLicense()" class="blocking-btn primary">Активувати ліцензію</button>
-            <button id="retry-connection-btn" onclick="checkServerBlockingStatus()" class="blocking-btn secondary">Перевірити підключення</button>
-          </div>
-        </div>
-        
-        <!-- Статус ліцензії -->
-        <div id="license-status" class="license-status">
-          <!-- Буде заповнено через JavaScript -->
-        </div>
-        
-        <!-- Повідомлення про ліцензію -->
-        <div id="license-message" class="license-message" style="display: none;">
-          <!-- Буде заповнено через JavaScript -->
-        </div>
-      </div>
-    </div>
+    <!-- Карточка блокування видалена - плагін працює без ліцензування -->
 
     <!-- Навігація табів -->
     <div class="tabs-navigation">

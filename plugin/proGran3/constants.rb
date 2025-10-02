@@ -53,10 +53,7 @@ module ProGran3
     LOG_LEVELS = [:debug, :info, :warn, :error, :fatal]
     DEFAULT_LOG_LEVEL = :info
     
-    # Налаштування сервера відстеження
-    DEFAULT_TRACKING_SERVER_URL = 'https://progran3-tracking-server-fxyguy2kt-provis3ds-projects.vercel.app'
-    TRACKING_SERVER_URL_ENV_VAR = 'PROGRAN3_TRACKING_URL'
-    FALLBACK_SERVER_URL = 'https://httpbin.org/post' # Для тестування
+    # Налаштування сервера відстеження видалено
     
     # Обмеження для валідації
     MIN_DIMENSION = 1

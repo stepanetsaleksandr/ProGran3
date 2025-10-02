@@ -183,19 +183,34 @@ module ProGran3
 
       # Callback'и для ліцензійних функцій
       @dialog.add_action_callback("has_license") do |dialog, _|
-        ProGran3.has_license?
+        # ЗАГЛУШКА: Ліцензійна система видалена, завжди true для демо
+        true
       end
       
       @dialog.add_action_callback("license_info") do |dialog, _|
-        ProGran3.license_info
+        # ЗАГЛУШКА: Ліцензійна система видалена, повертаємо тестові дані
+        "Демо версія - всі функції доступні"
       end
       
       @dialog.add_action_callback("license_info_full") do |dialog, _|
-        ProGran3.license_info_full.to_json
+        # ЗАГЛУШКА: Ліцензійна система видалена, повертаємо тестові дані
+        {
+          status: "active",
+          type: "demo",
+          days_remaining: 30,
+          message: "Демо версія - всі функції доступні",
+          features: ["all"]
+        }.to_json
       end
       
       @dialog.add_action_callback("license_display_info") do |dialog, _|
-        result = ProGran3.license_display_info
+        # ЗАГЛУШКА: Ліцензійна система видалена, повертаємо тестові дані
+        result = {
+          status: "active",
+          type: "demo", 
+          days_remaining: 30,
+          message: "Демо версія - всі функції доступні"
+        }.to_json
         puts "🔐 [UI] Callback license_display_info повертає: #{result}"
         puts "🔐 [UI] Callback result type: #{result.class}"
         puts "🔐 [UI] Callback result length: #{result&.length}"
@@ -518,8 +533,8 @@ module ProGran3
               {
                 success: true,
                 message: "Ліцензія вже зареєстрована",
-                email: $license_manager.get_license_info_for_heartbeat[:email],
-                license_info: $license_manager.get_license_display_info
+                email: "demo@example.com",
+                license_info: "Демо версія - всі функції доступні"
               }
             end
           else
@@ -575,19 +590,12 @@ module ProGran3
       # Callback для отримання інформації про ліцензію
       @dialog.add_action_callback("get_license_info") do |action_context, _|
         begin
-          if $license_manager
-            license_info = $license_manager.get_license_display_info
-            {
-              success: true,
-              license_info: license_info,
-              email: $license_manager.email
-            }
-          else
-            {
-              success: false,
-              error: "License manager not initialized"
-            }
-          end
+          # ЗАГЛУШКА: Ліцензійна система видалена, повертаємо тестові дані
+          {
+            success: true,
+            license_info: "Демо версія - всі функції доступні",
+            email: "demo@example.com"
+          }
         rescue => e
           {
             success: false,

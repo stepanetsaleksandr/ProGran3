@@ -7,8 +7,8 @@ def self.reload_plugin
   puts "🔄 Перезавантаження плагіна ProGran3..."
   
   # Видаляємо глобальні змінні
-  $plugin_blocked = nil
-  $license_manager = nil
+  # $plugin_blocked = nil (видалено)
+  # $license_manager = nil (видалено)
   $progran3_tracker = nil
   $tracker = nil
   
@@ -34,22 +34,17 @@ def self.check_for_updates
   end
   false
 end
-require 'net/http'
-require 'json'
 require 'socket'
-require 'timeout'
 
-# Глобальна змінна для статусу блокування плагіна
-$plugin_blocked = false
+# Глобальна змінна для статусу блокування плагіна (видалено)
+# $plugin_blocked = false
 
-# Глобальна змінна для менеджера ліцензій
-$license_manager = nil
+# Глобальна змінна для менеджера ліцензій (видалено)
+# $license_manager = nil
 
-# Клас для відстеження активності плагіна
+# Клас для відстеження активності плагіна (локальне логування)
 class ProGran3Tracker
-  def initialize(base_url = nil)
-        # Використовуємо конфігурований URL
-        @base_url = base_url || ProGran3::Config.get_tracking_server_url
+  def initialize
     @plugin_id = generate_unique_plugin_id
     @is_running = false
     @heartbeat_thread = nil
@@ -76,66 +71,13 @@ class ProGran3Tracker
     end
     
     @is_running = true
-    puts "🚀 Запуск відстеження ProGran3..."
+    puts "🚀 Запуск локального відстеження ProGran3 (без сервера)..."
     
-    # Відправляємо перший heartbeat
-    puts "🚀 [#{Time.now.strftime('%H:%M:%S')}] Відправка першого heartbeat..."
-    send_heartbeat
+    # Локальне логування замість серверного heartbeat
+    puts "🚀 [#{Time.now.strftime('%H:%M:%S')}] Локальне логування активності..."
+    log_local_activity
     
-    # Запускаємо фонову задачу для регулярних heartbeat
-    @heartbeat_thread = Thread.new do
-      puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Фонова задача heartbeat запущена"
-      puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Thread ID: #{Thread.current.object_id}"
-      puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Thread alive: #{Thread.current.alive?}"
-      
-      loop_count = 0
-      loop do
-        loop_count += 1
-        puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Цикл #{loop_count}: @is_running = #{@is_running}"
-        
-        break unless @is_running
-        
-        puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Засинаємо на 1 годину..."
-        sleep(3600) # 3600 секунд = 1 година
-        
-        puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Прокинулися після 1 години"
-        puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Перевіряємо @is_running = #{@is_running}"
-        
-        if @is_running
-          puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] ========== РЕГУЛЯРНИЙ HEARTBEAT =========="
-          puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Запуск регулярного heartbeat..."
-          send_heartbeat
-          puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Регулярний heartbeat завершено"
-        else
-          puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] @is_running = false, виходимо з циклу"
-        end
-      end
-      puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Фонова задача heartbeat завершена"
-    end
-    
-    # Додаємо невелику затримку та перевірку
-    sleep(1)
-    puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Перевірка після запуску потоку:"
-    puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Thread alive: #{@heartbeat_thread.alive?}"
-    puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Thread status: #{@heartbeat_thread.status}"
-    
-    # Альтернативний підхід - використовуємо SketchUp timer якщо потрібно
-    if defined?(UI) && UI.respond_to?(:start_timer)
-      puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Запуск альтернативного таймера SketchUp..."
-      @sketchup_timer = UI.start_timer(60, true) do
-        if @is_running
-          puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] ========== TIMER HEARTBEAT =========="
-          puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] Запуск heartbeat через SketchUp timer..."
-          send_heartbeat
-        else
-          puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] @is_running = false, зупиняємо timer"
-          UI.stop_timer(@sketchup_timer) if @sketchup_timer
-        end
-      end
-      puts "🔄 [#{Time.now.strftime('%H:%M:%S')}] SketchUp timer запущено: #{@sketchup_timer}"
-    end
-    
-    puts "✅ Відстеження активне. Plugin ID: #{@plugin_id}"
+    puts "✅ Локальне відстеження активне. Plugin ID: #{@plugin_id}"
   end
 
   def stop_tracking
@@ -164,302 +106,34 @@ class ProGran3Tracker
     puts "⏹️ Відстеження зупинено"
   end
 
-  def send_heartbeat
+  # Локальне логування активності (замість серверного heartbeat)
+  def log_local_activity
     timestamp = Time.now.strftime('%H:%M:%S')
-    puts "📡 [#{timestamp}] ========== HEARTBEAT ВІДПРАВКА =========="
-    puts "📡 [#{timestamp}] Plugin ID: #{@plugin_id}"
-    puts "📡 [#{timestamp}] Сервер: #{@base_url}"
-    puts "📡 [#{timestamp}] ==========================================="
-    send_heartbeat_with_retry
+    puts "📝 [#{timestamp}] ========== ЛОКАЛЬНЕ ЛОГУВАННЯ =========="
+    puts "📝 [#{timestamp}] Plugin ID: #{@plugin_id}"
+    puts "📝 [#{timestamp}] Час запуску: #{Time.now}"
+    puts "📝 [#{timestamp}] Комп'ютер: #{Socket.gethostname}"
+    puts "📝 [#{timestamp}] Користувач: #{ENV['USERNAME'] || ENV['USER'] || 'unknown'}"
+    puts "📝 [#{timestamp}] ==========================================="
+  end
+
+  def send_heartbeat
+    # Серверна частина видалена - використовуємо локальне логування
+    log_local_activity
   end
 
   def send_shutdown_signal
-    begin
-      uri = URI.parse("#{@base_url}/api/heartbeat")
-      
-      data = {
-        plugin_id: @plugin_id,
-        plugin_name: "ProGran3",
-        version: get_plugin_version,
-        user_id: get_user_identifier,
-        computer_name: Socket.gethostname,
-        system_info: get_system_info,
-        timestamp: Time.now.iso8601,
-        action: "plugin_shutdown",  # Сигнал про закриття
-        source: "sketchup_plugin",
-        update_existing: true,
-        force_update: false
-      }
-      
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true if uri.scheme == 'https'
-      http.read_timeout = 5
-      http.open_timeout = 5
-      
-      request = Net::HTTP::Post.new(uri)
-      request['Content-Type'] = 'application/json'
-      request['User-Agent'] = "ProGran3-Plugin/#{get_plugin_version}"
-      request.body = data.to_json
-      
-      timestamp = Time.now.strftime('%H:%M:%S')
-      puts "📤 [#{timestamp}] ========== СИГНАЛ ЗАКРИТТЯ =========="
-      puts "📤 [#{timestamp}] Відправка сигналу закриття до: #{@base_url}/api/heartbeat"
-      puts "📊 [#{timestamp}] Plugin ID: #{data[:plugin_id]}"
-      puts "📋 [#{timestamp}] Action: #{data[:action]}"
-      puts "📤 [#{timestamp}] ========================================"
-      
-      response = http.request(request)
-      
-      if response.code == '200'
-        puts "✅ [#{timestamp}] ✅ СИГНАЛ ЗАКРИТТЯ УСПІШНО ВІДПРАВЛЕНО!"
-        puts "✅ [#{timestamp}] ========== ПЛАГІН ЗАКРИТО =========="
-      else
-        puts "⚠️ [#{timestamp}] Помилка відправки сигналу закриття: #{response.code}"
-      end
-      
-    rescue => e
-      puts "⚠️ [#{Time.now.strftime('%H:%M:%S')}] Помилка при відправці сигналу закриття: #{e.message}"
-    end
+    # Локальне логування закриття
+    timestamp = Time.now.strftime('%H:%M:%S')
+    puts "📝 [#{timestamp}] ========== ЛОКАЛЬНЕ ЛОГУВАННЯ ЗАКРИТТЯ =========="
+    puts "📝 [#{timestamp}] Plugin ID: #{@plugin_id}"
+    puts "📝 [#{timestamp}] Час закриття: #{Time.now}"
+    puts "📝 [#{timestamp}] ================================================="
   end
 
   private
-
-  def send_heartbeat_with_retry
-    begin
-      timestamp = Time.now.strftime('%H:%M:%S')
-      puts "📡 [#{timestamp}] Підготовка HTTP запиту..."
-      
-      # Перевіряємо fallback для відсутності інтернету
-      if should_use_offline_fallback?
-        puts "📡 [#{timestamp}] Використовуємо offline fallback (немає інтернету)"
-        handle_offline_fallback
-        return
-      end
-      
-      uri = URI("#{@base_url}/api/heartbeat")
-      
-      # Валідація URL
-      unless uri.scheme == 'https' || uri.scheme == 'http'
-        raise "Невірний URL: #{@base_url}"
-      end
-      
-      # Додаємо інформацію про ліцензію
-      license_info = nil
-      if $license_manager && $license_manager.has_license?
-        begin
-          license_info = $license_manager.get_license_info_for_heartbeat
-        rescue => e
-          puts "❌ Помилка отримання license_info: #{e.message}"
-          license_info = nil
-        end
-      end
-
-      data = {
-        plugin_id: @plugin_id,
-        plugin_name: "ProGran3",
-        version: get_plugin_version,
-        user_id: get_user_identifier,
-        computer_name: Socket.gethostname,
-        system_info: get_system_info,
-        timestamp: Time.now.iso8601,
-        action: "heartbeat_update",  # Додаємо тип дії
-        source: "sketchup_plugin",   # Додаємо джерело
-        update_existing: true,       # Явно вказуємо, що потрібно оновити існуючий
-        force_update: false,         # Не примусово створювати новий
-        license_info: license_info   # Додаємо інформацію про ліцензію
-      }
-      
-      puts "📡 Дані heartbeat: #{data.inspect}"
-      puts "📡 License info в даних: #{data[:license_info].inspect}"
-      puts "📡 JSON для відправки: #{data.to_json}"
-      
-      # Валідація даних
-      validate_heartbeat_data(data)
-      
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true if uri.scheme == 'https'
-      http.read_timeout = 10
-      http.open_timeout = 10
-      
-      request = Net::HTTP::Post.new(uri)
-      request['Content-Type'] = 'application/json'
-      request['User-Agent'] = "ProGran3-Plugin/#{get_plugin_version}"
-      request.body = data.to_json
-      
-        puts "📡 [#{timestamp}] Відправка heartbeat до: #{@base_url}/api/heartbeat"
-        puts "📊 [#{timestamp}] Plugin ID: #{data[:plugin_id]}"
-        puts "📋 [#{timestamp}] Action: #{data[:action]}"
-        puts "📋 [#{timestamp}] Update existing: #{data[:update_existing]}"
-        puts "📋 [#{timestamp}] Timestamp: #{data[:timestamp]}"
-      
-      response = http.request(request)
-      
-      puts "📨 [#{timestamp}] Відповідь сервера: #{response.code} #{response.message}"
-      puts "📄 [#{timestamp}] Тіло відповіді: #{response.body}"
-      
-      if response.code == '200'
-        # Для тестового сервера (httpbin.org) завжди успіх
-        if @base_url.include?('httpbin.org')
-          puts "💓 [#{timestamp}] ✅ HEARTBEAT УСПІШНО ВІДПРАВЛЕНО!"
-          puts "💓 [#{timestamp}] ========== HEARTBEAT ЗАВЕРШЕНО УСПІШНО =========="
-          @retry_count = 0 # Скидаємо лічильник при успіху
-        elsif @base_url.include?('vercel.app')
-          # Для Vercel сервера - перевіряємо відповідь
-          begin
-            result = JSON.parse(response.body)
-            if result['success'] && result['plugin']
-              puts "💓 [#{timestamp}] ✅ HEARTBEAT УСПІШНО ВІДПРАВЛЕНО!"
-              puts "📋 [#{timestamp}] Сервер ID: #{result['plugin']['id']}"
-              puts "📋 [#{timestamp}] Plugin ID: #{result['plugin']['plugin_id']}"
-              puts "📋 [#{timestamp}] Last heartbeat: #{result['plugin']['last_heartbeat']}"
-              puts "📋 [#{timestamp}] Is active: #{result['plugin']['is_active']}"
-              puts "📋 [#{timestamp}] Is blocked: #{result['plugin']['is_blocked']}"
-              
-              # Перевіряємо статус блокування
-              is_blocked = result['plugin']['is_blocked']
-              
-              # Перевіряємо локальну ліцензію тільки для fallback при відсутності інтернету
-              has_local_license = $license_manager && $license_manager.has_license?
-              
-              # Додаткова перевірка: валідуємо ліцензію на сервері якщо вона є локально
-              server_license_valid = true
-              if has_local_license && $license_manager
-                puts "🔐 [#{timestamp}] Перевіряємо валідність ліцензії на сервері..."
-                license_validation = $license_manager.validate_license
-                server_license_valid = license_validation && license_validation[:valid]
-                puts "🔐 [#{timestamp}] Ліцензія на сервері: #{server_license_valid ? 'ВАЛІДНА' : 'НЕВАЛІДНА'}"
-              end
-              
-              # Блокуємо плагін якщо:
-              # 1. Сервер блокує плагін
-              # 2. Немає локальної ліцензії
-              # 3. Ліцензія є локально, але невалідна на сервері
-              if is_blocked || !has_local_license || (has_local_license && !server_license_valid)
-                puts "🚫 [#{timestamp}] ⚠️ ПЛАГІН ЗАБЛОКОВАНО (сервер: #{is_blocked}, локальна ліцензія: #{has_local_license}, серверна ліцензія: #{server_license_valid ? 'валідна' : 'невалідна'})!"
-                @plugin_blocked = true
-                $plugin_blocked = true
-                
-                # Очищаємо локальну ліцензію при блокуванні або невалідній серверній ліцензії
-                if (is_blocked || !server_license_valid) && $license_manager
-                  puts "🧹 [#{timestamp}] Очищаємо локальну ліцензію через блокування сервера або невалідну ліцензію"
-                  $license_manager.clear_saved_license
-                end
-                
-                # Автоматично показуємо карточку блокування в UI
-                show_blocking_card_in_ui
-              else
-                puts "✅ [#{timestamp}] Плагін активний (сервер: #{is_blocked ? 'заблоковано' : 'не заблоковано'}, локальна ліцензія: #{has_local_license}, серверна ліцензія: #{server_license_valid ? 'валідна' : 'немає'})"
-                @plugin_blocked = false
-                $plugin_blocked = false
-                
-                # Приховуємо карточку блокування якщо плагін розблокований
-                hide_blocking_card_in_ui
-              end
-              
-              puts "💓 [#{timestamp}] ========== HEARTBEAT ЗАВЕРШЕНО УСПІШНО =========="
-              
-              # Зберігаємо час успішного heartbeat для offline fallback
-              save_last_heartbeat_time
-              
-              # Перевіряємо, чи plugin_id співпадає
-              if result['plugin']['plugin_id'] != @plugin_id
-                puts "⚠️ УВАГА: Plugin ID не співпадає!"
-                puts "   Відправлено: #{@plugin_id}"
-                puts "   Отримано: #{result['plugin']['plugin_id']}"
-              end
-              
-              @retry_count = 0
-            else
-              puts "⚠️ Сервер не повернув очікувану відповідь"
-              @retry_count = 0 # Все одно вважаємо успіхом при 200
-            end
-          rescue => e
-            puts "⚠️ Помилка парсингу відповіді: #{e.message}"
-            @retry_count = 0
-          end
-        else
-          # Для інших серверів перевіряємо JSON відповідь
-          result = JSON.parse(response.body)
-          if result['success'] || result['status'] == 'ok'
-            puts "💓 [#{timestamp}] ✅ HEARTBEAT УСПІШНО ВІДПРАВЛЕНО!"
-            puts "💓 [#{timestamp}] ========== HEARTBEAT ЗАВЕРШЕНО УСПІШНО =========="
-            @retry_count = 0 # Скидаємо лічильник при успіху
-          else
-            puts "❌ [#{timestamp}] Сервер повернув помилку: #{result['error'] || result['message']}"
-            raise "Сервер повернув помилку: #{result['error'] || result['message']}"
-          end
-        end
-      else
-        puts "❌ [#{timestamp}] HTTP помилка: #{response.code} - #{response.message}"
-        raise "HTTP помилка: #{response.code} - #{response.message}"
-      end
-      
-    rescue Timeout::Error
-      puts "⏰ [#{Time.now.strftime('%H:%M:%S')}] ❌ ТАЙМАУТ при відправці heartbeat"
-      handle_heartbeat_error("Таймаут при відправці heartbeat")
-    rescue => e
-      puts "💥 [#{Time.now.strftime('%H:%M:%S')}] ❌ ПОМИЛКА відправки heartbeat: #{e.message}"
-      handle_heartbeat_error("Помилка відправки heartbeat: #{e.message}")
-    end
-  end
   
   public
-  
-  # Метод для перевірки статусу на сервері (публічний)
-  def check_server_status
-    begin
-      uri = URI("#{@base_url}/api/plugins")
-      
-      # Валідація URL
-      unless uri.scheme == 'https' || uri.scheme == 'http'
-        raise "Невірний URL: #{@base_url}"
-      end
-      
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = (uri.scheme == 'https')
-      http.read_timeout = 30
-      http.open_timeout = 10
-      
-      request = Net::HTTP::Get.new(uri)
-      request['User-Agent'] = "ProGran3-Plugin/#{get_plugin_version}"
-      
-      puts "📡 Запит статусу з сервера: #{@base_url}/api/plugins"
-      
-      response = http.request(request)
-      
-      puts "📨 Відповідь сервера: #{response.code} #{response.message}"
-      
-      if response.code == '200'
-        begin
-          result = JSON.parse(response.body)
-          puts "📄 Дані з сервера:"
-          puts JSON.pretty_generate(result)
-          
-          # Шукаємо наш плагін
-          if result.is_a?(Array)
-            our_plugin = result.find { |p| p['plugin_id'] == @plugin_id }
-            if our_plugin
-              puts "✅ Знайдено наш плагін на сервері:"
-              puts "   ID: #{our_plugin['id']}"
-              puts "   Plugin ID: #{our_plugin['plugin_id']}"
-              puts "   Last heartbeat: #{our_plugin['last_heartbeat']}"
-              puts "   Is active: #{our_plugin['is_active']}"
-            else
-              puts "❌ Наш плагін не знайдено на сервері"
-              puts "   Шукаємо: #{@plugin_id}"
-            end
-          end
-        rescue => e
-          puts "⚠️ Помилка парсингу відповіді: #{e.message}"
-        end
-      else
-        puts "❌ Не вдалося отримати статус: #{response.code}"
-      end
-      
-    rescue => e
-      puts "❌ Помилка при перевірці статусу: #{e.message}"
-    end
-  end
   
   
 
@@ -489,266 +163,6 @@ class ProGran3Tracker
       architecture: RUBY_PLATFORM.include?('x64') ? '64-bit' : '32-bit'
     }
   end
-
-
-  def validate_heartbeat_data(data)
-    required_fields = [:plugin_id, :plugin_name, :version, :user_id, :computer_name]
-    required_fields.each do |field|
-      if data[field].nil? || data[field].to_s.strip.empty?
-        raise "Відсутнє обов'язкове поле: #{field}"
-      end
-    end
-  end
-
-  def send_heartbeat_direct
-    begin
-      timestamp = Time.now.strftime('%H:%M:%S')
-      puts "📡 [#{timestamp}] Heartbeat для перевірки статусу блокування..."
-      
-      uri = URI("#{@base_url}/api/heartbeat")
-      
-      # Додаємо логування для діагностики
-      puts "🔐 ========== LICENSE DEBUG START =========="
-      puts "🔐 Перевірка LicenseManager перед heartbeat..."
-      puts "🔐 $license_manager доступний: #{$license_manager ? 'так' : 'ні'}"
-      puts "🔐 Глобальні змінні:"
-      puts "🔐   $license_manager: #{$license_manager.inspect}"
-      puts "🔐   $plugin_blocked: #{$plugin_blocked}"
-      puts "🔐 ========================================="
-      
-      license_info = nil
-      if $license_manager
-        puts "🔐 LicenseManager доступний, отримуємо інформацію про ліцензію..."
-        begin
-          license_info = $license_manager.get_license_info_for_heartbeat
-          puts "🔐 Інформація про ліцензію: #{license_info ? 'є' : 'немає'}"
-          if license_info
-            puts "🔐 License key: #{license_info[:license_key]}"
-            puts "🔐 License type: #{license_info[:license_type]}"
-          end
-        rescue => e
-          puts "❌ Помилка отримання license_info: #{e.message}"
-          license_info = nil
-        end
-      else
-        puts "❌ LicenseManager не доступний"
-      end
-
-      data = {
-        plugin_id: @plugin_id,
-        plugin_name: "ProGran3",
-        version: get_plugin_version,
-        user_id: get_user_identifier,
-        computer_name: Socket.gethostname,
-        system_info: get_system_info,
-        timestamp: Time.now.iso8601,
-        action: "heartbeat_update",
-        source: "sketchup_plugin",
-        update_existing: true,
-        force_update: false,
-        license_info: license_info
-      }
-      
-      validate_heartbeat_data(data)
-      
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = (uri.scheme == 'https')
-      http.read_timeout = 30
-      http.open_timeout = 10
-      
-      request = Net::HTTP::Post.new(uri)
-      request['Content-Type'] = 'application/json'
-      request['User-Agent'] = "ProGran3-Plugin/#{get_plugin_version}"
-      request.body = data.to_json
-      
-      puts "📡 [#{timestamp}] Відправка heartbeat до: #{@base_url}/api/heartbeat"
-      
-      response = http.request(request)
-      
-      puts "📨 [#{timestamp}] Відповідь сервера: #{response.code} #{response.message}"
-      puts "📄 [#{timestamp}] Тіло відповіді: #{response.body}"
-      
-      if response.code == '200'
-        begin
-          result = JSON.parse(response.body)
-          if result['success'] && result['plugin']
-            is_blocked = result['plugin']['is_blocked'] || false
-            is_active = result['plugin']['is_active'] || false
-            puts "📡 [#{timestamp}] Статус блокування: #{is_blocked ? 'ЗАБЛОКОВАНО' : 'АКТИВНИЙ'}"
-            puts "📡 [#{timestamp}] Статус активності: #{is_active ? 'АКТИВНИЙ' : 'НЕАКТИВНИЙ'}"
-            
-            # БЛОКУЄМО ПЛАГІН НА ОСНОВІ ВІДПОВІДІ СЕРВЕРА
-            # Але також перевіряємо валідність ліцензії на сервері
-            has_local_license = $license_manager && $license_manager.has_license?
-            server_license_valid = true
-            
-            if has_local_license && $license_manager
-              puts "🔐 [#{timestamp}] Перевіряємо валідність ліцензії на сервері..."
-              license_validation = $license_manager.validate_license
-              server_license_valid = license_validation && license_validation[:valid]
-              puts "🔐 [#{timestamp}] Ліцензія на сервері: #{server_license_valid ? 'ВАЛІДНА' : 'НЕВАЛІДНА'}"
-            end
-            
-            # Блокуємо плагін якщо:
-            # 1. Сервер блокує плагін
-            # 2. Ліцензія є локально, але невалідна на сервері
-            if is_blocked || (has_local_license && !server_license_valid)
-              $plugin_blocked = true
-              @plugin_blocked = true
-              puts "🔐 [#{timestamp}] Плагін ЗАБЛОКОВАНО (сервер: #{is_blocked}, ліцензія: #{server_license_valid ? 'валідна' : 'невалідна'})"
-              
-              # Очищаємо локальну ліцензію при блокуванні або невалідній серверній ліцензії
-              if (is_blocked || !server_license_valid) && $license_manager
-                puts "🧹 [#{timestamp}] Очищаємо локальну ліцензію через блокування сервера або невалідну ліцензію"
-                $license_manager.clear_saved_license
-              end
-              
-              show_blocking_card_in_ui
-            else
-              $plugin_blocked = false
-              @plugin_blocked = false
-              puts "🔐 [#{timestamp}] Плагін РОЗБЛОКОВАНО (сервер: #{is_blocked ? 'заблоковано' : 'не заблоковано'}, ліцензія: #{server_license_valid ? 'валідна' : 'немає'})"
-              hide_blocking_card_in_ui
-            end
-            
-            return {
-              success: true,
-              blocked: is_blocked,
-              plugin_id: @plugin_id
-            }
-          else
-            return {
-              success: false,
-              error: "Неочікувана відповідь від сервера",
-              blocked: false
-            }
-          end
-        rescue JSON::ParserError => e
-          return {
-            success: false,
-            error: "Помилка парсингу JSON: #{e.message}",
-            blocked: false
-          }
-        end
-      else
-        return {
-          success: false,
-          error: "HTTP помилка: #{response.code} - #{response.message}",
-          blocked: false
-        }
-      end
-    rescue => e
-      puts "❌ [#{timestamp}] Помилка тестового heartbeat: #{e.message}"
-      return {
-        success: false,
-        error: e.message,
-        blocked: false
-      }
-    end
-  end
-
-  # Показати карточку блокування в UI
-  def show_blocking_card_in_ui
-    begin
-      # Перевіряємо чи UI відкрито
-      if defined?(ProGran3::UI) && ProGran3::UI.instance_variable_get(:@dialog) && ProGran3::UI.instance_variable_get(:@dialog).visible?
-        puts "📱 Показуємо карточку блокування в UI..."
-        ProGran3::UI.instance_variable_get(:@dialog).execute_script("showBlockingCard();")
-        puts "✅ Карточка блокування показана"
-      else
-        puts "📱 UI не відкрито - карточка блокування буде показана при відкритті"
-      end
-    rescue => e
-      puts "❌ Помилка показу карточки блокування: #{e.message}"
-    end
-  end
-
-  # Приховати карточку блокування в UI
-  def hide_blocking_card_in_ui
-    begin
-      # Перевіряємо чи UI відкрито
-      if defined?(ProGran3::UI) && ProGran3::UI.instance_variable_get(:@dialog) && ProGran3::UI.instance_variable_get(:@dialog).visible?
-        puts "📱 Приховуємо карточку блокування в UI..."
-        ProGran3::UI.instance_variable_get(:@dialog).execute_script("hideBlockingCard();")
-        puts "✅ Карточка блокування прихована"
-      end
-    rescue => e
-      puts "❌ Помилка приховування карточки блокування: #{e.message}"
-    end
-  end
-
-  def handle_heartbeat_error(message)
-    @retry_count += 1
-    timestamp = Time.now.strftime('%H:%M:%S')
-    puts "❌ [#{timestamp}] #{message}"
-    
-    if @retry_count < @max_retries
-      puts "🔄 [#{timestamp}] Повторна спроба #{@retry_count}/#{@max_retries} через #{@retry_delay} секунд..."
-      sleep(@retry_delay)
-      send_heartbeat_with_retry
-    else
-      puts "❌ [#{timestamp}] ❌❌❌ КРИТИЧНА ПОМИЛКА ❌❌❌"
-      puts "❌ [#{timestamp}] Не вдалося відправити heartbeat після #{@max_retries} спроб"
-      puts "❌ [#{timestamp}] Плагін продовжує працювати, але відстеження неактивне"
-      @retry_count = 0 # Скидаємо лічильник
-    end
-  end
-  
-  # Перевіряємо чи потрібно використовувати offline fallback
-  def should_use_offline_fallback?
-    # Якщо є локальна ліцензія та останній успішний heartbeat був менше 48 секунд тому (для тестування)
-    if $license_manager && $license_manager.has_license?
-      last_heartbeat_file = get_last_heartbeat_file_path
-      if File.exist?(last_heartbeat_file)
-        begin
-          last_heartbeat_time = Time.parse(File.read(last_heartbeat_file))
-          seconds_since_last = (Time.now - last_heartbeat_time)
-          return seconds_since_last < 48  # 48 секунд для тестування
-        rescue
-          return false
-        end
-      end
-    end
-    false
-  end
-  
-  # Обробляємо offline fallback
-  def handle_offline_fallback
-    timestamp = Time.now.strftime('%H:%M:%S')
-    puts "📡 [#{timestamp}] OFFLINE FALLBACK: Плагін працює з локальною ліцензією"
-    
-    # Не блокуємо плагін при offline fallback
-    @plugin_blocked = false
-    $plugin_blocked = false
-    
-    # Приховуємо карточку блокування
-    hide_blocking_card_in_ui
-    
-    puts "✅ [#{timestamp}] Плагін активний (offline fallback)"
-  end
-  
-  # Зберігаємо час останнього успішного heartbeat
-  def save_last_heartbeat_time
-    begin
-      last_heartbeat_file = get_last_heartbeat_file_path
-      File.write(last_heartbeat_file, Time.now.iso8601)
-    rescue => e
-      puts "⚠️ Помилка збереження часу heartbeat: #{e.message}"
-    end
-  end
-  
-  # Отримуємо шлях до файлу останнього heartbeat
-  def get_last_heartbeat_file_path
-    if RUBY_PLATFORM =~ /win32|win64|mingw|mswin/
-      appdata = ENV['APPDATA'] || File.join(ENV['USERPROFILE'], 'AppData', 'Roaming')
-      heartbeat_dir = File.join(appdata, 'ProGran3')
-    else
-      heartbeat_dir = File.join(ENV['HOME'], '.progran3')
-    end
-    
-    FileUtils.mkdir_p(heartbeat_dir) unless File.exist?(heartbeat_dir)
-    File.join(heartbeat_dir, 'last_heartbeat.txt')
-  end
 end
 
 module ProGran3
@@ -771,8 +185,10 @@ module ProGran3
   require_relative 'progran3/ui'
   require_relative 'progran3/skp_preview_extractor'
   
-  # Підключаємо модуль безпеки
-  require_relative 'progran3/security/license_manager'
+  # Підключаємо систему завантаження
+  require_relative 'progran3/splash_screen'
+  require_relative 'progran3/license_ui'
+  require_relative 'progran3/demo_ui'
 
   # Метод для створення панелі інструментів
   def self.create_toolbar
@@ -783,8 +199,8 @@ module ProGran3
       # Команда для запуску плагіна
       cmd = ::UI::Command.new("ProGran3 Конструктор") {
         ErrorHandler.safe_execute("UI", "Запуск діалогу") do
-          # Завжди показуємо UI - HTML UI обробить блокування
-          ProGran3::UI.show_dialog
+          # Показуємо splash screen з перевіркою ліцензії
+          ProGran3::SplashScreen.show
         end
       }
       
@@ -811,7 +227,8 @@ module ProGran3
     # Меню Plugins
     ::UI.menu("Plugins").add_item("proGran3 Конструктор") {
       ErrorHandler.safe_execute("Menu", "Запуск з меню") do
-        ProGran3::UI.show_dialog
+        # Показуємо splash screen з перевіркою ліцензії
+        ProGran3::SplashScreen.show
       end
     }
     
@@ -913,175 +330,22 @@ if defined?(Sketchup)
     $progran3_tracker&.send_heartbeat
   end
   
-  # Метод для перевірки статусу блокування з сервера
+  # Метод для перевірки статусу блокування (локальна перевірка)
   def self.check_blocking_status
-    begin
-      if $progran3_tracker
-        result = $progran3_tracker.send(:send_heartbeat_direct)
-        
-        if result && result[:success]
-          return {
-            success: true,
-            blocked: result[:blocked] || false,
-            active: !result[:blocked] # Активний якщо не заблокований
-          }
-        else
-          return {
-            success: false,
-            blocked: false,
-            active: false,
-            error: result ? result[:error] : "No response from server"
-          }
-        end
-      else
-        return {
-          success: false,
-          blocked: false,
-          active: false,
-          error: "Tracker not initialized"
-        }
-      end
-    rescue => e
-      return {
-        success: false,
-        blocked: false,
-        active: false,
-        error: e.message
-      }
-    end
+    # Плагін завжди активний (локальне логування)
+    return {
+      success: true,
+      blocked: false,
+      active: true,
+      has_license: false
+    }
   end
   
-  # Методи для роботи з ліцензіями
-  def self.activate_license(license_key)
-    $license_manager&.activate_license(license_key)
-  end
+  # Методи для роботи з ліцензіями (видалено - серверна частина)
   
-  def self.validate_license
-    $license_manager&.validate_license
-  end
+  # Функція активації ліцензії (видалено - серверна частина)
   
-  def self.has_license?
-    result = $license_manager&.has_license? || false
-    puts "🔐 [DEBUG] has_license? повертає: #{result}"
-    result
-  end
-  
-  def self.license_days_remaining
-    $license_manager&.days_remaining || 0
-  end
-  
-  def self.license_info
-    result = $license_manager&.get_license_info_for_heartbeat
-    puts "🔐 [DEBUG] license_info повертає: #{result}"
-    result
-  end
-  
-  # Функція для отримання повної інформації про ліцензію (включаючи термін дії)
-  def self.license_info_full
-    result = $license_manager&.get_license_info_full
-    puts "🔐 [DEBUG] license_info_full повертає: #{result}"
-    result
-  end
-  
-  # Функція для отримання інформації для відображення в UI
-  def self.license_display_info
-    result = $license_manager&.get_license_display_info
-    puts "🔐 [DEBUG] license_display_info повертає: #{result}"
-    
-    # Конвертуємо Ruby hash в JSON для JavaScript
-    if result
-      require 'json'
-      json_result = result.to_json
-      puts "🔐 [DEBUG] license_display_info JSON: #{json_result}"
-      json_result
-    else
-      nil
-    end
-  end
-  
-  def self.clear_license
-    $license_manager&.clear_license
-  end
-  
-  # Функція активації ліцензії
-  def self.activate_license(email, license_key)
-    begin
-      puts "🔐 ========== ПОЧАТОК АКТИВАЦІЇ ЛІЦЕНЗІЇ =========="
-      puts "🔐 Email: #{email}"
-      puts "🔐 License Key: #{license_key[0..8]}..."
-      puts "🔐 LicenseManager доступний: #{$license_manager ? 'ТАК' : 'НІ'}"
-      
-      if $license_manager
-        puts "🔐 Викликаємо register_license..."
-        
-        result = $license_manager.register_license(email, license_key)
-        puts "🔐 Результат register_license: #{result}"
-        
-        if result[:success]
-          puts "✅ ========== ЛІЦЕНЗІЯ УСПІШНО АКТИВОВАНА =========="
-          puts "🔐 [DEBUG] Після активації has_license?: #{$license_manager.has_license?}"
-          puts "🔐 [DEBUG] Після активації license_info: #{$license_manager.get_license_info_for_heartbeat}"
-          
-          # Розблоковуємо плагін після успішної активації
-          puts "🔓 Розблоковуємо плагін..."
-          unblock_plugin
-          
-          # Примусово відправляємо heartbeat з новими даними ліцензії
-          puts "🔄 [DEBUG] Примусово відправляємо heartbeat після активації"
-          puts "🔄 [DEBUG] has_license? перед heartbeat: #{$license_manager.has_license?}"
-          puts "🔄 [DEBUG] license_info перед heartbeat: #{$license_manager.get_license_info_for_heartbeat}"
-          
-          if $progran3_tracker
-            puts "🔄 Трекер доступний, відправляємо heartbeat..."
-            $progran3_tracker.send_heartbeat_with_retry
-          else
-            puts "⚠️ Трекер недоступний!"
-          end
-          
-          return { success: true, message: "Ліцензія активована" }
-        else
-          puts "❌ ========== ПОМИЛКА АКТИВАЦІЇ =========="
-          puts "❌ Помилка: #{result[:error]}"
-          return { success: false, error: result[:error] }
-        end
-      else
-        puts "❌ LicenseManager не ініціалізований"
-        return { success: false, error: "LicenseManager не ініціалізований" }
-      end
-    rescue => e
-      puts "❌ ========== КРИТИЧНА ПОМИЛКА АКТИВАЦІЇ =========="
-      puts "❌ Exception: #{e.class}"
-      puts "❌ Message: #{e.message}"
-      puts "❌ Backtrace: #{e.backtrace.first(5).join("\n")}"
-      return { success: false, error: e.message }
-    end
-  end
-  
-  # Функція перевірки статусу блокування
-  def self.check_blocking_status
-    begin
-      puts "🔍 Перевірка статусу блокування..."
-      
-      if $license_manager
-        # Перевіряємо локальний статус
-        is_blocked = $license_manager.is_blocked?
-        puts "🔍 Локальний статус блокування: #{is_blocked ? 'ЗАБЛОКОВАНО' : 'НЕ ЗАБЛОКОВАНО'}"
-        
-        return { 
-          success: true, 
-          blocked: is_blocked,
-          has_license: $license_manager.has_license?,
-          license_info: $license_manager.get_license_info_for_heartbeat
-        }
-      else
-        puts "❌ LicenseManager не ініціалізований"
-        return { success: false, error: "LicenseManager не ініціалізований" }
-      end
-    rescue => e
-      puts "❌ Помилка перевірки статусу: #{e.message}"
-      return { success: false, error: e.message }
-    end
-  end
+  # Функція перевірки статусу блокування (видалено - серверна частина)
   
   
   def self.tracking_status
@@ -1099,7 +363,7 @@ if defined?(Sketchup)
         running: is_running,
         plugin_id: plugin_id,
         thread_alive: thread_alive,
-        base_url: $progran3_tracker.instance_variable_get(:@base_url),
+        # base_url видалено (локальне логування)
         retry_count: $progran3_tracker.instance_variable_get(:@retry_count),
         max_retries: $progran3_tracker.instance_variable_get(:@max_retries),
         retry_delay: $progran3_tracker.instance_variable_get(:@retry_delay)
@@ -1109,19 +373,12 @@ if defined?(Sketchup)
     end
   end
   
-  def self.create_new_tracker(server_url = nil)
+  def self.create_new_tracker
     # Зупиняємо старий трекер
     $progran3_tracker&.stop_tracking
     
-    # Перевіряємо ліцензію перед запуском (LicenseManager вже ініціалізований)
-    unless $license_manager&.has_license?
-      puts "🚫 Ліцензія не знайдена - плагін заблокований"
-      $plugin_blocked = true
-      return false
-    end
-    
-    # Створюємо новий трекер з правильним URL
-    $progran3_tracker = ProGran3Tracker.new(server_url)
+    # Створюємо новий трекер (локальне логування)
+    $progran3_tracker = ProGran3Tracker.new
     
     # Запускаємо відстеження
     $progran3_tracker.start_tracking
@@ -1129,30 +386,9 @@ if defined?(Sketchup)
     puts "✅ Новий трекер створено та запущено"
   end
   
-  # Функція для розблокування плагіна після активації ліцензії
-  def self.unblock_plugin
-    puts "🔓 Розблокування плагіна після активації ліцензії"
-    $plugin_blocked = false
-    
-    # Запускаємо відстеження
-    if $license_manager&.has_license?
-      create_new_tracker
-    end
-  end
+  # Функція для розблокування плагіна (видалено - серверна частина)
   
-  # Методи для управління конфігурацією сервера
-  def self.get_server_url
-    Config.get_tracking_server_url
-  end
-  
-  def self.set_server_url(url)
-    Config.set_tracking_server_url(url)
-  end
-  
-  def self.test_server_connection(url = nil)
-    Config.test_server_connection(url)
-  end
-  
+  # Методи для управління конфігурацією (локальні)
   def self.get_config
     Config.get_all_settings
   end
@@ -1162,13 +398,9 @@ if defined?(Sketchup)
   end
   
 
-  # Ініціалізуємо менеджер ліцензій одразу після завантаження
-  $license_manager = ProGran3::Security::LicenseManager.new
-  puts "🔐 LicenseManager ініціалізовано"
-  
-  # Початковий статус - плагін заблокований до першого heartbeat
-  puts "🔐 Плагін заблокований до перевірки ліцензії на сервері"
-  $plugin_blocked = true
+  # Менеджер ліцензій видалено (серверна частина)
+  # Плагін працює локально без обмежень
+  $plugin_blocked = false
   
   # НЕ запускаємо відстеження автоматично - тільки після відкриття UI
   puts "🔄 Завантаження всіх модулів завершено"
