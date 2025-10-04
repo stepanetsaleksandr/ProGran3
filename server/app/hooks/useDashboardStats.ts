@@ -34,13 +34,31 @@ export function useDashboardStats(): UseDashboardStatsReturn {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/dashboard/stats');
+      // UNIFIED APPROACH: Use same endpoint as table
+      const response = await fetch('/api/licenses');
       const data = await response.json();
       
       if (data.success) {
-        setStats(data.data);
+        const licenses = data.data || [];
+        
+        // Calculate stats from licenses data (same as table)
+        const stats = {
+          totalLicenses: licenses.length,
+          activeLicenses: licenses.filter((l: any) => l.status === 'active').length,
+          generatedLicenses: licenses.filter((l: any) => l.status === 'generated').length,
+          activatedLicenses: licenses.filter((l: any) => l.status === 'activated').length,
+          expiredLicenses: licenses.filter((l: any) => l.status === 'expired').length,
+          totalUsers: new Set(licenses.map((l: any) => l.user_id).filter(Boolean)).size
+        };
+        
+        setStats(stats);
+        
+        console.log('Unified stats calculation:', {
+          licenses: licenses.map((l: any) => ({ id: l.id, status: l.status, user_id: l.user_id })),
+          stats
+        });
       } else {
-        setError(data.error || 'Failed to fetch stats');
+        setError(data.error || 'Failed to fetch licenses');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
