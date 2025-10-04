@@ -1,14 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
+  // Remove experimental.appDir as it's no longer needed in Next.js 14
+  output: 'standalone',
   env: {
-    CRYPTO_SECRET_KEY: process.env.CRYPTO_SECRET_KEY,
-    SUPABASE_URL: process.env.SUPABASE_URL,
-    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
-    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    // Only include environment variables that should be available on the client side
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   },
+  // Server-side environment variables are automatically available in API routes
 }
 
 module.exports = nextConfig

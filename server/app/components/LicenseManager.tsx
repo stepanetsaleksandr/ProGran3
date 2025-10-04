@@ -7,9 +7,11 @@ interface License {
   license_key: string;
   duration_days: number;
   description: string;
-  status: 'generated' | 'activated';
+  status: 'generated' | 'activated' | 'active' | 'expired' | 'revoked';
   created_at: string;
   activated_at: string | null;
+  expires_at: string | null;
+  updated_at: string | null;
   users: {
     email: string;
     name: string;
@@ -34,7 +36,7 @@ export default function LicenseManager() {
 
   const fetchLicenses = async () => {
     try {
-      const response = await fetch('/api/licenses/keys');
+      const response = await fetch('/api/licenses');
       const data = await response.json();
       if (data.success) {
         setLicenses(data.data);
@@ -84,6 +86,101 @@ export default function LicenseManager() {
     }
   };
 
+  const checkState = async () => {
+    try {
+      const response = await fetch('/api/check-state');
+      const data = await response.json();
+      if (data.success) {
+        const state = data.data;
+        let message = 'Стан бази даних:\n\n';
+        
+        if (state.license_keys?.exists) {
+          message += `📋 license_keys: ${state.license_keys.count || 0} записів\n`;
+        } else {
+          message += `📋 license_keys: не існує\n`;
+        }
+        
+        if (state.licenses?.exists) {
+          message += `🔑 licenses: ${state.licenses.count || 0} записів\n`;
+          message += `📝 description: ${state.licenses.has_description ? '✅' : '❌'}\n`;
+          message += `⏰ expires_at: ${state.licenses.has_expires_at ? '✅' : '❌'}\n`;
+          message += `🔄 updated_at: ${state.licenses.has_updated_at ? '✅' : '❌'}\n`;
+        } else {
+          message += `🔑 licenses: не існує\n`;
+        }
+        
+        alert(message);
+        setDbStatus('✅ Стан перевірено');
+      } else {
+        setDbStatus(`❌ Помилка: ${data.error}`);
+        alert(`Помилка перевірки стану: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('Error checking state:', error);
+      setDbStatus('❌ Помилка перевірки стану');
+      alert('Помилка при перевірці стану бази даних');
+    }
+  };
+
+  const testConnection = async () => {
+    try {
+      setDbStatus('🔄 Тестування підключення...');
+      const response = await fetch('/api/test-connection');
+      const data = await response.json();
+      
+      if (data.success) {
+        setDbStatus('✅ Підключення працює');
+        alert('✅ Підключення до Supabase працює нормально!\n\nОбидві таблиці доступні:\n- license_keys ✅\n- licenses ✅');
+      } else {
+        setDbStatus(`❌ Помилка підключення: ${data.error}`);
+        alert(`❌ Помилка підключення: ${data.error}\n\nДеталі: ${data.details}`);
+      }
+    } catch (error) {
+      console.error('Error testing connection:', error);
+      setDbStatus('❌ Помилка підключення');
+      alert('Помилка при тестуванні підключення');
+    }
+  };
+
+  const migrateDatabase = async () => {
+    if (!confirm('Ви впевнені, що хочете мігрувати базу даних? Це перенесе дані з license_keys в licenses та оновить структуру.')) return;
+    
+    try {
+      setDbStatus('🔄 Крок 1: Додавання полів...');
+      
+      // Step 1: Add columns
+      const step1Response = await fetch('/api/simple-migrate-step1', { method: 'POST' });
+      const step1Data = await step1Response.json();
+      
+      if (!step1Data.success) {
+        setDbStatus(`❌ Помилка кроку 1: ${step1Data.error}`);
+        alert(`Помилка кроку 1: ${step1Data.error}`);
+        return;
+      }
+      
+      setDbStatus('🔄 Крок 2: Перенесення даних...');
+      
+      // Step 2: Migrate data
+      const step2Response = await fetch('/api/simple-migrate-step2', { method: 'POST' });
+      const step2Data = await step2Response.json();
+      
+      if (!step2Data.success) {
+        setDbStatus(`❌ Помилка кроку 2: ${step2Data.error}`);
+        alert(`Помилка кроку 2: ${step2Data.error}`);
+        return;
+      }
+      
+      setDbStatus('✅ Міграція завершена успішно');
+      alert(`Міграція завершена успішно!\n\nКрок 1: ✅ Поля додані\nКрок 2: ✅ Перенесено ${step2Data.migrated_count} записів з license_keys в licenses.`);
+      fetchLicenses(); // Refresh the list
+      
+    } catch (error) {
+      console.error('Error migrating database:', error);
+      setDbStatus('❌ Помилка міграції');
+      alert('Помилка при міграції бази даних');
+    }
+  };
+
   const createLicense = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -105,8 +202,10 @@ export default function LicenseManager() {
           description: data.data.description,
           status: data.data.status,
           created_at: data.data.created_at,
-          activated_at: null,
-          users: null
+          activated_at: data.data.activated_at || null,
+          expires_at: data.data.expires_at || null,
+          updated_at: data.data.updated_at || null,
+          users: data.data.users || null
         };
         setGeneratedKeys(prev => [newKey, ...prev]);
         
@@ -167,10 +266,28 @@ export default function LicenseManager() {
           <h2 className="text-lg font-medium text-gray-900">Управління ліцензіями</h2>
           <div className="flex space-x-2">
             <button
+              onClick={testConnection}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+            >
+              Тест підключення
+            </button>
+            <button
+              onClick={checkState}
+              className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
+            >
+              Стан БД
+            </button>
+            <button
               onClick={checkDatabase}
               className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
             >
               Перевірити БД
+            </button>
+            <button
+              onClick={migrateDatabase}
+              className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700"
+            >
+              Мігрувати БД
             </button>
             {!dbSetup && (
               <button
@@ -248,6 +365,7 @@ export default function LicenseManager() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Термін</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Опис</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Закінчується</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Користувач</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Створено</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дії</th>
@@ -269,10 +387,21 @@ export default function LicenseManager() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    license.status === 'activated' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                    license.status === 'active' ? 'bg-green-100 text-green-800' :
+                    license.status === 'activated' ? 'bg-blue-100 text-blue-800' :
+                    license.status === 'generated' ? 'bg-yellow-100 text-yellow-800' :
+                    license.status === 'expired' ? 'bg-red-100 text-red-800' :
+                    'bg-gray-100 text-gray-800'
                   }`}>
-                    {license.status === 'activated' ? 'Активовано' : 'Неактивовано'}
+                    {license.status === 'active' ? 'Активна' :
+                     license.status === 'activated' ? 'Активована' :
+                     license.status === 'generated' ? 'Згенерована' :
+                     license.status === 'expired' ? 'Прострочена' :
+                     license.status === 'revoked' ? 'Відкликана' : license.status}
                   </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {license.expires_at ? new Date(license.expires_at).toLocaleDateString() : 'N/A'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {license.users?.email || 'N/A'}

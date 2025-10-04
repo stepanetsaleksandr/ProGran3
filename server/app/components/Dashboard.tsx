@@ -42,6 +42,7 @@ export default function Dashboard() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">ProGran3 Dashboard</h1>
           <p className="mt-2 text-gray-600">Управління ліцензіями та моніторинг систем</p>
+          <p className="mt-1 text-sm text-gray-500">Версія: 2.0.0 (Об'єднана структура БД)</p>
         </div>
 
         {/* Stats Cards */}
@@ -70,6 +71,7 @@ export default function Dashboard() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Активні ліцензії</p>
                 <p className="text-2xl font-semibold text-gray-900">{stats.activeLicenses}</p>
+                <p className="text-xs text-gray-500">включає generated, activated, active</p>
               </div>
             </div>
           </div>
