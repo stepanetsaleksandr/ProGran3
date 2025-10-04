@@ -25,13 +25,16 @@ export async function POST(request: NextRequest) {
 
     // Create license record (not activated yet)
     const supabase = createSupabaseClient();
+    const currentDate = new Date().toISOString();
     const { data: license, error } = await supabase
       .from('licenses')
       .insert({
         license_key,
         duration_days,
         description: description || `${duration_days} days license`,
-        status: 'generated'
+        status: 'generated',
+        created_at: currentDate,
+        updated_at: currentDate
       })
       .select()
       .single();

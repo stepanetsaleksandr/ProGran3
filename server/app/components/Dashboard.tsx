@@ -1,52 +1,69 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Tabs from './Tabs';
 import LicenseManager from './LicenseManager';
 import SystemMonitor from './SystemMonitor';
+import { useDashboardStats } from '../hooks/useDashboardStats';
+import { DashboardProvider } from '../context/DashboardContext';
 
-interface DashboardStats {
-  totalLicenses: number;
-  activeLicenses: number;
-  expiredLicenses: number;
-  totalUsers: number;
-}
+function DashboardContent() {
+  const { stats, loading, error, refreshStats } = useDashboardStats();
 
-export default function Dashboard() {
-  const [stats, setStats] = useState<DashboardStats>({
-    totalLicenses: 0,
-    activeLicenses: 0,
-    expiredLicenses: 0,
-    totalUsers: 0
-  });
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Завантаження дашборду...</p>
+        </div>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
-    try {
-      const response = await fetch('/api/dashboard/stats');
-      const data = await response.json();
-      if (data.success) {
-        setStats(data.data);
-      }
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    }
-  };
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <p className="font-bold">Помилка завантаження</p>
+            <p className="text-sm">{error}</p>
+            <button 
+              onClick={refreshStats}
+              className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+            >
+              Спробувати знову
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">ProGran3 Dashboard</h1>
-          <p className="mt-2 text-gray-600">Управління ліцензіями та моніторинг систем</p>
-          <p className="mt-1 text-sm text-gray-500">Версія: 2.0.0 (Об'єднана структура БД)</p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">ProGran3 Dashboard</h1>
+              <p className="mt-2 text-gray-600">Управління ліцензіями та моніторинг систем</p>
+              <p className="mt-1 text-sm text-gray-500">Версія: 2.0.0 (Об'єднана структура БД)</p>
+            </div>
+            <button
+              onClick={refreshStats}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"
+              title="Оновити статистику"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Оновити
+            </button>
+          </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -71,7 +88,7 @@ export default function Dashboard() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Активні ліцензії</p>
                 <p className="text-2xl font-semibold text-gray-900">{stats.activeLicenses}</p>
-                <p className="text-xs text-gray-500">включає generated, activated, active</p>
+                <p className="text-xs text-gray-500">тільки статус active</p>
               </div>
             </div>
           </div>
@@ -86,6 +103,34 @@ export default function Dashboard() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Прострочені ліцензії</p>
                 <p className="text-2xl font-semibold text-gray-900">{stats.expiredLicenses}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-yellow-100 rounded-lg">
+                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Згенеровані</p>
+                <p className="text-2xl font-semibold text-gray-900">{stats.generatedLicenses}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Активовані</p>
+                <p className="text-2xl font-semibold text-gray-900">{stats.activatedLicenses}</p>
               </div>
             </div>
           </div>
@@ -123,5 +168,13 @@ export default function Dashboard() {
         />
       </div>
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <DashboardProvider>
+      <DashboardContent />
+    </DashboardProvider>
   );
 }

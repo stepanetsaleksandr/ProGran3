@@ -17,10 +17,10 @@ export async function POST(request: NextRequest) {
 
     // Check if license key exists and is not activated
     const { data: licenseKey, error: keyError } = await supabase
-      .from('license_keys')
+      .from('licenses')
       .select('*')
       .eq('license_key', license_key)
-      .eq('status', 'generated')
+      .in('status', ['generated', 'active'])
       .single();
 
     if (keyError || !licenseKey) {
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     // Update license key status
     const { error: updateKeyError } = await supabase
-      .from('license_keys')
+      .from('licenses')
       .update({ 
         status: 'activated',
         activated_at: activationDate,
