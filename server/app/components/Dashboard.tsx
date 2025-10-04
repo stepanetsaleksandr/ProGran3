@@ -5,6 +5,7 @@ import LicenseManager from './LicenseManager';
 import SystemMonitor from './SystemMonitor';
 import { useDashboardStats } from '../hooks/useDashboardStats';
 import { DashboardProvider } from '../context/DashboardContext';
+import { ToastProvider } from './Toast';
 
 function DashboardContent() {
   const { stats, loading, error, refreshStats } = useDashboardStats();
@@ -173,8 +174,10 @@ function DashboardContent() {
 
 export default function Dashboard() {
   return (
-    <DashboardProvider>
-      <DashboardContent />
-    </DashboardProvider>
+    <ToastProvider>
+      <DashboardProvider>
+        <DashboardContent />
+      </DashboardProvider>
+    </ToastProvider>
   );
 }
