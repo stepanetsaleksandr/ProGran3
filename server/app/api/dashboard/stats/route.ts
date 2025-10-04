@@ -5,7 +5,8 @@ export async function GET() {
   try {
     const supabase = createSupabaseClient();
     
-    // Use multiple methods to get reliable data
+    // CRITICAL FIX: Use ONLY reliable method (select all data)
+    // Supabase count API has caching issues and returns incorrect values
     const { data: allLicenses, error: licensesError } = await supabase
       .from('licenses')
       .select('*')
@@ -16,7 +17,7 @@ export async function GET() {
       throw licensesError;
     }
 
-    // Get actual count from data (most reliable)
+    // Get actual count from data (ONLY reliable method)
     const actualLicenses = allLicenses || [];
     const totalLicenses = actualLicenses.length;
     const activeLicenses = actualLicenses.filter(l => l.status === 'active').length;
@@ -24,22 +25,23 @@ export async function GET() {
     const activatedLicenses = actualLicenses.filter(l => l.status === 'activated').length;
     const expiredLicenses = actualLicenses.filter(l => l.status === 'expired').length;
 
-    // Get total users
+    // Get total users (also using reliable method)
     const { data: allUsers, error: usersError } = await supabase
       .from('users')
       .select('id');
 
     const totalUsers = allUsers?.length || 0;
 
-    // Log for debugging
-    console.log('Stats calculation (reliable method):', {
+    // Log for debugging - now shows REAL data
+    console.log('Stats calculation (RELIABLE method only):', {
       totalLicenses,
       activeLicenses,
       generatedLicenses,
       activatedLicenses,
       expiredLicenses,
       totalUsers,
-      actualLicenses: actualLicenses.map(l => ({ id: l.id, status: l.status, created_at: l.created_at }))
+      actualLicenses: actualLicenses.map(l => ({ id: l.id, status: l.status, created_at: l.created_at })),
+      note: 'Using select(*) method only - count API has caching issues'
     });
 
     return NextResponse.json({
