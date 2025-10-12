@@ -1,30 +1,42 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseClient } from '@/lib/supabase';
+import { NextRequest } from 'next/server';
+import { withPublicApi, ApiContext } from '@/lib/api-handler';
+import { apiSuccess, apiError, apiValidationError } from '@/lib/api-response';
+import { validateBody, LicenseGenerateSchema } from '@/lib/validation/schemas';
+import crypto from 'crypto';
 
-export async function POST(request: NextRequest) {
+/**
+ * POST /api/licenses/generate
+ * Generate a new license key with specified duration
+ * TODO: Add authentication when frontend supports it
+ */
+export const POST = withPublicApi(async ({ supabase, request }: ApiContext) => {
   try {
-    const body = await request.json();
-    const { duration_days, description } = body;
-
-    console.log('Generate license request:', { duration_days, description });
-
-    if (!duration_days || duration_days < 1) {
-      return NextResponse.json({ success: false, error: 'Duration must be at least 1 day' }, { status: 400 });
+    // Validate request body
+    const validation = await validateBody(request, LicenseGenerateSchema);
+    
+    if (!validation.success) {
+      return apiValidationError(validation.errors);
     }
 
+    const { duration_days, description } = validation.data;
+
     // Generate unique license key
-    const generateLicenseKey = () => {
+    const generateLicenseKey = (): string => {
       const year = new Date().getFullYear();
       const timestamp = Date.now().toString(36).toUpperCase();
-      const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const randomPart = crypto.randomBytes(6).toString('hex').toUpperCase();
       return `PROGRAN3-${year}-${randomPart}-${timestamp}`;
     };
 
     const license_key = generateLicenseKey();
-    console.log('Generated license key:', license_key);
 
-    // Create license record (not activated yet)
-    const supabase = createSupabaseClient();
+    console.log('[License Generation]', {
+      license_key,
+      duration_days,
+      description: description || 'N/A'
+    });
+
+    // Create license record
     const currentDate = new Date().toISOString();
     const { data: license, error } = await supabase
       .from('licenses')
@@ -34,35 +46,34 @@ export async function POST(request: NextRequest) {
         description: description || `${duration_days} days license`,
         status: 'generated',
         created_at: currentDate,
-        updated_at: currentDate
+        updated_at: currentDate,
       })
       .select()
       .single();
 
     if (error) {
-      console.error('Supabase error:', error);
+      console.error('[License Generation] Database error:', error);
+      
+      // Handle duplicate key error
+      if (error.code === '23505') {
+        return apiError('License key collision. Please try again.', 500);
+      }
+      
       throw error;
     }
 
-    console.log('License created successfully:', license);
+    console.log('[License Generation] Success:', license.id);
 
-    return NextResponse.json({ 
-      success: true, 
-      data: {
-        id: license.id,
-        license_key: license.license_key,
-        duration_days: license.duration_days,
-        description: license.description,
-        status: license.status,
-        created_at: license.created_at
-      }
-    });
+    return apiSuccess({
+      id: license.id,
+      license_key: license.license_key,
+      duration_days: license.duration_days,
+      description: license.description,
+      status: license.status,
+      created_at: license.created_at
+    }, 'License generated successfully', 201);
   } catch (error) {
-    console.error('Generate license error:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error',
-      details: error instanceof Error ? error.stack : undefined
-    }, { status: 500 });
+    console.error('[License Generation] Error:', error);
+    return apiError(error as Error);
   }
-}
+});

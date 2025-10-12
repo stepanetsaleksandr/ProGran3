@@ -1,21 +1,30 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { NextRequest } from 'next/server';
+import { withPublicApi, ApiContext } from '@/lib/api-handler';
+import { apiSuccess, apiError, apiValidationError, apiNotFound } from '@/lib/api-response';
+import { validateBody, LicenseActivateSchema } from '@/lib/validation/schemas';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL || 'https://zgkxtdjdaqnktjxunbeu.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpna3h0ZGpkYXFua3RqeHVuYmV1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTM1MDU3NCwiZXhwIjoyMDc0OTI2NTc0fQ.3GKhAoHc1Pprsf0qUBvieXzTTQf0OGeJK53PGgQ1iiE'
-);
-
-export async function POST(request: NextRequest) {
+/**
+ * POST /api/licenses/activate
+ * Activate a license with user email and system fingerprint
+ */
+export const POST = withPublicApi(async ({ supabase, request }: ApiContext) => {
   try {
-    const body = await request.json();
-    const { license_key, user_email, system_fingerprint } = body;
-
-    if (!license_key || !user_email || !system_fingerprint) {
-      return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
+    // Validate request body
+    const validation = await validateBody(request, LicenseActivateSchema);
+    
+    if (!validation.success) {
+      return apiValidationError(validation.errors);
     }
 
-    // Check if license key exists and is not activated
+    const { license_key, user_email, system_fingerprint } = validation.data;
+
+    console.log('[License Activation] Attempt:', {
+      license_key: license_key.substring(0, 20) + '...',
+      user_email,
+      fingerprint: system_fingerprint.substring(0, 16) + '...'
+    });
+
+    // Check if license key exists and is not already activated
     const { data: licenseKey, error: keyError } = await supabase
       .from('licenses')
       .select('*')
@@ -24,94 +33,102 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (keyError || !licenseKey) {
-      return NextResponse.json({ success: false, error: 'Invalid or already activated license key' }, { status: 400 });
+      console.warn('[License Activation] Invalid key:', license_key);
+      return apiError('Invalid or already activated license key', 400);
     }
 
     // Check if user exists, create if not
-    let { data: user, error: userError } = await supabase
+    let userId: string;
+    const { data: existingUser, error: userFetchError } = await supabase
       .from('users')
-      .select('*')
+      .select('id')
       .eq('email', user_email)
       .single();
 
-    if (userError && userError.code === 'PGRST116') {
+    if (userFetchError && userFetchError.code === 'PGRST116') {
       // User doesn't exist, create new user
       const { data: newUser, error: createUserError } = await supabase
         .from('users')
         .insert({
           email: user_email,
           name: user_email.split('@')[0],
-          created_at: new Date()
+          created_at: new Date().toISOString()
         })
-        .select()
+        .select('id')
         .single();
 
-      if (createUserError) throw createUserError;
-      user = newUser;
-    } else if (userError) {
-      throw userError;
+      if (createUserError) {
+        console.error('[License Activation] User creation error:', createUserError);
+        throw createUserError;
+      }
+
+      userId = newUser.id;
+      console.log('[License Activation] New user created:', userId);
+    } else if (userFetchError) {
+      console.error('[License Activation] User fetch error:', userFetchError);
+      throw userFetchError;
+    } else {
+      userId = existingUser.id;
     }
 
     // Calculate expiration date
     const activationDate = new Date();
     const expirationDate = new Date(activationDate.getTime() + (licenseKey.duration_days * 24 * 60 * 60 * 1000));
 
-    // Create activated license
-    const { data: license, error: licenseError } = await supabase
+    // Update license status
+    const { data: activatedLicense, error: licenseError } = await supabase
       .from('licenses')
-      .insert({
-        user_id: user.id,
-        license_key: license_key,
-        duration_days: licenseKey.duration_days,
+      .update({
+        user_id: userId,
         status: 'active',
-        activated_at: activationDate,
-        expires_at: expirationDate,
-        created_at: new Date()
+        activated_at: activationDate.toISOString(),
+        expires_at: expirationDate.toISOString(),
+        updated_at: new Date().toISOString()
       })
+      .eq('id', licenseKey.id)
       .select()
       .single();
 
-    if (licenseError) throw licenseError;
-
-    // Update license key status
-    const { error: updateKeyError } = await supabase
-      .from('licenses')
-      .update({ 
-        status: 'activated',
-        activated_at: activationDate,
-        user_id: user.id
-      })
-      .eq('id', licenseKey.id);
-
-    if (updateKeyError) throw updateKeyError;
+    if (licenseError) {
+      console.error('[License Activation] License update error:', licenseError);
+      throw licenseError;
+    }
 
     // Create system info record
     const { data: systemInfo, error: systemError } = await supabase
       .from('system_infos')
       .insert({
-        license_id: license.id,
+        license_id: activatedLicense.id,
         fingerprint_hash: system_fingerprint,
         system_data: { fingerprint: system_fingerprint },
-        last_seen: activationDate,
-        created_at: activationDate
+        last_seen: activationDate.toISOString(),
+        created_at: activationDate.toISOString()
       })
       .select()
       .single();
 
-    if (systemError) throw systemError;
+    if (systemError) {
+      console.error('[License Activation] System info error:', systemError);
+      // Don't fail activation if system info creation fails
+    }
 
-    return NextResponse.json({ 
-      success: true, 
-      data: {
-        license_id: license.id,
-        user_email: user.email,
-        duration_days: license.duration_days,
-        activated_at: activationDate,
-        expires_at: expirationDate,
-        status: 'active'
-      }
+    console.log('[License Activation] Success:', {
+      license_id: activatedLicense.id,
+      user_id: userId,
+      expires_at: expirationDate
     });
+
+    return apiSuccess({
+      license_id: activatedLicense.id,
+      license_key: activatedLicense.license_key,
+      user_email,
+      duration_days: activatedLicense.duration_days,
+      activated_at: activationDate.toISOString(),
+      expires_at: expirationDate.toISOString(),
+      status: 'active'
+    }, 'License activated successfully');
   } catch (error) {
-    return NextResponse.json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+    console.error('[License Activation] Error:', error);
+    return apiError(error as Error);
   }
-}
+});

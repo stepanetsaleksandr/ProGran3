@@ -39,7 +39,9 @@ export function useLicenses(): UseLicensesReturn {
       const data = await response.json();
       
       if (data.success) {
-        setLicenses(data.data || []);
+        // New API structure: data.data.licenses (with pagination)
+        const licenses = data.data?.licenses || data.data || [];
+        setLicenses(Array.isArray(licenses) ? licenses : []);
       } else {
         setError(data.error || 'Failed to fetch licenses');
       }
@@ -80,10 +82,9 @@ export function useLicenses(): UseLicensesReturn {
 
   const deleteLicense = useCallback(async (id: string): Promise<boolean> => {
     try {
-      const response = await fetch('/api/delete-license', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
+      const response = await fetch(`/api/licenses/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
       });
       
       const data = await response.json();

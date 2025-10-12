@@ -39,7 +39,12 @@ export function useDashboardStats(): UseDashboardStatsReturn {
       const data = await response.json();
       
       if (data.success) {
-        const licenses = data.data || [];
+        // New API structure: data.data.licenses (with pagination)
+        const licenses = Array.isArray(data.data?.licenses) 
+          ? data.data.licenses 
+          : Array.isArray(data.data) 
+            ? data.data 
+            : [];
         
         // Calculate stats from licenses data (same as table)
         const stats = {
