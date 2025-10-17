@@ -38,11 +38,15 @@ module ProGran3
         result = ApiClient.activate(email, license_key, @fingerprint)
         
         if result[:success]
-          # Зберігаємо ліцензію локально
+          # Зберігаємо ліцензію локально (v3.0: з компонентами для flexible validation)
+          fp_data = HardwareFingerprint.generate
+          
           license_data = {
             license_key: license_key,
             email: email,
-            fingerprint: @fingerprint,
+            fingerprint: fp_data[:fingerprint],
+            fingerprint_components: fp_data[:components],  # v3.0: зберігаємо компоненти
+            fingerprint_version: fp_data[:version],        # v3.0
             status: result[:data][:status] || 'active',
             activated_at: Time.now.iso8601,
             last_validation: Time.now.iso8601,
@@ -109,20 +113,42 @@ module ProGran3
         
         puts "📋 Знайдено ліцензію: #{license[:license_key][0..8]}..."
         
-        # Перевірка fingerprint
-        if license[:fingerprint] != @fingerprint
-          puts "❌ Fingerprint не збігається!"
-          puts "   Збережено: #{license[:fingerprint][0..16]}..."
-          puts "   Поточний: #{@fingerprint[0..16]}..."
-          
-          return {
-            valid: false,
-            error: 'hardware_mismatch',
-            message: 'Ліцензія прив\'язана до іншого комп\'ютера'
-          }
-        end
+        # Перевірка fingerprint (v3.0: flexible validation)
+        fp_version = (license[:fingerprint_version] || '1.0').to_f
         
-        puts "✅ Fingerprint збігається"
+        if fp_version >= 3.0
+          # v3.0+: Використовуємо flexible validation (3 з 4 компонентів)
+          current_components = fp_data[:components]
+          stored_components = license[:fingerprint_components] || {}
+          
+          if !HardwareFingerprint.validate_flexible(stored_components, current_components)
+            puts "❌ Fingerprint не збігається (flexible validation)!"
+            puts "   Недостатньо компонентів збігається (потрібно мінімум 3 з 4)"
+            
+            return {
+              valid: false,
+              error: 'hardware_mismatch',
+              message: 'Ліцензія прив\'язана до іншого комп\'ютера'
+            }
+          end
+          
+          puts "✅ Fingerprint валідний (flexible validation: OK)"
+        else
+          # v1.0-v2.0: Строга перевірка (повний збіг)
+          if license[:fingerprint] != @fingerprint
+            puts "❌ Fingerprint не збігається!"
+            puts "   Збережено: #{license[:fingerprint][0..16]}..."
+            puts "   Поточний: #{@fingerprint[0..16]}..."
+            
+            return {
+              valid: false,
+              error: 'hardware_mismatch',
+              message: 'Ліцензія прив\'язана до іншого комп\'ютера'
+            }
+          end
+          
+          puts "✅ Fingerprint збігається"
+        end
         
         # Перевірка expiration (якщо є)
         if license[:expires_at]

@@ -190,11 +190,63 @@ export const POST = withPublicApi(async ({ supabase, request }: ApiContext) => {
         return apiError('License is bound to a different system', 403);
       }
 
-      // Update last_seen
+      // === CONCURRENT SESSIONS CHECK (v3.0) ===
+      // Отримуємо IP клієнта
+      const currentClientIp = getClientIp(request);
+      
+      // Перевіряємо чи є інша активна сесія з іншого IP
+      const { data: systemData } = await supabase
+        .from('system_infos')
+        .select('system_data')
+        .eq('id', systemInfo.id)
+        .single();
+      
+      if (systemData?.system_data) {
+        const lastIp = systemData.system_data.last_ip;
+        const lastSeen = systemData.system_data.last_seen;
+        
+        if (lastIp && lastSeen) {
+          const lastSeenTime = new Date(lastSeen).getTime();
+          const now = Date.now();
+          const timeDiff = (now - lastSeenTime) / 1000; // секунди
+          
+          // Якщо остання активність < 15 хв і IP інший → concurrent usage
+          if (timeDiff < 900 && lastIp !== currentClientIp) {
+            console.warn('[License Validation] Concurrent session detected:', {
+              current_ip: currentClientIp,
+              last_ip: lastIp,
+              time_diff_seconds: timeDiff
+            });
+            
+            // Блокуємо ліцензію при виявленні concurrent usage
+            await supabase
+              .from('licenses')
+              .update({
+                status: 'suspended',
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', license.id);
+            
+            return apiError(
+              'License suspended: concurrent usage detected on different IP addresses',
+              403,
+              { reason: 'concurrent_usage', last_ip: lastIp, current_ip: currentClientIp },
+              'CONCURRENT_USAGE'
+            );
+          }
+        }
+      }
+
+      // Update last_seen + IP для tracking
       await supabase
         .from('system_infos')
         .update({
-          last_seen: new Date().toISOString()
+          last_seen: new Date().toISOString(),
+          system_data: {
+            ...systemData?.system_data,
+            last_ip: currentClientIp,
+            last_seen: new Date().toISOString()
+          }
         })
         .eq('id', systemInfo.id);
     }

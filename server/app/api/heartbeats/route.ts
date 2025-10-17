@@ -50,12 +50,63 @@ export const POST = withPublicApi(async ({ supabase, request }: ApiContext) => {
       return apiError('License is not active', 403);
     }
 
+    // === CONCURRENT SESSIONS CHECK (v3.0) ===
+    // Отримуємо IP клієнта
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0] || 
+                     request.headers.get('x-real-ip') || 
+                     'unknown';
+    
+    // Перевіряємо чи є concurrent usage
+    const { data: existingSystemInfo } = await supabase
+      .from('system_infos')
+      .select('system_data, last_seen')
+      .eq('license_id', license.id)
+      .single();
+    
+    if (existingSystemInfo?.system_data) {
+      const lastIp = existingSystemInfo.system_data.last_ip;
+      const lastSeen = existingSystemInfo.last_seen;
+      
+      if (lastIp && lastSeen && lastIp !== clientIp) {
+        const lastSeenTime = new Date(lastSeen).getTime();
+        const now = Date.now();
+        const timeDiff = (now - lastSeenTime) / 1000; // секунди
+        
+        // Якщо остання активність < 15 хв і IP інший → concurrent usage
+        if (timeDiff < 900) {
+          console.warn('[Heartbeat] Concurrent session detected:', {
+            current_ip: clientIp,
+            last_ip: lastIp,
+            time_diff_seconds: timeDiff
+          });
+          
+          // Блокуємо ліцензію
+          await supabase
+            .from('licenses')
+            .update({
+              status: 'suspended',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', license.id);
+          
+          return apiError(
+            'License suspended: concurrent usage from different IP',
+            403,
+            { reason: 'concurrent_usage' },
+            'CONCURRENT_USAGE'
+          );
+        }
+      }
+    }
+
     // Update system_infos last_seen with enhanced data
     const currentTime = new Date().toISOString();
     
     // Prepare enhanced system_data
     const systemData: any = {
       last_heartbeat: timestamp || Date.now(),
+      last_ip: clientIp,  // v3.0: зберігаємо IP для concurrent check
+      last_seen: currentTime,  // v3.0: дублюємо для швидшої перевірки
       updated_at: currentTime,
       plugin_version: plugin_version || 'unknown',
       sketchup_version: sketchup_version || 'unknown',

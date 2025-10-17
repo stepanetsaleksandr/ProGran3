@@ -24,9 +24,10 @@ module ProGran3
         raise ArgumentError, "License data cannot be nil" if license_data.nil?
         raise ArgumentError, "License data must be a Hash" unless license_data.is_a?(Hash)
         
-        # Додаємо метадані
+        # Додаємо метадані (включаючи версію fingerprint)
         data_to_save = license_data.merge({
           format_version: FORMAT_VERSION,
+          fingerprint_version: '3.0',  # v3.0: Machine GUID + flexible validation
           saved_at: Time.now.iso8601
         })
         
@@ -35,6 +36,13 @@ module ProGran3
         
         # Створюємо директорію якщо не існує
         FileUtils.mkdir_p(LICENSE_DIR) unless Dir.exist?(LICENSE_DIR)
+        
+        # Видаляємо старий файл якщо існує (для уникнення Permission denied)
+        if File.exist?(LICENSE_FILE)
+          # Знімаємо read-only перед перезаписом (БЕЗ консольного вікна)
+          remove_readonly_attribute(LICENSE_FILE)
+          File.delete(LICENSE_FILE)
+        end
         
         # Зберігаємо зашифровані дані
         File.write(LICENSE_FILE, encrypted)
@@ -74,12 +82,35 @@ module ProGran3
           return nil
         end
         
+        # МІГРАЦІЯ: Перевіряємо версію fingerprint
+        if needs_fingerprint_migration?(decrypted)
+          fp_version = decrypted[:fingerprint_version] || '1.0'
+          puts "🔄 Виявлено стару версію fingerprint (v#{fp_version})"
+          puts "📝 Оновлення до v3.0 - потрібна повторна активація ліцензії"
+          migrate_old_fingerprint
+          return nil
+        end
+        
         puts "✅ Ліцензію завантажено з #{LICENSE_FILE}"
         decrypted
         
       rescue OpenSSL::Cipher::CipherError => e
         puts "❌ Помилка розшифрування (можливо файл пошкоджено або скопійовано з іншого ПК)"
         puts "   #{e.message}"
+        puts "🗑️ Видаляємо пошкоджений файл ліцензії..."
+        
+        # Створюємо backup перед видаленням
+        begin
+          backup_file = LICENSE_FILE + '.corrupted.backup'
+          FileUtils.cp(LICENSE_FILE, backup_file) if File.exist?(LICENSE_FILE)
+          puts "💾 Backup створено: #{backup_file}"
+        rescue => backup_error
+          puts "⚠️ Не вдалося створити backup: #{backup_error.message}"
+        end
+        
+        # Видаляємо пошкоджений файл
+        delete
+        
         nil
         
       rescue => e
@@ -92,6 +123,9 @@ module ProGran3
       # @return [Boolean] true якщо успішно видалено
       def self.delete
         if File.exist?(LICENSE_FILE)
+          # Знімаємо read-only атрибут якщо є (БЕЗ консольного вікна)
+          remove_readonly_attribute(LICENSE_FILE)
+          
           File.delete(LICENSE_FILE)
           puts "✅ Ліцензію видалено"
           true
@@ -124,6 +158,42 @@ module ProGran3
           readable: File.readable?(LICENSE_FILE),
           writable: File.writable?(LICENSE_FILE)
         }
+      end
+      
+      # Перевіряє чи потрібна міграція fingerprint
+      # @param license_data [Hash] Дані ліцензії
+      # @return [Boolean]
+      def self.needs_fingerprint_migration?(license_data)
+        # Якщо немає fingerprint_version або версія < 3.0 - потрібна міграція
+        fp_version = license_data[:fingerprint_version]
+        return true unless fp_version
+        
+        # Порівнюємо версії (1.0, 2.0 < 3.0)
+        fp_version.to_f < 3.0
+      end
+      
+      # Мігрує стару ліцензію (видаляє її і створює backup)
+      def self.migrate_old_fingerprint
+        begin
+          # Створюємо backup старої ліцензії
+          backup_file = LICENSE_FILE + '.v1.backup'
+          
+          if File.exist?(LICENSE_FILE)
+            FileUtils.cp(LICENSE_FILE, backup_file)
+            puts "💾 Створено backup старої ліцензії: #{backup_file}"
+          end
+          
+          # Видаляємо стару ліцензію
+          delete
+          
+          puts "✅ Міграція завершена. Активуйте ліцензію заново."
+          puts "ℹ️  Backup старої ліцензії збережено на випадок потреби"
+          
+          true
+        rescue => e
+          puts "❌ Помилка міграції: #{e.message}"
+          false
+        end
       end
       
       private
@@ -183,7 +253,7 @@ module ProGran3
         
         # Використовуємо PBKDF2 для генерації ключа
         salt = 'ProGran3-License-Salt-v1.0'
-        iterations = 10000
+        iterations = 100000  # v3.0: збільшено з 10000 до 100000 (OWASP 2023)
         key_length = 32 # 256 bits
         
         OpenSSL::PKCS5.pbkdf2_hmac(
@@ -196,12 +266,25 @@ module ProGran3
       end
       
       # Приховує файл на Windows
+      # Знімає read-only атрибут з файлу (БЕЗ консольного вікна)
+      def self.remove_readonly_attribute(file_path)
+        return unless File.exist?(file_path)
+        
+        begin
+          # Робимо файл writable (знімаємо read-only)
+          File.chmod(0666, file_path)
+        rescue => e
+          # Ігноруємо помилки (не критично)
+        end
+      end
+      
       def self.hide_file_windows
         begin
-          # Встановлюємо атрибути Hidden + System
-          system("attrib +h +s \"#{LICENSE_FILE}\" >nul 2>&1")
+          # Встановлюємо атрибути БЕЗ консольного вікна
+          # Використовуємо просто File.chmod (приховання не критично)
+          File.chmod(0600, LICENSE_FILE)
         rescue => e
-          puts "⚠️ Не вдалося приховати файл: #{e.message}"
+          # Ігноруємо помилки приховування (не критично)
         end
       end
     end
