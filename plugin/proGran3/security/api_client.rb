@@ -11,7 +11,7 @@ module ProGran3
     class ApiClient
       
       # URL сервера (Vercel)
-      API_BASE_URL = 'https://server-qf9qtpsf0-provis3ds-projects.vercel.app'.freeze
+      API_BASE_URL = 'https://server-hbf7li0u7-provis3ds-projects.vercel.app'.freeze
       
       # Timeout для запитів
       REQUEST_TIMEOUT = 10 # секунд
