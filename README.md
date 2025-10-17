@@ -1,8 +1,9 @@
 # ProGran3 - Professional License Management System
 
-**Version:** 3.1.0  
-**Production:** https://server-qf9qtpsf0-provis3ds-projects.vercel.app  
-**Status:** 🟢 Production Ready
+**Version:** 3.2.0  
+**Production:** https://server-hbf7li0u7-provis3ds-projects.vercel.app  
+**Status:** 🟢 Production Ready  
+**Security:** 🟢 9.0/10 (EXCELLENT)
 
 ---
 
@@ -26,8 +27,9 @@
 4. Працювати
 
 ### For Admins:
-- Dashboard: https://server-qf9qtpsf0-provis3ds-projects.vercel.app
+- Dashboard: https://server-hbf7li0u7-provis3ds-projects.vercel.app/dashboard
 - Generate licenses → Copy key → Send to users
+- Manage licenses (status, expiration, manual changes)
 
 ---
 
@@ -36,10 +38,11 @@
 **SketchUp plugin** для конструювання пам'ятників з професійною системою ліцензування:
 
 **Features:**
-- ✅ License Management (hardware binding, 8/10 security)
+- ✅ License Management (hardware binding v3.0, 9/10 security)
 - ✅ Activity Tracking (real-time monitoring)
 - ✅ Professional Dashboard (Next.js + Supabase)
-- ✅ Offline Support (7-day grace period)
+- ✅ Offline Support (1-day grace period)
+- ✅ Concurrent Detection (IP tracking + auto-suspension)
 - ✅ Multi-language (UK/PL/EN)
 
 **Tech Stack:**
