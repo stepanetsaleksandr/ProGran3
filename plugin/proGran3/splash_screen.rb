@@ -194,38 +194,61 @@ module ProGran3
             loadingText.textContent = 'Перевірка ліцензії...';
             statusText.textContent = 'Підключення до сервера...';
             
-            // Симуляція затримки сервера
-            setTimeout(() => {
-              // Симуляція результату перевірки
-              const hasLicense = true; // ТЕСТОВИЙ РЕЖИМ - ЗАВЖДИ УСПІШНА ЛІЦЕНЗІЯ
+            // Викликаємо Ruby callback для перевірки ліцензії
+            if (window.sketchup && window.sketchup.validate_license) {
+              window.sketchup.validate_license();
+            } else {
+              // Fallback якщо callback не зареєстровано
+              console.warn('License validation callback не знайдено');
+              loadingText.textContent = 'Ліцензія не знайдена';
+              statusText.textContent = 'Потрібна активація';
               
-              if (hasLicense) {
-                // Ліцензія знайдена
-                loadingText.textContent = 'Ліцензія знайдена!';
-                statusText.textContent = 'Завантаження інтерфейсу...';
-                
-                setTimeout(() => {
-                  // Переходимо до основного UI
-                  console.log('Спроба переходу до основного UI...');
-                  if (window.sketchup && window.sketchup.show_main_ui) {
-                    console.log('Викликаємо show_main_ui через sketchup');
-                    window.sketchup.show_main_ui();
-                  } else {
-                    console.log('Викликаємо show_main_ui через postMessage');
-                    window.parent.postMessage({ type: 'show_main_ui' }, '*');
-                  }
-                }, 1000);
-              } else {
-                // Ліцензія не знайдена
-                loadingText.textContent = 'Ліцензія не знайдена';
-                statusText.textContent = 'Потрібна активація';
-                
-                setTimeout(() => {
-                  // Переходимо до ліцензійного UI
-                  window.parent.postMessage({ type: 'license_required' }, '*');
-                }, 1000);
+              setTimeout(() => {
+                if (window.sketchup && window.sketchup.show_license_ui) {
+                  window.sketchup.show_license_ui();
+                } else {
+                  console.error('show_license_ui callback не знайдено');
+                }
+              }, 1000);
+            }
+          }
+          
+          // Обробка результату валідації від Ruby
+          window.handleLicenseValidationResult = function(result) {
+            console.log('License validation result:', result);
+            
+            if (result.valid) {
+              // Ліцензія валідна
+              loadingText.textContent = 'Ліцензія валідна!';
+              statusText.textContent = 'Завантаження інтерфейсу...';
+              
+              // Показуємо попередження якщо є
+              if (result.warning) {
+                statusText.textContent = result.warning;
               }
-            }, 2000);
+              
+              setTimeout(() => {
+                // Переходимо до основного UI
+                if (window.sketchup && window.sketchup.show_main_ui) {
+                  window.sketchup.show_main_ui();
+                } else {
+                  window.parent.postMessage({ type: 'show_main_ui' }, '*');
+                }
+              }, 1000);
+            } else {
+              // Ліцензія не валідна
+              loadingText.textContent = 'Ліцензія не знайдена';
+              statusText.textContent = result.message || 'Потрібна активація';
+              
+              setTimeout(() => {
+                // Переходимо до ліцензійного UI
+                if (window.sketchup && window.sketchup.show_license_ui) {
+                  window.sketchup.show_license_ui();
+                } else {
+                  console.error('show_license_ui callback не знайдено');
+                }
+              }, 1000);
+            }
           }
           
           // Початок завантаження
@@ -260,6 +283,41 @@ module ProGran3
         
         # Встановлюємо HTML
         dialog.set_html(SPLASH_HTML)
+        
+        # Додаємо callback для валідації ліцензії
+        dialog.add_action_callback("validate_license") do |action_context|
+          puts "🔍 Callback: validate_license викликано"
+          
+          begin
+            # Ініціалізуємо License Manager
+            require_relative 'security/license_manager'
+            manager = Security::LicenseManager.new
+            
+            # Валідуємо ліцензію
+            result = manager.validate_license
+            
+            # Повертаємо результат в JavaScript
+            js_result = {
+              valid: result[:valid],
+              message: result[:message] || result[:error],
+              warning: result[:warning]
+            }.to_json
+            
+            dialog.execute_script("window.handleLicenseValidationResult(#{js_result})")
+            
+          rescue => e
+            puts "❌ Помилка валідації: #{e.message}"
+            puts e.backtrace.first(3)
+            
+            # Повертаємо помилку в JavaScript
+            error_result = {
+              valid: false,
+              message: "Помилка перевірки ліцензії: #{e.message}"
+            }.to_json
+            
+            dialog.execute_script("window.handleLicenseValidationResult(#{error_result})")
+          end
+        end
         
         # Обробка повідомлень від JavaScript
         dialog.add_action_callback("license_valid") do |action_context|

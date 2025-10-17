@@ -53,14 +53,21 @@
   }
   
   function updateTilingSummary(addedElements) {
+    // Не оновлюємо автоматично - тільки через детальну специфікацію
+    // Якщо користувач не натиснув кнопку, показуємо базову інфо
     if (addedElements.tiling) {
-      const activeButton = document.querySelector('.tiling-mode-btn.active');
       const summaryTilingEl = safeGetElement('summary-tiling');
-      if (activeButton && summaryTilingEl) {
-        safeSetTextContent(summaryTilingEl, activeButton.textContent);
+      if (summaryTilingEl && summaryTilingEl.textContent === '--') {
+        const activeButton = document.querySelector('.tiling-mode-btn.active');
+        if (activeButton) {
+          safeSetTextContent(summaryTilingEl, activeButton.textContent + ' (оновіть для деталей)');
+        }
       }
     } else {
-      safeSetTextContent(safeGetElement('summary-tiling'), '--');
+      const summaryTilingEl = safeGetElement('summary-tiling');
+      if (summaryTilingEl && !summaryTilingEl.textContent.includes('см')) {
+        safeSetTextContent(summaryTilingEl, '--');
+      }
     }
   }
   
@@ -232,25 +239,18 @@
         global.ProGran3.Core.StateManager.getModelLists() : 
         global.modelLists || {};
       
-      // Оновлюємо всі секції
+      // Оновлюємо тільки ті секції що не використовують детальну специфікацію
       updateFoundationSummary(addedElements, currentUnit);
-      updateTilingSummary(addedElements);
-      updateCladdingSummary(addedElements, currentUnit);
       updateBlindAreaSummary(addedElements, currentUnit);
-      
-      // Оновлюємо карусельні елементи
-      updateCarouselItemSummary(addedElements, carouselState, modelLists, 'stands', 'summary-stand');
-      updateCarouselItemSummary(addedElements, carouselState, modelLists, 'flowerbeds', 'summary-flowerbed');
-      updateCarouselItemSummary(addedElements, carouselState, modelLists, 'gravestones', 'summary-gravestone');
-      updateCarouselItemSummary(addedElements, carouselState, modelLists, 'steles', 'summary-stele');
-      updateCarouselItemSummary(addedElements, carouselState, modelLists, 'fence_decor', 'summary-fence-decor');
-      
-      // Оновлюємо огорожі
       updateFenceCornerSummary(addedElements, currentUnit);
       updateFencePerimeterSummary(addedElements, currentUnit);
       
-      // Оновлюємо підставки
-      updateStandsSummary(addedElements, currentUnit);
+      // Автоматично запитуємо детальну специфікацію для інших елементів
+      if (addedElements.tiling || addedElements.cladding || addedElements.stands || 
+          addedElements.steles || addedElements.flowerbeds || addedElements.gravestones) {
+        logSummaryAction('Автоматичний запит детальної специфікації', 'info');
+        setTimeout(() => refreshDetailedSummary(), 100);
+      }
       
       logSummaryAction('updateSummaryTable() завершено успішно', 'success');
       
@@ -293,15 +293,92 @@
     logSummaryAction('SummaryTable очищено', 'info');
   }
   
+  // Оновлення детальної специфікації з Ruby
+  function updateDetailedSummary(data) {
+    try {
+      logSummaryAction('updateDetailedSummary() викликано з даними: ' + JSON.stringify(data), 'info');
+      console.log('📊 Детальна специфікація:', data);
+      
+      const categories = [
+        // Фундамент, огорожі, відмостку НЕ оновлюємо - вони беруться з input полів
+        { key: 'tiles', id: 'summary-tiling', label: 'Плитка' },
+        { key: 'cladding', id: 'summary-cladding', label: 'Облицювання' },
+        { key: 'stands', id: 'summary-stand', label: 'Підставка' },
+        { key: 'flowerbeds', id: 'summary-flowerbed', label: 'Квітник' },
+        { key: 'gravestones', id: 'summary-gravestone', label: 'Надгробна плита' },
+        { key: 'steles', id: 'summary-stele', label: 'Стела' },
+        { key: 'lamps', id: 'summary-lamp', label: 'Лампа' },
+        { key: 'fence_decor', id: 'summary-fence-decor', label: 'Декор огорожі' }
+      ];
+      
+      categories.forEach(category => {
+        const element = safeGetElement(category.id);
+        const items = data[category.key];
+        
+        console.log(`📌 Категорія ${category.label}:`, items);
+        
+        if (!element) {
+          console.warn(`⚠️ Елемент ${category.id} не знайдено!`);
+          return;
+        }
+        
+        if (!items || items.length === 0) {
+          console.log(`ℹ️ ${category.label}: немає даних`);
+          // НЕ перезаписуємо якщо немає даних - залишаємо старе значення
+          return;
+        }
+        
+        // Формуємо текст специфікації
+        const lines = items.map(item => {
+          return `${item.width}×${item.depth}×${item.height} см (${item.material}) - ${item.count} шт`;
+        });
+        
+        const text = lines.join('\n');
+        console.log(`✅ ${category.label}: ${text}`);
+        safeSetTextContent(element, text);
+      });
+      
+      logSummaryAction('Детальна специфікація оновлена', 'success');
+      
+    } catch (error) {
+      logSummaryAction(`Помилка в updateDetailedSummary(): ${error.message}`, 'error');
+      console.error('❌ Помилка детальної специфікації:', error);
+    }
+  }
+  
+  // Функція для запиту детальної специфікації
+  function refreshDetailedSummary() {
+    try {
+      logSummaryAction('Запит детальної специфікації', 'info');
+      console.log('🔄 Викликаю window.sketchup.get_detailed_summary()');
+      
+      if (window.sketchup && window.sketchup.get_detailed_summary) {
+        window.sketchup.get_detailed_summary();
+        console.log('✅ Callback викликано успішно');
+      } else {
+        console.error('❌ window.sketchup.get_detailed_summary не доступний');
+        logSummaryAction('SketchUp bridge не доступний', 'warn');
+      }
+      
+    } catch (error) {
+      console.error('❌ Помилка:', error);
+      logSummaryAction(`Помилка при запиті специфікації: ${error.message}`, 'error');
+    }
+  }
+  
   // Експорт публічного API
   global.ProGran3.UI.SummaryTable = {
     updateSummaryTable: updateSummaryTable,
     getSummaryData: getSummaryData,
-    clearSummaryTable: clearSummaryTable
+    clearSummaryTable: clearSummaryTable,
+    updateDetailedSummary: updateDetailedSummary,
+    refreshDetailedSummary: refreshDetailedSummary
   };
   
-  // Зворотна сумісність - функція доступна глобально
+  // Зворотна сумісність - функції доступні глобально
   global.updateSummaryTable = updateSummaryTable;
+  global.updateDetailedSummary = updateDetailedSummary;
+  global.refreshDetailedSummary = refreshDetailedSummary;
   
   // Ініціалізація
   if (global.ProGran3.Core.Logger) {

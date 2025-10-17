@@ -56,9 +56,15 @@ export function useLicenses(): UseLicensesReturn {
 
   const createLicense = useCallback(async (licenseData: { duration_days: number; description: string }): Promise<boolean> => {
     try {
+      // Get API key from environment (client-side)
+      const apiKey = process.env.NEXT_PUBLIC_ADMIN_API_KEY || '';
+      
       const response = await fetch('/api/licenses/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-API-Key': apiKey
+        },
         body: JSON.stringify(licenseData)
       });
       
@@ -82,12 +88,33 @@ export function useLicenses(): UseLicensesReturn {
 
   const deleteLicense = useCallback(async (id: string): Promise<boolean> => {
     try {
+      // Get API key from environment (client-side)
+      const apiKey = process.env.NEXT_PUBLIC_ADMIN_API_KEY || '';
+      
       const response = await fetch(`/api/licenses/${id}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-API-Key': apiKey
+        }
       });
       
-      const data = await response.json();
+      // Check if response has content before parsing JSON
+      if (!response.ok) {
+        const text = await response.text();
+        let errorData;
+        try {
+          errorData = text ? JSON.parse(text) : { error: 'Failed to delete license' };
+        } catch {
+          errorData = { error: text || 'Failed to delete license' };
+        }
+        setError(errorData.error || 'Failed to delete license');
+        return false;
+      }
+
+      // Try to parse JSON, handle empty responses
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : { success: true };
       
       if (data.success) {
         // Refresh licenses after deletion

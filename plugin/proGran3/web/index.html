@@ -633,19 +633,20 @@
       </div>
       <div class="panel-content">
         <table class="summary-table">
-          <tr> <td data-i18n="summary.foundation">Фундамент:</td> <td id="summary-foundation">--</td> </tr>
-          <tr> <td data-i18n="summary.tiling">Плитка (верх):</td> <td id="summary-tiling">--</td> </tr>
-          <tr> <td data-i18n="summary.cladding">Облицювання (бік):</td> <td id="summary-cladding">--</td> </tr>
-          <tr> <td data-i18n="summary.blind_area">Відмостка:</td> <td id="summary-blind-area">--</td> </tr>
-          <tr> <td data-i18n="summary.stand">Підставка:</td> <td id="summary-stand">--</td> </tr>
-          <tr> <td data-i18n="summary.flowerbed">Квітник:</td> <td id="summary-flowerbed">--</td> </tr>
-          <tr> <td data-i18n="summary.gravestone">Надгробна плита:</td> <td id="summary-gravestone">--</td> </tr>
-          <tr> <td data-i18n="summary.stele">Стела:</td> <td id="summary-stele">--</td> </tr>
-          <tr> <td data-i18n="summary.fence_corner">Кутова огорожа:</td> <td id="summary-fence-corner">--</td> </tr>
-          <tr> <td data-i18n="summary.fence_perimeter">Периметральна огорожа:</td> <td id="summary-fence-perimeter">--</td> </tr>
-          <tr> <td data-i18n="summary.fence_decor">Декор огорожі:</td> <td id="summary-fence-decor">--</td> </tr>
+          <tr> <td data-i18n="summary.foundation">Фундамент:</td> <td id="summary-foundation" class="summary-cell">--</td> </tr>
+          <tr> <td data-i18n="summary.tiling">Плитка (верх):</td> <td id="summary-tiling" class="summary-cell">--</td> </tr>
+          <tr> <td data-i18n="summary.cladding">Облицювання (бік):</td> <td id="summary-cladding" class="summary-cell">--</td> </tr>
+          <tr> <td data-i18n="summary.blind_area">Відмостка:</td> <td id="summary-blind-area" class="summary-cell">--</td> </tr>
+          <tr> <td data-i18n="summary.stand">Підставка:</td> <td id="summary-stand" class="summary-cell">--</td> </tr>
+          <tr> <td data-i18n="summary.flowerbed">Квітник:</td> <td id="summary-flowerbed" class="summary-cell">--</td> </tr>
+          <tr> <td data-i18n="summary.gravestone">Надгробна плита:</td> <td id="summary-gravestone" class="summary-cell">--</td> </tr>
+          <tr> <td data-i18n="summary.stele">Стела:</td> <td id="summary-stele" class="summary-cell">--</td> </tr>
+          <tr> <td data-i18n="summary.lamp">Лампа:</td> <td id="summary-lamp" class="summary-cell">--</td> </tr>
+          <tr> <td data-i18n="summary.fence_corner">Кутова огорожа:</td> <td id="summary-fence-corner" class="summary-cell">--</td> </tr>
+          <tr> <td data-i18n="summary.fence_perimeter">Периметральна огорожа:</td> <td id="summary-fence-perimeter" class="summary-cell">--</td> </tr>
+          <tr> <td data-i18n="summary.fence_decor">Декор огорожі:</td> <td id="summary-fence-decor" class="summary-cell">--</td> </tr>
         </table>
-        <button onclick="refreshSpecification()" class="refresh-button" data-i18n="buttons.refresh">Оновити</button>
+        <button onclick="refreshDetailedSummary()" class="refresh-button" data-i18n="buttons.refresh">Оновити</button>
       </div>
     </section>
 
@@ -696,6 +697,9 @@
       <span class="license-footer-text">Ліцензія:</span>
       <span id="license-footer-email" class="license-footer-email">Не активована</span>
       <span id="license-footer-key" class="license-footer-key"></span>
+      <span class="license-footer-separator">|</span>
+      <span class="license-footer-text">PC ID:</span>
+      <span id="license-footer-fingerprint" class="license-footer-fingerprint">...</span>
     </div>
   </div>
 

@@ -2,14 +2,15 @@ import { NextRequest } from 'next/server';
 import { withPublicApi, ApiContext } from '@/lib/api-handler';
 import { apiSuccess, apiError, apiValidationError } from '@/lib/api-response';
 import { validateBody, LicenseGenerateSchema } from '@/lib/validation/schemas';
+import { requireApiKey } from '@/lib/auth';
 import crypto from 'crypto';
 
 /**
  * POST /api/licenses/generate
  * Generate a new license key with specified duration
- * TODO: Add authentication when frontend supports it
+ * Requires API Key authentication (X-API-Key header)
  */
-export const POST = withPublicApi(async ({ supabase, request }: ApiContext) => {
+const generateHandler = withPublicApi(async ({ supabase, request }: ApiContext) => {
   try {
     // Validate request body
     const validation = await validateBody(request, LicenseGenerateSchema);
@@ -77,3 +78,6 @@ export const POST = withPublicApi(async ({ supabase, request }: ApiContext) => {
     return apiError(error as Error);
   }
 });
+
+// Wrap with API Key requirement
+export const POST = requireApiKey(generateHandler);

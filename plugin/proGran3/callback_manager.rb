@@ -989,5 +989,321 @@ module ProGran3
       @fence_corner_params = nil
       @fence_perimeter_params = nil
     end
+
+    # Callback для отримання детальної специфікації всіх компонентів в моделі
+    def get_detailed_summary_callback(dialog)
+      begin
+        ProGran3::Logger.info("🔍 Початок збору детальної специфікації", "Summary")
+        
+        model = Sketchup.active_model
+        entities = model.entities
+        
+        total_components = entities.grep(Sketchup::ComponentInstance).count
+        ProGran3::Logger.info("📦 Всього компонентів в моделі: #{total_components}", "Summary")
+        
+        summary = {
+          foundation: [],
+          tiles: [],
+          cladding: [],
+          blind_area: [],
+          stands: [],
+          steles: [],
+          flowerbeds: [],
+          gravestones: [],
+          lamps: [],
+          fence_corner: [],
+          fence_perimeter: [],
+          fence_decor: []
+        }
+        
+        # Збираємо всі компоненти
+        entities.grep(Sketchup::ComponentInstance).each do |component|
+          name = component.definition.name
+          ProGran3::Logger.info("🔎 Знайдено компонент: #{name}", "Summary")
+          
+          # Класифікуємо за типом
+          case name
+          when "Foundation"
+            bounds = component.bounds
+            item = {
+              name: name,
+              width: (bounds.width / 10.0).round(1),
+              depth: (bounds.depth / 10.0).round(1),
+              height: (bounds.height / 10.0).round(1),
+              material: get_component_material(component)
+            }
+            summary[:foundation] << item
+            
+          when /Perimeter_Tile|Modular_Tile/
+            # Для плитки аналізуємо внутрішні компоненти
+            ProGran3::Logger.info("🔹 Плитка знайдена: #{name}, аналізую внутрішні компоненти...", "Summary")
+            analyze_tile_components(component, summary[:tiles])
+            ProGran3::Logger.info("✅ Плитка: додано #{summary[:tiles].count} елементів", "Summary")
+            
+          when /Cladding/
+            # Для облицювання аналізуємо внутрішні елементи
+            analyze_cladding_components(component, summary[:cladding])
+            
+          when /BlindArea/
+            bounds = component.bounds
+            item = {
+              name: name,
+              width: (bounds.width / 10.0).round(1),
+              depth: (bounds.depth / 10.0).round(1),
+              height: (bounds.height / 10.0).round(1),
+              material: get_component_material(component)
+            }
+            summary[:blind_area] << item
+            
+          when /stand/i
+            bounds = component.bounds
+            item = {
+              name: name,
+              width: (bounds.width / 10.0).round(1),
+              depth: (bounds.depth / 10.0).round(1),
+              height: (bounds.height / 10.0).round(1),
+              material: get_component_material(component)
+            }
+            summary[:stands] << item
+            
+          when /stele/i
+            bounds = component.bounds
+            item = {
+              name: name,
+              width: (bounds.width / 10.0).round(1),
+              depth: (bounds.depth / 10.0).round(1),
+              height: (bounds.height / 10.0).round(1),
+              material: get_component_material(component)
+            }
+            summary[:steles] << item
+            
+          when /flowerbed/i
+            bounds = component.bounds
+            item = {
+              name: name,
+              width: (bounds.width / 10.0).round(1),
+              depth: (bounds.depth / 10.0).round(1),
+              height: (bounds.height / 10.0).round(1),
+              material: get_component_material(component)
+            }
+            summary[:flowerbeds] << item
+            
+          when /gravestone|plate/i
+            bounds = component.bounds
+            item = {
+              name: name,
+              width: (bounds.width / 10.0).round(1),
+              depth: (bounds.depth / 10.0).round(1),
+              height: (bounds.height / 10.0).round(1),
+              material: get_component_material(component)
+            }
+            summary[:gravestones] << item
+            
+          when /lamp/i
+            bounds = component.bounds
+            item = {
+              name: name,
+              width: (bounds.width / 10.0).round(1),
+              depth: (bounds.depth / 10.0).round(1),
+              height: (bounds.height / 10.0).round(1),
+              material: get_component_material(component)
+            }
+            summary[:lamps] << item
+            
+          when /CornerFence/
+            bounds = component.bounds
+            item = {
+              name: name,
+              width: (bounds.width / 10.0).round(1),
+              depth: (bounds.depth / 10.0).round(1),
+              height: (bounds.height / 10.0).round(1),
+              material: get_component_material(component)
+            }
+            summary[:fence_corner] << item
+            
+          when /PerimeterFence/
+            bounds = component.bounds
+            item = {
+              name: name,
+              width: (bounds.width / 10.0).round(1),
+              depth: (bounds.depth / 10.0).round(1),
+              height: (bounds.height / 10.0).round(1),
+              material: get_component_material(component)
+            }
+            summary[:fence_perimeter] << item
+            
+          when /fence_decor/i
+            bounds = component.bounds
+            item = {
+              name: name,
+              width: (bounds.width / 10.0).round(1),
+              depth: (bounds.depth / 10.0).round(1),
+              height: (bounds.height / 10.0).round(1),
+              material: get_component_material(component)
+            }
+            summary[:fence_decor] << item
+          end
+        end
+        
+        # Логуємо результати збору
+        summary.each do |category, items|
+          ProGran3::Logger.info("📊 #{category}: #{items.count} елементів", "Summary")
+        end
+        
+        # Групуємо однакові компоненти
+        grouped_summary = {}
+        summary.each do |category, items|
+          grouped_summary[category] = group_components(items)
+        end
+        
+        # Логуємо згруповані результати
+        grouped_summary.each do |category, items|
+          if items.any?
+            ProGran3::Logger.info("✅ #{category} (згруповано): #{items.count} типів", "Summary")
+            items.each do |item|
+              ProGran3::Logger.info("  - #{item[:width]}×#{item[:depth]}×#{item[:height]} см (#{item[:material]}) - #{item[:count]} шт", "Summary")
+            end
+          end
+        end
+        
+        # Відправляємо в JS
+        json_data = grouped_summary.to_json
+        ProGran3::Logger.info("📤 Відправка даних в JS: #{json_data.length} символів", "Summary")
+        dialog.execute_script("updateDetailedSummary(#{json_data});")
+        
+        ProGran3::Logger.info("✅ Детальна специфікація згенерована успішно", "Summary")
+        true
+        
+      rescue => e
+        ErrorHandler.handle_error(e, "Summary", "get_detailed_summary")
+        false
+      end
+    end
+    
+    private
+    
+    # Аналіз внутрішніх компонентів плитки
+    def analyze_tile_components(tile_group, tiles_array)
+      definition = tile_group.definition
+      ProGran3::Logger.info("  📦 Аналіз групи плитки: #{definition.name}", "Summary")
+      ProGran3::Logger.info("  📦 Внутрішніх entities: #{definition.entities.count}", "Summary")
+      
+      internal_components = definition.entities.grep(Sketchup::ComponentInstance)
+      ProGran3::Logger.info("  📦 Внутрішніх компонентів: #{internal_components.count}", "Summary")
+      
+      internal_components.each do |tile|
+        bounds = tile.bounds
+        
+        width = (bounds.width / 10.0).round(1)
+        depth = (bounds.depth / 10.0).round(1)
+        height = (bounds.height / 10.0).round(1)
+        material = get_component_material(tile)
+        
+        ProGran3::Logger.info("    ➕ Плитка: #{tile.definition.name}, #{width}×#{depth}×#{height} см, матеріал: #{material}", "Summary")
+        
+        item = {
+          name: tile.definition.name,
+          width: width,
+          depth: depth,
+          height: height,
+          material: material
+        }
+        tiles_array << item
+      end
+      
+      # Якщо немає внутрішніх компонентів, додаємо сам tile_group
+      if tiles_array.empty?
+        ProGran3::Logger.info("  ⚠️ Немає внутрішніх компонентів, додаю саму групу", "Summary")
+        bounds = tile_group.bounds
+        width = (bounds.width / 10.0).round(1)
+        depth = (bounds.depth / 10.0).round(1)
+        height = (bounds.height / 10.0).round(1)
+        material = get_component_material(tile_group)
+        
+        ProGran3::Logger.info("    ➕ Група як єдиний елемент: #{width}×#{depth}×#{height} см, матеріал: #{material}", "Summary")
+        
+        item = {
+          name: tile_group.definition.name,
+          width: width,
+          depth: depth,
+          height: height,
+          material: material
+        }
+        tiles_array << item
+      end
+    end
+    
+    # Аналіз внутрішніх компонентів облицювання
+    def analyze_cladding_components(cladding_group, cladding_array)
+      definition = cladding_group.definition
+      definition.entities.grep(Sketchup::ComponentInstance).each do |piece|
+        bounds = piece.bounds
+        
+        item = {
+          name: piece.definition.name,
+          width: (bounds.width / 10.0).round(1),
+          depth: (bounds.depth / 10.0).round(1),
+          height: (bounds.height / 10.0).round(1),
+          material: get_component_material(piece)
+        }
+        cladding_array << item
+      end
+      
+      # Якщо немає внутрішніх компонентів, додаємо сам cladding_group
+      if cladding_array.empty?
+        bounds = cladding_group.bounds
+        item = {
+          name: cladding_group.definition.name,
+          width: (bounds.width / 10.0).round(1),
+          depth: (bounds.depth / 10.0).round(1),
+          height: (bounds.height / 10.0).round(1),
+          material: get_component_material(cladding_group)
+        }
+        cladding_array << item
+      end
+    end
+    
+    # Отримання матеріалу компонента
+    def get_component_material(component)
+      # Спробуємо отримати матеріал компонента
+      if component.material
+        return component.material.display_name
+      end
+      
+      # Якщо у компонента немає матеріалу, шукаємо в його definition
+      definition = component.definition
+      if definition.entities.length > 0
+        first_entity = definition.entities[0]
+        if first_entity.respond_to?(:material) && first_entity.material
+          return first_entity.material.display_name
+        end
+      end
+      
+      # Шукаємо в faces definition
+      definition.entities.grep(Sketchup::Face).each do |face|
+        if face.material
+          return face.material.display_name
+        end
+      end
+      
+      "Без матеріалу"
+    end
+    
+    # Групування компонентів за розмірами і матеріалом
+    def group_components(items)
+      grouped = {}
+      
+      items.each do |item|
+        key = "#{item[:width]}×#{item[:depth]}×#{item[:height]}_#{item[:material]}"
+        
+        if grouped[key]
+          grouped[key][:count] += 1
+        else
+          grouped[key] = item.merge(count: 1)
+        end
+      end
+      
+      grouped.values.sort_by { |item| -item[:count] }
+    end
   end
 end

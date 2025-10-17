@@ -179,6 +179,10 @@ module ProGran3
       @dialog.add_action_callback("add_lamp") do |dialog, category, filename, position|
         CallbackManager.add_lamp_callback(dialog, category, filename, position)
       end
+      
+      @dialog.add_action_callback("get_detailed_summary") do |dialog|
+        CallbackManager.get_detailed_summary_callback(@dialog)
+      end
 
 
       # Callback'и для ліцензійних функцій
@@ -204,26 +208,116 @@ module ProGran3
       end
       
       @dialog.add_action_callback("license_display_info") do |dialog, _|
-        # ЗАГЛУШКА: Ліцензійна система видалена, повертаємо тестові дані
-        result = {
-          status: "active",
-          type: "demo", 
-          days_remaining: 30,
-          message: "Демо версія - всі функції доступні"
-        }.to_json
-        puts "🔐 [UI] Callback license_display_info повертає: #{result}"
-        puts "🔐 [UI] Callback result type: #{result.class}"
-        puts "🔐 [UI] Callback result length: #{result&.length}"
+        begin
+          # Отримуємо реальну інформацію про ліцензію
+          require_relative 'security/license_manager'
+          manager = Security::LicenseManager.new
+          
+          info = manager.license_info
+          
+          if info[:has_license]
+            # Розраховуємо днів до закінчення
+            days_remaining = if info[:expires_at]
+              expires = Time.parse(info[:expires_at])
+              ((expires - Time.now) / 86400).to_i
+            else
+              nil # Необмежено
+            end
+            
+            # Завантажуємо ліцензію напряму з файлу щоб отримати fingerprint
+            require_relative 'security/license_storage'
+            stored_license = Security::LicenseStorage.load
+            stored_fp = stored_license ? stored_license[:fingerprint] : nil
+            
+            puts "🔐 [UI] Email: #{info[:email]}"
+            puts "🔐 [UI] Fingerprint from storage: #{stored_fp ? stored_fp[0..16] : 'nil'}"
+            
+            result = {
+              status: info[:status] || "active",
+              type: "full",
+              email: info[:email] || "Невідомий email",
+              license_key: info[:license_key],
+              fingerprint: stored_fp,
+              days_remaining: days_remaining,
+              message: days_remaining ? "Ліцензія активна (#{days_remaining} днів)" : "Ліцензія активна"
+            }.to_json
+          else
+            # Немає ліцензії - демо режим
+            current_fp = Security::HardwareFingerprint.generate[:fingerprint]
+            
+            result = {
+              status: "demo",
+              type: "demo",
+              fingerprint: current_fp,
+              days_remaining: nil,
+              message: "Демо версія"
+            }.to_json
+          end
+          
+          puts "🔐 [UI] License info: #{result}"
+          puts "🔐 [UI] Info hash: #{info.inspect}"
+          
+          # Додатково встановлюємо fingerprint напряму
+          # Беремо fingerprint напряму з файлу ліцензії
+          require_relative 'security/license_storage'
+          stored_license = Security::LicenseStorage.load
+          
+          stored_fp = stored_license ? stored_license[:fingerprint] : nil
+          
+          fp_display = if stored_fp && stored_fp.length >= 12
+            "#{stored_fp[0..7]}...#{stored_fp[-4..-1]}"
+          else
+            'N/A'
+          end
+          
+          puts "🔐 [UI] Stored FP: #{stored_fp ? stored_fp[0..16] : 'nil'}"
+          puts "🔐 [UI] FP Display: #{fp_display}"
+          
+          # Передаємо дані в JavaScript через execute_script
+          @dialog.execute_script("
+            if (window.licenseDisplayInfoCallback) {
+              window.licenseDisplayInfoCallback('#{result}');
+            }
+            
+            // Додатково встановлюємо fingerprint напряму
+            const footerFp = document.getElementById('license-footer-fingerprint');
+            if (footerFp) {
+              footerFp.textContent = '#{fp_display}';
+            }
+          ")
+          
+        rescue => e
+          puts "❌ [UI] Помилка отримання license info: #{e.message}"
+          
+          # Fallback - демо (але все одно показуємо fingerprint)
+          begin
+            current_fp = Security::HardwareFingerprint.generate[:fingerprint]
+            fp_display = "#{current_fp[0..7]}...#{current_fp[-4..-1]}"
+          rescue
+            current_fp = 'unavailable'
+            fp_display = 'N/A'
+          end
+          
+          result = {
+            status: "demo",
+            type: "demo",
+            fingerprint: current_fp,
+            message: "Демо версія"
+          }.to_json
+          
+          @dialog.execute_script("
+            if (window.licenseDisplayInfoCallback) {
+              window.licenseDisplayInfoCallback('#{result}');
+            }
+            
+            // Встановлюємо fingerprint напряму
+            const footerFp = document.getElementById('license-footer-fingerprint');
+            if (footerFp) {
+              footerFp.textContent = '#{fp_display}';
+            }
+          ")
+        end
         
-        # SketchUp callback повертає кількість символів замість рядка
-        # Використовуємо execute_script для передачі даних
-        @dialog.execute_script("
-          if (window.licenseDisplayInfoCallback) {
-            window.licenseDisplayInfoCallback('#{result}');
-          }
-        ")
-        
-        # Повертаємо nil, щоб уникнути проблеми з return value
         nil
       end
       

@@ -189,6 +189,20 @@ module ProGran3
   require_relative 'progran3/splash_screen'
   require_relative 'progran3/license_ui'
   require_relative 'progran3/demo_ui'
+  require_relative 'progran3/activity_tracker'
+  
+  # Методи для керування activity tracking
+  def self.start_tracking
+    ActivityTracker.start_tracking
+  end
+  
+  def self.stop_tracking
+    ActivityTracker.stop_tracking
+  end
+  
+  def self.session_info
+    ActivityTracker.session_info
+  end
 
   # Метод для створення панелі інструментів
   def self.create_toolbar

@@ -657,4 +657,55 @@ button:disabled {
   }
 }
 
+/* ========== LICENSE FOOTER ========== */
+
+.license-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 15px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 1000;
+}
+
+.license-footer-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #ffffff;
+}
+
+.license-footer-text {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.license-footer-email {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.license-footer-key {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  font-family: monospace;
+}
+
+.license-footer-separator {
+  color: rgba(255, 255, 255, 0.3);
+  margin: 0 8px;
+}
+
+.license-footer-fingerprint {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  font-family: monospace;
+  letter-spacing: 0.5px;
+}
+
 

@@ -1,13 +1,6 @@
 {
-  "version": 2,
   "buildCommand": "cd server && npm run build",
   "outputDirectory": "server/.next",
   "installCommand": "cd server && npm install",
-  "framework": "nextjs",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/server/$1"
-    }
-  ]
+  "framework": "nextjs"
 }

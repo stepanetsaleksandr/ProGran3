@@ -231,11 +231,22 @@
   font-weight: 600;
   color: #2c3e50;
   text-align: left;
+  vertical-align: top;
+  width: 40%;
 }
 
 .summary-table td:last-child {
   text-align: right;
   color: var(--text-color);
+}
+
+.summary-cell {
+  white-space: pre-line;
+  line-height: 1.6;
+  font-size: 0.9em;
+  max-width: 350px;
+  word-wrap: break-word;
+  text-align: left !important;
 }
 
 /* Refresh Button */

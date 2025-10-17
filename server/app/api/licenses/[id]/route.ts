@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { withPublicApi, ApiContext } from '@/lib/api-handler';
 import { apiSuccess, apiError, apiNotFound, apiValidationError } from '@/lib/api-response';
 import { LicenseIdSchema, LicenseUpdateSchema, validateBody } from '@/lib/validation/schemas';
+import { requireApiKey } from '@/lib/auth';
 
 /**
  * GET /api/licenses/[id]
@@ -106,9 +107,9 @@ export const PUT = withPublicApi(async ({ supabase, params, request }: ApiContex
 /**
  * DELETE /api/licenses/[id]
  * Delete a license
- * TODO: Add authentication when frontend supports it
+ * Requires API Key authentication
  */
-export const DELETE = withPublicApi(async ({ supabase, params }: ApiContext) => {
+const deleteHandler = withPublicApi(async ({ supabase, params }: ApiContext) => {
   try {
     const { id } = params;
 
@@ -157,3 +158,6 @@ export const DELETE = withPublicApi(async ({ supabase, params }: ApiContext) => 
     return apiError(error as Error);
   }
 });
+
+// Wrap with API Key requirement
+export const DELETE = requireApiKey(deleteHandler);

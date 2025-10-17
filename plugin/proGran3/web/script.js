@@ -2067,35 +2067,11 @@ function updateSummaryTable() {
     }
   }
   
-  // Плитка
-  if (addedElements.tiling) {
-    const activeButton = document.querySelector('.tiling-mode-btn.active');
-    const summaryTilingEl = document.getElementById('summary-tiling');
-    if (activeButton && summaryTilingEl) {
-      summaryTilingEl.textContent = activeButton.textContent;
-    }
-  } else {
-    const summaryTilingEl = document.getElementById('summary-tiling');
-    if (summaryTilingEl) {
-      summaryTilingEl.textContent = '--';
-    }
-  }
+  // Плитка - ВИДАЛЕНО, тепер використовується детальна специфікація
+  // Не оновлюємо автоматично, щоб не перезаписувати дані з updateDetailedSummary()
   
-  // Облицювання
-  if (addedElements.cladding) {
-    const claddingThicknessEl = document.getElementById('cladding-thickness');
-    const summaryCladdingEl = document.getElementById('summary-cladding');
-    if (claddingThicknessEl && summaryCladdingEl) {
-      const claddingThickness = claddingThicknessEl.value;
-      summaryCladdingEl.textContent = 
-        `Товщина: ${claddingThickness} ${unitText}`;
-    }
-  } else {
-    const summaryCladdingEl = document.getElementById('summary-cladding');
-    if (summaryCladdingEl) {
-      summaryCladdingEl.textContent = '--';
-    }
-  }
+  // Облицювання - використовується детальна специфікація
+  // Не оновлюємо автоматично
   
   // Відмостка
   if (addedElements.blindArea) {
@@ -2137,67 +2113,17 @@ function updateSummaryTable() {
     }
   }
   
-  // Підставка
-  if (addedElements.stands) {
-    const summaryStandEl = document.getElementById('summary-stand');
-    if (summaryStandEl) {
-      if (typeof addedElements.stands === 'object' && addedElements.stands.filename) {
-        summaryStandEl.textContent = addedElements.stands.filename.replace('.skp', '');
-      } else {
-        summaryStandEl.textContent = 'Підставка';
-      }
-    }
-  } else {
-    const summaryStandEl = document.getElementById('summary-stand');
-    if (summaryStandEl) {
-      summaryStandEl.textContent = '--';
-    }
-  }
+  // Підставка - використовується детальна специфікація
+  // Не оновлюємо автоматично
   
-  // Квітник
-  if (addedElements.flowerbeds && carouselState.flowerbeds && modelLists.flowerbeds) {
-    const flowerbedFilename = modelLists.flowerbeds[carouselState.flowerbeds.index];
-    const summaryFlowerbedEl = document.getElementById('summary-flowerbed');
-    if (summaryFlowerbedEl) {
-      summaryFlowerbedEl.textContent = 
-        flowerbedFilename ? flowerbedFilename.replace('.skp', '') : '--';
-    }
-  } else {
-    const summaryFlowerbedEl = document.getElementById('summary-flowerbed');
-    if (summaryFlowerbedEl) {
-      summaryFlowerbedEl.textContent = '--';
-    }
-  }
+  // Квітник - використовується детальна специфікація
+  // Не оновлюємо автоматично
   
-  // Надгробна плита
-  if (addedElements.gravestones && carouselState.gravestones && modelLists.gravestones) {
-    const gravestoneFilename = modelLists.gravestones[carouselState.gravestones.index];
-    const summaryGravestoneEl = document.getElementById('summary-gravestone');
-    if (summaryGravestoneEl) {
-      summaryGravestoneEl.textContent = 
-        gravestoneFilename ? gravestoneFilename.replace('.skp', '') : '--';
-    }
-  } else {
-    const summaryGravestoneEl = document.getElementById('summary-gravestone');
-    if (summaryGravestoneEl) {
-      summaryGravestoneEl.textContent = '--';
-    }
-  }
+  // Надгробна плита - використовується детальна специфікація
+  // Не оновлюємо автоматично
   
-  // Стела
-  if (addedElements.steles && carouselState.steles && modelLists.steles) {
-    const steleFilename = modelLists.steles[carouselState.steles.index];
-    const summarySteleEl = document.getElementById('summary-stele');
-    if (summarySteleEl) {
-      summarySteleEl.textContent = 
-        steleFilename ? steleFilename.replace('.skp', '') : '--';
-    }
-  } else {
-    const summarySteleEl = document.getElementById('summary-stele');
-    if (summarySteleEl) {
-      summarySteleEl.textContent = '--';
-    }
-  }
+  // Стела - використовується детальна специфікація
+  // Не оновлюємо автоматично
   
   // Кутова огорожа
   if (addedElements.fence_corner) {
@@ -2584,15 +2510,15 @@ function addBlindArea() {
 
 // Функція для оновлення специфікації з моделі
 function refreshSpecification() {
-  debugLog(` Оновлення специфікації з моделі`, 'info');
+  debugLog(` Оновлення специфікації з моделі (викликає детальну специфікацію)`, 'info');
   
-  if (window.sketchup && window.sketchup.get_model_status) {
-    // Викликаємо Ruby callback для отримання поточного стану моделі
-    window.sketchup.get_model_status();
+  // Викликаємо детальну специфікацію
+  if (typeof refreshDetailedSummary === 'function') {
+    refreshDetailedSummary();
+  } else if (typeof window.ProGran3?.UI?.SummaryTable?.refreshDetailedSummary === 'function') {
+    window.ProGran3.UI.SummaryTable.refreshDetailedSummary();
   } else {
-    debugLog(` window.sketchup.get_model_status не доступний`, 'error');
-    // Якщо callback недоступний, просто очищаємо специфікацію
-    clearSpecification();
+    debugLog(` refreshDetailedSummary не знайдено!`, 'error');
   }
 }
 
@@ -4777,6 +4703,18 @@ function updateLicenseStatus() {
           footerKey.textContent = licenseDisplayInfo.license_key ? licenseDisplayInfo.license_key.substring(0, 8) + '...' : '';
           console.log('🔐 [DEBUG] Встановлено footerKey:', licenseDisplayInfo.license_key ? licenseDisplayInfo.license_key.substring(0, 8) + '...' : '');
         }
+        
+        // Оновлюємо fingerprint
+        const footerFingerprint = document.getElementById('license-footer-fingerprint');
+        if (footerFingerprint) {
+          // Показуємо перші 8 + останні 4 символи fingerprint
+          if (licenseDisplayInfo.fingerprint) {
+            const fp = licenseDisplayInfo.fingerprint;
+            footerFingerprint.textContent = fp.substring(0, 8) + '...' + fp.substring(fp.length - 4);
+          } else {
+            footerFingerprint.textContent = 'N/A';
+          }
+        }
       } else {
         // Ліцензія неактивна або дані не отримані - оновлюємо footer
         console.log('🔐 [DEBUG] Ліцензія неактивна або дані не отримані - оновлюємо footer');
@@ -4802,14 +4740,22 @@ function updateLicenseStatus() {
           footerKey.textContent = '';
           console.log('🔐 [DEBUG] Встановлено footerKey: порожньо');
         }
+        
+        // Очищаємо fingerprint
+        const footerFingerprint = document.getElementById('license-footer-fingerprint');
+        if (footerFingerprint) {
+          footerFingerprint.textContent = 'N/A';
+        }
       }
   } catch (error) {
     console.error('Помилка в updateLicenseStatusWithData:', error);
     // Fallback - демо режим
     const footerEmail = document.getElementById('license-footer-email');
     const footerKey = document.getElementById('license-footer-key');
+    const footerFingerprint = document.getElementById('license-footer-fingerprint');
     if (footerEmail) footerEmail.textContent = 'Не активована';
     if (footerKey) footerKey.textContent = '';
+    if (footerFingerprint) footerFingerprint.textContent = 'N/A';
   }
 }
 

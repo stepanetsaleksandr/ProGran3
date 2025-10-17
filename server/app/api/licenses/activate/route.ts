@@ -2,14 +2,72 @@ import { NextRequest } from 'next/server';
 import { withPublicApi, ApiContext } from '@/lib/api-handler';
 import { apiSuccess, apiError, apiValidationError, apiNotFound } from '@/lib/api-response';
 import { validateBody, LicenseActivateSchema } from '@/lib/validation/schemas';
+import { verifyHMAC, isHMACEnabled } from '@/lib/hmac';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 /**
  * POST /api/licenses/activate
  * Activate a license with user email and system fingerprint
+ * 
+ * Security:
+ * - HMAC signature verification (опціонально)
+ * - Rate limiting (5 req/min per email, 100 req/min per IP)
  */
 export const POST = withPublicApi(async ({ supabase, request }: ApiContext) => {
   try {
-    // Validate request body
+    // ============================================
+    // КРОК 1: ПЕРЕВІРКА HMAC (якщо налаштовано)
+    // ============================================
+    
+    const signature = request.headers.get('X-Signature');
+    const timestampHeader = request.headers.get('X-Timestamp');
+    
+    // Якщо HMAC налаштовано - перевіряємо
+    if (isHMACEnabled()) {
+      if (!signature || !timestampHeader) {
+        console.warn('[License Activation] HMAC enabled but headers missing');
+        return apiError(
+          'HMAC signature required (X-Signature and X-Timestamp headers)',
+          401,
+          undefined,
+          'HMAC_REQUIRED'
+        );
+      }
+      
+      // Читаємо body для перевірки підпису
+      const bodyText = await request.text();
+      const timestamp = parseInt(timestampHeader);
+      
+      if (isNaN(timestamp)) {
+        return apiError('Invalid timestamp format', 400);
+      }
+      
+      // Перевіряємо HMAC підпис
+      const hmacResult = verifyHMAC(bodyText, timestamp, signature);
+      
+      if (!hmacResult.valid) {
+        console.warn('[License Activation] HMAC verification failed:', hmacResult.error);
+        return apiError(
+          `Invalid HMAC signature: ${hmacResult.error}`,
+          401,
+          undefined,
+          'HMAC_INVALID'
+        );
+      }
+      
+      console.log('[License Activation] HMAC verification passed');
+      
+      // Парсимо JSON з body
+      // @ts-ignore - request з text() вже прочитаний
+      request.json = async () => JSON.parse(bodyText);
+    } else {
+      console.log('[License Activation] HMAC not enabled, skipping verification');
+    }
+    
+    // ============================================
+    // КРОК 2: ВАЛІДАЦІЯ ВХІДНИХ ДАНИХ
+    // ============================================
+    
     const validation = await validateBody(request, LicenseActivateSchema);
     
     if (!validation.success) {
@@ -23,6 +81,60 @@ export const POST = withPublicApi(async ({ supabase, request }: ApiContext) => {
       user_email,
       fingerprint: system_fingerprint.substring(0, 16) + '...'
     });
+    
+    // ============================================
+    // КРОК 3: RATE LIMITING
+    // ============================================
+    
+    // Rate limit по email (5 спроб/хв)
+    const emailLimit = await checkRateLimit(`activate:email:${user_email}`, 'activate');
+    
+    if (!emailLimit.allowed) {
+      const resetDate = new Date(emailLimit.reset * 1000);
+      const waitSeconds = Math.ceil((emailLimit.reset * 1000 - Date.now()) / 1000);
+      
+      console.warn(`[License Activation] Rate limit exceeded for email: ${user_email}`);
+      
+      return apiError(
+        `Too many activation attempts. Try again in ${waitSeconds} seconds.`,
+        429,
+        {
+          resetAt: resetDate.toISOString(),
+          limit: emailLimit.limit,
+          remaining: emailLimit.remaining
+        },
+        'RATE_LIMIT_EXCEEDED'
+      );
+    }
+    
+    // Rate limit по IP (100 спроб/хв - загальний)
+    const clientIp = getClientIp(request);
+    const ipLimit = await checkRateLimit(`activate:ip:${clientIp}`, 'byIp');
+    
+    if (!ipLimit.allowed) {
+      const resetDate = new Date(ipLimit.reset * 1000);
+      const waitSeconds = Math.ceil((ipLimit.reset * 1000 - Date.now()) / 1000);
+      
+      console.warn(`[License Activation] Rate limit exceeded for IP: ${clientIp}`);
+      
+      return apiError(
+        `Too many requests from your IP. Try again in ${waitSeconds} seconds.`,
+        429,
+        {
+          resetAt: resetDate.toISOString()
+        },
+        'RATE_LIMIT_EXCEEDED'
+      );
+    }
+    
+    console.log('[License Activation] Rate limits passed:', {
+      email: `${emailLimit.remaining}/${emailLimit.limit}`,
+      ip: `${ipLimit.remaining}/${ipLimit.limit}`
+    });
+    
+    // ============================================
+    // КРОК 4: ОСНОВНА ЛОГІКА АКТИВАЦІЇ (БЕЗ ЗМІН!)
+    // ============================================
 
     // Check if license key exists and is not already activated
     const { data: licenseKey, error: keyError } = await supabase

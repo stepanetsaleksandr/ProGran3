@@ -221,7 +221,7 @@ module ProGran3
                 type="text" 
                 id="licenseKey" 
                 class="form-input" 
-                placeholder="XXXX-XXXX-XXXX-XXXX"
+                placeholder="PROGRAN3-2025-XXXXXXXX-XXXXXXXX"
                 required
               >
             </div>
@@ -272,30 +272,33 @@ module ProGran3
               return;
             }
             
-            // Симуляція активації
+            // Реальна активація через Ruby callback
             activateBtn.textContent = 'Активація...';
             activateBtn.disabled = true;
             
-            setTimeout(() => {
-              // Симуляція результату активації
-              const success = true; // ТЕСТОВИЙ РЕЖИМ - ЗАВЖДИ УСПІШНА АКТИВАЦІЯ
-              
-              if (success) {
-                showStatus('✅ Ліцензія успішно активована!', 'success');
-                setTimeout(() => {
-                  window.parent.postMessage({ 
-                    type: 'license_activated',
-                    email: email,
-                    licenseKey: licenseKey
-                  }, '*');
-                }, 1500);
-              } else {
-                showStatus('❌ Помилка активації. Перевірте дані.', 'error');
-                activateBtn.textContent = 'Активувати ліцензію';
-                activateBtn.disabled = false;
-              }
-            }, 2000);
+            // Викликаємо Ruby callback
+            if (window.sketchup && window.sketchup.activate_license) {
+              window.sketchup.activate_license(email, licenseKey);
+            } else {
+              showStatus('❌ Помилка: callback не знайдено', 'error');
+              activateBtn.textContent = 'Активувати ліцензію';
+              activateBtn.disabled = false;
+            }
           });
+          
+          // Обробка результату активації від Ruby
+          window.handleActivationResult = function(result) {
+            console.log('Activation result:', result);
+            
+            if (result.success) {
+              showStatus('✅ Ліцензію успішно активовано!', 'success');
+              // Діалог закриється автоматично з Ruby side
+            } else {
+              showStatus('❌ ' + (result.error || 'Помилка активації'), 'error');
+              activateBtn.textContent = 'Активувати ліцензію';
+              activateBtn.disabled = false;
+            }
+          };
           
           // Обробка демо версії
           demoBtn.addEventListener('click', () => {
@@ -325,9 +328,9 @@ module ProGran3
           
           // Валідація ключа ліцензії
           document.getElementById('licenseKey').addEventListener('input', (e) => {
-            let value = e.target.value.replace(/[^A-Z0-9-]/g, '');
-            value = value.replace(/(.{4})/g, '$1-').replace(/-$/, '');
-            if (value.length > 19) value = value.substring(0, 19);
+            // Дозволяємо тільки великі літери, цифри та дефіс
+            let value = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+            // Без обмеження довжини - підтримуємо різні формати ключів
             e.target.value = value;
           });
         </script>
@@ -355,7 +358,51 @@ module ProGran3
         # Встановлюємо HTML
         dialog.set_html(LICENSE_HTML)
         
-        # Обробка повідомлень від JavaScript
+        # Callback для активації ліцензії
+        dialog.add_action_callback("activate_license") do |action_context, email, license_key|
+          puts "🔐 Callback: activate_license викликано"
+          puts "   Email: #{email}"
+          puts "   Key: #{license_key[0..8]}..."
+          
+          begin
+            # Ініціалізуємо License Manager
+            require_relative 'security/license_manager'
+            manager = Security::LicenseManager.new
+            
+            # Активуємо ліцензію
+            result = manager.activate_license(email, license_key)
+            
+            # Повертаємо результат в JavaScript
+            js_result = {
+              success: result[:success],
+              error: result[:error],
+              message: result[:message]
+            }.to_json
+            
+            dialog.execute_script("window.handleActivationResult(#{js_result})")
+            
+            # Якщо успішно - закриваємо діалог та показуємо UI
+            if result[:success]
+              sleep(1.5) # Даємо час показати success message
+              dialog.close
+              show_main_ui
+            end
+            
+          rescue => e
+            puts "❌ Помилка активації: #{e.message}"
+            puts e.backtrace.first(3)
+            
+            # Повертаємо помилку в JavaScript
+            error_result = {
+              success: false,
+              error: "Помилка активації: #{e.message}"
+            }.to_json
+            
+            dialog.execute_script("window.handleActivationResult(#{error_result})")
+          end
+        end
+        
+        # Обробка повідомлень від JavaScript (старі callbacks для сумісності)
         dialog.add_action_callback("license_activated") do |action_context, email, licenseKey|
           puts "✅ Ліцензія активована: #{email}"
           dialog.close

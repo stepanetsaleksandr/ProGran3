@@ -8,7 +8,17 @@ import { apiSuccess, apiError } from '@/lib/api-response';
 export const POST = withPublicApi(async ({ supabase, request }: ApiContext) => {
   try {
     const body = await request.json();
-    const { license_key, system_fingerprint, timestamp } = body;
+    const { 
+      license_key, 
+      system_fingerprint, 
+      timestamp,
+      event_type,
+      plugin_version,
+      session_start,
+      session_duration,
+      sketchup_version,
+      platform
+    } = body;
 
     if (!license_key || !system_fingerprint) {
       return apiError('license_key and system_fingerprint are required', 400);
@@ -17,6 +27,8 @@ export const POST = withPublicApi(async ({ supabase, request }: ApiContext) => {
     console.log('[Heartbeat] Received:', {
       license_key: license_key.substring(0, 20) + '...',
       fingerprint: system_fingerprint.substring(0, 16) + '...',
+      event_type: event_type || 'heartbeat',
+      plugin_version,
       timestamp
     });
 
@@ -38,8 +50,30 @@ export const POST = withPublicApi(async ({ supabase, request }: ApiContext) => {
       return apiError('License is not active', 403);
     }
 
-    // Update system_infos last_seen
+    // Update system_infos last_seen with enhanced data
     const currentTime = new Date().toISOString();
+    
+    // Prepare enhanced system_data
+    const systemData: any = {
+      last_heartbeat: timestamp || Date.now(),
+      updated_at: currentTime,
+      plugin_version: plugin_version || 'unknown',
+      sketchup_version: sketchup_version || 'unknown',
+      platform: platform || 'unknown',
+      event_type: event_type || 'heartbeat'
+    };
+    
+    // Додаємо session info якщо є
+    if (session_start) {
+      systemData.session_start = session_start;
+      systemData.session_duration = session_duration || 0;
+    }
+    
+    // Для startup events зберігаємо окремо
+    if (event_type === 'startup') {
+      systemData.last_startup = currentTime;
+    }
+    
     const { data: systemInfo, error: systemError } = await supabase
       .from('system_infos')
       .upsert(
@@ -47,10 +81,7 @@ export const POST = withPublicApi(async ({ supabase, request }: ApiContext) => {
           license_id: license.id,
           fingerprint_hash: system_fingerprint,
           last_seen: currentTime,
-          system_data: { 
-            last_heartbeat: timestamp || Date.now(),
-            updated_at: currentTime
-          }
+          system_data: systemData
         },
         {
           onConflict: 'fingerprint_hash',
@@ -65,13 +96,13 @@ export const POST = withPublicApi(async ({ supabase, request }: ApiContext) => {
       throw systemError;
     }
 
-    // Create heartbeat record
+    // Create heartbeat record with event type
     const { data: heartbeat, error: heartbeatError } = await supabase
       .from('heartbeats')
       .insert({
         license_id: license.id,
         system_info_id: systemInfo.id,
-        status: 'active',
+        status: event_type === 'startup' ? 'startup' : 'active',
         created_at: currentTime
       })
       .select()
