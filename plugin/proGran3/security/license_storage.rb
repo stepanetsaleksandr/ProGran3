@@ -65,6 +65,9 @@ module ProGran3
       # Завантажує ліцензійні дані
       # @return [Hash, nil] Розшифровані дані або nil якщо файл не знайдено
       def self.load
+        # v3.0: Очищаємо старі backup файли при кожному завантаженні
+        cleanup_old_backups
+        
         unless File.exist?(LICENSE_FILE)
           puts "⚠️ Файл ліцензії не знайдено: #{LICENSE_FILE}"
           return nil
@@ -187,12 +190,43 @@ module ProGran3
           delete
           
           puts "✅ Міграція завершена. Активуйте ліцензію заново."
-          puts "ℹ️  Backup старої ліцензії збережено на випадок потреби"
+          puts "ℹ️  Backup буде автоматично видалено через 7 днів"
           
           true
         rescue => e
           puts "❌ Помилка міграції: #{e.message}"
           false
+        end
+      end
+      
+      # Очищає старі backup файли (v3.0: безпека)
+      # Видаляє backup старші за 7 днів
+      def self.cleanup_old_backups
+        return unless Dir.exist?(LICENSE_DIR)
+        
+        begin
+          # Знаходимо всі backup файли
+          backup_pattern = File.join(LICENSE_DIR, '*.backup')
+          backup_files = Dir.glob(backup_pattern)
+          
+          return if backup_files.empty?
+          
+          cutoff_time = Time.now - (7 * 86400)  # 7 днів назад
+          deleted_count = 0
+          
+          backup_files.each do |backup_file|
+            # Перевіряємо вік файлу
+            if File.mtime(backup_file) < cutoff_time
+              remove_readonly_attribute(backup_file)
+              File.delete(backup_file)
+              deleted_count += 1
+            end
+          end
+          
+          puts "🧹 Видалено старих backup файлів: #{deleted_count}" if deleted_count > 0
+          
+        rescue => e
+          # Помилки cleanup не критичні - ігноруємо
         end
       end
       

@@ -136,17 +136,55 @@ export const POST = withPublicApi(async ({ supabase, request }: ApiContext) => {
     // КРОК 4: ОСНОВНА ЛОГІКА АКТИВАЦІЇ (БЕЗ ЗМІН!)
     // ============================================
 
-    // Check if license key exists and is not already activated
+    // === v3.1: RACE CONDITION FIX ===
+    // Дозволяємо тільки 'generated' (не 'active'!)
+    // Це запобігає подвійній активації через race condition
     const { data: licenseKey, error: keyError } = await supabase
       .from('licenses')
       .select('*')
       .eq('license_key', license_key)
-      .in('status', ['generated', 'active'])
+      .eq('status', 'generated')  // v3.1: тільки generated!
       .single();
 
     if (keyError || !licenseKey) {
+      // Перевіряємо чи ліцензія вже активна (більш зрозуміле повідомлення)
+      const { data: existingLicense } = await supabase
+        .from('licenses')
+        .select('status')
+        .eq('license_key', license_key)
+        .single();
+      
+      if (existingLicense?.status === 'active') {
+        console.warn('[License Activation] License already active:', license_key);
+        return apiError('This license key is already activated', 400);
+      }
+      
       console.warn('[License Activation] Invalid key:', license_key);
-      return apiError('Invalid or already activated license key', 400);
+      return apiError('Invalid license key', 400);
+    }
+    
+    // === v3.1: EMAIL VERIFICATION (optional) ===
+    // Якщо ліцензія має intended_email - перевіряємо збіг
+    if (licenseKey.description && licenseKey.description.includes('email:')) {
+      const intendedEmail = licenseKey.description.match(/email:([^\s,]+)/)?.[1];
+      
+      if (intendedEmail && intendedEmail.toLowerCase() !== user_email.toLowerCase()) {
+        console.warn('[License Activation] Email mismatch:', {
+          intended: intendedEmail,
+          provided: user_email
+        });
+        
+        return apiError(
+          `This license key is intended for ${intendedEmail}. Please use the correct email.`,
+          403,
+          { intended_email: intendedEmail },
+          'EMAIL_MISMATCH'
+        );
+      }
+      
+      if (intendedEmail) {
+        console.log('[License Activation] Email verified:', user_email);
+      }
     }
 
     // Check if user exists, create if not

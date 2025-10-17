@@ -10,6 +10,17 @@ module ProGran3
         @carousel_manager = nil
       end
       
+      private
+      
+      # v3.1: Sanitize string для JavaScript injection protection
+      def sanitize_for_js(str)
+        return '' if str.nil?
+        # Видаляємо всі небезпечні символи для JavaScript
+        str.to_s.gsub(/['"`\\<>]/, '')
+      end
+      
+      public
+      
       # Реєстрація callback'ів для нового модуля каруселі
       def register_callbacks(dialog)
         puts "🎨 Реєстрація callback'ів для модуля каруселі..."
@@ -19,67 +30,74 @@ module ProGran3
         
         # Callback для ініціалізації каруселі
         dialog.add_action_callback("initialize_carousel_module") do |dialog, carousel_id, model_list_json|
+          safe_id = sanitize_for_js(carousel_id)  # v3.1: sanitize
+          
           model_list = JSON.parse(model_list_json)
-          success = @carousel_manager.initialize_carousel(carousel_id, model_list)
+          success = @carousel_manager.initialize_carousel(safe_id, model_list)
           
           if success
-            info = @carousel_manager.get_carousel_info(carousel_id)
-            dialog.execute_script("carouselModuleInitialized('#{carousel_id}', #{info.to_json});")
+            info = @carousel_manager.get_carousel_info(safe_id)
+            dialog.execute_script("carouselModuleInitialized('#{safe_id}', #{info.to_json});")
           else
-            dialog.execute_script("carouselModuleError('#{carousel_id}', 'Помилка ініціалізації');")
+            dialog.execute_script("carouselModuleError('#{safe_id}', 'Помилка ініціалізації');")
           end
         end
         
         # Callback для навігації каруселі
         dialog.add_action_callback("carousel_next") do |dialog, carousel_id|
-          success = @carousel_manager.next_model(carousel_id)
+          safe_id = sanitize_for_js(carousel_id)  # v3.1: sanitize
+          success = @carousel_manager.next_model(safe_id)
           
           if success
-            info = @carousel_manager.get_carousel_info(carousel_id)
-            dialog.execute_script("carouselNavigated('#{carousel_id}', #{info.to_json});")
+            info = @carousel_manager.get_carousel_info(safe_id)
+            dialog.execute_script("carouselNavigated('#{safe_id}', #{info.to_json});")
           end
         end
         
         dialog.add_action_callback("carousel_previous") do |dialog, carousel_id|
-          success = @carousel_manager.previous_model(carousel_id)
+          safe_id = sanitize_for_js(carousel_id)  # v3.1: sanitize
+          success = @carousel_manager.previous_model(safe_id)
           
           if success
-            info = @carousel_manager.get_carousel_info(carousel_id)
-            dialog.execute_script("carouselNavigated('#{carousel_id}', #{info.to_json});")
+            info = @carousel_manager.get_carousel_info(safe_id)
+            dialog.execute_script("carouselNavigated('#{safe_id}', #{info.to_json});")
           end
         end
         
         # Callback для генерації превью
         dialog.add_action_callback("carousel_generate_preview") do |dialog, carousel_id|
-          base64_data = @carousel_manager.get_preview_base64(carousel_id)
+          safe_id = sanitize_for_js(carousel_id)  # v3.1: sanitize
+          base64_data = @carousel_manager.get_preview_base64(safe_id)
           
           if base64_data
-            dialog.execute_script("carouselPreviewGenerated('#{carousel_id}', '#{base64_data}');")
+            dialog.execute_script("carouselPreviewGenerated('#{safe_id}', '#{base64_data}');")
           else
-            dialog.execute_script("carouselPreviewError('#{carousel_id}', 'Помилка генерації превью');")
+            dialog.execute_script("carouselPreviewError('#{safe_id}', 'Помилка генерації превью');")
           end
         end
         
         # Callback для додавання моделі
         dialog.add_action_callback("carousel_add_model") do |dialog, carousel_id|
-          success = @carousel_manager.add_current_model(carousel_id)
+          safe_id = sanitize_for_js(carousel_id)  # v3.1: sanitize
+          success = @carousel_manager.add_current_model(safe_id)
           
           if success
-            info = @carousel_manager.get_carousel_info(carousel_id)
-            dialog.execute_script("carouselModelAdded('#{carousel_id}', #{info.to_json});")
+            info = @carousel_manager.get_carousel_info(safe_id)
+            dialog.execute_script("carouselModelAdded('#{safe_id}', #{info.to_json});")
           else
-            dialog.execute_script("carouselAddError('#{carousel_id}', 'Помилка додавання моделі');")
+            dialog.execute_script("carouselAddError('#{safe_id}', 'Помилка додавання моделі');")
           end
         end
         
         # Callback для отримання інформації про карусель
         dialog.add_action_callback("carousel_get_info") do |dialog, carousel_id|
-          info = @carousel_manager.get_carousel_info(carousel_id)
+          safe_id = sanitize_for_js(carousel_id)  # v3.1: sanitize
+          info = @carousel_manager.get_carousel_info(safe_id)
           
           if info
-            dialog.execute_script("carouselInfoReceived('#{carousel_id}', #{info.to_json});")
+            dialog.execute_script("carouselInfoReceived('#{safe_id}', #{info.to_json});")
           else
-            dialog.execute_script("carouselInfoError('#{carousel_id}', 'Карусель не знайдена');")
+            dialog.execute_script("carouselInfoError('#{safe_id}', 'Карусель не знайдена');")
           end
         end
         

@@ -16,11 +16,22 @@ module ProGran3
       # Timeout для запитів
       REQUEST_TIMEOUT = 10 # секунд
       
-      # HMAC Secret Key (опціонально - для додаткової безпеки)
-      # Якщо не встановлено - працює без HMAC (backward compatible)
-      # Щоб увімкнути HMAC - вставте той самий ключ що на сервері:
-      # SECRET_KEY = 'ваш-секретний-ключ-тут'
-      SECRET_KEY = nil  # nil = HMAC вимкнено
+      # HMAC Secret Key (v3.1: server-side secret)
+      # Використовуємо глобальний secret для всіх клієнтів
+      # Має збігатися з HMAC_SECRET_KEY на сервері
+      # 
+      # Security Note: Цей ключ захардкожений тут, але:
+      # 1. Клієнт може бути обфусковано (.rbc)
+      # 2. Зміна ключа = оновлення плагіна (контрольоване)
+      # 3. Краще ніж predictable fingerprint-based key
+      
+      def self.get_secret_key
+        # Глобальний shared secret (має збігатися з сервером)
+        # В production: обфускувати або завантажувати динамічно
+        'ProGran3-HMAC-Global-Secret-2025-v3.1-DO-NOT-SHARE-9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d'
+      end
+      
+      SECRET_KEY = nil  # Буде встановлено динамічно через get_secret_key
       
       # Активує ліцензію на сервері
       # @param email [String] Email користувача
@@ -152,15 +163,16 @@ module ProGran3
       
       private
       
-      # Створює HMAC підпис для запиту
+      # Створює HMAC підпис для запиту (v3.0: завжди ввімкнено)
       # @param body [String] JSON тіло запиту
       # @param timestamp [Integer] Unix timestamp
       # @return [String] HMAC підпис (hex)
       def self.create_hmac_signature(body, timestamp)
-        return nil unless SECRET_KEY && !SECRET_KEY.empty?
+        # v3.0: Завжди використовуємо HMAC (не опціонально!)
+        secret = get_secret_key
         
         message = "#{body}#{timestamp}"
-        OpenSSL::HMAC.hexdigest('SHA256', SECRET_KEY, message)
+        OpenSSL::HMAC.hexdigest('SHA256', secret, message)
       rescue => e
         puts "⚠️ Помилка створення HMAC підпису: #{e.message}"
         nil
@@ -193,16 +205,16 @@ module ProGran3
         body = payload.to_json
         request.body = body
         
-        # Додаємо HMAC headers (якщо налаштовано)
-        if SECRET_KEY && !SECRET_KEY.empty?
-          timestamp = Time.now.to_i
-          signature = create_hmac_signature(body, timestamp)
-          
-          if signature
-            request['X-Signature'] = signature
-            request['X-Timestamp'] = timestamp.to_s
-            puts "🔐 HMAC підпис додано" unless silent
-          end
+        # Додаємо HMAC headers (v3.0: завжди!)
+        timestamp = Time.now.to_i
+        signature = create_hmac_signature(body, timestamp)
+        
+        if signature
+          request['X-Signature'] = signature
+          request['X-Timestamp'] = timestamp.to_s
+          puts "🔐 HMAC підпис додано" unless silent
+        else
+          puts "⚠️ Не вдалося створити HMAC підпис - запит може бути відхилено сервером" unless silent
         end
         
         response = http.request(request)

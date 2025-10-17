@@ -165,6 +165,21 @@ module ProGran3
         return result
       end
       
+      # === v3.1: PATH TRAVERSAL PROTECTION ===
+      # Перевіряємо що шлях не містить ".." (path traversal)
+      if file_path.include?('..') || file_path.include?('~')
+        result.add_error("Небезпечний шлях (path traversal заборонено): #{file_path}", :file_path)
+        Logger.error("🚨 PATH TRAVERSAL ATTEMPT: #{file_path}", context)
+        return result
+      end
+      
+      # Перевіряємо що шлях не абсолютний (тільки відносні шляхи)
+      if file_path.start_with?('/') || file_path.match?(/^[A-Za-z]:/)
+        result.add_error("Абсолютні шляхи заборонені: #{file_path}", :file_path)
+        Logger.error("🚨 ABSOLUTE PATH ATTEMPT: #{file_path}", context)
+        return result
+      end
+      
       unless File.exist?(file_path)
         result.add_error("Файл не знайдено: #{file_path}", :file_path)
       end

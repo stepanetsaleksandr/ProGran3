@@ -5,9 +5,26 @@ import crypto from 'crypto';
  * Захист від підробки запитів та replay attacks
  */
 
-const SECRET_KEY = process.env.HMAC_SECRET_KEY || '';
+// v3.1: Використовуємо глобальний shared secret
+const SECRET_KEY = process.env.HMAC_SECRET_KEY || 
+                   'ProGran3-HMAC-Global-Secret-2025-v3.1-DO-NOT-SHARE-9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d';
+
 const MAX_TIMESTAMP_AGE = 300; // 5 хвилин
 const MAX_FUTURE_TOLERANCE = 60; // 1 хвилина в майбутнє (для різниці годин)
+
+// v3.1: Nonce tracking для захисту від replay attacks
+const usedNonces = new Map<string, number>();
+
+// Очищення старих nonces кожні 10 хвилин
+setInterval(() => {
+  const cutoff = Date.now() - (MAX_TIMESTAMP_AGE * 1000);
+  // v3.1: Використовуємо forEach замість for...of (TypeScript compatibility)
+  usedNonces.forEach((timestamp, nonce) => {
+    if (timestamp < cutoff) {
+      usedNonces.delete(nonce);
+    }
+  });
+}, 600000);
 
 /**
  * Створює HMAC підпис для даних
@@ -70,6 +87,17 @@ export function verifyHMAC(
     };
   }
   
+  // === v3.1: REPLAY ATTACK PROTECTION ===
+  // Перевіряємо що цей nonce ще не використовувався
+  const nonce = `${timestamp}:${signature}`;
+  
+  if (usedNonces.has(nonce)) {
+    return {
+      valid: false,
+      error: 'Request already processed (replay attack detected)'
+    };
+  }
+  
   // Перевірка: Створюємо очікуваний підпис
   try {
     const expectedSignature = createHMAC(body, timestamp);
@@ -93,6 +121,9 @@ export function verifyHMAC(
         error: 'Invalid signature (data tampered or wrong key)'
       };
     }
+    
+    // === v3.1: Зберігаємо nonce (replay protection) ===
+    usedNonces.set(nonce, timestamp);
     
     // ✅ Все добре!
     return { valid: true };

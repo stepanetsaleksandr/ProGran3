@@ -408,8 +408,15 @@ module ProGran3
       
       # Додаємо callback для отримання HTML каруселі
       @dialog.add_action_callback("get_carousel_html") do |dialog, carousel_id|
-        html = @carousel_ui.get_carousel_html(carousel_id)
-        dialog.execute_script("receiveCarouselHtml('#{carousel_id}', `#{html}`);")
+        # v3.1: Sanitize carousel_id для запобігання code injection
+        safe_carousel_id = carousel_id.to_s.gsub(/['"\\`]/, '')  # Видаляємо небезпечні символи
+        
+        html = @carousel_ui.get_carousel_html(safe_carousel_id)
+        
+        # v3.1: Escape HTML для безпечного вставлення
+        safe_html = html.gsub('`', '\\`').gsub('${', '\\${')
+        
+        dialog.execute_script("receiveCarouselHtml('#{safe_carousel_id}', `#{safe_html}`);")
       end
 
       # Callback для отримання статусу моделі

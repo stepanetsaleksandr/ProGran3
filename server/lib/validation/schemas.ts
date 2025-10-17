@@ -41,7 +41,7 @@ export const LicenseUpdateSchema = z.object({
     .min(1)
     .max(3650)
     .optional(),
-  status: z.enum(['generated', 'activated', 'active', 'expired', 'revoked'])
+  status: z.enum(['generated', 'active', 'expired', 'suspended'])
     .optional(),
   description: z.string()
     .max(500)
@@ -97,7 +97,7 @@ export const PaginationSchema = z.object({
  */
 
 export const LicenseQuerySchema = z.object({
-  status: z.enum(['generated', 'activated', 'active', 'expired', 'revoked']).optional(),
+  status: z.enum(['generated', 'active', 'expired', 'suspended']).optional(),
   user_id: z.string().uuid().optional(),
   search: z.string().max(100).optional(),
 }).merge(PaginationSchema.partial());

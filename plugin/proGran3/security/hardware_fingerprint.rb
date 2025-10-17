@@ -9,18 +9,37 @@ module ProGran3
   module Security
     class HardwareFingerprint
       
+      # v3.1: Кеш для захисту від DoS (занадто часті генерації)
+      @@fingerprint_cache = nil
+      @@cache_timestamp = 0
+      CACHE_TTL = 3600  # 1 година
+      
       # Генерує унікальний fingerprint для цього комп'ютера
       # @return [Hash] { fingerprint: String, components: Hash, timestamp: Integer }
       def self.generate
+        # v3.1: Повертаємо з кешу якщо свіжий (DoS protection)
+        now = Time.now.to_i
+        
+        if @@fingerprint_cache && (now - @@cache_timestamp) < CACHE_TTL
+          return @@fingerprint_cache
+        end
+        
+        # Генеруємо новий fingerprint
         components = collect_hardware_components
         fingerprint_string = generate_fingerprint_string(components)
         
-        {
+        result = {
           fingerprint: fingerprint_string,
           components: components,
-          timestamp: Time.now.to_i,
+          timestamp: now,
           version: '3.0'  # v3.0: Machine GUID + flexible validation
         }
+        
+        # Зберігаємо в кеш
+        @@fingerprint_cache = result
+        @@cache_timestamp = now
+        
+        result
       end
       
       # Перевірка чи fingerprint відповідає поточній системі
@@ -38,18 +57,36 @@ module ProGran3
       def self.validate_flexible(stored_components, current_components = nil)
         current_components ||= collect_hardware_components
         
-        # Критичні компоненти (апаратні, складно підробити)
-        critical_keys = [:machine_guid, :volume_serial, :bios_serial, :mac_address]
-        
-        matches = 0
-        critical_keys.each do |key|
-          if stored_components[key] && current_components[key]
-            matches += 1 if stored_components[key] == current_components[key]
-          end
+        # === v3.1: Machine GUID ЗАВЖДИ має збігатися (не flexible!) ===
+        # Це найстабільніший компонент - не можна змінити без переустановки Windows
+        if stored_components[:machine_guid] && current_components[:machine_guid]
+          return false if stored_components[:machine_guid] != current_components[:machine_guid]
         end
         
-        # Мінімум 3 з 4 критичних компонентів має збігатися
-        matches >= 3
+        # Інші критичні компоненти (flexible: 2 з 3)
+        other_keys = [:volume_serial, :bios_serial, :mac_address]
+        
+        matches = 0
+        valid_comparisons = 0  # Скільки компонентів можна порівняти
+        
+        other_keys.each do |key|
+          stored_val = stored_components[key]
+          current_val = current_components[key]
+          
+          # Пропускаємо якщо хоч один 'unknown'
+          next if !stored_val || !current_val || 
+                  stored_val.to_s.include?('unknown') || 
+                  current_val.to_s.include?('unknown')
+          
+          valid_comparisons += 1
+          matches += 1 if stored_val == current_val
+        end
+        
+        # Якщо < 2 компонентів для порівняння - не можемо валідувати
+        return false if valid_comparisons < 2
+        
+        # Мінімум 2 з 3 додаткових компонентів має збігатися
+        matches >= 2
       end
       
       private
@@ -94,9 +131,8 @@ module ProGran3
           components[:mac_address] = get_mac_address_unix
         end
         
-        # Платформа та версія Ruby
-        components[:platform] = RUBY_PLATFORM
-        components[:ruby_version] = RUBY_VERSION
+        # ВИДАЛЕНО: platform і ruby_version (не є апаратними характеристиками)
+        # Вони можуть змінюватися між SketchUp Ruby та системним Ruby
         
         components
       end
@@ -119,7 +155,6 @@ module ProGran3
             return reg['MachineGuid']
           end
         rescue LoadError, Win32::Registry::Error => e
-          # Win32::Registry не доступний або помилка читання
           return 'unknown_machine_guid'
         end
       end
@@ -168,9 +203,27 @@ module ProGran3
           wmi = WIN32OLE.connect("winmgmts://")
           bios_query = wmi.ExecQuery("SELECT SerialNumber FROM Win32_BIOS")
           
+          # Список дефолтних/неунікальних серійних номерів BIOS
+          invalid_serials = [
+            'To be filled by O.E.M.',
+            'System Serial Number',
+            'Default string',
+            'Not Specified',
+            'Not Applicable',
+            'None',
+            'N/A',
+            '0',
+            '1',
+            '123456789'
+          ]
+          
           bios_query.each do |bios|
             serial = bios.SerialNumber
-            return serial if serial && !serial.empty? && serial != 'To be filled by O.E.M.'
+            
+            # Перевіряємо що serial не пустий і не дефолтний
+            if serial && !serial.empty? && !invalid_serials.include?(serial.strip)
+              return serial.strip
+            end
           end
           
           'unknown_bios_serial'

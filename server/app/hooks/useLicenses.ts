@@ -5,7 +5,7 @@ interface License {
   license_key: string;
   duration_days: number;
   description: string;
-  status: 'generated' | 'activated' | 'active' | 'expired' | 'revoked';
+  status: 'generated' | 'active' | 'expired' | 'suspended';
   created_at: string;
   activated_at: string | null;
   expires_at: string | null;

@@ -1,6 +1,7 @@
 # plugin/proGran3/security/license_manager.rb
 # Головний менеджер ліцензій - об'єднує всі модулі
 
+require 'time'  # v3.1: для Time.parse
 require_relative 'hardware_fingerprint'
 require_relative 'license_storage'
 require_relative 'api_client'
@@ -10,8 +11,8 @@ module ProGran3
     class LicenseManager
       
       # Grace period - скільки днів може працювати offline
-      GRACE_PERIOD_DAYS = 7
-      WARNING_PERIOD_DAYS = 3
+      GRACE_PERIOD_DAYS = 1  # v3.2: Змінено з 7 на 1 день
+      WARNING_PERIOD_DAYS = 0  # Без попереджень (блокує відразу після 1 дня)
       
       # Ініціалізація менеджера
       def initialize
@@ -223,18 +224,35 @@ module ProGran3
         end
         
         last_validation_time = Time.parse(last_validation)
+        
+        # === TIME TAMPERING CHECK (v3.0) ===
+        # Перевіряємо що системний час не змінено назад
+        if Time.now < last_validation_time
+          puts "🚨 SECURITY ALERT: Системний час менший за last_validation!"
+          puts "   Поточний час: #{Time.now}"
+          puts "   Last validation: #{last_validation_time}"
+          puts "   Різниця: #{((last_validation_time - Time.now) / 3600.0).round(1)} годин"
+          
+          return {
+            action: :block,
+            message: 'Виявлено зміну системного часу. Підключіться до інтернету для валідації.',
+            time_tampering: true
+          }
+        end
+        
         days_offline = ((Time.now - last_validation_time) / 86400.0).round(1)
         
         puts "📊 Днів без online валідації: #{days_offline}"
         
-        if days_offline > GRACE_PERIOD_DAYS
+        # v3.1: Блокуємо >= 7 днів (не > 7)
+        if days_offline >= GRACE_PERIOD_DAYS
           # Grace period вичерпано
           {
             action: :block,
-            message: "Grace period вичерпано (#{days_offline.to_i} днів offline)",
+            message: "Grace period вичерпано (#{days_offline.to_i} днів offline). Підключіться до інтернету.",
             days_offline: days_offline.to_i
           }
-        elsif days_offline > WARNING_PERIOD_DAYS
+        elsif days_offline >= WARNING_PERIOD_DAYS
           # Попередження
           {
             action: :warn,

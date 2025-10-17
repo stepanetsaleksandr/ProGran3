@@ -54,6 +54,31 @@ export default function LicenseManager() {
     }
   };
 
+  // v3.1: Зміна статусу ліцензії
+  const handleStatusChange = async (licenseId: string, newStatus: string) => {
+    try {
+      const response = await fetch(`/api/licenses/${licenseId}`, {
+        method: 'PUT',  // Виправлено: було PATCH
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': process.env.NEXT_PUBLIC_ADMIN_API_KEY || ''
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        await refreshDashboard();
+        showToast(`Статус змінено на: ${newStatus}`, 'success');
+      } else {
+        showToast(`Помилка: ${data.error}`, 'error');
+      }
+    } catch (error) {
+      showToast('Помилка при зміні статусу', 'error');
+    }
+  };
+  
   const handleDeleteLicense = async (id: string) => {
     if (!confirm('Ви впевнені, що хочете видалити цю ліцензію?')) return;
     
@@ -217,19 +242,22 @@ export default function LicenseManager() {
                     {license.description || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      license.status === 'active' ? 'bg-green-100 text-green-800' :
-                      license.status === 'activated' ? 'bg-blue-100 text-blue-800' :
-                      license.status === 'generated' ? 'bg-yellow-100 text-yellow-800' :
-                      license.status === 'expired' ? 'bg-red-100 text-red-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {license.status === 'active' ? 'Активна' :
-                       license.status === 'activated' ? 'Активована' :
-                       license.status === 'generated' ? 'Згенерована' :
-                       license.status === 'expired' ? 'Прострочена' :
-                       license.status === 'revoked' ? 'Відкликана' : license.status}
-                    </span>
+                    <select
+                      value={license.status}
+                      onChange={(e) => handleStatusChange(license.id, e.target.value)}
+                      className={`text-xs font-semibold rounded px-2 py-1 border-0 cursor-pointer ${
+                        license.status === 'active' ? 'bg-green-100 text-green-800' :
+                        license.status === 'generated' ? 'bg-yellow-100 text-yellow-800' :
+                        license.status === 'expired' ? 'bg-red-100 text-red-800' :
+                        license.status === 'suspended' ? 'bg-orange-100 text-orange-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      <option value="generated">Згенерована</option>
+                      <option value="active">Активна</option>
+                      <option value="expired">Прострочена (тест)</option>
+                      <option value="suspended">Заблокована (тест)</option>
+                    </select>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {license.expires_at ? 
