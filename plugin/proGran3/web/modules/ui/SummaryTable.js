@@ -240,14 +240,16 @@
         global.modelLists || {};
       
       // Оновлюємо тільки ті секції що не використовують детальну специфікацію
-      updateFoundationSummary(addedElements, currentUnit);
-      updateBlindAreaSummary(addedElements, currentUnit);
+      // Foundation та BlindArea НЕ оновлюємо автоматично - тільки через детальну специфікацію (кнопка "Оновити")
+      // updateFoundationSummary(addedElements, currentUnit);
+      // updateBlindAreaSummary(addedElements, currentUnit);
       updateFenceCornerSummary(addedElements, currentUnit);
       updateFencePerimeterSummary(addedElements, currentUnit);
       
-      // Автоматично запитуємо детальну специфікацію для інших елементів
-      if (addedElements.tiling || addedElements.cladding || addedElements.stands || 
-          addedElements.steles || addedElements.flowerbeds || addedElements.gravestones) {
+      // Автоматично запитуємо детальну специфікацію для всіх основних елементів
+      if (addedElements.foundation || addedElements.blindArea || addedElements.tiling || 
+          addedElements.cladding || addedElements.stands || addedElements.steles || 
+          addedElements.flowerbeds || addedElements.gravestones) {
         logSummaryAction('Автоматичний запит детальної специфікації', 'info');
         setTimeout(() => refreshDetailedSummary(), 100);
       }
@@ -299,16 +301,324 @@
       logSummaryAction('updateDetailedSummary() викликано з даними: ' + JSON.stringify(data), 'info');
       console.log('📊 Детальна специфікація:', data);
       
+      // Оновлюємо Foundation окремо (з площею та об'ємом)
+      if (data.foundation && data.foundation.length > 0) {
+        const foundation = data.foundation[0];
+        console.log('📐 Foundation дані:', foundation);
+        
+        const foundationEl = safeGetElement('summary-foundation');
+        if (foundationEl) {
+          const area = foundation.area_m2 !== undefined ? foundation.area_m2 : 'N/A';
+          const volume = foundation.volume_m3 !== undefined ? foundation.volume_m3 : 'N/A';
+          const text = `${foundation.depth} × ${foundation.width} × ${foundation.height} см\nПлоща: ${area} м²\nОб'єм: ${volume} м³`;
+          safeSetTextContent(foundationEl, text);
+          console.log('✅ Foundation оновлено:', text);
+        }
+      }
+      
+      // Оновлюємо BlindArea окремо (з площею та об'ємом)
+      if (data.blind_area && data.blind_area.length > 0) {
+        const blindArea = data.blind_area[0];
+        console.log('📐 BlindArea дані:', blindArea);
+        
+        const blindAreaEl = safeGetElement('summary-blind-area');
+        if (blindAreaEl) {
+          const area = blindArea.area_m2 !== undefined ? blindArea.area_m2 : 'N/A';
+          const volume = blindArea.volume_m3 !== undefined ? blindArea.volume_m3 : 'N/A';
+          const text = `${blindArea.depth} × ${blindArea.width} × ${blindArea.height} см\nПлоща: ${area} м²\nОб'єм: ${volume} м³`;
+          safeSetTextContent(blindAreaEl, text);
+          console.log('✅ BlindArea оновлено:', text);
+        }
+      }
+      
+      // Оновлюємо Stands окремо (з площею та об'ємом, + проміжна деталь)
+      if (data.stands && data.stands.length > 0) {
+        console.log('📐 Stands дані:', data.stands);
+        
+        const standEl = safeGetElement('summary-stand');
+        if (standEl) {
+          const lines = data.stands.map(stand => {
+            const area = stand.area_m2 !== undefined ? stand.area_m2 : 'N/A';
+            const volume = stand.volume_m3 !== undefined ? stand.volume_m3 : 'N/A';
+            const standType = stand.stand_type === 'проміжна' ? 'Проміжна деталь' : 'Підставка';
+            return `${standType}: ${stand.depth} × ${stand.width} × ${stand.height} см\nПлоща: ${area} м²\nОб'єм: ${volume} м³`;
+          });
+          
+          const text = lines.join('\n\n');
+          safeSetTextContent(standEl, text);
+          console.log('✅ Stands оновлено:', text);
+        }
+      }
+      
+      // Оновлюємо Tiles окремо (групуємо за розмірами)
+      if (data.tiles && data.tiles.length > 0) {
+        console.log('📐 Tiles дані:', data.tiles);
+        
+        const tilesEl = safeGetElement('summary-tiling');
+        if (tilesEl) {
+          // Групуємо плитки за розмірами
+          const grouped = {};
+          
+          data.tiles.forEach(tile => {
+            const key = `${tile.depth}×${tile.width}×${tile.height}×${tile.tile_type || 'horizontal'}`;
+            
+            if (!grouped[key]) {
+              grouped[key] = {
+                depth: tile.depth,
+                width: tile.width,
+                height: tile.height,
+                tile_type: tile.tile_type || 'horizontal',
+                count: 0,
+                totalArea: 0,
+                totalVolume: 0
+              };
+            }
+            
+            grouped[key].count++;
+            grouped[key].totalArea += (tile.area_m2 || 0);
+            grouped[key].totalVolume += (tile.volume_m3 || 0);
+          });
+          
+          // Формуємо текст
+          const tileLines = [];
+          let grandTotalArea = 0;
+          let grandTotalVolume = 0;
+          
+          Object.values(grouped).forEach((group, index) => {
+            grandTotalArea += group.totalArea;
+            grandTotalVolume += group.totalVolume;
+            
+            const typeLabel = group.tile_type === 'вертикальна' ? 'Вертикальна плитка' : 'Плитка';
+            
+            tileLines.push(
+              `${typeLabel} ${group.depth} × ${group.width} × ${group.height} см - ${group.count} шт\n` +
+              `  Площа: ${group.totalArea.toFixed(3)} м², Об'єм: ${group.totalVolume.toFixed(4)} м³`
+            );
+          });
+          
+          tileLines.push(
+            `\nЗАГАЛОМ:\n` +
+            `  Площа: ${grandTotalArea.toFixed(2)} м²\n` +
+            `  Об'єм: ${grandTotalVolume.toFixed(3)} м³`
+          );
+          
+          const text = tileLines.join('\n\n');
+          safeSetTextContent(tilesEl, text);
+          console.log('✅ Tiles оновлено:', text);
+        }
+      }
+      
+      // Оновлюємо Стели (групуємо за розмірами)
+      if (data.steles && data.steles.length > 0) {
+        console.log('📐 Steles дані:', data.steles);
+        
+        const steleEl = safeGetElement('summary-stele');
+        if (steleEl) {
+          const grouped = {};
+          
+          data.steles.forEach(stele => {
+            const key = `${stele.depth}×${stele.width}×${stele.height}`;
+            
+            if (!grouped[key]) {
+              grouped[key] = {
+                depth: stele.depth,
+                width: stele.width,
+                height: stele.height,
+                count: 0,
+                totalArea: 0,
+                totalVolume: 0
+              };
+            }
+            
+            grouped[key].count++;
+            grouped[key].totalArea += (stele.area_m2 || 0);
+            grouped[key].totalVolume += (stele.volume_m3 || 0);
+          });
+          
+          const steleLines = [];
+          let totalArea = 0;
+          let totalVolume = 0;
+          
+          Object.values(grouped).forEach(group => {
+            totalArea += group.totalArea;
+            totalVolume += group.totalVolume;
+            
+            steleLines.push(
+              `Стела ${group.depth} × ${group.width} × ${group.height} см - ${group.count} шт\n` +
+              `  Площа: ${group.totalArea.toFixed(3)} м², Об'єм: ${group.totalVolume.toFixed(4)} м³`
+            );
+          });
+          
+          if (Object.keys(grouped).length > 1) {
+            steleLines.push(`\nЗАГАЛОМ:\n  Площа: ${totalArea.toFixed(2)} м²\n  Об'єм: ${totalVolume.toFixed(3)} м³`);
+          }
+          
+          const text = steleLines.join('\n\n');
+          safeSetTextContent(steleEl, text);
+          console.log('✅ Steles оновлено:', text);
+        }
+      }
+      
+      // Оновлюємо Квітники (групуємо за розмірами)
+      if (data.flowerbeds && data.flowerbeds.length > 0) {
+        console.log('📐 Flowerbeds дані:', data.flowerbeds);
+        
+        const flowerbedEl = safeGetElement('summary-flowerbed');
+        if (flowerbedEl) {
+          const grouped = {};
+          
+          data.flowerbeds.forEach(flowerbed => {
+            const key = `${flowerbed.depth}×${flowerbed.width}×${flowerbed.height}`;
+            
+            if (!grouped[key]) {
+              grouped[key] = {
+                depth: flowerbed.depth,
+                width: flowerbed.width,
+                height: flowerbed.height,
+                count: 0,
+                totalArea: 0,
+                totalVolume: 0
+              };
+            }
+            
+            grouped[key].count++;
+            grouped[key].totalArea += (flowerbed.area_m2 || 0);
+            grouped[key].totalVolume += (flowerbed.volume_m3 || 0);
+          });
+          
+          const flowerbedLines = [];
+          let totalArea = 0;
+          let totalVolume = 0;
+          
+          Object.values(grouped).forEach(group => {
+            totalArea += group.totalArea;
+            totalVolume += group.totalVolume;
+            
+            flowerbedLines.push(
+              `Квітник ${group.depth} × ${group.width} × ${group.height} см - ${group.count} шт\n` +
+              `  Площа: ${group.totalArea.toFixed(3)} м², Об'єм: ${group.totalVolume.toFixed(4)} м³`
+            );
+          });
+          
+          if (Object.keys(grouped).length > 1) {
+            flowerbedLines.push(`\nЗАГАЛОМ:\n  Площа: ${totalArea.toFixed(2)} м²\n  Об'єм: ${totalVolume.toFixed(3)} м³`);
+          }
+          
+          const text = flowerbedLines.join('\n\n');
+          safeSetTextContent(flowerbedEl, text);
+          console.log('✅ Flowerbeds оновлено:', text);
+        }
+      }
+      
+      // Оновлюємо Кутову огорожу (групуємо за типом)
+      if (data.fence_corner && data.fence_corner.length > 0) {
+        console.log('📐 Fence Corner дані:', data.fence_corner);
+        
+        const fenceCornerEl = safeGetElement('summary-fence-corner');
+        if (fenceCornerEl) {
+          // Групуємо за назвою компонента
+          const grouped = {};
+          
+          data.fence_corner.forEach(item => {
+            const key = item.name;
+            
+            if (!grouped[key]) {
+              grouped[key] = {
+                name: item.name,
+                depth: item.depth,
+                width: item.width,
+                height: item.height,
+                count: 0,
+                totalArea: 0,
+                totalVolume: 0
+              };
+            }
+            
+            grouped[key].count++;
+            grouped[key].totalArea += (item.area_m2 || 0);
+            grouped[key].totalVolume += (item.volume_m3 || 0);
+          });
+          
+          const fenceLines = [];
+          let grandTotalArea = 0;
+          let grandTotalVolume = 0;
+          
+          Object.values(grouped).forEach(group => {
+            grandTotalArea += group.totalArea;
+            grandTotalVolume += group.totalVolume;
+            
+            // Визначаємо тип (Post, Panel_X, Panel_Y)
+            const componentName = group.name.replace('CornerFence_', '');
+            
+            fenceLines.push(
+              `${componentName}: ${group.depth} × ${group.width} × ${group.height} см - ${group.count} шт\n` +
+              `  Площа: ${group.totalArea.toFixed(3)} м², Об'єм: ${group.totalVolume.toFixed(4)} м³`
+            );
+          });
+          
+          fenceLines.push(`\nЗАГАЛОМ:\n  Площа: ${grandTotalArea.toFixed(2)} м²\n  Об'єм: ${grandTotalVolume.toFixed(3)} м³`);
+          
+          const text = fenceLines.join('\n\n');
+          safeSetTextContent(fenceCornerEl, text);
+          console.log('✅ Fence Corner оновлено:', text);
+        }
+      }
+      
+      // Оновлюємо Декор огорожі (ball.skp та інші)
+      if (data.fence_decor && data.fence_decor.length > 0) {
+        console.log('📐 Fence Decor дані:', data.fence_decor);
+        
+        const fenceDecorEl = safeGetElement('summary-fence-decor');
+        if (fenceDecorEl) {
+          const grouped = {};
+          
+          data.fence_decor.forEach(item => {
+            const key = item.name;
+            
+            if (!grouped[key]) {
+              grouped[key] = {
+                name: item.name,
+                depth: item.depth,
+                width: item.width,
+                height: item.height,
+                count: 0,
+                totalArea: 0,
+                totalVolume: 0
+              };
+            }
+            
+            grouped[key].count++;
+            grouped[key].totalArea += (item.area_m2 || 0);
+            grouped[key].totalVolume += (item.volume_m3 || 0);
+          });
+          
+          const decorLines = [];
+          let totalArea = 0;
+          let totalVolume = 0;
+          
+          Object.values(grouped).forEach(group => {
+            totalArea += group.totalArea;
+            totalVolume += group.totalVolume;
+            
+            decorLines.push(
+              `${group.name}: ${group.depth} × ${group.width} × ${group.height} см - ${group.count} шт\n` +
+              `  Площа: ${group.totalArea.toFixed(3)} м², Об'єм: ${group.totalVolume.toFixed(4)} м³`
+            );
+          });
+          
+          if (Object.keys(grouped).length > 1) {
+            decorLines.push(`\nЗАГАЛОМ:\n  Площа: ${totalArea.toFixed(2)} м²\n  Об'єм: ${totalVolume.toFixed(3)} м³`);
+          }
+          
+          const text = decorLines.join('\n\n');
+          safeSetTextContent(fenceDecorEl, text);
+          console.log('✅ Fence Decor оновлено:', text);
+        }
+      }
+      
       const categories = [
-        // Фундамент, огорожі, відмостку НЕ оновлюємо - вони беруться з input полів
-        { key: 'tiles', id: 'summary-tiling', label: 'Плитка' },
-        { key: 'cladding', id: 'summary-cladding', label: 'Облицювання' },
-        { key: 'stands', id: 'summary-stand', label: 'Підставка' },
-        { key: 'flowerbeds', id: 'summary-flowerbed', label: 'Квітник' },
         { key: 'gravestones', id: 'summary-gravestone', label: 'Надгробна плита' },
-        { key: 'steles', id: 'summary-stele', label: 'Стела' },
-        { key: 'lamps', id: 'summary-lamp', label: 'Лампа' },
-        { key: 'fence_decor', id: 'summary-fence-decor', label: 'Декор огорожі' }
+        { key: 'lamps', id: 'summary-lamp', label: 'Лампа' }
       ];
       
       categories.forEach(category => {
@@ -324,7 +634,6 @@
         
         if (!items || items.length === 0) {
           console.log(`ℹ️ ${category.label}: немає даних`);
-          // НЕ перезаписуємо якщо немає даних - залишаємо старе значення
           return;
         }
         

@@ -2046,26 +2046,27 @@ function updateSummaryTable() {
     debugLog(` updateSummaryTable() викликано`, 'info');
     const unitText = currentUnit === 'mm' ? 'мм' : 'см';
     
-    // Фундамент
-    if (addedElements.foundation) {
-    const foundationDepthEl = document.getElementById('foundation-depth');
-    const foundationWidthEl = document.getElementById('foundation-width');
-    const foundationHeightEl = document.getElementById('foundation-height');
-    const summaryFoundationEl = document.getElementById('summary-foundation');
-    
-    if (foundationDepthEl && foundationWidthEl && foundationHeightEl && summaryFoundationEl) {
-      const foundationDepth = foundationDepthEl.value;
-      const foundationWidth = foundationWidthEl.value;
-      const foundationHeight = foundationHeightEl.value;
-      summaryFoundationEl.textContent = 
-        `${foundationDepth}×${foundationWidth}×${foundationHeight} ${unitText}`;
-    }
-  } else {
-    const summaryFoundationEl = document.getElementById('summary-foundation');
-    if (summaryFoundationEl) {
-      summaryFoundationEl.textContent = '--';
-    }
-  }
+  // Фундамент - НЕ оновлюємо автоматично!
+  // Використовується детальна специфікація (кнопка "Оновити" з площею та об'ємом)
+  // if (addedElements.foundation) {
+  //   const foundationDepthEl = document.getElementById('foundation-depth');
+  //   const foundationWidthEl = document.getElementById('foundation-width');
+  //   const foundationHeightEl = document.getElementById('foundation-height');
+  //   const summaryFoundationEl = document.getElementById('summary-foundation');
+  //   
+  //   if (foundationDepthEl && foundationWidthEl && foundationHeightEl && summaryFoundationEl) {
+  //     const foundationDepth = foundationDepthEl.value;
+  //     const foundationWidth = foundationWidthEl.value;
+  //     const foundationHeight = foundationHeightEl.value;
+  //     summaryFoundationEl.textContent = 
+  //       `${foundationDepth}×${foundationWidth}×${foundationHeight} ${unitText}`;
+  //   }
+  // } else {
+  //   const summaryFoundationEl = document.getElementById('summary-foundation');
+  //   if (summaryFoundationEl) {
+  //     summaryFoundationEl.textContent = '--';
+  //   }
+  // }
   
   // Плитка - ВИДАЛЕНО, тепер використовується детальна специфікація
   // Не оновлюємо автоматично, щоб не перезаписувати дані з updateDetailedSummary()

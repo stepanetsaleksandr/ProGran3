@@ -232,21 +232,25 @@
   color: #2c3e50;
   text-align: left;
   vertical-align: top;
-  width: 40%;
+  width: 35%;
+  padding-right: 15px;
 }
 
 .summary-table td:last-child {
-  text-align: right;
+  text-align: left;
   color: var(--text-color);
+  vertical-align: top;
 }
 
 .summary-cell {
   white-space: pre-line;
-  line-height: 1.6;
+  line-height: 1.8;
   font-size: 0.9em;
   max-width: 350px;
   word-wrap: break-word;
   text-align: left !important;
+  vertical-align: top;
+  font-family: 'Manrope', sans-serif;
 }
 
 /* Refresh Button */

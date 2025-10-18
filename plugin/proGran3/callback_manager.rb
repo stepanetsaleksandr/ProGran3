@@ -993,7 +993,7 @@ module ProGran3
     # Callback для отримання детальної специфікації всіх компонентів в моделі
     def get_detailed_summary_callback(dialog)
       begin
-        ProGran3::Logger.info("🔍 Початок збору детальної специфікації", "Summary")
+        ProGran3::Logger.info("🔍 Початок збору детальної специфікації [VERSION 2.0 - FIXED]", "Summary")
         
         model = Sketchup.active_model
         entities = model.entities
@@ -1019,82 +1019,393 @@ module ProGran3
         # Збираємо всі компоненти
         entities.grep(Sketchup::ComponentInstance).each do |component|
           name = component.definition.name
-          ProGran3::Logger.info("🔎 Знайдено компонент: #{name}", "Summary")
+          ProGran3::Logger.info("🔎 Знайдено компонент: [#{name}] (клас: #{name.class})", "Summary")
           
           # Класифікуємо за типом
           case name
           when "Foundation"
+            ProGran3::Logger.info("💡 CASE: Foundation matched!", "Summary")
             bounds = component.bounds
+            trans = component.transformation
+            
+            ProGran3::Logger.info("🔍 Foundation bounds:", "Summary")
+            ProGran3::Logger.info("  width: #{bounds.width} inches = #{bounds.width.to_mm} mm", "Summary")
+            ProGran3::Logger.info("  depth: #{bounds.depth} inches = #{bounds.depth.to_mm} mm", "Summary")
+            ProGran3::Logger.info("  height: #{bounds.height} inches = #{bounds.height.to_mm} mm", "Summary")
+            
+            # Розміри в см
+            width_cm = (bounds.width.to_mm / 10.0).round(1)
+            depth_cm = (bounds.depth.to_mm / 10.0).round(1)
+            height_cm = (bounds.height.to_mm / 10.0).round(1)
+            
+            ProGran3::Logger.info("📏 Розміри в см: #{depth_cm} × #{width_cm} × #{height_cm}", "Summary")
+            
+            # Площа верхньої грані (з урахуванням трансформації)
+            scale_x = trans.xscale
+            scale_y = trans.yscale
+            
+            ProGran3::Logger.info("🔄 Трансформація: scale_x=#{scale_x}, scale_y=#{scale_y}", "Summary")
+            
+            top_area = 0
+            face_count = 0
+            component.definition.entities.grep(Sketchup::Face).each do |face|
+              if face.normal.z > 0.9  # Верхня грань
+                face_count += 1
+                face_area = face.area * scale_x * scale_y
+                top_area += face_area
+                ProGran3::Logger.info("  Грань #{face_count}: #{face.area} sq_in → #{face_area} sq_in (scaled)", "Summary")
+              end
+            end
+            area_m2 = (top_area / 1550.0031).round(2)
+            
+            ProGran3::Logger.info("📊 Площа: #{top_area} sq_in = #{area_m2} м²", "Summary")
+            
+            # Об'єм в м³
+            volume_cu_inches = bounds.width * bounds.depth * bounds.height
+            volume_m3 = (volume_cu_inches * 0.000016387064).round(3)
+            
+            ProGran3::Logger.info("📦 Об'єм: #{volume_cu_inches} cu_in = #{volume_m3} м³", "Summary")
+            
             item = {
               name: name,
-              width: (bounds.width / 10.0).round(1),
-              depth: (bounds.depth / 10.0).round(1),
-              height: (bounds.height / 10.0).round(1),
+              width: width_cm,
+              depth: depth_cm,
+              height: height_cm,
+              area_m2: area_m2,
+              volume_m3: volume_m3,
               material: get_component_material(component)
             }
+            
+            ProGran3::Logger.info("✅ Foundation item: #{item.inspect}", "Summary")
             summary[:foundation] << item
             
           when /Perimeter_Tile|Modular_Tile/
-            # Для плитки аналізуємо внутрішні компоненти
-            ProGran3::Logger.info("🔹 Плитка знайдена: #{name}, аналізую внутрішні компоненти...", "Summary")
-            analyze_tile_components(component, summary[:tiles])
-            ProGran3::Logger.info("✅ Плитка: додано #{summary[:tiles].count} елементів", "Summary")
+            # Кожна плитка - окремий компонент (НЕ група)
+            ProGran3::Logger.info("🔹 Плитка знайдена: #{name}", "Summary")
             
-          when /Cladding/
-            # Для облицювання аналізуємо внутрішні елементи
-            analyze_cladding_components(component, summary[:cladding])
-            
-          when /BlindArea/
             bounds = component.bounds
+            trans = component.transformation
+            
+            # Розміри в см
+            width_cm = (bounds.width.to_mm / 10.0).round(1)
+            depth_cm = (bounds.depth.to_mm / 10.0).round(1)
+            height_cm = (bounds.height.to_mm / 10.0).round(1)
+            
+            ProGran3::Logger.info("  📏 Bounds: #{bounds.width.to_mm} × #{bounds.depth.to_mm} × #{bounds.height.to_mm} мм", "Summary")
+            ProGran3::Logger.info("  📏 В см: #{depth_cm} × #{width_cm} × #{height_cm} см", "Summary")
+            
+            # Площа верхньої грані
+            scale_x = trans.xscale
+            scale_y = trans.yscale
+            
+            top_area = 0
+            face_count = 0
+            component.definition.entities.grep(Sketchup::Face).each do |face|
+              if face.normal.z > 0.9
+                face_count += 1
+                top_area += face.area * scale_x * scale_y
+              end
+            end
+            area_m2 = (top_area / 1550.0031).round(3)
+            
+            # Об'єм
+            volume_cu_inches = bounds.width * bounds.depth * bounds.height
+            volume_m3 = (volume_cu_inches * 0.000016387064).round(4)
+            
+            ProGran3::Logger.info("  📊 Площа (#{face_count} граней): #{area_m2} м²", "Summary")
+            ProGran3::Logger.info("  📦 Об'єм: #{volume_m3} м³", "Summary")
+            
             item = {
               name: name,
-              width: (bounds.width / 10.0).round(1),
-              depth: (bounds.depth / 10.0).round(1),
-              height: (bounds.height / 10.0).round(1),
+              width: width_cm,
+              depth: depth_cm,
+              height: height_cm,
+              area_m2: area_m2,
+              volume_m3: volume_m3,
               material: get_component_material(component)
             }
+            summary[:tiles] << item
+            
+          when /Cladding/
+            # Облицювання - вертикальна плитка
+            ProGran3::Logger.info("🔹 Облицювання (вертикальна плитка) знайдена: #{name}", "Summary")
+            
+            bounds = component.bounds
+            trans = component.transformation
+            
+            # Розміри в см
+            width_cm = (bounds.width.to_mm / 10.0).round(1)
+            depth_cm = (bounds.depth.to_mm / 10.0).round(1)
+            height_cm = (bounds.height.to_mm / 10.0).round(1)
+            
+            ProGran3::Logger.info("  📏 Bounds: #{bounds.width.to_mm} × #{bounds.depth.to_mm} × #{bounds.height.to_mm} мм", "Summary")
+            
+            # Площа НАЙБІЛЬШОЇ грані (не обов'язково верхньої)
+            scale_x = trans.xscale
+            scale_y = trans.yscale
+            scale_z = trans.zscale
+            
+            max_area = 0
+            max_face_info = ""
+            face_count = 0
+            
+            component.definition.entities.grep(Sketchup::Face).each do |face|
+              face_count += 1
+              
+              # Трансформована нормаль
+              normal = face.normal.transform(trans)
+              
+              # Площа з урахуванням орієнтації
+              if normal.z.abs > 0.9  # Горизонтальна (XY площина)
+                face_area = face.area * scale_x * scale_y
+              elsif normal.x.abs > 0.9  # Вертикальна (YZ площина)
+                face_area = face.area * scale_y * scale_z
+              elsif normal.y.abs > 0.9  # Вертикальна (XZ площина)
+                face_area = face.area * scale_x * scale_z
+              else
+                # Похила грань - приблизний розрахунок
+                avg_scale = Math.sqrt(scale_x * scale_y * scale_z)
+                face_area = face.area * avg_scale * avg_scale
+              end
+              
+              if face_area > max_area
+                max_area = face_area
+                max_face_info = "грань #{face_count}, normal: [#{normal.x.round(2)}, #{normal.y.round(2)}, #{normal.z.round(2)}]"
+              end
+            end
+            
+            area_m2 = (max_area / 1550.0031).round(3)
+            
+            # Об'єм
+            volume_cu_inches = bounds.width * bounds.depth * bounds.height
+            volume_m3 = (volume_cu_inches * 0.000016387064).round(4)
+            
+            ProGran3::Logger.info("  📊 Найбільша площина (#{max_face_info}): #{area_m2} м²", "Summary")
+            ProGran3::Logger.info("  📦 Об'єм: #{volume_m3} м³", "Summary")
+            
+            item = {
+              name: name,
+              width: width_cm,
+              depth: depth_cm,
+              height: height_cm,
+              area_m2: area_m2,
+              volume_m3: volume_m3,
+              tile_type: "вертикальна",
+              material: get_component_material(component)
+            }
+            summary[:tiles] << item
+            
+          when /BlindArea/
+            ProGran3::Logger.info("💡 CASE: BlindArea matched!", "Summary")
+            bounds = component.bounds
+            trans = component.transformation
+            
+            # Розміри в см
+            width_cm = (bounds.width.to_mm / 10.0).round(1)
+            depth_cm = (bounds.depth.to_mm / 10.0).round(1)
+            height_cm = (bounds.height.to_mm / 10.0).round(1)
+            
+            # Площа верхньої грані (РЕКУРСИВНИЙ пошук для вкладених компонентів)
+            scale_x = trans.xscale
+            scale_y = trans.yscale
+            
+            top_area = 0
+            face_count = 0
+            
+            # Рекурсивна функція для пошуку всіх граней
+            process_entities = lambda do |entities, transformation|
+              entities.each do |entity|
+                if entity.is_a?(Sketchup::Face)
+                  # Трансформована нормаль
+                  normal = entity.normal.transform(transformation)
+                  
+                  if normal.z > 0.9  # Верхня грань
+                    face_count += 1
+                    sx = transformation.xscale
+                    sy = transformation.yscale
+                    face_area = entity.area * sx * sy
+                    top_area += face_area
+                    ProGran3::Logger.info("  Грань #{face_count}: #{entity.area.round(2)} sq_in → #{face_area.round(2)} sq_in (scaled)", "Summary")
+                  end
+                  
+                elsif entity.is_a?(Sketchup::ComponentInstance) || entity.is_a?(Sketchup::Group)
+                  # Рекурсивно обробляємо вкладені компоненти/групи
+                  new_trans = transformation * entity.transformation
+                  process_entities.call(entity.definition.entities, new_trans)
+                end
+              end
+            end
+            
+            # Запускаємо рекурсивний пошук
+            process_entities.call(component.definition.entities, component.transformation)
+            
+            area_m2 = (top_area / 1550.0031).round(2)
+            
+            # Об'єм в м³ - рахуємо через реальну геометрію
+            # Для BlindArea (рамка): об'єм = площа верхньої грані × товщина
+            # Товщина = найменший з трьох розмірів
+            thickness_mm = [bounds.width.to_mm, bounds.depth.to_mm, bounds.height.to_mm].min
+            thickness_m = thickness_mm / 1000.0
+            volume_m3 = (area_m2 * thickness_m).round(3)
+            
+            ProGran3::Logger.info("🔢 Розрахунок об'єму: #{area_m2} м² × #{thickness_m.round(3)} м (товщина #{thickness_mm} мм) = #{volume_m3} м³", "Summary")
+            
+            ProGran3::Logger.info("📏 BlindArea: #{depth_cm} × #{width_cm} × #{height_cm} см", "Summary")
+            ProGran3::Logger.info("📊 Площа (#{face_count} граней): #{area_m2} м²", "Summary")
+            ProGran3::Logger.info("📦 Об'єм: #{volume_m3} м³", "Summary")
+            
+            item = {
+              name: name,
+              width: width_cm,
+              depth: depth_cm,
+              height: height_cm,
+              area_m2: area_m2,
+              volume_m3: volume_m3,
+              material: get_component_material(component)
+            }
+            
+            ProGran3::Logger.info("✅ BlindArea item створено: #{item.inspect}", "Summary")
+            ProGran3::Logger.info("   JSON: #{item.to_json}", "Summary")
+            
             summary[:blind_area] << item
             
           when /stand/i
             bounds = component.bounds
+            trans = component.transformation
+            
+            # Розміри в см
+            width_cm = (bounds.width.to_mm / 10.0).round(1)
+            depth_cm = (bounds.depth.to_mm / 10.0).round(1)
+            height_cm = (bounds.height.to_mm / 10.0).round(1)
+            
+            # Площа верхньої грані
+            scale_x = trans.xscale
+            scale_y = trans.yscale
+            
+            top_area = 0
+            component.definition.entities.grep(Sketchup::Face).each do |face|
+              if face.normal.z > 0.9
+                top_area += face.area * scale_x * scale_y
+              end
+            end
+            area_m2 = (top_area / 1550.0031).round(2)
+            
+            # Об'єм
+            volume_cu_inches = bounds.width * bounds.depth * bounds.height
+            volume_m3 = (volume_cu_inches * 0.000016387064).round(3)
+            
+            # Визначаємо тип (основна чи проміжна)
+            is_gaps = name =~ /StandGaps/i
+            stand_type = is_gaps ? "проміжна" : "основна"
+            
+            ProGran3::Logger.info("📏 Stand (#{stand_type}): #{depth_cm} × #{width_cm} × #{height_cm} см, Площа: #{area_m2} м², Об'єм: #{volume_m3} м³", "Summary")
+            
             item = {
               name: name,
-              width: (bounds.width / 10.0).round(1),
-              depth: (bounds.depth / 10.0).round(1),
-              height: (bounds.height / 10.0).round(1),
+              width: width_cm,
+              depth: depth_cm,
+              height: height_cm,
+              area_m2: area_m2,
+              volume_m3: volume_m3,
+              stand_type: stand_type,
               material: get_component_material(component)
             }
             summary[:stands] << item
             
           when /stele/i
+            ProGran3::Logger.info("🔹 Стела знайдена: #{name}", "Summary")
+            
             bounds = component.bounds
+            trans = component.transformation
+            
+            # Розміри в см
+            width_cm = (bounds.width.to_mm / 10.0).round(1)
+            depth_cm = (bounds.depth.to_mm / 10.0).round(1)
+            height_cm = (bounds.height.to_mm / 10.0).round(1)
+            
+            # Площа верхньої грані
+            scale_x = trans.xscale
+            scale_y = trans.yscale
+            
+            top_area = 0
+            component.definition.entities.grep(Sketchup::Face).each do |face|
+              if face.normal.z > 0.9
+                top_area += face.area * scale_x * scale_y
+              end
+            end
+            area_m2 = (top_area / 1550.0031).round(3)
+            
+            # Об'єм
+            volume_cu_inches = bounds.width * bounds.depth * bounds.height
+            volume_m3 = (volume_cu_inches * 0.000016387064).round(4)
+            
+            ProGran3::Logger.info("  📏 Стела: #{depth_cm} × #{width_cm} × #{height_cm} см, Площа: #{area_m2} м², Об'єм: #{volume_m3} м³", "Summary")
+            
             item = {
               name: name,
-              width: (bounds.width / 10.0).round(1),
-              depth: (bounds.depth / 10.0).round(1),
-              height: (bounds.height / 10.0).round(1),
+              width: width_cm,
+              depth: depth_cm,
+              height: height_cm,
+              area_m2: area_m2,
+              volume_m3: volume_m3,
               material: get_component_material(component)
             }
             summary[:steles] << item
             
           when /flowerbed/i
-            bounds = component.bounds
-            item = {
-              name: name,
-              width: (bounds.width / 10.0).round(1),
-              depth: (bounds.depth / 10.0).round(1),
-              height: (bounds.height / 10.0).round(1),
-              material: get_component_material(component)
-            }
-            summary[:flowerbeds] << item
+            # Квітник містить внутрішні компоненти - показуємо ТІЛЬКИ їх
+            ProGran3::Logger.info("🔹 Квітник знайдено: #{name}", "Summary")
+            
+            internal_components = component.definition.entities.grep(Sketchup::ComponentInstance)
+            ProGran3::Logger.info("  📦 Внутрішніх компонентів: #{internal_components.count}", "Summary")
+            
+            # Обробляємо ТІЛЬКИ внутрішні компоненти (не сам квітник)
+            internal_components.each do |internal|
+              bounds = internal.bounds
+              trans = component.transformation * internal.transformation
+              
+              # Розміри в см
+              width_cm = (bounds.width.to_mm / 10.0).round(1)
+              depth_cm = (bounds.depth.to_mm / 10.0).round(1)
+              height_cm = (bounds.height.to_mm / 10.0).round(1)
+              
+              # Площа верхньої грані
+              scale_x = trans.xscale
+              scale_y = trans.yscale
+              
+              top_area = 0
+              internal.definition.entities.grep(Sketchup::Face).each do |face|
+                if face.normal.z > 0.9
+                  top_area += face.area * scale_x * scale_y
+                end
+              end
+              area_m2 = (top_area / 1550.0031).round(3)
+              
+              # Об'єм
+              volume_cu_inches = bounds.width * bounds.depth * bounds.height * scale_x * scale_y * trans.zscale
+              volume_m3 = (volume_cu_inches * 0.000016387064).round(4)
+              
+              ProGran3::Logger.info("    ➕ #{internal.definition.name}: #{depth_cm}×#{width_cm}×#{height_cm} см, Площа: #{area_m2} м², Об'єм: #{volume_m3} м³", "Summary")
+              
+              item = {
+                name: internal.definition.name,
+                width: width_cm,
+                depth: depth_cm,
+                height: height_cm,
+                area_m2: area_m2,
+                volume_m3: volume_m3,
+                material: get_component_material(internal)
+              }
+              summary[:flowerbeds] << item
+            end
             
           when /gravestone|plate/i
             bounds = component.bounds
             item = {
               name: name,
-              width: (bounds.width / 10.0).round(1),
-              depth: (bounds.depth / 10.0).round(1),
-              height: (bounds.height / 10.0).round(1),
+              width: (bounds.width.to_mm / 10.0).round(1),
+              depth: (bounds.depth.to_mm / 10.0).round(1),
+              height: (bounds.height.to_mm / 10.0).round(1),
               material: get_component_material(component)
             }
             summary[:gravestones] << item
@@ -1103,45 +1414,138 @@ module ProGran3
             bounds = component.bounds
             item = {
               name: name,
-              width: (bounds.width / 10.0).round(1),
-              depth: (bounds.depth / 10.0).round(1),
-              height: (bounds.height / 10.0).round(1),
+              width: (bounds.width.to_mm / 10.0).round(1),
+              depth: (bounds.depth.to_mm / 10.0).round(1),
+              height: (bounds.height.to_mm / 10.0).round(1),
               material: get_component_material(component)
             }
             summary[:lamps] << item
             
-          when /CornerFence/
-            bounds = component.bounds
-            item = {
-              name: name,
-              width: (bounds.width / 10.0).round(1),
-              depth: (bounds.depth / 10.0).round(1),
-              height: (bounds.height / 10.0).round(1),
-              material: get_component_material(component)
-            }
-            summary[:fence_corner] << item
+          when /^CornerFence$/
+            # CornerFence - контейнер з 3 внутрішніми компонентами (Post, Panel_X, Panel_Y)
+            ProGran3::Logger.info("🔹 CornerFence контейнер знайдено: #{name}", "Summary")
+            
+            # Збираємо внутрішні компоненти
+            internal_components = component.definition.entities.grep(Sketchup::ComponentInstance)
+            ProGran3::Logger.info("  📦 Внутрішніх компонентів: #{internal_components.count}", "Summary")
+            
+            # Обробляємо кожен внутрішній компонент
+            internal_components.each do |internal|
+              bounds = internal.bounds
+              combined_trans = component.transformation * internal.transformation
+              
+              # Розміри в см
+              width_cm = (bounds.width.to_mm / 10.0).round(1)
+              depth_cm = (bounds.depth.to_mm / 10.0).round(1)
+              height_cm = (bounds.height.to_mm / 10.0).round(1)
+              
+              # Площа найбільшої грані
+              scale_x = combined_trans.xscale
+              scale_y = combined_trans.yscale
+              scale_z = combined_trans.zscale
+              
+              max_area = 0
+              internal.definition.entities.grep(Sketchup::Face).each do |face|
+                normal = face.normal
+                
+                if normal.z.abs > 0.9
+                  face_area = face.area * scale_x * scale_y
+                elsif normal.x.abs > 0.9
+                  face_area = face.area * scale_y * scale_z
+                elsif normal.y.abs > 0.9
+                  face_area = face.area * scale_x * scale_z
+                else
+                  face_area = face.area
+                end
+                
+                max_area = face_area if face_area > max_area
+              end
+              
+              area_m2 = (max_area / 1550.0031).round(3)
+              
+              # Об'єм
+              volume_cu_inches = bounds.width * bounds.depth * bounds.height * scale_x * scale_y * scale_z
+              volume_m3 = (volume_cu_inches * 0.000016387064).round(4)
+              
+              ProGran3::Logger.info("    ➕ #{internal.definition.name}: #{depth_cm} × #{width_cm} × #{height_cm} см, Площа: #{area_m2} м², Об'єм: #{volume_m3} м³", "Summary")
+              
+              item = {
+                name: internal.definition.name,
+                width: width_cm,
+                depth: depth_cm,
+                height: height_cm,
+                area_m2: area_m2,
+                volume_m3: volume_m3,
+                material: get_component_material(internal)
+              }
+              summary[:fence_corner] << item
+            end
             
           when /PerimeterFence/
             bounds = component.bounds
             item = {
               name: name,
-              width: (bounds.width / 10.0).round(1),
-              depth: (bounds.depth / 10.0).round(1),
-              height: (bounds.height / 10.0).round(1),
+              width: (bounds.width.to_mm / 10.0).round(1),
+              depth: (bounds.depth.to_mm / 10.0).round(1),
+              height: (bounds.height.to_mm / 10.0).round(1),
               material: get_component_material(component)
             }
             summary[:fence_perimeter] << item
             
-          when /fence_decor/i
+          when /fence_decor|ball\.skp|pancake\.skp|ball2\.skp/i
+            # Декоративні елементи огорожі
+            ProGran3::Logger.info("🔹 Декор огорожі: #{name}", "Summary")
+            
             bounds = component.bounds
+            trans = component.transformation
+            
+            # Розміри в см
+            width_cm = (bounds.width.to_mm / 10.0).round(1)
+            depth_cm = (bounds.depth.to_mm / 10.0).round(1)
+            height_cm = (bounds.height.to_mm / 10.0).round(1)
+            
+            # Площа найбільшої грані
+            scale_x = trans.xscale
+            scale_y = trans.yscale
+            scale_z = trans.zscale
+            
+            max_area = 0
+            component.definition.entities.grep(Sketchup::Face).each do |face|
+              normal = face.normal
+              
+              if normal.z.abs > 0.9
+                face_area = face.area * scale_x * scale_y
+              elsif normal.x.abs > 0.9
+                face_area = face.area * scale_y * scale_z
+              elsif normal.y.abs > 0.9
+                face_area = face.area * scale_x * scale_z
+              else
+                face_area = face.area
+              end
+              
+              max_area = face_area if face_area > max_area
+            end
+            
+            area_m2 = (max_area / 1550.0031).round(3)
+            
+            # Об'єм
+            volume_cu_inches = bounds.width * bounds.depth * bounds.height
+            volume_m3 = (volume_cu_inches * 0.000016387064).round(4)
+            
+            ProGran3::Logger.info("  📏 #{name}: #{depth_cm} × #{width_cm} × #{height_cm} см, Площа: #{area_m2} м², Об'єм: #{volume_m3} м³", "Summary")
+            
             item = {
               name: name,
-              width: (bounds.width / 10.0).round(1),
-              depth: (bounds.depth / 10.0).round(1),
-              height: (bounds.height / 10.0).round(1),
+              width: width_cm,
+              depth: depth_cm,
+              height: height_cm,
+              area_m2: area_m2,
+              volume_m3: volume_m3,
               material: get_component_material(component)
             }
             summary[:fence_decor] << item
+          else
+            ProGran3::Logger.warn("⚠️ Компонент '#{name}' НЕ розпізнано жодним case!", "Summary")
           end
         end
         
@@ -1153,15 +1557,54 @@ module ProGran3
         # Групуємо однакові компоненти
         grouped_summary = {}
         summary.each do |category, items|
-          grouped_summary[category] = group_components(items)
+          # Foundation, BlindArea, Stands, Tiles, Steles, Flowerbeds, FenceCorner, FenceDecor не групуємо - вони мають додаткові дані (площа, об'єм)
+          if category == :foundation || category == :blind_area || category == :stands || 
+             category == :tiles || category == :steles || category == :flowerbeds || 
+             category == :fence_corner || category == :fence_decor
+            grouped_summary[category] = items
+          else
+            grouped_summary[category] = group_components(items)
+          end
         end
         
         # Логуємо згруповані результати
         grouped_summary.each do |category, items|
           if items.any?
-            ProGran3::Logger.info("✅ #{category} (згруповано): #{items.count} типів", "Summary")
+            if category == :foundation
+              ProGran3::Logger.info("✅ #{category}: #{items.count} елементів", "Summary")
+            else
+              ProGran3::Logger.info("✅ #{category} (згруповано): #{items.count} типів", "Summary")
+            end
+            
             items.each do |item|
-              ProGran3::Logger.info("  - #{item[:width]}×#{item[:depth]}×#{item[:height]} см (#{item[:material]}) - #{item[:count]} шт", "Summary")
+              if category == :foundation || category == :blind_area || category == :stands || 
+                 category == :tiles || category == :steles || category == :flowerbeds || 
+                 category == :fence_corner || category == :fence_decor
+                log_text = "  - #{item[:name]}: #{item[:depth]}×#{item[:width]}×#{item[:height]} см" if item[:name]
+                log_text = "  - #{item[:depth]}×#{item[:width]}×#{item[:height]} см" unless item[:name]
+                log_text += " (#{item[:stand_type]})" if item[:stand_type]
+                log_text += " (#{item[:tile_type]})" if item[:tile_type]
+                log_text += ", Площа: #{item[:area_m2]} м²" if item[:area_m2]
+                log_text += ", Об'єм: #{item[:volume_m3]} м³" if item[:volume_m3]
+              else
+                log_text = "  - #{item[:width]}×#{item[:depth]}×#{item[:height]} см (#{item[:material]}) - #{item[:count]} шт"
+              end
+              ProGran3::Logger.info(log_text, "Summary")
+            end
+            
+            # Показуємо загальну суму
+            if (category == :tiles || category == :steles || category == :flowerbeds || 
+                category == :fence_corner || category == :fence_decor) && items.any?
+              total_area = items.map { |t| t[:area_m2] || 0 }.sum
+              total_volume = items.map { |t| t[:volume_m3] || 0 }.sum
+              cat_name = case category
+                when :tiles then "Плитка"
+                when :steles then "Стели"
+                when :flowerbeds then "Квітники"
+                when :fence_corner then "Кутова огорожа"
+                when :fence_decor then "Декор огорожі"
+              end
+              ProGran3::Logger.info("  📊 ЗАГАЛОМ #{cat_name}: Площа #{total_area.round(2)} м², Об'єм #{total_volume.round(3)} м³", "Summary")
             end
           end
         end
@@ -1169,6 +1612,13 @@ module ProGran3
         # Відправляємо в JS
         json_data = grouped_summary.to_json
         ProGran3::Logger.info("📤 Відправка даних в JS: #{json_data.length} символів", "Summary")
+        
+        # Логуємо BlindArea окремо для перевірки
+        if grouped_summary[:blind_area] && grouped_summary[:blind_area].any?
+          ProGran3::Logger.info("🔍 BlindArea в JSON:", "Summary")
+          ProGran3::Logger.info("   #{grouped_summary[:blind_area].to_json}", "Summary")
+        end
+        
         dialog.execute_script("updateDetailedSummary(#{json_data});")
         
         ProGran3::Logger.info("✅ Детальна специфікація згенерована успішно", "Summary")
@@ -1185,7 +1635,10 @@ module ProGran3
     # Аналіз внутрішніх компонентів плитки
     def analyze_tile_components(tile_group, tiles_array)
       definition = tile_group.definition
+      group_trans = tile_group.transformation
+      
       ProGran3::Logger.info("  📦 Аналіз групи плитки: #{definition.name}", "Summary")
+      ProGran3::Logger.info("  📦 Група трансформація: scale #{group_trans.xscale}, #{group_trans.yscale}, #{group_trans.zscale}", "Summary")
       ProGran3::Logger.info("  📦 Внутрішніх entities: #{definition.entities.count}", "Summary")
       
       internal_components = definition.entities.grep(Sketchup::ComponentInstance)
@@ -1194,18 +1647,45 @@ module ProGran3
       internal_components.each do |tile|
         bounds = tile.bounds
         
-        width = (bounds.width / 10.0).round(1)
-        depth = (bounds.depth / 10.0).round(1)
-        height = (bounds.height / 10.0).round(1)
+        # Комбінована трансформація (група + сама плитка)
+        combined_trans = group_trans * tile.transformation
+        
+        # Розміри в см (з урахуванням трансформації групи)
+        width_cm = (bounds.width.to_mm / 10.0).round(1)
+        depth_cm = (bounds.depth.to_mm / 10.0).round(1)
+        height_cm = (bounds.height.to_mm / 10.0).round(1)
+        
+        ProGran3::Logger.info("    📏 Плитка bounds: #{bounds.width.to_mm} × #{bounds.depth.to_mm} × #{bounds.height.to_mm} мм", "Summary")
+        
+        # Площа верхньої грані (з урахуванням комбінованої трансформації)
+        scale_x = combined_trans.xscale
+        scale_y = combined_trans.yscale
+        
+        ProGran3::Logger.info("    🔄 Комбінована трансформація: scale #{scale_x.round(3)}, #{scale_y.round(3)}", "Summary")
+        
+        top_area = 0
+        tile.definition.entities.grep(Sketchup::Face).each do |face|
+          if face.normal.z > 0.9
+            top_area += face.area * scale_x * scale_y
+          end
+        end
+        area_m2 = (top_area / 1550.0031).round(3)
+        
+        # Об'єм (з урахуванням всіх scale)
+        volume_cu_inches = bounds.width * bounds.depth * bounds.height * scale_x * scale_y * combined_trans.zscale
+        volume_m3 = (volume_cu_inches * 0.000016387064).round(4)
+        
         material = get_component_material(tile)
         
-        ProGran3::Logger.info("    ➕ Плитка: #{tile.definition.name}, #{width}×#{depth}×#{height} см, матеріал: #{material}", "Summary")
+        ProGran3::Logger.info("    ➕ Плитка: #{tile.definition.name}, #{depth_cm}×#{width_cm}×#{height_cm} см, Площа: #{area_m2} м², Об'єм: #{volume_m3} м³", "Summary")
         
         item = {
           name: tile.definition.name,
-          width: width,
-          depth: depth,
-          height: height,
+          width: width_cm,
+          depth: depth_cm,
+          height: height_cm,
+          area_m2: area_m2,
+          volume_m3: volume_m3,
           material: material
         }
         tiles_array << item
@@ -1215,18 +1695,38 @@ module ProGran3
       if tiles_array.empty?
         ProGran3::Logger.info("  ⚠️ Немає внутрішніх компонентів, додаю саму групу", "Summary")
         bounds = tile_group.bounds
-        width = (bounds.width / 10.0).round(1)
-        depth = (bounds.depth / 10.0).round(1)
-        height = (bounds.height / 10.0).round(1)
+        trans = tile_group.transformation
+        
+        width_cm = (bounds.width.to_mm / 10.0).round(1)
+        depth_cm = (bounds.depth.to_mm / 10.0).round(1)
+        height_cm = (bounds.height.to_mm / 10.0).round(1)
+        
+        # Площа та об'єм
+        scale_x = trans.xscale
+        scale_y = trans.yscale
+        
+        top_area = 0
+        tile_group.definition.entities.grep(Sketchup::Face).each do |face|
+          if face.normal.z > 0.9
+            top_area += face.area * scale_x * scale_y
+          end
+        end
+        area_m2 = (top_area / 1550.0031).round(3)
+        
+        volume_cu_inches = bounds.width * bounds.depth * bounds.height
+        volume_m3 = (volume_cu_inches * 0.000016387064).round(4)
+        
         material = get_component_material(tile_group)
         
-        ProGran3::Logger.info("    ➕ Група як єдиний елемент: #{width}×#{depth}×#{height} см, матеріал: #{material}", "Summary")
+        ProGran3::Logger.info("    ➕ Група як єдиний елемент: #{depth_cm}×#{width_cm}×#{height_cm} см, Площа: #{area_m2} м², Об'єм: #{volume_m3} м³", "Summary")
         
         item = {
           name: tile_group.definition.name,
-          width: width,
-          depth: depth,
-          height: height,
+          width: width_cm,
+          depth: depth_cm,
+          height: height_cm,
+          area_m2: area_m2,
+          volume_m3: volume_m3,
           material: material
         }
         tiles_array << item

@@ -69,7 +69,7 @@
     "monument": "Monument",
     "gravestone": "Gravestone",
     "fence": "Fence",
-    "view": "View"
+    "view": "Info"
   },
   "panels": {
     "foundation": "Foundation",
