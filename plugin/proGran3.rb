@@ -191,6 +191,10 @@ module ProGran3
   require_relative 'progran3/demo_ui'
   require_relative 'progran3/activity_tracker'
   
+  # Підключаємо систему підсумку
+  require_relative 'progran3/summary_cache'
+  require_relative 'progran3/summary_validator'
+  
   # Методи для керування activity tracking
   def self.start_tracking
     ActivityTracker.start_tracking

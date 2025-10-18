@@ -993,7 +993,15 @@ module ProGran3
     # Callback для отримання детальної специфікації всіх компонентів в моделі
     def get_detailed_summary_callback(dialog)
       begin
-        ProGran3::Logger.info("🔍 Початок збору детальної специфікації [VERSION 2.0 - FIXED]", "Summary")
+        ProGran3::Logger.info("🔍 Початок збору детальної специфікації [VERSION 3.0 - CACHED]", "Summary")
+        
+        # Перевірка кешу
+        cached = ProGran3::SummaryCache.get_cached_summary
+        if cached
+          ProGran3::Logger.info("⚡ Використовую кешовані дані", "Summary")
+          dialog.execute_script("updateDetailedSummary(#{cached.to_json});")
+          return true
+        end
         
         model = Sketchup.active_model
         entities = model.entities
@@ -1609,14 +1617,28 @@ module ProGran3
           end
         end
         
+        # Валідація підсумку (тільки попередження)
+        warnings = ProGran3::SummaryValidator.validate_summary(grouped_summary)
+        
+        # Додаємо метадані (тільки timestamp та попередження)
+        result_data = {
+          summary: grouped_summary,
+          metadata: {
+            timestamp: Time.now.iso8601,
+            warnings: warnings
+          }
+        }
+        
+        # Кешуємо результат
+        ProGran3::SummaryCache.cache_summary(result_data)
+        
         # Відправляємо в JS
-        json_data = grouped_summary.to_json
+        json_data = result_data.to_json
         ProGran3::Logger.info("📤 Відправка даних в JS: #{json_data.length} символів", "Summary")
         
-        # Логуємо BlindArea окремо для перевірки
-        if grouped_summary[:blind_area] && grouped_summary[:blind_area].any?
-          ProGran3::Logger.info("🔍 BlindArea в JSON:", "Summary")
-          ProGran3::Logger.info("   #{grouped_summary[:blind_area].to_json}", "Summary")
+        if warnings.any?
+          ProGran3::Logger.warn("⚠️ Знайдено #{warnings.count} попереджень", "Summary")
+          warnings.each { |w| ProGran3::Logger.warn("  - #{w}", "Summary") }
         end
         
         dialog.execute_script("updateDetailedSummary(#{json_data});")

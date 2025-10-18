@@ -298,12 +298,21 @@
   // Оновлення детальної специфікації з Ruby
   function updateDetailedSummary(data) {
     try {
-      logSummaryAction('updateDetailedSummary() викликано з даними: ' + JSON.stringify(data), 'info');
+      logSummaryAction('updateDetailedSummary() викликано', 'info');
       console.log('📊 Детальна специфікація:', data);
       
+      // Перевіряємо структуру даних (v3.0 - з metadata)
+      const summaryData = data.summary || data;  // Підтримка старого формату
+      const metadata = data.metadata || null;
+      
+      // Оновлюємо метадані (статистика вгорі)
+      if (metadata) {
+        updateSummaryMetadata(metadata);
+      }
+      
       // Оновлюємо Foundation окремо (з площею та об'ємом)
-      if (data.foundation && data.foundation.length > 0) {
-        const foundation = data.foundation[0];
+      if (summaryData.foundation && summaryData.foundation.length > 0) {
+        const foundation = summaryData.foundation[0];
         console.log('📐 Foundation дані:', foundation);
         
         const foundationEl = safeGetElement('summary-foundation');
@@ -317,8 +326,8 @@
       }
       
       // Оновлюємо BlindArea окремо (з площею та об'ємом)
-      if (data.blind_area && data.blind_area.length > 0) {
-        const blindArea = data.blind_area[0];
+      if (summaryData.blind_area && summaryData.blind_area.length > 0) {
+        const blindArea = summaryData.blind_area[0];
         console.log('📐 BlindArea дані:', blindArea);
         
         const blindAreaEl = safeGetElement('summary-blind-area');
@@ -332,12 +341,12 @@
       }
       
       // Оновлюємо Stands окремо (з площею та об'ємом, + проміжна деталь)
-      if (data.stands && data.stands.length > 0) {
-        console.log('📐 Stands дані:', data.stands);
+      if (summaryData.stands && summaryData.stands.length > 0) {
+        console.log('📐 Stands дані:', summaryData.stands);
         
         const standEl = safeGetElement('summary-stand');
         if (standEl) {
-          const lines = data.stands.map(stand => {
+          const lines = summaryData.stands.map(stand => {
             const area = stand.area_m2 !== undefined ? stand.area_m2 : 'N/A';
             const volume = stand.volume_m3 !== undefined ? stand.volume_m3 : 'N/A';
             const standType = stand.stand_type === 'проміжна' ? 'Проміжна деталь' : 'Підставка';
@@ -351,15 +360,15 @@
       }
       
       // Оновлюємо Tiles окремо (групуємо за розмірами)
-      if (data.tiles && data.tiles.length > 0) {
-        console.log('📐 Tiles дані:', data.tiles);
+      if (summaryData.tiles && summaryData.tiles.length > 0) {
+        console.log('📐 Tiles дані:', summaryData.tiles);
         
         const tilesEl = safeGetElement('summary-tiling');
         if (tilesEl) {
           // Групуємо плитки за розмірами
           const grouped = {};
           
-          data.tiles.forEach(tile => {
+          summaryData.tiles.forEach(tile => {
             const key = `${tile.depth}×${tile.width}×${tile.height}×${tile.tile_type || 'horizontal'}`;
             
             if (!grouped[key]) {
@@ -409,14 +418,14 @@
       }
       
       // Оновлюємо Стели (групуємо за розмірами)
-      if (data.steles && data.steles.length > 0) {
-        console.log('📐 Steles дані:', data.steles);
+      if (summaryData.steles && summaryData.steles.length > 0) {
+        console.log('📐 Steles дані:', summaryData.steles);
         
         const steleEl = safeGetElement('summary-stele');
         if (steleEl) {
           const grouped = {};
           
-          data.steles.forEach(stele => {
+          summaryData.steles.forEach(stele => {
             const key = `${stele.depth}×${stele.width}×${stele.height}`;
             
             if (!grouped[key]) {
@@ -460,14 +469,14 @@
       }
       
       // Оновлюємо Квітники (групуємо за розмірами)
-      if (data.flowerbeds && data.flowerbeds.length > 0) {
-        console.log('📐 Flowerbeds дані:', data.flowerbeds);
+      if (summaryData.flowerbeds && summaryData.flowerbeds.length > 0) {
+        console.log('📐 Flowerbeds дані:', summaryData.flowerbeds);
         
         const flowerbedEl = safeGetElement('summary-flowerbed');
         if (flowerbedEl) {
           const grouped = {};
           
-          data.flowerbeds.forEach(flowerbed => {
+          summaryData.flowerbeds.forEach(flowerbed => {
             const key = `${flowerbed.depth}×${flowerbed.width}×${flowerbed.height}`;
             
             if (!grouped[key]) {
@@ -511,15 +520,15 @@
       }
       
       // Оновлюємо Кутову огорожу (групуємо за типом)
-      if (data.fence_corner && data.fence_corner.length > 0) {
-        console.log('📐 Fence Corner дані:', data.fence_corner);
+      if (summaryData.fence_corner && summaryData.fence_corner.length > 0) {
+        console.log('📐 Fence Corner дані:', summaryData.fence_corner);
         
         const fenceCornerEl = safeGetElement('summary-fence-corner');
         if (fenceCornerEl) {
           // Групуємо за назвою компонента
           const grouped = {};
           
-          data.fence_corner.forEach(item => {
+          summaryData.fence_corner.forEach(item => {
             const key = item.name;
             
             if (!grouped[key]) {
@@ -565,14 +574,14 @@
       }
       
       // Оновлюємо Декор огорожі (ball.skp та інші)
-      if (data.fence_decor && data.fence_decor.length > 0) {
-        console.log('📐 Fence Decor дані:', data.fence_decor);
+      if (summaryData.fence_decor && summaryData.fence_decor.length > 0) {
+        console.log('📐 Fence Decor дані:', summaryData.fence_decor);
         
         const fenceDecorEl = safeGetElement('summary-fence-decor');
         if (fenceDecorEl) {
           const grouped = {};
           
-          data.fence_decor.forEach(item => {
+          summaryData.fence_decor.forEach(item => {
             const key = item.name;
             
             if (!grouped[key]) {
@@ -623,7 +632,7 @@
       
       categories.forEach(category => {
         const element = safeGetElement(category.id);
-        const items = data[category.key];
+        const items = summaryData[category.key];
         
         console.log(`📌 Категорія ${category.label}:`, items);
         
@@ -675,13 +684,157 @@
     }
   }
   
+  // Оновлення метаданих (тільки попередження та timestamp)
+  function updateSummaryMetadata(metadata) {
+    console.log('📊 Оновлення метаданих:', metadata);
+    
+    // Знаходимо або створюємо контейнер для метаданих
+    let metadataContainer = document.getElementById('summary-metadata');
+    
+    if (!metadataContainer) {
+      // Створюємо контейнер після таблиці підсумку
+      const summarySection = document.querySelector('.summary-table');
+      if (summarySection) {
+        metadataContainer = document.createElement('div');
+        metadataContainer.id = 'summary-metadata';
+        metadataContainer.className = 'summary-metadata';
+        summarySection.parentNode.insertBefore(metadataContainer, summarySection.nextSibling);
+      } else {
+        console.warn('⚠️ Не знайдено .summary-table для вставки метаданих');
+        return;
+      }
+    }
+    
+    let html = '';
+    
+    // Попередження (якщо є)
+    if (metadata.warnings && metadata.warnings.length > 0) {
+      html += '<div class="summary-warnings">';
+      html += '<div class="warnings-title">⚠️ Попередження:</div>';
+      html += '<ul class="warnings-list">';
+      metadata.warnings.forEach(warning => {
+        html += `<li>${warning}</li>`;
+      });
+      html += '</ul>';
+      html += '</div>';
+    }
+    
+    // Timestamp з кнопкою-іконкою копіювання
+    if (metadata.timestamp) {
+      const date = new Date(metadata.timestamp);
+      const formattedTime = date.toLocaleString('uk-UA', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      
+      html += `<div class="summary-footer">
+        <span class="summary-timestamp">Оновлено: ${formattedTime}</span>
+        <button class="copy-summary-icon-btn" onclick="window.ProGran3.UI.SummaryTable.copySummaryToClipboard()" title="Копіювати підсумок">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        </button>
+      </div>`;
+    }
+    
+    metadataContainer.innerHTML = html;
+    console.log('✅ Метадані оновлено');
+  }
+  
+  // Копіювання підсумку в clipboard
+  function copySummaryToClipboard() {
+    try {
+      const summaryElements = [
+        'summary-foundation',
+        'summary-blind-area',
+        'summary-stand',
+        'summary-tiling',
+        'summary-stele',
+        'summary-flowerbed',
+        'summary-fence-corner',
+        'summary-fence-decor',
+        'summary-gravestone',
+        'summary-lamp'
+      ];
+      
+      let text = '=== ПІДСУМОК ПРОЕКТУ ProGran3 ===\n\n';
+      
+      // Метадані
+      const metadata = document.getElementById('summary-metadata');
+      if (metadata) {
+        const stats = metadata.querySelectorAll('.stat-item');
+        stats.forEach(stat => {
+          const label = stat.querySelector('.stat-label')?.textContent || '';
+          const value = stat.querySelector('.stat-value')?.textContent || '';
+          text += `${label} ${value}\n`;
+        });
+        text += '\n';
+      }
+      
+      // Компоненти
+      const labels = {
+        'summary-foundation': 'Фундамент',
+        'summary-blind-area': 'Відмостка',
+        'summary-stand': 'Підставка',
+        'summary-tiling': 'Плитка',
+        'summary-stele': 'Стела',
+        'summary-flowerbed': 'Квітник',
+        'summary-fence-corner': 'Кутова огорожа',
+        'summary-fence-decor': 'Декор огорожі',
+        'summary-gravestone': 'Надгробна плита',
+        'summary-lamp': 'Лампа'
+      };
+      
+      summaryElements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element && element.textContent.trim() !== '--' && element.textContent.trim() !== '') {
+          text += `${labels[id]}:\n${element.textContent}\n\n`;
+        }
+      });
+      
+      // Timestamp
+      const timestamp = document.querySelector('.summary-timestamp span');
+      if (timestamp) {
+        text += `\n${timestamp.textContent}`;
+      }
+      
+      // Копіюємо
+      navigator.clipboard.writeText(text).then(() => {
+        console.log('✅ Підсумок скопійовано в clipboard');
+        
+        // Показуємо візуальний feedback
+        const btn = document.querySelector('.copy-summary-icon-btn');
+        if (btn) {
+          btn.classList.add('copied');
+          
+          setTimeout(() => {
+            btn.classList.remove('copied');
+          }, 2000);
+        }
+      }).catch(err => {
+        console.error('❌ Помилка копіювання:', err);
+        alert('Помилка копіювання в буфер обміну');
+      });
+      
+    } catch (error) {
+      console.error('❌ Помилка при копіюванні:', error);
+      alert('Помилка копіювання підсумку');
+    }
+  }
+  
   // Експорт публічного API
   global.ProGran3.UI.SummaryTable = {
     updateSummaryTable: updateSummaryTable,
     getSummaryData: getSummaryData,
     clearSummaryTable: clearSummaryTable,
     updateDetailedSummary: updateDetailedSummary,
-    refreshDetailedSummary: refreshDetailedSummary
+    refreshDetailedSummary: refreshDetailedSummary,
+    copySummaryToClipboard: copySummaryToClipboard
   };
   
   // Зворотна сумісність - функції доступні глобально
