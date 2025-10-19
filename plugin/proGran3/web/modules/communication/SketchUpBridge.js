@@ -394,4 +394,56 @@
   // Очищуємо старі pending записи при завантаженні
   cleanupOldPendingPreviews();
   
+  // Callback для отримання превью даних
+  global.handlePreviewData = function(data) {
+    logBridgeAction(`Отримано превью дані: ${data ? 'є дані' : 'немає даних'}`, 'info');
+    
+    if (data) {
+      // Зберігаємо дані в різних місцях для сумісності
+      global.currentPreviewData = data;
+      window.currentPreviewData = data;
+      logBridgeAction(`Превью дані збережено в global.currentPreviewData та window.currentPreviewData, довжина: ${data.length} символів`, 'info');
+      
+      // Показуємо превью (для звичайного блоку превью)
+      if (global.showPreviewContainer && global.currentPreviewData) {
+        global.showPreviewContainer(global.currentPreviewData);
+      }
+      
+      // Викликаємо callback для ReportWithPreview модуля
+      if (global.ProGran3 && global.ProGran3.UI && global.ProGran3.UI.ReportWithPreview) {
+        logBridgeAction('Викликаємо ReportWithPreview.handlePreviewData', 'info');
+        global.ProGran3.UI.ReportWithPreview.handlePreviewData(data);
+      } else {
+        logBridgeAction('ReportWithPreview модуль не доступний', 'warn');
+      }
+      
+      logBridgeAction('Превью успішно відображено', 'success');
+    } else {
+      logBridgeAction('Превью дані порожні', 'warn');
+      if (global.hidePreviewContainer) {
+        global.hidePreviewContainer();
+      }
+    }
+  };
+  
+  // Callback для отримання даних звіту
+  global.handleReportData = function(data) {
+    logBridgeAction(`Отримано дані звіту: ${data ? 'є дані' : 'немає даних'}`, 'info');
+    
+    if (data) {
+      // Зберігаємо дані
+      global.lastSummaryData = data;
+      
+      // Показуємо звіт в модальному вікні
+      if (global.ProGran3 && global.ProGran3.UI && global.ProGran3.UI.SummaryTable) {
+        global.ProGran3.UI.SummaryTable.showReportModal(data);
+        logBridgeAction('Звіт успішно відображено в модальному вікні', 'success');
+      } else {
+        logBridgeAction('SummaryTable модуль не доступний', 'error');
+      }
+    } else {
+      logBridgeAction('Дані звіту порожні', 'warn');
+    }
+  };
+  
 })(window);

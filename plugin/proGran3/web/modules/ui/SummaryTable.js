@@ -15,6 +15,25 @@
     }
   }
   
+  // Функція для форматування розмірів з вирівнюванням (найбільше число першим)
+  function formatDimensions(depth, width, height) {
+    console.log(`📐 [formatDimensions] Вхідні дані: depth=${depth}, width=${width}, height=${height}`);
+    const dimensions = [depth, width, height].map(Number).sort((a, b) => b - a);
+    console.log(`📐 [formatDimensions] Відсортовані: [${dimensions.join(', ')}]`);
+    
+    // Використовуємо span замість вкладеної таблиці
+    const result = `<span class="dimensions-inline">
+      <span class="number">${dimensions[0]}</span>
+      <span class="separator">×</span>
+      <span class="number">${dimensions[1]}</span>
+      <span class="separator">×</span>
+      <span class="number">${dimensions[2]}</span>
+    </span>`;
+    
+    console.log(`📐 [formatDimensions] Згенерований inline HTML, довжина: ${result.length}`);
+    return result;
+  }
+  
   function safeGetElement(id) {
     const element = document.getElementById(id);
     if (!element) {
@@ -300,6 +319,9 @@
     try {
       logSummaryAction('updateDetailedSummary() викликано', 'info');
       console.log('📊 Детальна специфікація:', data);
+      
+      // Зберігаємо дані для звіту
+      window.lastSummaryData = data;
       
       // Перевіряємо структуру даних (v3.0 - з metadata)
       const summaryData = data.summary || data;  // Підтримка старого формату
@@ -733,17 +755,1004 @@
       
       html += `<div class="summary-footer">
         <span class="summary-timestamp">Оновлено: ${formattedTime}</span>
-        <button class="copy-summary-icon-btn" onclick="window.ProGran3.UI.SummaryTable.copySummaryToClipboard()" title="Копіювати підсумок">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-          </svg>
-        </button>
+        <div class="summary-actions">
+          <button class="summary-icon-btn" onclick="window.ProGran3.UI.SummaryTable.generateReport()" title="Згенерувати звіт">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </button>
+          <button class="summary-icon-btn" onclick="window.ProGran3.UI.SummaryTable.copySummaryToClipboard()" title="Копіювати підсумок">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+        </div>
       </div>`;
     }
     
     metadataContainer.innerHTML = html;
     console.log('✅ Метадані оновлено');
+  }
+  
+  // Генерація професійного звіту
+  function generateReport() {
+    console.log('📄 Генерація звіту...');
+    
+    try {
+      // Перевіряємо чи є збережені дані
+      if (window.lastSummaryData && Object.keys(window.lastSummaryData).length > 0) {
+        console.log('✅ Використовую збережені дані для звіту');
+        showReportModal(window.lastSummaryData);
+      } else if (window.sketchup) {
+        // Запитуємо дані з Ruby
+        console.log('🔄 Запит даних з Ruby...');
+        window.sketchup.generate_report();
+        // Після запиту даних з Ruby, callback автоматично викличе showReportModal
+      } else {
+        console.error('❌ Немає даних для звіту');
+        alert('Спочатку натисніть "Оновити" у підсумку проекту');
+      }
+    } catch (error) {
+      console.error('❌ Помилка генерації звіту:', error);
+      alert('Помилка при генерації звіту: ' + error.message);
+    }
+  }
+  
+  // Показ модального вікна зі звітом
+  function showReportModal(data) {
+    console.log('📊 Відображення звіту:', data);
+    
+    // Розширюємо основне вікно ВЛІВО
+    if (window.sketchup && window.sketchup.expand_window_for_report) {
+      console.log('📐 Розширення вікна вліво...');
+      window.sketchup.expand_window_for_report();
+    }
+    
+    // Створюємо модальне вікно якщо його немає
+    let modal = document.getElementById('report-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'report-modal';
+      modal.className = 'report-modal';
+      document.body.appendChild(modal);
+    }
+    
+    // Генеруємо HTML звіту
+    const reportHTML = generateReportHTML(data);
+    
+    modal.innerHTML = `
+      <div class="report-modal-overlay" onclick="window.ProGran3.UI.SummaryTable.closeReportModal()"></div>
+      <div class="report-modal-content">
+        <div class="report-modal-header">
+          <div class="report-header-buttons">
+            <button class="report-print-btn-icon" onclick="window.ProGran3.UI.SummaryTable.printReport()" title="Друк звіту">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1 2 2h-2"></path>
+                <rect x="6" y="14" width="12" height="8"></rect>
+              </svg>
+              Друк
+            </button>
+            <button class="report-pdf-btn-icon" onclick="window.ProGran3.UI.SummaryTable.exportToPDF()" title="Зберегти як PDF (оберіть принтер 'Save as PDF' в діалозі друку)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14,2 14,8 20,8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10,9 9,9 8,9"></polyline>
+              </svg>
+              PDF
+            </button>
+          </div>
+          <h2>Звіт проекту</h2>
+          <button class="report-close-btn" onclick="window.ProGran3.UI.SummaryTable.closeReportModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="report-modal-body">
+          <div class="report-pages-container" id="report-pages-container">
+            ${reportHTML}
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Показуємо модальне вікно
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    console.log('✅ Модальне вікно відкрито');
+    
+    // Додаємо обробник клавіші ESC
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        closeReportModal();
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    
+    // Зберігаємо посилання на обробник для очищення
+    modal._escapeHandler = handleEscape;
+    
+    // Після відкриття вікна, розбиваємо контент на сторінки
+    setTimeout(() => {
+      paginateReport();
+    }, 100);
+  }
+  
+  // Функція для розбивання звіту на сторінки A4
+  function paginateReport() {
+    const container = document.getElementById('report-pages-container');
+    if (!container) return;
+    
+    console.log('📄 Розбиття звіту на сторінки A4...');
+    
+    // Отримуємо всі елементи контенту
+    const content = container.innerHTML;
+    
+    // Створюємо тимчасовий контейнер для вимірювання
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.visibility = 'hidden';
+    tempDiv.style.width = '190mm'; // 210mm - 2*10mm padding
+    document.body.appendChild(tempDiv);
+    tempDiv.innerHTML = content;
+    
+    // Константи A4 (з урахуванням padding 10mm з кожної сторони)
+    const A4_HEIGHT_MM = 297;
+    const PAGE_PADDING_MM = 10; // Зменшено з 15mm
+    const USABLE_HEIGHT_MM = A4_HEIGHT_MM - (PAGE_PADDING_MM * 2); // 277mm
+    const MM_TO_PX = 3.7795275591; // 1mm = 3.78px at 96 DPI
+    const MAX_PAGE_HEIGHT_PX = USABLE_HEIGHT_MM * MM_TO_PX; // ~1047px
+    
+    console.log(`📐 Максимальна висота сторінки: ${MAX_PAGE_HEIGHT_PX}px (~${USABLE_HEIGHT_MM}mm)`);
+    
+    // Отримуємо всі блоки контенту
+    const header = tempDiv.querySelector('.report-header');
+    const table = tempDiv.querySelector('.report-table');
+    const preview = tempDiv.querySelector('.report-preview-section');
+    const footer = tempDiv.querySelector('.report-footer');
+    
+    const headerHeight = header ? header.offsetHeight : 0;
+    const footerHeight = footer ? footer.offsetHeight : 0;
+    const previewHeight = preview ? preview.offsetHeight : 0;
+    
+    console.log(`📊 Висоти елементів: header=${headerHeight}px, footer=${footerHeight}px, preview=${previewHeight}px`);
+    
+    // Обчислюємо доступний простір для таблиці на першій сторінці
+    let availableHeight = MAX_PAGE_HEIGHT_PX - headerHeight - footerHeight - 40; // 40px запас
+    
+    const tableRows = table ? table.querySelectorAll('tbody tr') : [];
+    console.log(`📊 Знайдено ${tableRows.length} рядків таблиці`);
+    
+    // Якщо все вміщується на одну сторінку
+    const totalContentHeight = headerHeight + (table ? table.offsetHeight : 0) + previewHeight + footerHeight;
+    console.log(`📊 Загальна висота контенту: ${totalContentHeight}px`);
+    
+    if (totalContentHeight <= MAX_PAGE_HEIGHT_PX) {
+      console.log('✅ Весь контент вміщується на одну сторінку');
+      container.innerHTML = `
+        <div class="report-page-single">
+          ${content}
+          <div class="report-page-number">Сторінка 1 з 1</div>
+        </div>
+      `;
+      document.body.removeChild(tempDiv);
+      return;
+    }
+    
+    console.log('📄 Потрібно розбити на кілька сторінок');
+    
+    // Генеруємо багатосторінковий звіт
+    const pages = generateMultiPageReport(header, table, tableRows, preview, footer, MAX_PAGE_HEIGHT_PX);
+    
+    container.innerHTML = pages;
+    document.body.removeChild(tempDiv);
+    
+    console.log('✅ Звіт розбито на сторінки');
+  }
+  
+  // Генерація багатосторінкового звіту
+  function generateMultiPageReport(header, table, tableRows, preview, footer, maxHeight) {
+    const pages = [];
+    let currentPage = 1;
+    
+    // Перша сторінка з header та початком таблиці
+    let pageContent = header ? header.outerHTML : '';
+    
+    if (table) {
+      const thead = table.querySelector('thead');
+      pageContent += `<div class="report-main"><table class="report-table">${thead.outerHTML}<tbody>`;
+      
+      let currentHeight = 100; // Зменшена приблизна висота header + thead (оптимізовано)
+      let rowIndex = 0;
+      
+      // Додаємо рядки поки вміщуються (більше рядків на сторінку)
+      while (rowIndex < tableRows.length && currentHeight < maxHeight - 80) { // Зменшено резерв з 150 до 80
+        const row = tableRows[rowIndex];
+        pageContent += row.outerHTML;
+        currentHeight += row.offsetHeight || 25; // Зменшено з 30 до 25
+        rowIndex++;
+      }
+      
+      pageContent += `</tbody></table></div>`;
+      
+      // Якщо є ще рядки, додаємо їх на наступні сторінки
+      while (rowIndex < tableRows.length) {
+        pages.push(`
+          <div class="report-page-single">
+            ${pageContent}
+            <div class="report-page-number">Сторінка ${currentPage} з ?</div>
+          </div>
+        `);
+        
+        currentPage++;
+        pageContent = (header ? header.outerHTML : '') + 
+                     `<div class="report-main"><table class="report-table">${thead.outerHTML}<tbody>`;
+        
+        currentHeight = 100; // Оптимізовано
+        
+        while (rowIndex < tableRows.length && currentHeight < maxHeight - 80) { // Більше місця для контенту
+          const row = tableRows[rowIndex];
+          pageContent += row.outerHTML;
+          currentHeight += row.offsetHeight || 25;
+          rowIndex++;
+        }
+        
+        pageContent += `</tbody></table></div>`;
+      }
+    }
+    
+    // Додаємо превью і footer на останню сторінку або окрему
+    if (preview) {
+      pageContent += preview.outerHTML;
+    }
+    if (footer) {
+      pageContent += footer.outerHTML;
+    }
+    
+    pages.push(`
+      <div class="report-page-single">
+        ${pageContent}
+        <div class="report-page-number">Сторінка ${currentPage} з ${currentPage}</div>
+      </div>
+    `);
+    
+    // Оновлюємо номери сторінок
+    return pages.map((page, index) => 
+      page.replace('Сторінка ? з ?', `Сторінка ${index + 1} з ${pages.length}`)
+          .replace(/Сторінка \d+ з \?/, `Сторінка ${index + 1} з ${pages.length}`)
+          .replace(/Сторінка \d+ з \d+/, `Сторінка ${index + 1} з ${pages.length}`)
+    ).join('');
+  }
+  
+  // Генерація HTML звіту (формат A4)
+  function generateReportHTML(data) {
+    const summaryData = data.summary || data;
+    const metadata = data.metadata || {};
+    
+    const currentDate = new Date().toLocaleDateString('uk-UA', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    
+    // Розраховуємо загальну статистику
+    let totalComponents = 0;
+    let totalArea = 0;
+    let totalVolume = 0;
+    
+    Object.values(summaryData).forEach(category => {
+      if (Array.isArray(category)) {
+        category.forEach(item => {
+          totalComponents += (item.count || 1);
+          totalArea += (item.area_m2 || 0) * (item.count || 1);
+          totalVolume += (item.volume_m3 || 0) * (item.count || 1);
+        });
+      }
+    });
+    
+    let html = `
+      <div class="report-header">
+        <div class="report-title-row">
+          <h1>Технічний звіт проекту</h1>
+          <div class="report-date">${currentDate}</div>
+        </div>
+      </div>
+      
+      <div class="report-main">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Назва</th>
+              <th>Розміри (см)</th>
+              <th class="text-center">Кількість</th>
+              <th class="text-right">Площа (м²)</th>
+              <th class="text-right">Об'єм (м³)</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    
+    // Додаємо всі категорії в одну таблицю
+    const categories = [
+      { key: 'foundation', label: 'Фундамент' },
+      { key: 'blind_area', label: 'Відмостка' },
+      { key: 'stands', label: 'Підставка' },
+      { key: 'tiles', label: 'Плитка' },
+      { key: 'steles', label: 'Стела' },
+      { key: 'flowerbeds', label: 'Квітник' },
+      { key: 'fence_corner', label: 'Кутова огорожа' },
+      { key: 'fence_decor', label: 'Декор огорожі' }
+    ];
+    
+    let hasData = false;
+    
+    categories.forEach(category => {
+      const items = summaryData[category.key];
+      console.log(`📋 [generateReportHTML] Категорія: ${category.label} (${category.key})`);
+      console.log(`📋 [generateReportHTML] Items:`, items);
+      
+      if (items && items.length > 0) {
+        hasData = true;
+        console.log(`✅ [generateReportHTML] Генеруємо рядки для ${category.label}, кількість: ${items.length}`);
+        html += generateCategoryRows(category.label, items);
+      } else {
+        console.log(`⚠️ [generateReportHTML] Немає даних для ${category.label}`);
+      }
+    });
+    
+    if (!hasData) {
+      html += `
+        <tr>
+          <td colspan="5" class="text-center" style="padding: 20px; color: #999;">
+            Немає даних для звіту
+          </td>
+        </tr>
+      `;
+    }
+    
+    html += `
+          </tbody>
+        </table>
+        
+        ${(() => {
+          // Перевіряємо чи увімкнений перемикач превью
+          const previewToggle = document.getElementById('include-preview-toggle');
+          const includePreview = previewToggle ? previewToggle.checked : false;
+          
+          console.log('📄 Генерація звіту: перемикач превью =', includePreview);
+          
+          if (includePreview) {
+            console.log('   Викликаємо generatePreviewSection()');
+            return generatePreviewSection();
+          } else {
+            console.log('   Пропускаємо превью (перемикач вимкнений)');
+            return '';
+          }
+        })()}
+      </div>
+      
+      <div class="report-footer">
+        <div class="report-footer-info">
+          <div>Згенеровано: ${new Date().toLocaleString('uk-UA')}</div>
+          <div>ProGran3 Plugin v3.1</div>
+        </div>
+    `;
+    
+    return html;
+  }
+  
+  // Генерація секції превью
+  function generatePreviewSection() {
+    console.log('🔍 Перевірка превью даних:', window.currentPreviewData);
+    
+    // Перевіряємо різні можливі місця зберігання превью даних
+    let previewData = null;
+    
+    // Спочатку перевіряємо window.currentPreviewData
+    if (window.currentPreviewData) {
+      if (typeof window.currentPreviewData === 'string') {
+        previewData = window.currentPreviewData;
+        console.log('✅ Превью дані знайдені в window.currentPreviewData (string), довжина:', previewData.length);
+      } else if (typeof window.currentPreviewData === 'object' && window.currentPreviewData.base64) {
+        previewData = window.currentPreviewData.base64;
+        console.log('✅ Превью дані знайдені в window.currentPreviewData (object), довжина:', previewData.length);
+      }
+    }
+    
+    // Якщо не знайшли, перевіряємо global.currentPreviewData
+    if (!previewData && global.currentPreviewData) {
+      if (typeof global.currentPreviewData === 'string') {
+        previewData = global.currentPreviewData;
+        console.log('✅ Превью дані знайдені в global.currentPreviewData (string), довжина:', previewData.length);
+      } else if (typeof global.currentPreviewData === 'object' && global.currentPreviewData.base64) {
+        previewData = global.currentPreviewData.base64;
+        console.log('✅ Превью дані знайдені в global.currentPreviewData (object), довжина:', previewData.length);
+      }
+    }
+    
+    // Якщо все ще не знайшли, перевіряємо через GlobalState
+    if (!previewData && global.ProGran3 && global.ProGran3.Core && global.ProGran3.Core.GlobalState) {
+      const globalPreviewData = global.ProGran3.Core.GlobalState.getCurrentPreviewData();
+      if (globalPreviewData) {
+        if (typeof globalPreviewData === 'string') {
+          previewData = globalPreviewData;
+          console.log('✅ Превью дані знайдені через GlobalState (string), довжина:', previewData.length);
+        } else if (typeof globalPreviewData === 'object' && globalPreviewData.base64) {
+          previewData = globalPreviewData.base64;
+          console.log('✅ Превью дані знайдені через GlobalState (object), довжина:', previewData.length);
+        }
+      }
+    }
+    
+    if (!previewData) {
+      console.log('❌ Превью дані відсутні в усіх можливих місцях');
+      return '';
+    }
+    
+    // Перевіряємо чи дані валідні
+    if (typeof previewData !== 'string' || previewData.length < 100) {
+      console.log('❌ Превью дані невалідні, довжина:', previewData ? previewData.length : 0);
+      return '';
+    }
+    
+    console.log('🎨 Генеруємо HTML для превью секції, дані:', previewData.substring(0, 50) + '...');
+    
+    // Перевіряємо чи дані вже містять data:image prefix
+    const imageSrc = previewData.startsWith('data:image') ? previewData : `data:image/png;base64,${previewData}`;
+    console.log('🎨 Image src перші 100 символів:', imageSrc.substring(0, 100));
+    
+    return `
+      <div class="report-preview-section">
+        <h2 class="report-section-title">Превью моделі</h2>
+        <div class="report-preview-container">
+          <img src="${imageSrc}" 
+               alt="Превью моделі" 
+               class="report-preview-image"
+               onerror="console.error('❌ Помилка завантаження превью зображення:', this.src.substring(0, 100) + '...')"
+               onload="console.log('✅ Превью зображення завантажено успішно')">
+        </div>
+      </div>
+    `;
+  }
+  
+  // Генерація рядків для категорії (без окремої таблиці)
+  function generateCategoryRows(label, items) {
+    console.log(`📊 [generateCategoryRows] Категорія: ${label}, кількість items: ${items.length}`);
+    console.log(`📊 [generateCategoryRows] Items:`, items);
+    
+    let html = '';
+    
+    // Групуємо однакові елементи
+    const grouped = {};
+    items.forEach((item, index) => {
+      console.log(`  📦 Item ${index}:`, {
+        name: item.name,
+        depth: item.depth,
+        width: item.width,
+        height: item.height,
+        count: item.count,
+        area: item.area_m2,
+        volume: item.volume_m3
+      });
+      
+      const key = `${item.depth}×${item.width}×${item.height}`;
+      if (!grouped[key]) {
+        grouped[key] = {
+          name: item.name || label,
+          depth: item.depth,
+          width: item.width,
+          height: item.height,
+          count: 0,
+          totalArea: 0,
+          totalVolume: 0
+        };
+      }
+      grouped[key].count += (item.count || 1);
+      grouped[key].totalArea += (item.area_m2 || 0) * (item.count || 1);
+      grouped[key].totalVolume += (item.volume_m3 || 0) * (item.count || 1);
+    });
+    
+    console.log(`📊 [generateCategoryRows] Згруповано:`, grouped);
+    console.log(`📊 [generateCategoryRows] Кількість груп: ${Object.keys(grouped).length}`);
+    
+    // Розділювач категорії
+    html += `
+      <tr class="report-category-divider">
+        <td colspan="5"><strong>${label}</strong></td>
+      </tr>
+    `;
+    
+    // Відображаємо згруповані елементи
+    Object.values(grouped).forEach((group, index) => {
+      const formattedDims = formatDimensions(group.depth, group.width, group.height);
+      console.log(`  ✅ Генеруємо рядок ${index} для групи:`, group);
+      console.log(`  📐 Форматовані розміри:`, formattedDims);
+      
+      html += `
+        <tr>
+          <td>${group.name}</td>
+          <td>${formattedDims}</td>
+          <td class="text-center">${group.count}</td>
+          <td class="text-center">${group.totalArea.toFixed(2)}</td>
+          <td class="text-center">${group.totalVolume.toFixed(3)}</td>
+        </tr>
+      `;
+    });
+    
+    // Підсумок по категорії
+    const categoryTotal = Object.values(grouped).reduce((acc, g) => ({
+      count: acc.count + g.count,
+      area: acc.area + g.totalArea,
+      volume: acc.volume + g.totalVolume
+    }), { count: 0, area: 0, volume: 0 });
+    
+    html += `
+      <tr class="report-category-total">
+        <td colspan="2">Разом ${label}:</td>
+        <td class="text-center"><strong>${categoryTotal.count}</strong></td>
+        <td class="text-center"><strong>${categoryTotal.area.toFixed(2)}</strong></td>
+        <td class="text-center"><strong>${categoryTotal.volume.toFixed(3)}</strong></td>
+      </tr>
+    `;
+    
+    console.log(`✅ [generateCategoryRows] Згенеровано HTML для ${label}, довжина: ${html.length}`);
+    
+    return html;
+  }
+  
+  // Закриття модального вікна
+  function closeReportModal() {
+    const modal = document.getElementById('report-modal');
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+      console.log('✅ Модальне вікно закрито');
+      
+      // Очищаємо обробник клавіші ESC
+      if (modal._escapeHandler) {
+        document.removeEventListener('keydown', modal._escapeHandler);
+        modal._escapeHandler = null;
+      }
+      
+      // Повертаємо розмір та позицію вікна до початкових
+      if (window.sketchup && window.sketchup.restore_window_size) {
+        console.log('📐 Повернення розміру та позиції вікна...');
+        console.log('   Викликаємо window.sketchup.restore_window_size()');
+        try {
+          window.sketchup.restore_window_size();
+          console.log('   ✅ Виклик успішний');
+        } catch (error) {
+          console.error('   ❌ Помилка виклику:', error);
+        }
+      } else {
+        console.warn('⚠️ window.sketchup.restore_window_size недоступний');
+      }
+    }
+  }
+  
+  // Друк звіту
+  function printReport() {
+    if (window.sketchup && window.sketchup.log_message) {
+      window.sketchup.log_message('🖨️ [JS] printReport викликано');
+    }
+    
+    const reportContent = document.getElementById('report-pages-container');
+    if (!reportContent) {
+      if (window.sketchup && window.sketchup.log_message) {
+        window.sketchup.log_message('❌ [JS] report-pages-container не знайдено');
+      }
+      return;
+    }
+    
+    if (window.sketchup && window.sketchup.log_message) {
+      window.sketchup.log_message('   Контент знайдено, готуємо HTML...');
+    }
+    
+    // ВАЖЛИВО: Отримуємо HTML з усіма сторінками, як вони відображені в модальному вікні
+    const pages = reportContent.querySelectorAll('.report-page-single');
+    let pagesHTML = '';
+    
+    if (pages.length > 0) {
+      // Якщо є розбивка на сторінки, експортуємо кожну сторінку окремо
+      if (window.sketchup && window.sketchup.log_message) {
+        window.sketchup.log_message(`   Знайдено ${pages.length} сторінок`);
+      }
+      
+      pages.forEach((page, index) => {
+        pagesHTML += `
+          <div class="report-page" style="page-break-after: ${index < pages.length - 1 ? 'always' : 'auto'};">
+            ${page.innerHTML}
+          </div>
+        `;
+      });
+    } else {
+      // Якщо немає розбивки, експортуємо як є
+      if (window.sketchup && window.sketchup.log_message) {
+        window.sketchup.log_message('   Немає розбивки на сторінки, експортуємо як одну сторінку');
+      }
+      pagesHTML = `<div class="report-page">${reportContent.innerHTML}</div>`;
+    }
+    
+    // Створюємо повний HTML документ
+    const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Звіт проекту ProGran3</title>
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { 
+      font-family: 'Comfortaa', Arial, sans-serif; 
+      margin: 0; 
+      padding: 20px; 
+      background: white;
+      color: #2c3e50;
+    }
+    
+    /* Header звіту */
+    .report-header {
+      text-align: center;
+      margin-bottom: 3px;
+      padding: 1px 0;
+      border-bottom: 1px solid #3498db;
+    }
+    
+    .report-header h1 {
+      margin: 0;
+      font-size: 1.1em;
+      color: #2c3e50;
+      font-weight: 600;
+      font-family: 'Comfortaa', sans-serif;
+    }
+    
+    .report-date {
+      font-size: 0.8em;
+      color: #95a5a6;
+      font-style: italic;
+    }
+    
+    /* Таблиці */
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 3px 0;
+      font-size: 0.9em;
+      font-family: 'Comfortaa', sans-serif;
+    }
+    
+    .report-table thead {
+      background: #34495e;
+      color: white;
+    }
+    
+    .report-table th {
+      padding: 5px 4px;
+      font-weight: 600;
+      font-size: 0.75em;
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+      font-family: 'Comfortaa', sans-serif;
+      white-space: nowrap;
+    }
+    
+    .report-table th:nth-child(1) {
+      text-align: left;
+      width: 35%;
+    }
+    
+    .report-table th:nth-child(2) {
+      text-align: left;
+      width: 20%;
+    }
+    
+    .report-table th:nth-child(3),
+    .report-table th:nth-child(4),
+    .report-table th:nth-child(5) {
+      text-align: center;
+      width: 15%;
+    }
+    
+    .report-table td {
+      padding: 5px 4px;
+      border-bottom: 1px solid #ecf0f1;
+      font-family: 'Comfortaa', sans-serif;
+      font-weight: 600;
+      font-size: 0.9em;
+    }
+    
+    .report-table td:nth-child(1) {
+      text-align: left;
+      width: 35%;
+    }
+    
+    .report-table td:nth-child(2) {
+      text-align: center;
+      width: 20%;
+      font-family: 'Comfortaa', sans-serif;
+      padding: 0;
+    }
+    
+    .report-table td:nth-child(3),
+    .report-table td:nth-child(4),
+    .report-table td:nth-child(5) {
+      text-align: center;
+      width: 15%;
+    }
+    
+    /* Розділювачі категорій */
+    .report-category-divider td {
+      background: #3498db !important;
+      color: white !important;
+      font-weight: 600;
+      font-size: 0.75em;
+      padding: 3px 4px !important;
+      letter-spacing: 0.3px;
+      border-top: 2px solid #2980b9;
+      font-family: 'Comfortaa', sans-serif;
+    }
+    
+    /* Підсумки по категоріях */
+    .report-category-total td {
+      background: #ecf0f1 !important;
+      font-weight: 600;
+      font-size: 0.75em;
+      color: #2c3e50;
+      border-bottom: 2px solid #bdc3c7 !important;
+      font-family: 'Comfortaa', sans-serif;
+      padding: 3px 4px !important;
+    }
+    
+    .report-category-total td:nth-child(1) {
+      text-align: left;
+    }
+    
+    .report-category-total td:nth-child(2),
+    .report-category-total td:nth-child(3),
+    .report-category-total td:nth-child(4),
+    .report-category-total td:nth-child(5) {
+      text-align: center;
+    }
+    
+    /* Розміри - inline варіант */
+    .dimensions-inline {
+      display: inline-block;
+      font-family: 'Comfortaa', sans-serif;
+      font-weight: 600;
+      font-size: 0.9em;
+    }
+    
+    .dimensions-inline .number {
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .dimensions-inline .separator {
+      margin: 0 2px;
+      color: #666;
+    }
+    
+    /* Розміри - табличний варіант */
+    .dimensions-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'Comfortaa', sans-serif;
+    }
+    
+    .dimensions-table td {
+      border: none;
+      padding: 1px 2px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.9em;
+    }
+    
+    .dimensions-table td.number:first-child {
+      text-align: right;
+      min-width: 28px;
+    }
+    
+    .dimensions-table td.number:nth-child(3) {
+      text-align: center;
+      min-width: 28px;
+    }
+    
+    .dimensions-table td.number:last-child {
+      text-align: left;
+      min-width: 28px;
+    }
+    
+    .dimensions-table td.separator {
+      text-align: center;
+      width: 10px;
+    }
+    
+    /* Превю зображення */
+    .report-preview-section {
+      margin-top: 15px;
+      padding-top: 10px;
+      border-top: 1px solid #ddd;
+      page-break-inside: avoid;
+    }
+    
+    .report-section-title {
+      font-size: 14pt;
+      color: #2c3e50;
+      margin-bottom: 8px;
+      font-family: 'Comfortaa', sans-serif;
+      font-weight: 600;
+    }
+    
+    .report-preview-container {
+      text-align: center;
+      margin: 10px 0;
+      page-break-inside: avoid;
+    }
+    
+    .report-preview-image {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #ddd;
+    }
+    
+    /* Footer */
+    .report-footer {
+      margin-top: 10px;
+      padding-top: 6px;
+      border-top: 1px solid #ddd;
+      font-size: 8pt;
+      color: #666;
+    }
+    
+    /* Стилі для сторінок */
+    .report-page {
+      background: white;
+      margin: 0;
+      padding: 20px;
+      min-height: 297mm;
+    }
+    
+    /* Налаштування для друку */
+    @page {
+      size: A4;
+      margin: 20mm;
+    }
+    
+    @media print {
+      body { margin: 0; padding: 0; }
+      .no-print { display: none !important; }
+      
+      .report-page {
+        margin: 0;
+        padding: 10mm;
+      }
+      
+      .report-table tr {
+        page-break-inside: avoid;
+      }
+      
+      .report-table thead {
+        display: table-header-group;
+      }
+    }
+    
+    .print-instructions {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #3498db;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 9999;
+      font-family: 'Comfortaa', Arial, sans-serif;
+    }
+    
+    .print-btn {
+      background: #2ecc71;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 10px;
+      width: 100%;
+      font-family: 'Comfortaa', Arial, sans-serif;
+    }
+    
+    .print-btn:hover {
+      background: #27ae60;
+    }
+  </style>
+  <script>
+    // Автоматично відкриваємо діалог друку після завантаження
+    window.addEventListener('load', function() {
+      // Затримка 500ms щоб контент встиг завантажитися
+      setTimeout(function() {
+        window.print();
+      }, 500);
+    });
+    
+    function printNow() {
+      window.print();
+    }
+  </script>
+</head>
+<body>
+<div class="print-instructions no-print">
+  <strong>Інструкція:</strong><br>
+  1. Оберіть принтер "Microsoft Print to PDF"<br>
+  2. Натисніть "Print" / "Друк"<br>
+  3. Оберіть місце для збереження<br><br>
+  <button class="print-btn" onclick="printNow()">Відкрити діалог друку</button>
+</div>
+${pagesHTML}
+</body>
+</html>`;
+    
+    if (window.sketchup && window.sketchup.log_message) {
+      window.sketchup.log_message('   HTML готовий, розмір: ' + htmlContent.length + ' символів');
+    }
+    
+    // Викликаємо Ruby callback для збереження та відкриття файлу
+    if (window.sketchup && window.sketchup.save_and_print_report) {
+      if (window.sketchup && window.sketchup.log_message) {
+        window.sketchup.log_message('   Викликаємо save_and_print_report...');
+      }
+      window.sketchup.save_and_print_report(htmlContent);
+    } else {
+      if (window.sketchup && window.sketchup.log_message) {
+        window.sketchup.log_message('⚠️ [JS] save_and_print_report callback не знайдено');
+        window.sketchup.log_message('   Перезавантажте SketchUp повністю для застосування змін');
+      }
+      
+      // ТИМЧАСОВЕ РІШЕННЯ: копіюємо HTML в буфер обміну
+      if (window.sketchup && window.sketchup.copy_report_html) {
+        window.sketchup.copy_report_html(htmlContent);
+      }
+    }
+  }
+
+  // Експорт в PDF
+  function exportToPDF() {
+    // Логування в Ruby Console
+    if (window.sketchup && window.sketchup.log_message) {
+      window.sketchup.log_message('📄 [JS] exportToPDF викликано');
+    }
+    
+    try {
+      // Викликаємо функцію друку напряму
+      // У діалозі друку користувач може обрати "Microsoft Print to PDF"
+      if (window.sketchup && window.sketchup.log_message) {
+        window.sketchup.log_message('   Викликаємо printReport()...');
+      }
+      
+      printReport();
+      
+      if (window.sketchup && window.sketchup.log_message) {
+        window.sketchup.log_message('✅ [JS] printReport виконано успішно');
+      }
+      
+    } catch (error) {
+      // Логування помилки в Ruby Console
+      if (window.sketchup && window.sketchup.log_message) {
+        window.sketchup.log_message('❌ [JS] Помилка в exportToPDF: ' + error.message);
+      }
+    }
   }
   
   // Копіювання підсумку в clipboard
@@ -834,7 +1843,12 @@
     clearSummaryTable: clearSummaryTable,
     updateDetailedSummary: updateDetailedSummary,
     refreshDetailedSummary: refreshDetailedSummary,
-    copySummaryToClipboard: copySummaryToClipboard
+    copySummaryToClipboard: copySummaryToClipboard,
+    generateReport: generateReport,
+    showReportModal: showReportModal,
+    closeReportModal: closeReportModal,
+    printReport: printReport,
+    exportToPDF: exportToPDF
   };
   
   // Зворотна сумісність - функції доступні глобально

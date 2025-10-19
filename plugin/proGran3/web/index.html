@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>proGran3 Конструктор</title>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,12 +14,12 @@
       <!-- Лівий верхній кут - вибір одиниць -->
       <div class="header-left">
         <div class="unit-switcher">
-          <div class="unit-toggle">
+          <div class="unit-toggle-simple">
             <input type="radio" id="unit-mm" name="unit" value="mm" checked onchange="changeUnit('mm')">
+            <label for="unit-mm" class="unit-label-simple" data-unit="mm" data-i18n="units.mm">мм</label>
+            
             <input type="radio" id="unit-cm" name="unit" value="cm" onchange="changeUnit('cm')">
-            <label for="unit-mm" class="unit-label" data-unit="mm" data-i18n="units.mm">мм</label>
-            <label for="unit-cm" class="unit-label" data-unit="cm" data-i18n="units.cm">см</label>
-            <div class="unit-slider"></div>
+            <label for="unit-cm" class="unit-label-simple" data-unit="cm" data-i18n="units.cm">см</label>
           </div>
         </div>
       </div>
@@ -61,7 +62,7 @@
             </div>
             <div class="input-wrapper">
               <label id="foundation-width-label" for="foundation-width" data-i18n="dimensions.width">Ширина (мм)</label>
-              <input type="number" id="foundation-width" value="1000" oninput="updateAllDisplays()">
+              <input type="number" id="foundation-width" value="1200" oninput="updateAllDisplays()">
             </div>
             <div class="input-wrapper">
               <label id="foundation-height-label" for="foundation-height" data-i18n="dimensions.height">Висота (мм)</label>
@@ -272,13 +273,12 @@
           </div>
           
           <!-- Вмикач проміжки -->
-          <div class="input-group">
-            <div class="gaps-toggle">
-              <label class="toggle-label">
-                <input type="checkbox" id="stands-gaps" onchange="updateStandsGaps()">
-                <span data-i18n="stands.gaps">Проміжка</span>
-              </label>
-            </div>
+          <div class="toggle-with-label">
+            <span class="toggle-label-text" data-i18n="stands.gaps">Проміжка</span>
+            <label class="modern-toggle">
+              <input type="checkbox" id="stands-gaps" onchange="updateStandsGaps()">
+              <span class="toggle-slider"></span>
+            </label>
           </div>
           
           <!-- Розміри проміжків (показуються тільки коли увімкнено проміжки) -->
@@ -475,7 +475,7 @@
             </div>
             <div class="input-wrapper">
               <label id="fence-corner-side-length-label" for="fence-corner-side-length" data-i18n="labels.panel_length_mm">Довжина панелі (мм)</label>
-              <input type="number" id="fence-corner-side-length" value="500" min="200" max="600" oninput="updateFenceCornerDisplay()">
+              <input type="number" id="fence-corner-side-length" value="300" min="200" max="600" oninput="updateFenceCornerDisplay()">
             </div>
             <div class="input-wrapper">
               <label id="fence-corner-side-thickness-label" for="fence-corner-side-thickness" data-i18n="labels.panel_thickness_mm">Товщина панелі (мм)</label>
@@ -611,11 +611,6 @@
             Створити превью
           </button>
           
-          <button onclick="forceRefreshCarousel()" style="background: #ff6b6b; margin-top: 10px;">
-            <span class="button-icon">🔄</span>
-            Оновити карусель
-          </button>
-          
           <!-- Область відображення превью -->
           <div id="preview-container" class="preview-container" style="display: none;">
             <div class="preview-header">
@@ -676,6 +671,7 @@
   <script src="modules/ui/Panels.js"></script>
   <script src="modules/ui/AccordionManager.js"></script>
   <script src="modules/ui/SummaryTable.js"></script>
+  <script src="modules/ui/ReportWithPreview.js"></script>
   <script src="modules/ui/LanguageSwitcher.js"></script>
   
   <!-- 5. I18n модулі -->

@@ -30,21 +30,43 @@ module ProGran3
         puts "📱 UI ProGran3 закрито"
       end
       
+      # Розраховуємо висоту екрану (для 1080p: 1080 - 200 = 880)
+      # Для різних екранів: 720p=520, 900p=700, 1080p=880, 1440p=1240
+      default_height = 880  # Для стандартного 1080p екрану
+      
       @dialog ||= ::UI::HtmlDialog.new({
           :dialog_title => "proGran Конструктор",
           :preferences_key => "com.progran.ui",
           :scrollable => true,
           :resizable => true,
-          :width => 420,
-          :height => 850,
+          :width => 500,
+          :height => default_height,
           :min_width => 350,
           :min_height => 600
       })
+      
+      # Зберігаємо початкові розміри для звіту
+      @initial_width = 500
+      @initial_height = default_height
+      
+      # Зберігаємо початкову позицію для відновлення
+      @initial_position = nil
 
       @dialog.set_file(html_path)
 
       @dialog.add_action_callback("ready") do |d, _|
         puts "📱 UI повністю завантажено - запуск відстеження heartbeat..."
+        
+        # Зберігаємо початкову позицію після завантаження UI
+        if @initial_position.nil?
+          begin
+            current_pos = @dialog.get_position
+            @initial_position = [current_pos[0], current_pos[1]]
+            puts "📍 Початкова позиція збережена після завантаження UI: x=#{current_pos[0]}, y=#{current_pos[1]}"
+          rescue => e
+            puts "⚠️ Не вдалося зберегти початкову позицію: #{e.message}"
+          end
+        end
         
         # Оновлюємо статус ліцензії в UI з затримкою
         @dialog.execute_script("
@@ -182,6 +204,94 @@ module ProGran3
       
       @dialog.add_action_callback("get_detailed_summary") do |dialog|
         CallbackManager.get_detailed_summary_callback(@dialog)
+      end
+      
+      @dialog.add_action_callback("generate_report") do |dialog|
+        CallbackManager.generate_report_callback(@dialog)
+      end
+      
+      # Callbacks для зміни розміру вікна (розширення вліво)
+      @dialog.add_action_callback("expand_window_for_report") do |dialog|
+        expand_window_left
+      end
+      
+      @dialog.add_action_callback("restore_window_size") do |dialog|
+        puts "🔔 Отримано запит на restore_window_size"
+        puts "   Поточна позиція перед відновленням: #{@dialog.get_position.inspect}"
+        restore_window_size
+        puts "   Поточна позиція після відновлення: #{@dialog.get_position.inspect}"
+      end
+      
+      # Тестовий callback для діагностики
+      @dialog.add_action_callback("test_position_info") do |dialog|
+        puts "\n📊 === Діагностична інформація ==="
+        puts "   @initial_position: #{@initial_position.inspect}"
+        puts "   @saved_position: #{@saved_position.inspect}"
+        puts "   Поточна позиція: #{@dialog.get_position.inspect}"
+        puts "   Поточний розмір: #{[@dialog.get_size[0], @dialog.get_size[1]].inspect}"
+        puts "   @initial_width: #{@initial_width}"
+        puts "   @initial_height: #{@initial_height}"
+        puts "=================================\n"
+      end
+      
+      # Callback для логування з JavaScript
+      @dialog.add_action_callback("log_message") do |dialog, message|
+        puts message
+      end
+      
+      # Callback для збереження та відкриття звіту для друку
+      @dialog.add_action_callback("save_and_print_report") do |dialog, html_content|
+        puts "📄 [Ruby] Отримано запит на збереження звіту"
+        puts "   Розмір контенту: #{html_content.length} символів"
+        
+        begin
+          # Створюємо тимчасовий файл
+          require 'tmpdir'
+          temp_dir = Dir.tmpdir
+          timestamp = Time.now.strftime("%Y%m%d_%H%M%S")
+          filename = "ProGran3_Report_#{timestamp}.html"
+          filepath = File.join(temp_dir, filename)
+          
+          puts "   Зберігаємо в: #{filepath}"
+          
+          # Записуємо HTML в файл
+          File.write(filepath, html_content, encoding: 'UTF-8')
+          
+          puts "   ✓ Файл збережено успішно"
+          puts "   Відкриваємо файл в браузері..."
+          
+          # Відкриваємо файл в браузері за замовчуванням
+          ::UI.openURL("file:///#{filepath.gsub('\\', '/')}")
+          
+          puts "✅ Звіт відкрито в браузері. Використовуйте Ctrl+P для друку або збереження в PDF"
+          
+        rescue => e
+          puts "❌ Помилка збереження звіту: #{e.message}"
+          puts "   #{e.backtrace.first(3).join("\n   ")}"
+        end
+      end
+      
+      # Альтернативний callback для копіювання HTML
+      @dialog.add_action_callback("copy_report_html") do |dialog, html_content|
+        puts "📋 [Ruby] Копіювання звіту (розмір: #{html_content.length} символів)"
+        
+        begin
+          # Створюємо файл на робочому столі
+          desktop = File.expand_path("~/Desktop")
+          timestamp = Time.now.strftime("%Y%m%d_%H%M%S")
+          filename = "ProGran3_Report_#{timestamp}.html"
+          filepath = File.join(desktop, filename)
+          
+          File.write(filepath, html_content, encoding: 'UTF-8')
+          
+          puts "✅ Звіт збережено на робочий стіл: #{filename}"
+          puts "   Відкрийте файл у браузері та натисніть Ctrl+P для друку/PDF"
+          
+          ::UI.openURL("file:///#{filepath.gsub('\\', '/')}")
+          
+        rescue => e
+          puts "❌ Помилка: #{e.message}"
+        end
       end
 
 
@@ -621,29 +731,13 @@ module ProGran3
         begin
           puts "🔐 [UI] Callback активації ліцензії: #{license_key[0..8]}..."
           
-          if $license_manager
-            if !$license_manager.has_license?
-              puts "🔐 [UI] Перша активація - потрібен email"
-              {
-                success: false,
-                requires_email: true,
-                message: "Введіть email для реєстрації ліцензії"
-              }
-            else
-              puts "🔐 [UI] Ліцензія вже зареєстрована"
-              {
-                success: true,
-                message: "Ліцензія вже зареєстрована",
-                email: "demo@example.com",
-                license_info: "Демо версія - всі функції доступні"
-              }
-            end
-          else
-            {
-              success: false,
-              error: "License manager not initialized"
-            }
-          end
+          # ЗАГЛУШКА: Ліцензійна система видалена, завжди успішно
+          {
+            success: true,
+            message: "Ліцензія активована (локальна версія)",
+            email: "local@progran3.com",
+            license_info: "Локальна версія - всі функції доступні"
+          }
         rescue => e
           {
             success: false,
@@ -657,29 +751,16 @@ module ProGran3
         begin
           puts "🔐 [UI] Callback реєстрації ліцензії: #{email} + #{license_key[0..8]}..."
           
-          if $license_manager
-            result = $license_manager.register_license(email, license_key)
-            
-            if result[:success]
-              puts "✅ [UI] Ліцензія успішно зареєстрована"
-              {
-                success: true,
-                message: result[:message],
-                user_license: result[:user_license]
-              }
-            else
-              puts "❌ [UI] Помилка реєстрації: #{result[:error]}"
-              {
-                success: false,
-                error: result[:error]
-              }
-            end
-          else
-            {
-              success: false,
-              error: "License manager not initialized"
+          # ЗАГЛУШКА: Ліцензійна система видалена, завжди успішно
+          {
+            success: true,
+            message: "Ліцензія зареєстрована (локальна версія)",
+            user_license: {
+              email: email,
+              status: "active",
+              expires_at: nil
             }
-          end
+          }
         rescue => e
           {
             success: false,
@@ -708,18 +789,11 @@ module ProGran3
       # Callback для очищення ліцензії
       @dialog.add_action_callback("clear_license") do |action_context, _|
         begin
-          if $license_manager
-            $license_manager.clear_license
-            {
-              success: true,
-              message: "Ліцензія очищена"
-            }
-          else
-            {
-              success: false,
-              error: "License manager not initialized"
-            }
-          end
+          # ЗАГЛУШКА: Ліцензійна система видалена
+          {
+            success: true,
+            message: "Ліцензія очищена (локальна версія)"
+          }
         rescue => e
           {
             success: false,
@@ -840,5 +914,141 @@ module ProGran3
         end
       end
     end
+    
+    # Розширення вікна ВЛІВО (права сторона залишається на місці)
+    def expand_window_left
+      if @dialog
+        begin
+          # Отримуємо поточну позицію
+          current_pos = @dialog.get_position
+          current_x = current_pos[0]
+          current_y = current_pos[1]
+          
+          # Зберігаємо початкову позицію ПЕРЕД розширенням (якщо ще не збережена)
+          if @initial_position.nil?
+            @initial_position = [current_x, current_y]
+            puts "📍 Початкова позиція збережена перед розширенням: x=#{current_x}, y=#{current_y}"
+          end
+          
+          # Нові розміри (A4 пропорції: 850×1200 + відступи на модальне вікно)
+          new_width = 950   # 850px + 100px на відступи
+          new_height = 1280 # 1200px + 80px на header модального вікна
+          old_width = @initial_width || 500
+          
+          # Розраховуємо зміщення вліво (щоб права сторона залишилась на місці)
+          shift_left = new_width - old_width  # 950 - 420 = 530
+          new_x = current_x - shift_left
+          
+          # Зберігаємо позицію для тимчасового відновлення
+          @saved_position = current_pos
+          
+          puts "📐 Розширення вікна ВЛІВО: #{old_width}×850 → #{new_width}×#{new_height}"
+          puts "   Позиція: x=#{current_x} → x=#{new_x} (зміщення вліво на #{shift_left}px)"
+          puts "   Модальне всередині: 850×1200 (пропорції A4)"
+          
+          # Спочатку змінюємо позицію, потім розмір
+          @dialog.set_position(new_x, current_y)
+          @dialog.set_size(new_width, new_height)
+          
+          puts "✅ Вікно розширено вліво, права сторона на місці"
+          
+        rescue => e
+          puts "⚠️ Помилка розширення вікна: #{e.message}"
+          # Fallback - просто розширюємо без зміщення
+          @dialog.set_size(950, 1250) rescue nil
+        end
+      end
+    end
+    
+    # Повернення вікна до початкових розмірів та позиції
+    def restore_window_size
+      if @dialog
+        begin
+          width = @initial_width || 500
+          height = @initial_height || 880
+          
+          puts "📐 Повернення розміру вікна: #{width}x#{height}"
+          puts "   Початкова позиція: #{@initial_position.inspect}"
+          puts "   Збережена позиція: #{@saved_position.inspect}"
+          
+          # ВАЖЛИВО: Спочатку повертаємо позицію, потім розмір
+          # Це гарантує що вікно буде в правильному місці
+          
+          # Крок 1: Повертаємо до початкової позиції
+          if @initial_position && @initial_position.is_a?(Array) && @initial_position.length == 2
+            puts "   Крок 1: Встановлення позиції x=#{@initial_position[0]}, y=#{@initial_position[1]}"
+            @dialog.set_position(@initial_position[0], @initial_position[1])
+          else
+            puts "   Крок 1: Центрування на екрані (початкова позиція не збережена)"
+            center_window_on_screen_fallback
+          end
+          
+          # Крок 2: Встановлюємо розмір
+          puts "   Крок 2: Встановлення розміру #{width}x#{height}"
+          @dialog.set_size(width, height)
+          
+          # Крок 3: Повторно встановлюємо позицію (після зміни розміру вона може зміститися)
+          if @initial_position && @initial_position.is_a?(Array) && @initial_position.length == 2
+            puts "   Крок 3: Повторне встановлення позиції"
+            @dialog.set_position(@initial_position[0], @initial_position[1])
+          end
+          
+          # Перевіряємо фактичну позицію
+          final_pos = @dialog.get_position
+          puts "   ✓ Фінальна позиція: x=#{final_pos[0]}, y=#{final_pos[1]}"
+          
+          # Очищаємо збережену позицію
+          @saved_position = nil
+          
+          puts "✅ Вікно повернуто до початкових розмірів та позиції"
+          
+        rescue => e
+          puts "⚠️ Помилка відновлення розміру: #{e.message}"
+          puts "   Трасування: #{e.backtrace.first(3).join("\n   ")}"
+        end
+      else
+        puts "⚠️ Діалог не знайдено для відновлення"
+      end
+    end
+    
+    # Fallback - центрування вікна на екрані якщо початкова позиція не збережена
+    def center_window_on_screen_fallback
+      if @dialog
+        begin
+          puts "🔍 Центрування на екрані (fallback)..."
+          
+          # Типові розміри екрану
+          screen_width = 1920
+          screen_height = 1080
+          
+          # Спробуємо отримати реальні розміри екрану
+          begin
+            if SketchUp.respond_to?(:screen_width) && SketchUp.respond_to?(:screen_height)
+              screen_width = SketchUp.screen_width
+              screen_height = SketchUp.screen_height
+            end
+          rescue
+            # Використовуємо типові розміри якщо не вдалося отримати реальні
+          end
+          
+          # Розміри вікна
+          window_width = @initial_width || 500
+          window_height = @initial_height || 880
+          
+          # Розраховуємо центральну позицію
+          center_x = (screen_width - window_width) / 2
+          center_y = (screen_height - window_height) / 2
+          
+          # Встановлюємо центральну позицію
+          @dialog.set_position(center_x.to_i, center_y.to_i)
+          
+          puts "📍 Вікно відцентровано на екрані #{screen_width}x#{screen_height}: x=#{center_x.to_i}, y=#{center_y.to_i}"
+          
+        rescue => e
+          puts "⚠️ Помилка центрування: #{e.message}"
+        end
+      end
+    end
+    
   end
 end

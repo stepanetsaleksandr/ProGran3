@@ -1043,6 +1043,18 @@ function initializeApp() {
   initializeStandsGaps();
   debugLog(` Вмикач проміжків ініціалізовано`, 'success');
   
+  // Ініціалізуємо модуль ReportWithPreview
+  if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.ReportWithPreview) {
+    try {
+      window.ProGran3.UI.ReportWithPreview.initializeReportWithPreview();
+      debugLog(` ReportWithPreview ініціалізовано`, 'success');
+    } catch (error) {
+      debugLog(` Помилка ініціалізації ReportWithPreview: ${error.message}`, 'error');
+    }
+  } else {
+    debugLog(` ReportWithPreview модуль не доступний`, 'warn');
+  }
+  
   debugLog(` initializeApp завершено`, 'success');
 }
 
@@ -3786,11 +3798,15 @@ function generateModelPreview() {
 
 // Обробка успішного результату превью (викликається з Ruby)
 function receiveModelPreview(result) {
+  console.log('📥 [receiveModelPreview] Функція викликана з Ruby');
+  console.log('📥 [receiveModelPreview] Отримано результат:', result);
   debugLog('📥 Отримано результат превью з Ruby', 'info');
   debugLog(`📊 Дані: success=${result.success}, size=${result.size}, quality=${result.quality}`, 'info');
   
   try {
     if (result && result.success && result.data) {
+      console.log('📥 [receiveModelPreview] Дані успішні, довжина:', result.data.length);
+      
       // Зберігаємо дані превью
       currentPreviewData = {
         base64: result.data,
@@ -3800,15 +3816,34 @@ function receiveModelPreview(result) {
         filename: `model_preview_${Date.now()}.png`
       };
       
+      // Зберігаємо дані в усіх можливих місцях для доступу з інших модулів
+      window.currentPreviewData = result.data;
+      console.log(`📤 [receiveModelPreview] window.currentPreviewData встановлено, довжина: ${result.data.length}`);
+      debugLog(`📤 Дані превью збережено в window.currentPreviewData, довжина: ${result.data.length}`, 'info');
+      
+      // Викликаємо handlePreviewData для модуля ReportWithPreview
+      if (typeof handlePreviewData === 'function') {
+        console.log('📤 [receiveModelPreview] Викликаємо handlePreviewData');
+        debugLog('📤 Викликаємо handlePreviewData для модуля звіту', 'info');
+        handlePreviewData(result.data);
+      } else {
+        console.log('⚠️ [receiveModelPreview] handlePreviewData не знайдено');
+        debugLog('⚠️ handlePreviewData не знайдено, дані доступні через window.currentPreviewData', 'warn');
+      }
+      
       // Показуємо превью
       showPreviewContainer();
       updatePreviewInfo();
       
+      console.log('✅ [receiveModelPreview] Превью успішно оброблено');
       debugLog('✅ Превью успішно згенеровано та відображено', 'success');
+      debugLog(`✅ window.currentPreviewData існує: ${!!window.currentPreviewData}, довжина: ${window.currentPreviewData ? window.currentPreviewData.length : 0}`, 'info');
     } else {
+      console.error('❌ [receiveModelPreview] Некоректні дані:', result);
       throw new Error('Некоректні дані превью');
     }
   } catch (error) {
+    console.error('❌ [receiveModelPreview] Помилка:', error);
     debugLog(`❌ Помилка обробки превью: ${error.message}`, 'error');
     alert(`Помилка обробки превью: ${error.message}`);
   } finally {
@@ -3817,12 +3852,19 @@ function receiveModelPreview(result) {
   }
 }
 
+// Експортуємо функцію в window для доступу з Ruby
+window.receiveModelPreview = receiveModelPreview;
+
 // Обробка помилки превью (викликається з Ruby)
 function handleModelPreviewError(errorMessage) {
+  console.error('❌ [handleModelPreviewError] Функція викликана з Ruby:', errorMessage);
   debugLog(`❌ Помилка превью з Ruby: ${errorMessage}`, 'error');
   alert(`Помилка при створенні превью: ${errorMessage}`);
   showPreviewStatus(false);
 }
+
+// Експортуємо функцію в window для доступу з Ruby
+window.handleModelPreviewError = handleModelPreviewError;
 
 // Показ/приховування статусу генерації
 function showPreviewStatus(show) {

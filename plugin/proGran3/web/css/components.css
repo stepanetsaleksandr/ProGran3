@@ -39,130 +39,68 @@ header h1 {
   flex-shrink: 0;
 }
 
-/* Unit Switcher - Новий сучасний дизайн */
+/* Unit Switcher - повністю прозорий */
 .unit-switcher {
   display: flex;
   align-items: center;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  padding: 6px 10px;
-  border-radius: 20px;
+  background: transparent;
+  backdrop-filter: none;
+  border: none;
+  padding: 0;
+  border-radius: 0;
   flex-shrink: 0;
   margin-left: 15px;
-  box-shadow: var(--shadow-medium);
+  box-shadow: none;
   position: relative;
-  overflow: hidden;
-  min-width: 100px;
-  height: 32px;
+  overflow: visible;
 }
 
 .unit-switcher::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(130, 130, 130, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-  pointer-events: none;
-  z-index: -1;
-}
-
-.unit-switcher:hover {
-  background: var(--glass-bg-hover);
-  border-color: var(--glass-border-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-heavy);
+  display: none;
 }
 
 /* Unit Toggle - Сучасний перемикач */
-.unit-toggle {
-  position: relative;
+/* Простий текстовий перемикач одиниць */
+.unit-toggle-simple {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 3px;
-  width: 100%;
-  height: 20px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: var(--spacing-md);
 }
 
 /* Приховуємо radio inputs */
-.unit-toggle input[type="radio"] {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
+.unit-toggle-simple input[type="radio"] {
+  display: none;
 }
 
-/* Labels для кнопок */
-.unit-label {
-  position: relative;
-  z-index: 2;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Labels - просто текст */
+.unit-label-simple {
+  padding: 0;
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-color);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 3px 6px;
-  border-radius: 13px;
+  transition: all 0.3s ease;
   user-select: none;
-  line-height: 1;
+  background: none;
+  border: none;
+  text-shadow: none;
 }
 
-/* Активний стан для мм */
-#unit-mm:checked ~ .unit-label[for="unit-mm"] {
-  color: #ffffff;
-  font-weight: 700;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-/* Активний стан для см */
-#unit-cm:checked ~ .unit-label[for="unit-cm"] {
-  color: #ffffff;
-  font-weight: 700;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-/* Слайдер */
-.unit-slider {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: calc(50% - 3px);
-  height: 22px;
-  background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
-  border-radius: 10px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
-  z-index: 1;
-}
-
-/* Анімація слайдера для см */
-#unit-cm:checked ~ .unit-slider {
-  transform: translateX(100%);
-}
-
-/* Hover ефекти */
-.unit-toggle:hover .unit-slider {
-  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
-}
-
-.unit-label:hover {
+/* Активний стан - світіння */
+#unit-mm:checked + .unit-label-simple[for="unit-mm"],
+#unit-cm:checked + .unit-label-simple[for="unit-cm"] {
   color: #4A90E2;
+  font-weight: 700;
+  text-shadow: 
+    0 0 8px rgba(74, 144, 226, 0.6),
+    0 0 16px rgba(74, 144, 226, 0.4),
+    0 0 24px rgba(74, 144, 226, 0.2);
 }
 
-/* Активний hover */
-#unit-mm:checked ~ .unit-label[for="unit-mm"]:hover,
-#unit-cm:checked ~ .unit-label[for="unit-cm"]:hover {
-  color: #ffffff;
+/* Hover - легке підсвічування */
+.unit-label-simple:hover {
+  color: #4A90E2;
+  opacity: 0.8;
 }
 
 /* Buttons */
@@ -516,16 +454,9 @@ button:disabled {
 }
 
 .dark .unit-switcher {
-  background: var(--glass-bg);
-  border-color: var(--glass-border);
-  color: var(--text-color);
-  box-shadow: var(--shadow-light);
-}
-
-.dark .unit-switcher:hover {
-  background: var(--glass-bg-hover);
-  border-color: var(--glass-border-hover);
-  box-shadow: var(--shadow-medium);
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 /* Dark theme для нового перемикача */

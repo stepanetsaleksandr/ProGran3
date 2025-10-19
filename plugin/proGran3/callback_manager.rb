@@ -990,8 +990,33 @@ module ProGran3
       @fence_perimeter_params = nil
     end
 
+    # Callback для генерації звіту (використовує кешовані дані або генерує нові)
+    def self.generate_report_callback(dialog)
+      begin
+        ProGran3::Logger.info("📄 Генерація звіту...", "Report")
+        
+        # Перевіряємо кеш
+        cached = ProGran3::SummaryCache.get_cached_summary
+        if cached
+          ProGran3::Logger.info("⚡ Використовую кешовані дані для звіту", "Report")
+          dialog.execute_script("if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.SummaryTable) { window.ProGran3.UI.SummaryTable.showReportModal(#{cached.to_json}); } else { console.error('SummaryTable не знайдено'); }")
+          return true
+        end
+        
+        # Якщо немає кешу - генеруємо нові дані
+        ProGran3::Logger.info("🔄 Немає кешованих даних, генерую нові...", "Report")
+        get_detailed_summary_callback(dialog, for_report: true)
+        
+      rescue => e
+        ProGran3::Logger.error("❌ Помилка генерації звіту: #{e.message}", "Report")
+        ProGran3::Logger.error("   Backtrace: #{e.backtrace.first(3).join("\n   ")}", "Report")
+        dialog.execute_script("alert('Помилка генерації звіту. Перевірте Ruby Console.');")
+        false
+      end
+    end
+    
     # Callback для отримання детальної специфікації всіх компонентів в моделі
-    def get_detailed_summary_callback(dialog)
+    def self.get_detailed_summary_callback(dialog, for_report: false)
       begin
         ProGran3::Logger.info("🔍 Початок збору детальної специфікації [VERSION 3.0 - CACHED]", "Summary")
         
@@ -1641,7 +1666,12 @@ module ProGran3
           warnings.each { |w| ProGran3::Logger.warn("  - #{w}", "Summary") }
         end
         
-        dialog.execute_script("updateDetailedSummary(#{json_data});")
+        # Викликаємо відповідний JS callback
+        if for_report
+          dialog.execute_script("window.ProGran3.UI.SummaryTable.showReportModal(#{json_data});")
+        else
+          dialog.execute_script("updateDetailedSummary(#{json_data});")
+        end
         
         ProGran3::Logger.info("✅ Детальна специфікація згенерована успішно", "Summary")
         true
