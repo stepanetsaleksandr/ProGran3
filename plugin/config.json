@@ -1,4 +1,9 @@
 {
+  "api": {
+    "base_url": "https://server-hbf7li0u7-provis3ds-projects.vercel.app",
+    "timeout": 10,
+    "retry_attempts": 3
+  },
   "sketchup_versions": {
     "2024": "C:\\Users\\ProVis3D\\AppData\\Roaming\\SketchUp\\SketchUp 2024\\SketchUp\\Plugins",
     "2023": "%APPDATA%\\SketchUp\\SketchUp 2023\\SketchUp\\Plugins",

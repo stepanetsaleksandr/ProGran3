@@ -10,11 +10,38 @@ module ProGran3
   module Security
     class ApiClient
       
-      # URL сервера (Vercel)
-      API_BASE_URL = 'https://server-hbf7li0u7-provis3ds-projects.vercel.app'.freeze
+      # Читаємо URL з конфігу
+      def self.load_api_config
+        config_path = File.join(File.dirname(__FILE__), '..', '..', 'config.json')
+        if File.exist?(config_path)
+          config = JSON.parse(File.read(config_path))
+          {
+            base_url: config.dig('api', 'base_url') || 'https://server-hbf7li0u7-provis3ds-projects.vercel.app',
+            timeout: config.dig('api', 'timeout') || 10,
+            retry_attempts: config.dig('api', 'retry_attempts') || 3
+          }
+        else
+          # Fallback якщо config не знайдено
+          {
+            base_url: 'https://server-hbf7li0u7-provis3ds-projects.vercel.app',
+            timeout: 10,
+            retry_attempts: 3
+          }
+        end
+      rescue => e
+        puts "⚠️ Помилка читання конфігу: #{e.message}. Використовуємо default."
+        {
+          base_url: 'https://server-hbf7li0u7-provis3ds-projects.vercel.app',
+          timeout: 10,
+          retry_attempts: 3
+        }
+      end
       
-      # Timeout для запитів
-      REQUEST_TIMEOUT = 10 # секунд
+      # URL сервера (з конфігу)
+      API_BASE_URL = load_api_config[:base_url].freeze
+      
+      # Timeout для запитів (з конфігу)
+      REQUEST_TIMEOUT = load_api_config[:timeout]
       
       # HMAC Secret Key (v3.1: server-side secret)
       # Використовуємо глобальний secret для всіх клієнтів
