@@ -79,12 +79,20 @@ class PluginBuilder
     file_count = 0
     
     Zip::File.open(output_path, create: true) do |zipfile|
+      # Додаємо loader (точка входу для Extension Manager)
+      loader_file = File.join(@plugin_dir, "#{PLUGIN_NAME}_loader.rb")
+      if File.exist?(loader_file)
+        add_to_zip(zipfile, loader_file, "#{PLUGIN_NAME}.rb")  # Має бути .rb для автозавантаження
+        file_count += 1
+        puts "  ✓ #{PLUGIN_NAME}.rb (loader)"
+      end
+      
       # Додаємо головний файл плагіна
       main_file = File.join(@plugin_dir, "#{PLUGIN_NAME}.rb")
       if File.exist?(main_file)
-        add_to_zip(zipfile, main_file, "#{PLUGIN_NAME}.rb")
+        add_to_zip(zipfile, main_file, "#{PLUGIN_NAME}/#{PLUGIN_NAME}_core.rb")
         file_count += 1
-        puts "  ✓ #{PLUGIN_NAME}.rb"
+        puts "  ✓ #{PLUGIN_NAME}/#{PLUGIN_NAME}_core.rb"
       end
       
       # Додаємо всі файли з директорії proGran3/
