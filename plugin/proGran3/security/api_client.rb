@@ -5,6 +5,8 @@ require 'net/http'
 require 'uri'
 require 'json'
 require 'openssl'
+require_relative 'server_validator'
+require_relative 'secret_manager'
 
 module ProGran3
   module Security
@@ -43,29 +45,30 @@ module ProGran3
       # Timeout для запитів (з конфігу)
       REQUEST_TIMEOUT = load_api_config[:timeout]
       
-      # HMAC Secret Key (v3.1: server-side secret)
+      # HMAC Secret Key (v3.2: obfuscated через SecretManager)
       # Використовуємо глобальний secret для всіх клієнтів
       # Має збігатися з HMAC_SECRET_KEY на сервері
       # 
-      # Security Note: Цей ключ захардкожений тут, але:
-      # 1. Клієнт може бути обфусковано (.rbc)
-      # 2. Зміна ключа = оновлення плагіна (контрольоване)
-      # 3. Краще ніж predictable fingerprint-based key
+      # Security Note: v3.2 improvements:
+      # 1. Secret обфускований через SecretManager (multi-layer)
+      # 2. XOR з hardware fingerprint
+      # 3. Розбитий на частини в різних методах
+      # 4. Складніше витягнути через reverse engineering
       
       def self.get_secret_key
-        # Глобальний shared secret (має збігатися з сервером)
-        # В production: обфускувати або завантажувати динамічно
-        'ProGran3-HMAC-Global-Secret-2025-v3.1-DO-NOT-SHARE-9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d'
+        # v3.2: Використовуємо SecretManager замість hardcoded secret
+        SecretManager.get_hmac_secret
       end
       
       SECRET_KEY = nil  # Буде встановлено динамічно через get_secret_key
       
-      # Активує ліцензію на сервері
+      # Активує ліцензію на сервері з retry логікою
       # @param email [String] Email користувача
       # @param license_key [String] Ключ ліцензії
       # @param fingerprint [String] Hardware fingerprint
+      # @param max_retries [Integer] Максимальна кількість спроб
       # @return [Hash] { success: Boolean, license: Hash, error: String }
-      def self.activate(email, license_key, fingerprint)
+      def self.activate(email, license_key, fingerprint, max_retries = 3)
         endpoint = '/api/licenses/activate'
         
         payload = {
@@ -76,7 +79,7 @@ module ProGran3
         
         puts "📤 Активація ліцензії: #{license_key[0..8]}..."
         
-        response = post_request(endpoint, payload)
+        response = post_request_with_retry(endpoint, payload, max_retries)
         
         if response[:success]
           puts "✅ Ліцензію активовано успішно"
@@ -90,11 +93,12 @@ module ProGran3
         handle_exception('activate', e)
       end
       
-      # Валідує ліцензію на сервері
+      # Валідує ліцензію на сервері з retry логікою
       # @param license_key [String] Ключ ліцензії
       # @param fingerprint [String] Hardware fingerprint
+      # @param max_retries [Integer] Максимальна кількість спроб
       # @return [Hash] { success: Boolean, valid: Boolean, license: Hash, error: String }
-      def self.validate(license_key, fingerprint)
+      def self.validate(license_key, fingerprint, max_retries = 3)
         endpoint = '/api/licenses/validate'
         
         payload = {
@@ -104,7 +108,7 @@ module ProGran3
         
         puts "🔍 Валідація ліцензії: #{license_key[0..8]}..."
         
-        response = post_request(endpoint, payload)
+        response = post_request_with_retry(endpoint, payload, max_retries)
         
         if response[:success]
           puts "✅ Ліцензія валідна"
@@ -211,6 +215,18 @@ module ProGran3
       # @param silent [Boolean] Чи приховувати логи
       # @return [Hash]
       def self.post_request(endpoint, payload, silent: false)
+        # SECURITY: Валідуємо URL перед кожним запитом
+        begin
+          ServerValidator.validate_url(API_BASE_URL)
+        rescue SecurityError => e
+          Logger.error("Server validation failed: #{e.message}", "ApiClient")
+          return {
+            success: false,
+            error: "Security error: #{e.message}",
+            security_block: true
+          }
+        end
+        
         uri = URI.parse("#{API_BASE_URL}#{endpoint}")
         
         puts "🌐 POST #{uri}" unless silent
@@ -351,6 +367,52 @@ module ProGran3
             error: "Unexpected status code: #{response.code}"
           }
         end
+      end
+      
+      # POST запит з retry логікою
+      # @param endpoint [String] API endpoint
+      # @param payload [Hash] Дані для відправки
+      # @param max_retries [Integer] Максимальна кількість спроб
+      # @return [Hash] Response
+      def self.post_request_with_retry(endpoint, payload, max_retries = 3)
+        retries = 0
+        last_exception = nil
+        
+        begin
+          response = post_request(endpoint, payload)
+          
+          # Якщо успішно - повертаємо відповідь
+          return response if response[:success]
+          
+          # Якщо помилка, але не network - не retry
+          unless response[:offline]
+            return response
+          end
+          
+        rescue => e
+          last_exception = e
+          retries += 1
+          
+          puts "⚠️ Спроба #{retries}/#{max_retries} невдала: #{e.message}"
+          
+          if retries < max_retries
+            # Exponential backoff: 1s, 2s, 4s
+            delay = 2 ** (retries - 1)
+            puts "⏳ Очікування #{delay} секунд перед повторною спробою..."
+            sleep(delay)
+            retry
+          else
+            puts "❌ Всі спроби вичерпано"
+            return handle_exception('post_request_with_retry', e)
+          end
+        end
+        
+        # Якщо дійшли сюди - всі спроби невдалі
+        {
+          success: false,
+          error: "Network error after #{max_retries} attempts: #{last_exception&.message}",
+          offline: true
+        }
       end
       
       # Обробка винятків

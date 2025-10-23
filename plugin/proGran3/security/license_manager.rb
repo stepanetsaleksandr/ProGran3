@@ -5,6 +5,8 @@ require 'time'  # v3.1: для Time.parse
 require_relative 'hardware_fingerprint'
 require_relative 'license_storage'
 require_relative 'api_client'
+require_relative 'time_validator'
+require_relative 'telemetry'
 
 module ProGran3
   module Security
@@ -39,6 +41,10 @@ module ProGran3
         result = ApiClient.activate(email, license_key, @fingerprint)
         
         if result[:success]
+          # v3.2: Відправляємо телеметрію при активації
+          Telemetry.track_feature('license_activation')
+          Telemetry.send_if_needed(true)  # Force send
+          
           # Зберігаємо ліцензію локально (v3.0: з компонентами для flexible validation)
           fp_data = HardwareFingerprint.generate
           
@@ -183,6 +189,11 @@ module ProGran3
           validate_online_background(license)
           
           @current_license = license
+          
+          # v3.2: Відправляємо телеметрію
+          Telemetry.track_feature('license_validated_with_warning')
+          Telemetry.send_if_needed
+          
           return {
             valid: true,
             license: license,
@@ -195,6 +206,11 @@ module ProGran3
           validate_online_background(license)
           
           @current_license = license
+          
+          # v3.2: Відправляємо телеметрію
+          Telemetry.track_feature('license_validated_success')
+          Telemetry.send_if_needed
+          
           return {
             valid: true,
             license: license
@@ -225,13 +241,18 @@ module ProGran3
         
         last_validation_time = Time.parse(last_validation)
         
-        # === TIME TAMPERING CHECK (v3.0) ===
-        # Перевіряємо що системний час не змінено назад
-        if Time.now < last_validation_time
-          puts "🚨 SECURITY ALERT: Системний час менший за last_validation!"
-          puts "   Поточний час: #{Time.now}"
+        # === TIME TAMPERING CHECK (v3.2: NTP verification) ===
+        time_check = TimeValidator.validate_system_time
+        
+        # Якщо NTP час доступний - використовуємо його
+        current_time = time_check[:ntp_time] || Time.now
+        
+        # Перевірка зміни часу назад (v3.0)
+        if current_time < last_validation_time
+          puts "🚨 SECURITY ALERT: Час менший за last_validation!"
+          puts "   Поточний час: #{current_time}"
           puts "   Last validation: #{last_validation_time}"
-          puts "   Різниця: #{((last_validation_time - Time.now) / 3600.0).round(1)} годин"
+          puts "   Різниця: #{((last_validation_time - current_time) / 3600.0).round(1)} годин"
           
           return {
             action: :block,
@@ -240,7 +261,24 @@ module ProGran3
           }
         end
         
-        days_offline = ((Time.now - last_validation_time) / 86400.0).round(1)
+        # Якщо NTP показав велику різницю - блокуємо
+        if time_check[:valid] == false
+          Logger.error("NTP validation failed: #{time_check[:error]}", "LicenseManager")
+          
+          return {
+            action: :block,
+            message: time_check[:error],
+            time_tampering: true,
+            time_diff: time_check[:diff_seconds]
+          }
+        end
+        
+        # Попередження якщо NTP недоступний
+        if time_check[:verified] == false
+          Logger.warn("NTP unavailable: #{time_check[:warning]}", "LicenseManager")
+        end
+        
+        days_offline = ((current_time - last_validation_time) / 86400.0).round(1)
         
         puts "📊 Днів без online валідації: #{days_offline}"
         

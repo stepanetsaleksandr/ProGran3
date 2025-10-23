@@ -1,10 +1,15 @@
 # progran3.rb
-# VERSION: 2025-09-25-19:50 - FIX_SERVER_URL_INTERNAL
+# VERSION: 2025-10-22 - PRODUCTION_READY
 require 'sketchup.rb'
 
 # Автоматичне перезавантаження плагіна при змінах
 def self.reload_plugin
   puts "🔄 Перезавантаження плагіна ProGran3..."
+  
+  # Cleanup resources before reload
+  if defined?(ProGran3::ResourceManager)
+    ProGran3::ResourceManager.cleanup_resources(true)
+  end
   
   # Видаляємо глобальні змінні
   $progran3_tracker = nil
@@ -159,33 +164,33 @@ end
 
 module ProGran3
   # Підключаємо нові системні модулі першими
-  require_relative 'progran3/constants'
-  require_relative 'progran3/logger'
-  require_relative 'progran3/error_handler'
-  require_relative 'progran3/validation'
-  require_relative 'progran3/dimensions_manager'
-  require_relative 'progran3/coordination_manager'
-  require_relative 'progran3/callback_manager'
-  require_relative 'progran3/config'
+  require_relative 'proGran3/constants'
+  require_relative 'proGran3/logger'
+  require_relative 'proGran3/error_handler'
+  require_relative 'proGran3/validation'
+  require_relative 'proGran3/dimensions_manager'
+  require_relative 'proGran3/coordination_manager'
+  require_relative 'proGran3/callback_manager'
+  require_relative 'proGran3/config'
   
   # Підключаємо основні модулі
-  require_relative 'progran3/loader'
-  require_relative 'progran3/builders/foundation_builder'
-  require_relative 'progran3/builders/tiling_builder'
-  require_relative 'progran3/builders/cladding_builder'
-  require_relative 'progran3/builders/blind_area_builder'
-  require_relative 'progran3/ui'
-  require_relative 'progran3/skp_preview_extractor'
+  require_relative 'proGran3/loader'
+  require_relative 'proGran3/builders/foundation_builder'
+  require_relative 'proGran3/builders/tiling_builder'
+  require_relative 'proGran3/builders/cladding_builder'
+  require_relative 'proGran3/builders/blind_area_builder'
+  require_relative 'proGran3/ui'
+  require_relative 'proGran3/skp_preview_extractor'
   
   # Підключаємо систему завантаження
-  require_relative 'progran3/splash_screen'
-  require_relative 'progran3/license_ui'
-  require_relative 'progran3/demo_ui'
-  require_relative 'progran3/activity_tracker'
+  require_relative 'proGran3/splash_screen'
+  require_relative 'proGran3/license_ui'
+  require_relative 'proGran3/demo_ui'
+  require_relative 'proGran3/activity_tracker'
   
   # Підключаємо систему підсумку
-  require_relative 'progran3/summary_cache'
-  require_relative 'progran3/summary_validator'
+  require_relative 'proGran3/summary_cache'
+  require_relative 'proGran3/summary_validator'
   
   # Методи для керування activity tracking
   def self.start_tracking
@@ -399,6 +404,13 @@ if defined?(Sketchup)
   
   # Ініціалізація при завантаженні
   $plugin_blocked = false
+  
+  # Resource cleanup при виході
+  at_exit do
+    if defined?(ProGran3::ResourceManager)
+      ProGran3::ResourceManager.cleanup_resources(true)
+    end
+  end
   
   # НЕ запускаємо відстеження автоматично - тільки після відкриття UI
   puts "🔄 Завантаження всіх модулів завершено"

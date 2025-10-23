@@ -121,6 +121,58 @@
     return false;
   }
   
+  // Memory cleanup function
+  function cleanup() {
+    logStateChange('cleanup', 'Memory cleanup initiated');
+    
+    // Reset all state variables to defaults
+    modelLists = {};
+    carouselState = {
+      stands: { index: 0 },
+      steles: { index: 0 },
+      flowerbeds: { index: 0 },
+      gravestones: { index: 0 },
+      fence_decor: { index: 0 }
+    };
+    activeTab = 'base';
+    addedElements = {
+      foundation: false,
+      tiling: false,
+      cladding: false,
+      blindArea: false,
+      stands: false,
+      flowerbeds: false,
+      gravestones: false,
+      steles: false,
+      fence_corner: false,
+      fence_perimeter: false,
+      blind_area: false,
+      tiles: false,
+      pavement_tiles: false
+    };
+    currentUnit = 'mm';
+    
+    logStateChange('cleanup', 'Memory cleanup completed');
+  }
+  
+  // Memory usage monitoring
+  function getMemoryUsage() {
+    const stateSize = JSON.stringify({
+      modelLists,
+      carouselState,
+      activeTab,
+      addedElements,
+      currentUnit
+    }).length;
+    
+    return {
+      stateSize: stateSize,
+      modelListsCount: Object.keys(modelLists).length,
+      carouselCategories: Object.keys(carouselState).length,
+      addedElementsCount: Object.keys(addedElements).filter(k => addedElements[k]).length
+    };
+  }
+  
   function resetState() {
     modelLists = {};
     carouselState = {
@@ -209,7 +261,9 @@
     setCurrentUnit: setCurrentUnit,
     resetState: resetState,
     exportState: exportState,
-    importState: importState
+    importState: importState,
+    cleanup: cleanup,
+    getMemoryUsage: getMemoryUsage
   };
   
   // Зворотна сумісність - змінні доступні глобально
