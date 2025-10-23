@@ -125,10 +125,10 @@ class AdvancedObfuscator
   def advanced_obfuscate(code)
     # Максимальна обфускація
     code = remove_comments(code)
-    code = obfuscate_strings(code)
+    # code = obfuscate_strings(code)  # Вимкнено - ламає синтаксис
     code = obfuscate_variables(code)
     code = minify_whitespace(code)
-    code = add_junk_code(code)
+    # code = add_junk_code(code)  # Вимкнено - може конфліктувати
     code
   end
   
