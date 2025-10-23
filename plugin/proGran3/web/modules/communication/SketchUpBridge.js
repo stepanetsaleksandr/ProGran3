@@ -427,7 +427,7 @@
   };
   
   // Callback для отримання даних звіту
-  global.handleReportData = function(data) {
+  global.handleReportData = async function(data) {
     logBridgeAction(`Отримано дані звіту: ${data ? 'є дані' : 'немає даних'}`, 'info');
     
     if (data) {
@@ -436,7 +436,7 @@
       
       // Показуємо звіт в модальному вікні
       if (global.ProGran3 && global.ProGran3.UI && global.ProGran3.UI.SummaryTable) {
-        global.ProGran3.UI.SummaryTable.showReportModal(data);
+        await global.ProGran3.UI.SummaryTable.showReportModal(data);
         logBridgeAction('Звіт успішно відображено в модальному вікні', 'success');
       } else {
         logBridgeAction('SummaryTable модуль не доступний', 'error');

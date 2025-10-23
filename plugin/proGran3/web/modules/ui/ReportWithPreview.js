@@ -158,7 +158,7 @@
   }
   
   // Головна функція генерації звіту з превью
-  function generateReportWithPreview() {
+  async function generateReportWithPreview() {
     logReportPreviewAction('Початок генерації звіту з превью', 'info');
     
     try {
@@ -167,10 +167,10 @@
       
       if (includePreviewInReport) {
         // Генеруємо превью та звіт
-        generatePreviewAndReport();
+        await generatePreviewAndReport();
       } else {
         // Генеруємо тільки звіт
-        generateReportOnly();
+        await generateReportOnly();
       }
       
     } catch (error) {
@@ -181,11 +181,11 @@
   }
   
   // Генерація тільки звіту
-  function generateReportOnly() {
+  async function generateReportOnly() {
     logReportPreviewAction('Генерація тільки звіту', 'info');
     
     if (window.ProGran3.UI.SummaryTable && window.ProGran3.UI.SummaryTable.generateReport) {
-      window.ProGran3.UI.SummaryTable.generateReport();
+      await window.ProGran3.UI.SummaryTable.generateReport();
       showLoadingIndicator(false);
       logReportPreviewAction('Звіт успішно згенеровано та відкрито', 'success');
     } else {
@@ -194,13 +194,13 @@
   }
   
   // Генерація превью та звіту
-  function generatePreviewAndReport() {
+  async function generatePreviewAndReport() {
     logReportPreviewAction('Генерація превью та звіту', 'info');
     
     // Перевіряємо доступність SketchUp API
     if (!window.sketchup || !window.sketchup.generate_model_preview) {
       logReportPreviewAction('SketchUp API для генерації превью не доступний, генеруємо тільки звіт', 'warn');
-      generateReportOnly();
+      await generateReportOnly();
       return;
     }
     
@@ -214,21 +214,21 @@
         logReportPreviewAction('Превью успішно згенеровано, очікуємо дані', 'success');
         
         // Додаємо таймаут для випадку, коли превью не приходить
-        window.previewTimeout = setTimeout(() => {
+        window.previewTimeout = setTimeout(async () => {
           logReportPreviewAction('Таймаут очікування превью, генеруємо звіт без превью', 'warn');
           window.currentPreviewData = null;
           global.currentPreviewData = null;
-          generateReportOnly();
+          await generateReportOnly();
         }, 10000); // 10 секунд
         
         // Дані прийдуть через callback handlePreviewData
       } else {
         logReportPreviewAction('Помилка генерації превью, генеруємо тільки звіт', 'warn');
-        generateReportOnly();
+        await generateReportOnly();
       }
     } catch (error) {
       logReportPreviewAction(`Помилка при виклику generate_model_preview: ${error.message}`, 'error');
-      generateReportOnly();
+      await generateReportOnly();
     }
   }
   
@@ -260,7 +260,7 @@
   }
   
   // Callback для отримання превью даних
-  function handlePreviewData(data) {
+  async function handlePreviewData(data) {
     console.log('🎯 [ReportWithPreview] handlePreviewData викликано');
     console.log('🎯 [ReportWithPreview] Дані:', data ? `є дані, довжина: ${data.length}` : 'немає даних');
     logReportPreviewAction('Отримано дані превью', 'info');
@@ -288,7 +288,7 @@
         logReportPreviewAction('Превью дані порожні, генеруємо звіт без превью', 'warn');
         window.currentPreviewData = null;
         global.currentPreviewData = null;
-        generateReportOnly();
+        await generateReportOnly();
       }
       
     } catch (error) {
