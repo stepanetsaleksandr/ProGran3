@@ -780,14 +780,14 @@
   }
   
   // Генерація професійного звіту
-  function generateReport() {
+  async function generateReport() {
     console.log('📄 Генерація звіту...');
     
     try {
       // Перевіряємо чи є збережені дані
       if (window.lastSummaryData && Object.keys(window.lastSummaryData).length > 0) {
         console.log('✅ Використовую збережені дані для звіту');
-        showReportModal(window.lastSummaryData);
+        await showReportModal(window.lastSummaryData);
       } else if (window.sketchup) {
         // Запитуємо дані з Ruby
         console.log('🔄 Запит даних з Ruby...');

@@ -999,7 +999,8 @@ module ProGran3
         cached = ProGran3::SummaryCache.get_cached_summary
         if cached
           ProGran3::Logger.info("⚡ Використовую кешовані дані для звіту", "Report")
-          dialog.execute_script("if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.SummaryTable) { window.ProGran3.UI.SummaryTable.showReportModal(#{cached.to_json}); } else { console.error('SummaryTable не знайдено'); }")
+          # v3.2: showReportModal тепер async
+          dialog.execute_script("if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.SummaryTable) { (async () => { await window.ProGran3.UI.SummaryTable.showReportModal(#{cached.to_json}); })(); } else { console.error('SummaryTable не знайдено'); }")
           return true
         end
         
@@ -1668,7 +1669,8 @@ module ProGran3
         
         # Викликаємо відповідний JS callback
         if for_report
-          dialog.execute_script("window.ProGran3.UI.SummaryTable.showReportModal(#{json_data});")
+          # v3.2: showReportModal тепер async
+          dialog.execute_script("(async () => { await window.ProGran3.UI.SummaryTable.showReportModal(#{json_data}); })();")
         else
           dialog.execute_script("updateDetailedSummary(#{json_data});")
         end
