@@ -5,6 +5,8 @@ require 'net/http'
 require 'uri'
 require 'json'
 require 'openssl'
+require_relative 'server_validator'
+require_relative 'secret_manager'
 
 module ProGran3
   module Security
@@ -43,19 +45,19 @@ module ProGran3
       # Timeout для запитів (з конфігу)
       REQUEST_TIMEOUT = load_api_config[:timeout]
       
-      # HMAC Secret Key (v3.1: server-side secret)
+      # HMAC Secret Key (v3.2: obfuscated через SecretManager)
       # Використовуємо глобальний secret для всіх клієнтів
       # Має збігатися з HMAC_SECRET_KEY на сервері
       # 
-      # Security Note: Цей ключ захардкожений тут, але:
-      # 1. Клієнт може бути обфусковано (.rbc)
-      # 2. Зміна ключа = оновлення плагіна (контрольоване)
-      # 3. Краще ніж predictable fingerprint-based key
+      # Security Note: v3.2 improvements:
+      # 1. Secret обфускований через SecretManager (multi-layer)
+      # 2. XOR з hardware fingerprint
+      # 3. Розбитий на частини в різних методах
+      # 4. Складніше витягнути через reverse engineering
       
       def self.get_secret_key
-        # Глобальний shared secret (має збігатися з сервером)
-        # В production: обфускувати або завантажувати динамічно
-        'ProGran3-HMAC-Global-Secret-2025-v3.1-DO-NOT-SHARE-9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d'
+        # v3.2: Використовуємо SecretManager замість hardcoded secret
+        SecretManager.get_hmac_secret
       end
       
       SECRET_KEY = nil  # Буде встановлено динамічно через get_secret_key
@@ -213,6 +215,18 @@ module ProGran3
       # @param silent [Boolean] Чи приховувати логи
       # @return [Hash]
       def self.post_request(endpoint, payload, silent: false)
+        # SECURITY: Валідуємо URL перед кожним запитом
+        begin
+          ServerValidator.validate_url(API_BASE_URL)
+        rescue SecurityError => e
+          Logger.error("Server validation failed: #{e.message}", "ApiClient")
+          return {
+            success: false,
+            error: "Security error: #{e.message}",
+            security_block: true
+          }
+        end
+        
         uri = URI.parse("#{API_BASE_URL}#{endpoint}")
         
         puts "🌐 POST #{uri}" unless silent
