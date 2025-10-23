@@ -1,10 +1,15 @@
 # progran3.rb
-# VERSION: 2025-09-25-19:50 - FIX_SERVER_URL_INTERNAL
+# VERSION: 2025-10-22 - PRODUCTION_READY
 require 'sketchup.rb'
 
 # Автоматичне перезавантаження плагіна при змінах
 def self.reload_plugin
   puts "🔄 Перезавантаження плагіна ProGran3..."
+  
+  # Cleanup resources before reload
+  if defined?(ProGran3::ResourceManager)
+    ProGran3::ResourceManager.cleanup_resources(true)
+  end
   
   # Видаляємо глобальні змінні
   $progran3_tracker = nil
@@ -399,6 +404,13 @@ if defined?(Sketchup)
   
   # Ініціалізація при завантаженні
   $plugin_blocked = false
+  
+  # Resource cleanup при виході
+  at_exit do
+    if defined?(ProGran3::ResourceManager)
+      ProGran3::ResourceManager.cleanup_resources(true)
+    end
+  end
   
   # НЕ запускаємо відстеження автоматично - тільки після відкриття UI
   puts "🔄 Завантаження всіх модулів завершено"
