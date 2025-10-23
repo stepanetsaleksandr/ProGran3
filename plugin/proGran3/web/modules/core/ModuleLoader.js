@@ -30,10 +30,18 @@
    * Завантажити модуль з сервера або cache
    * @param {string} moduleName - Назва модуля (e.g., 'report-generator')
    * @param {Object} options - Опції завантаження
+   * @param {boolean} options.forceReload - Завжди завантажувати з сервера
+   * @param {boolean} options.noCache - Не зберігати в cache (для security)
    * @returns {Promise<Object>} Завантажений модуль
    */
   async function loadModule(moduleName, options = {}) {
-    logModuleLoader(`Завантаження модуля: ${moduleName}`, 'info');
+    logModuleLoader(`Завантаження модуля: ${moduleName} (noCache: ${!!options.noCache})`, 'info');
+    
+    // Якщо noCache - завжди з сервера, не зберігати
+    if (options.noCache) {
+      logModuleLoader(`🔒 Security mode: завантаження без cache`, 'info');
+      return await loadModuleNoCache(moduleName);
+    }
     
     // Якщо вже завантажуємо - почекати
     if (loadingPromises[moduleName]) {
@@ -99,6 +107,37 @@
     
     loadingPromises[moduleName] = loadPromise;
     return loadPromise;
+  }
+  
+  /**
+   * Завантажити модуль БЕЗ cache (для security)
+   * Код виконується і одразу видаляється з пам'яті
+   */
+  async function loadModuleNoCache(moduleName) {
+    try {
+      // 1. Завантажити з сервера
+      logModuleLoader(`🔒 Secure load: ${moduleName}`, 'info');
+      const moduleData = await fetchModuleFromServer(moduleName);
+      
+      // 2. Verify signature
+      if (!verifyModuleSignature(moduleData)) {
+        throw new Error('Module signature verification failed');
+      }
+      
+      // 3. Execute (БЕЗ збереження в memory/cache!)
+      const module = executeModuleCode(moduleData.code, moduleName);
+      
+      logModuleLoader(`🔒 Модуль ${moduleName} завантажено (temporary)`, 'success');
+      
+      // НЕ зберігаємо в loadedModules
+      // НЕ зберігаємо в localStorage
+      
+      return module;
+      
+    } catch (error) {
+      logModuleLoader(`🔒 Secure load failed: ${error.message}`, 'error');
+      throw error;
+    }
   }
   
   /**

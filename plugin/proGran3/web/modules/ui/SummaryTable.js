@@ -804,7 +804,7 @@
   }
   
   // Показ модального вікна зі звітом
-  function showReportModal(data) {
+  async function showReportModal(data) {
     console.log('📊 Відображення звіту:', data);
     
     // Розширюємо основне вікно ВЛІВО
@@ -822,8 +822,21 @@
       document.body.appendChild(modal);
     }
     
-    // Генеруємо HTML звіту
-    const reportHTML = generateReportHTML(data);
+    // Показуємо loading
+    modal.innerHTML = `
+      <div class="report-modal-overlay"></div>
+      <div class="report-modal-content" style="display:flex; align-items:center; justify-content:center; min-height:400px;">
+        <div style="text-align:center;">
+          <div class="loading-spinner" style="margin:0 auto 20px;"></div>
+          <div>Завантаження модуля генерації звіту...</div>
+        </div>
+      </div>
+    `;
+    modal.style.display = 'flex';
+    
+    try {
+      // Генеруємо HTML звіту (async, завантажує модуль)
+      const reportHTML = await generateReportHTML(data);
     
     modal.innerHTML = `
       <div class="report-modal-overlay" onclick="window.ProGran3.UI.SummaryTable.closeReportModal()"></div>
@@ -865,11 +878,30 @@
       </div>
     `;
     
-    // Показуємо модальне вікно
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    
-    console.log('✅ Модальне вікно відкрито');
+      // Показуємо модальне вікно
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      
+      console.log('✅ Модальне вікно відкрито');
+      
+    } catch (error) {
+      console.error('❌ Помилка генерації звіту:', error);
+      
+      // Показуємо помилку в modal
+      modal.innerHTML = `
+        <div class="report-modal-overlay" onclick="window.ProGran3.UI.SummaryTable.closeReportModal()"></div>
+        <div class="report-modal-content" style="padding:40px; text-align:center;">
+          <h2 style="color:#ff6b6b; margin-bottom:20px;">❌ Помилка генерації звіту</h2>
+          <p style="margin-bottom:20px;">${error.message}</p>
+          <p style="color:#666; font-size:14px;">Для генерації звіту потрібне підключення до інтернету</p>
+          <button onclick="window.ProGran3.UI.SummaryTable.closeReportModal()" 
+                  style="margin-top:20px; padding:10px 20px; cursor:pointer;">
+            Закрити
+          </button>
+        </div>
+      `;
+      modal.style.display = 'flex';
+    }
     
     // Додаємо обробник клавіші ESC
     const handleEscape = (event) => {
@@ -1035,23 +1067,44 @@
   }
   
   // Генерація HTML звіту (формат A4)
-  // v3.2: Використовує динамічний модуль з сервера
-  function generateReportHTML(data) {
-    // Спробувати використати динамічно завантажений модуль
-    if (global.ProGran3 && global.ProGran3.Modules && global.ProGran3.Modules.ReportGenerator) {
-      console.log('✅ Використовую динамічний ReportGenerator модуль');
-      return global.ProGran3.Modules.ReportGenerator.generateReportHTML(data);
+  // v3.2: ТІЛЬКИ з динамічного модуля (захист коду)
+  async function generateReportHTML(data) {
+    try {
+      // Завантажити модуль з сервера (temporary, не cache!)
+      console.log('📦 Завантаження report-generator з сервера...');
+      
+      const module = await global.ProGran3.Core.ModuleLoader.loadModule('report-generator', {
+        forceReload: true,  // Завжди з сервера
+        noCache: true       // Не зберігати в cache
+      });
+      
+      if (!module || !module.generateReportHTML) {
+        throw new Error('Report generator module не завантажився');
+      }
+      
+      console.log('✅ Модуль завантажено, генерую звіт...');
+      
+      // Генеруємо HTML
+      const html = module.generateReportHTML(data);
+      
+      // ВАЖЛИВО: Видаляємо модуль з пам'яті одразу після використання
+      delete global.ProGran3.Modules.ReportGenerator;
+      console.log('🗑️ Модуль видалено з пам\'яті');
+      
+      return html;
+      
+    } catch (error) {
+      console.error('❌ Помилка завантаження модуля:', error);
+      alert('Для генерації звіту потрібне підключення до інтернету.\n\nПомилка: ' + error.message);
+      throw error;
     }
-    
-    // Fallback до вбудованої версії
-    console.log('⚠️ Використовую вбудовану версію generateReportHTML (fallback)');
-    return generateReportHTML_Embedded(data);
   }
   
-  // Вбудована версія (fallback якщо сервер недоступний)
+  // Видалено embedded версію - звіт ТІЛЬКИ через сервер!
   function generateReportHTML_Embedded(data) {
-    const summaryData = data.summary || data;
-    const metadata = data.metadata || {};
+    // DEPRECATED: Більше не використовується
+    throw new Error('Embedded version disabled. Internet connection required.');
+  }
     
     const currentDate = new Date().toLocaleDateString('uk-UA', {
       year: 'numeric',
