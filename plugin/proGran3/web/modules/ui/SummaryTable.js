@@ -1035,7 +1035,21 @@
   }
   
   // Генерація HTML звіту (формат A4)
+  // v3.2: Використовує динамічний модуль з сервера
   function generateReportHTML(data) {
+    // Спробувати використати динамічно завантажений модуль
+    if (global.ProGran3 && global.ProGran3.Modules && global.ProGran3.Modules.ReportGenerator) {
+      console.log('✅ Використовую динамічний ReportGenerator модуль');
+      return global.ProGran3.Modules.ReportGenerator.generateReportHTML(data);
+    }
+    
+    // Fallback до вбудованої версії
+    console.log('⚠️ Використовую вбудовану версію generateReportHTML (fallback)');
+    return generateReportHTML_Embedded(data);
+  }
+  
+  // Вбудована версія (fallback якщо сервер недоступний)
+  function generateReportHTML_Embedded(data) {
     const summaryData = data.summary || data;
     const metadata = data.metadata || {};
     

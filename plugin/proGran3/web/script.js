@@ -922,6 +922,9 @@ window.onload = async function () {
 function initializeApp() {
   debugLog(` initializeApp викликано`, 'info');
   
+  // v3.2: Завантажуємо динамічні модулі (асинхронно, не блокує UI)
+  loadDynamicModules();
+  
   // Ініціалізація обробників подій
   initializeEventHandlers();
   
@@ -4883,5 +4886,49 @@ function hideBlockingCard() {
   const blockingCard = document.getElementById('blocking-card');
   if (blockingCard) {
     blockingCard.style.display = 'none';
+  }
+}
+
+// ============================================================================
+// 📦 ДИНАМІЧНЕ ЗАВАНТАЖЕННЯ МОДУЛІВ (v3.2)
+// ============================================================================
+
+/**
+ * Завантажити динамічні модулі з сервера
+ */
+async function loadDynamicModules() {
+  console.log('📦 Завантаження динамічних модулів...');
+  
+  try {
+    // Перевіряємо наявність ModuleLoader
+    if (!window.ProGran3 || !window.ProGran3.Core || !window.ProGran3.Core.ModuleLoader) {
+      console.warn('⚠️ ModuleLoader не доступний, пропускаємо динамічне завантаження');
+      return;
+    }
+    
+    // Список модулів для завантаження
+    const modulesToLoad = [
+      'report-generator'  // Модуль генерації звітів
+    ];
+    
+    // Завантажуємо модулі асинхронно
+    for (const moduleName of modulesToLoad) {
+      try {
+        console.log(`📦 Завантаження модуля: ${moduleName}`);
+        
+        const module = await window.ProGran3.Core.ModuleLoader.loadModule(moduleName);
+        
+        console.log(`✅ Модуль ${moduleName} завантажено:`, module);
+        
+      } catch (error) {
+        console.warn(`⚠️ Не вдалося завантажити ${moduleName}: ${error.message}`);
+        console.warn('   Використовуватиметься вбудована версія');
+      }
+    }
+    
+    console.log('✅ Динамічні модулі оброблено');
+    
+  } catch (error) {
+    console.error('❌ Помилка завантаження динамічних модулів:', error);
   }
 }
