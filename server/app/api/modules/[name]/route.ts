@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { createClient } from '@/lib/supabase';
+import { createSupabaseClient } from '@/lib/supabase';
 import { apiSuccess, apiError } from '@/lib/api-response';
 import crypto from 'crypto';
 
@@ -13,7 +13,7 @@ export async function GET(
 ) {
   try {
     const { name } = params;
-    const supabase = createClient();
+    const supabase = createSupabaseClient();
     
     // Отримуємо fingerprint з headers (для telemetry)
     const fingerprintHash = request.headers.get('X-Fingerprint-Hash');

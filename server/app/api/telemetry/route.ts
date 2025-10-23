@@ -67,7 +67,7 @@ export const POST = withPublicApi(async ({ supabase, request }: ApiContext) => {
  * Виявлення аномалій в телеметрії
  */
 async function detectAnomalies(fingerprintHash: string, telemetry: any) {
-  const supabase = await import('@/lib/supabase').then(m => m.createClient());
+  const supabase = await import('@/lib/supabase').then(m => m.createSupabaseClient());
   
   // 1. Перевірка: чи той самий fingerprint з різних locations
   const recentSessions = await supabase
@@ -123,7 +123,7 @@ async function flagAnomaly(
   anomalyType: string, 
   details: any
 ) {
-  const supabase = await import('@/lib/supabase').then(m => m.createClient());
+  const supabase = await import('@/lib/supabase').then(m => m.createSupabaseClient());
   
   await supabase.from('anomalies').insert({
     fingerprint_hash: fingerprintHash,
