@@ -87,22 +87,22 @@ class PluginBuilder
         puts "  ✓ #{PLUGIN_NAME}.rb (loader)"
       end
       
-      # Додаємо головний файл плагіна
+      # Додаємо головний файл плагіна (в ту саму папку що і loader для require_relative)
       main_file = File.join(@plugin_dir, "#{PLUGIN_NAME}.rb")
       if File.exist?(main_file)
-        add_to_zip(zipfile, main_file, "#{PLUGIN_NAME}/#{PLUGIN_NAME}_core.rb")
+        add_to_zip(zipfile, main_file, "#{PLUGIN_NAME}_core.rb")
         file_count += 1
-        puts "  ✓ #{PLUGIN_NAME}/#{PLUGIN_NAME}_core.rb"
+        puts "  ✓ #{PLUGIN_NAME}_core.rb"
       end
       
-      # Додаємо всі файли з директорії proGran3/
+      # Додаємо всі файли з директорії proGran3/ (зберігаємо структуру)
       plugin_subdir = File.join(@plugin_dir, PLUGIN_NAME)
       if Dir.exist?(plugin_subdir)
         Dir.glob(File.join(plugin_subdir, '**', '*')).each do |file|
           next if File.directory?(file)
           next if should_exclude?(file)
           
-          # Відносний шлях
+          # Відносний шлях від plugin_dir
           relative_path = file.sub("#{@plugin_dir}/", '')
           
           add_to_zip(zipfile, file, relative_path)

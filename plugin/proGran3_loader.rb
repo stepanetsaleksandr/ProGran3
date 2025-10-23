@@ -14,8 +14,8 @@ module ProGran3Extension
   EXTENSION_COPYRIGHT = "2025 © ProVis3D. Всі права захищені."
   
   # Створюємо extension
-  # Шлях до головного файлу (в архіві буде proGran3/proGran3_core.rb)
-  loader = File.join(File.dirname(__FILE__), 'proGran3', 'proGran3_core.rb')
+  # Шлях до головного файлу (в архіві буде proGran3_core.rb поруч з loader)
+  loader = File.join(File.dirname(__FILE__), 'proGran3_core.rb')
   extension = SketchupExtension.new(EXTENSION_NAME, loader)
   
   # Налаштування extension
