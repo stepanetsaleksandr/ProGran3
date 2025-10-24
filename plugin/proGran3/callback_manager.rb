@@ -1682,11 +1682,18 @@ module ProGran3
         end
         
         # Викликаємо відповідний JS callback
-        if for_report
-          # v3.2: showReportModal тепер async
-          dialog.execute_script("(async () => { await window.ProGran3.UI.SummaryTable.showReportModal(#{json_data}); })();")
+        if dialog && dialog.respond_to?(:execute_script)
+          if for_report
+            # v3.2: showReportModal тепер async
+            dialog.execute_script("(async () => { await window.ProGran3.UI.SummaryTable.showReportModal(#{json_data}); })();")
+          else
+            dialog.execute_script("updateDetailedSummary(#{json_data});")
+          end
         else
-          dialog.execute_script("updateDetailedSummary(#{json_data});")
+          # Fallback - виводимо дані в консоль для діагностики
+          ProGran3::Logger.info("📤 [FALLBACK] Дані для JavaScript:", "Summary")
+          ProGran3::Logger.info("📊 JSON дані: #{json_data}", "Summary")
+          ProGran3::Logger.warn("⚠️ Dialog не доступний - дані не передано в JavaScript", "Summary")
         end
         
         ProGran3::Logger.info("✅ Детальна специфікація згенерована успішно", "Summary")
