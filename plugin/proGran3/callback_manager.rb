@@ -316,19 +316,7 @@ module ProGran3
         
         # Bounds стели - без логування
         
-        # ДЕТАЛЬНА ДІАГНОСТИКА: що означають bounds.width, bounds.height, bounds.depth
-        ProGran3::Logger.info("Детальна діагностика bounds:", "CallbackManager")
-        ProGran3::Logger.info("  bounds.width = #{bounds.width.to_mm} мм", "CallbackManager")
-        ProGran3::Logger.info("  bounds.height = #{bounds.height.to_mm} мм", "CallbackManager")
-        ProGran3::Logger.info("  bounds.depth = #{bounds.depth.to_mm} мм", "CallbackManager")
-        ProGran3::Logger.info("  Розрахунок вручну:", "CallbackManager")
-        ProGran3::Logger.info("    X-розмір (max.x - min.x) = #{bounds.max.x - bounds.min.x} мм", "CallbackManager")
-        ProGran3::Logger.info("    Y-розмір (max.y - min.y) = #{bounds.max.y - bounds.min.y} мм", "CallbackManager")
-        ProGran3::Logger.info("    Z-розмір (max.z - min.z) = #{bounds.max.z - bounds.min.z} мм", "CallbackManager")
-        ProGran3::Logger.info("  Порівняння:", "CallbackManager")
-        ProGran3::Logger.info("    bounds.width == Y-розмір? #{bounds.width == (bounds.max.y - bounds.min.y)}", "CallbackManager")
-        ProGran3::Logger.info("    bounds.height == Z-розмір? #{bounds.height == (bounds.max.z - bounds.min.z)}", "CallbackManager")
-        ProGran3::Logger.info("    bounds.depth == X-розмір? #{bounds.depth == (bounds.max.x - bounds.min.x)}", "CallbackManager")
+        # Детальна діагностика bounds - без логування
         
         # ПРАВИЛЬНИЙ МАПІНГ SketchUp bounds → UI поля:
         # Фактично: стела 1000(висота) × 500(ширина) × 80(глибина)
@@ -343,9 +331,7 @@ module ProGran3
           depth: bounds.width.to_mm.round    # bounds.width → UI "глибина"
         }
         
-        ProGran3::Logger.info("ПРАВИЛЬНИЙ МАПІНГ до UI полів:", "CallbackManager")
-        ProGran3::Logger.info("  bounds.height (#{bounds.height.to_mm.round}) → UI 'ширина' (#{dimensions[:width]})", "CallbackManager")
-        ProGran3::Logger.info("  bounds.depth (#{bounds.depth.to_mm.round}) → UI 'висота' (#{dimensions[:height]})", "CallbackManager")
+        # Правильний мапінг до UI полів - без логування
         ProGran3::Logger.info("  bounds.width (#{bounds.width.to_mm.round}) → UI 'глибина' (#{dimensions[:depth]})", "CallbackManager")
         ProGran3::Logger.info("Розміри стели: #{dimensions[:width]}(ширина)×#{dimensions[:height]}(висота)×#{dimensions[:depth]}(глибина) мм", "CallbackManager")
         

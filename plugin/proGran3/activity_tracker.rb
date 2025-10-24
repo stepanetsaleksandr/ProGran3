@@ -21,12 +21,12 @@ module ProGran3
     def start_tracking
       return if @tracking_enabled
       
-      puts "📊 Запуск Activity Tracker..."
+      # Запуск Activity Tracker - без логування
       
       # Перевірка чи є ліцензія
       license = get_license_info
       unless license && license[:has_license]
-        puts "   ⚠️ Ліцензія не знайдена - tracking вимкнено"
+        # Ліцензія не знайдена - tracking вимкнено - без логування
         return
       end
       
@@ -39,9 +39,7 @@ module ProGran3
       # Запуск періодичного heartbeat
       start_heartbeat_timer(license)
       
-      puts "   ✅ Activity Tracker запущено"
-      puts "   📍 Session start: #{@session_start}"
-      puts "   ⏱️ Heartbeat interval: #{HEARTBEAT_INTERVAL}s (#{HEARTBEAT_INTERVAL / 60} хв)"
+      # Activity Tracker запущено - без логування
       
     rescue => e
       puts "   ❌ Помилка запуску Activity Tracker: #{e.message}"
@@ -52,7 +50,7 @@ module ProGran3
     def stop_tracking
       return unless @tracking_enabled
       
-      puts "📊 Зупинка Activity Tracker..."
+      # Зупинка Activity Tracker - без логування
       
       # Зупинка heartbeat timer
       if @heartbeat_timer
@@ -65,12 +63,12 @@ module ProGran3
       send_shutdown_event(license) if license && license[:has_license]
       
       @tracking_enabled = false
-      puts "   ✅ Activity Tracker зупинено"
+      # Activity Tracker зупинено - без логування
     end
     
     # Відправка startup event
     def send_startup_event(license)
-      puts "   📤 Відправка startup event..."
+      # Відправка startup event - без логування
       
       begin
         require_relative 'system/network/network_client'
@@ -91,13 +89,13 @@ module ProGran3
         }, silent: true)
         
         if result[:success]
-          puts "   ✅ Startup event відправлено"
+          # Startup event відправлено - без логування
         else
-          puts "   ⚠️ Startup event не відправлено: #{result[:error]}"
+          # Startup event не відправлено - без логування
         end
         
       rescue => e
-        puts "   ⚠️ Помилка відправки startup event: #{e.message}"
+        # Помилка відправки startup event - без логування
         # Не критична помилка - продовжуємо роботу
       end
     end
@@ -137,7 +135,7 @@ module ProGran3
         send_heartbeat(license) if @tracking_enabled
       end
       
-      puts "   ⏱️ Heartbeat timer запущено"
+      # Heartbeat timer запущено - без логування
     end
     
     # Відправка heartbeat
@@ -166,13 +164,13 @@ module ProGran3
         
         if result[:success]
           @last_heartbeat = Time.now
-          puts "💓 Heartbeat відправлено (session: #{format_duration(session_duration)})"
+          # Heartbeat відправлено - без логування
         else
-          puts "⚠️ Heartbeat не відправлено: #{result[:error]}" unless result[:offline]
+          # Heartbeat не відправлено - без логування
         end
         
       rescue => e
-        puts "⚠️ Помилка heartbeat: #{e.message}"
+        # Помилка heartbeat - без логування
         # Не критична помилка - продовжуємо роботу
       end
     end
@@ -183,7 +181,7 @@ module ProGran3
       if license && license[:has_license]
         send_heartbeat(license)
       else
-        puts "❌ Неможливо відправити heartbeat - ліцензія не знайдена"
+        # Неможливо відправити heartbeat - ліцензія не знайдена - без логування
       end
     end
     
@@ -193,7 +191,7 @@ module ProGran3
       manager = ProGran3::System::Core::SessionManager.new
       manager.license_info
     rescue => e
-      puts "⚠️ Помилка отримання license info: #{e.message}"
+      # Помилка отримання license info - без логування
       nil
     end
     
