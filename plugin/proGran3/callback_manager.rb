@@ -1675,6 +1675,15 @@ module ProGran3
         # Відправляємо в JS
         json_data = result_data.to_json
         ProGran3::Logger.info("📤 Відправка даних в JS: #{json_data.length} символів", "Summary")
+        ProGran3::Logger.info("📊 JSON дані для JavaScript:", "Summary")
+        ProGran3::Logger.info("  Foundation: #{result_data[:summary][:foundation].inspect}", "Summary")
+        ProGran3::Logger.info("  BlindArea: #{result_data[:summary][:blind_area].inspect}", "Summary")
+        ProGran3::Logger.info("  Stands: #{result_data[:summary][:stands].inspect}", "Summary")
+        ProGran3::Logger.info("  Steles: #{result_data[:summary][:steles].inspect}", "Summary")
+        ProGran3::Logger.info("  Flowerbeds: #{result_data[:summary][:flowerbeds].inspect}", "Summary")
+        ProGran3::Logger.info("  Gravestones: #{result_data[:summary][:gravestones].inspect}", "Summary")
+        ProGran3::Logger.info("  FenceCorner: #{result_data[:summary][:fence_corner].inspect}", "Summary")
+        ProGran3::Logger.info("  FenceDecor: #{result_data[:summary][:fence_decor].inspect}", "Summary")
         
         if warnings.any?
           ProGran3::Logger.warn("⚠️ Знайдено #{warnings.count} попереджень", "Summary")

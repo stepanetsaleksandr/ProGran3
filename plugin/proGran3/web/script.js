@@ -4940,9 +4940,16 @@ async function loadDynamicModules() {
 // Глобальна функція для оновлення детальної специфікації (викликається з Ruby)
 function updateDetailedSummary(data) {
   console.log('📊 [GLOBAL] updateDetailedSummary викликано з Ruby:', data);
+  console.log('📊 [GLOBAL] Тип даних:', typeof data);
+  console.log('📊 [GLOBAL] Структура даних:', JSON.stringify(data, null, 2));
   
   try {
     // Перевіряємо чи доступний модуль SummaryTable
+    console.log('🔍 [GLOBAL] Перевірка доступності модулів:');
+    console.log('  - window.ProGran3:', !!window.ProGran3);
+    console.log('  - window.ProGran3.UI:', !!(window.ProGran3 && window.ProGran3.UI));
+    console.log('  - window.ProGran3.UI.SummaryTable:', !!(window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.SummaryTable));
+    
     if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.SummaryTable) {
       console.log('✅ Використовуємо модуль SummaryTable');
       window.ProGran3.UI.SummaryTable.updateDetailedSummary(data);
@@ -4952,18 +4959,33 @@ function updateDetailedSummary(data) {
       // Fallback - базове оновлення
       if (data && data.summary) {
         const summary = data.summary;
+        console.log('📊 [FALLBACK] Summary дані:', summary);
+        console.log('📊 [FALLBACK] Foundation:', summary.foundation);
+        console.log('📊 [FALLBACK] BlindArea:', summary.blind_area);
+        console.log('📊 [FALLBACK] Stands:', summary.stands);
+        console.log('📊 [FALLBACK] Steles:', summary.steles);
+        console.log('📊 [FALLBACK] Flowerbeds:', summary.flowerbeds);
+        console.log('📊 [FALLBACK] Gravestones:', summary.gravestones);
+        console.log('📊 [FALLBACK] FenceCorner:', summary.fence_corner);
+        console.log('📊 [FALLBACK] FenceDecor:', summary.fence_decor);
         
         // Оновлюємо Foundation
         if (summary.foundation && summary.foundation.length > 0) {
           const foundation = summary.foundation[0];
+          console.log('🔍 [FALLBACK] Foundation дані:', foundation);
           const foundationEl = document.getElementById('summary-foundation');
+          console.log('🔍 [FALLBACK] Foundation DOM елемент:', foundationEl);
           if (foundationEl) {
             const area = foundation.area_m2 !== undefined ? foundation.area_m2 : 'N/A';
             const volume = foundation.volume_m3 !== undefined ? foundation.volume_m3 : 'N/A';
             const text = `${foundation.depth} × ${foundation.width} × ${foundation.height} см\nПлоща: ${area} м²\nОб'єм: ${volume} м³`;
             foundationEl.textContent = text;
             console.log('✅ Foundation оновлено (fallback):', text);
+          } else {
+            console.error('❌ Foundation DOM елемент не знайдено!');
           }
+        } else {
+          console.warn('⚠️ Foundation дані відсутні або порожні');
         }
         
         // Оновлюємо BlindArea
