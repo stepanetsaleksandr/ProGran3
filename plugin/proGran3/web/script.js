@@ -1338,8 +1338,7 @@ function createPlaceholder(item, loadingDiv, text) {
 
 // Функція для отримання згенерованого превью з Ruby
 function receiveWebPreview(componentPath, base64Data) {
-  debugLog(`📥 Отримано превью для: ${componentPath}`, 'info');
-  debugLog(`📊 Розмір превью: ${base64Data ? base64Data.length : 0} символів`, 'info');
+  // Отримано превью - без логування
   
   // Використовуємо SketchUpBridge якщо доступний
   if (window.ProGran3 && window.ProGran3.Communication && window.ProGran3.Communication.SketchUpBridge) {

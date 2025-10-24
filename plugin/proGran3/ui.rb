@@ -890,15 +890,14 @@ module ProGran3
     # Генерація превью поточної моделі
     def generate_model_preview_callback(dialog, size, quality)
       begin
-        ProGran3::Logger.info("🎨 Початок генерації превью моделі", "UI")
-        ProGran3::Logger.info("📐 Параметри: розмір=#{size}, якість=#{quality}", "UI")
+        # Початок генерації превью - без логування
+        # Параметри превью - без логування
 
         # Використовуємо новий метод з SkpPreviewExtractor
         data_url = ProGran3::SkpPreviewExtractor.generate_current_model_preview(size, quality)
         
         if data_url
-          ProGran3::Logger.success("✅ Превью успішно згенеровано", "UI")
-          ProGran3::Logger.info("📏 Розмір превью: #{data_url.length} символів", "UI")
+          # Превью згенеровано успішно - без логування
           
           result = {
             success: true,
@@ -908,7 +907,7 @@ module ProGran3
             generated_at: Time.now.iso8601
           }
           
-          ProGran3::Logger.info("📤 Повертаємо результат: #{result.keys.join(', ')}", "UI")
+          # Результат повертається - без логування
           return result
         else
           ProGran3::Logger.error("Не вдалося згенерувати превью", "UI")

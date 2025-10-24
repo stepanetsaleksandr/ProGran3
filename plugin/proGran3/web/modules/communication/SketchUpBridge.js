@@ -200,8 +200,7 @@
   }
   
   function receiveWebPreview(componentPath, base64Data) {
-    logBridgeAction(`Отримано превью для: ${componentPath}`, 'info');
-    logBridgeAction(`Розмір превью: ${base64Data ? base64Data.length : 0} символів`, 'info');
+    // Отримано превью - без логування
     
     if (!base64Data) {
       logBridgeAction(`Порожні base64 дані для: ${componentPath}`, 'error');

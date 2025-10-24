@@ -234,7 +234,7 @@ module ProGran3
           base64_data = Base64.strict_encode64(image_data)
           data_url = "data:image/png;base64,#{base64_data}"
           
-          puts "📊 Розмір зображення: #{data_url.length} символів"
+          # Розмір зображення - без логування
           
           # Видаляємо тимчасовий файл
           File.delete(temp_file) if File.exist?(temp_file)

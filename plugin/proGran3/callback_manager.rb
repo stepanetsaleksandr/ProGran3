@@ -187,7 +187,7 @@ module ProGran3
     # Callback для додавання декору огорожі на всі стовпчики
     def add_fence_decor_callback(dialog, model_name)
       begin
-        ProGran3::Logger.info("Додавання декору огорожі на всі стовпчики: #{model_name}", "UI")
+        # Додавання декору огорожі - без логування
         
         # Додаємо декор на всі стовпчики огорожі
         success = ProGran3.add_fence_decor_to_all_posts(model_name)
@@ -287,7 +287,7 @@ module ProGran3
           return { width: 100, height: 200, depth: 50 } # Значення за замовчуванням
         end
         
-        ProGran3::Logger.info("Знайдено #{stele_instances.length} стел", "CallbackManager")
+        # Знайдено стел - без логування
         
         # Очищаємо стели з невалідними розмірами
         valid_steles = stele_instances.select do |stele|
