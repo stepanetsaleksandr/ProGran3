@@ -1,9 +1,10 @@
 # ProGran3 - Professional License Management System
 
-**Version:** 3.2.0  
-**Production:** https://server-hbf7li0u7-provis3ds-projects.vercel.app  
+**Version:** 3.2.1  
+**Production:** https://server-i74j0z2y9-provis3ds-projects.vercel.app  
 **Status:** 🟢 Production Ready  
-**Security:** 🟢 9.0/10 (EXCELLENT)
+**Security:** 🟢 9.0/10 (EXCELLENT)  
+**Last Updated:** 24 жовтня 2025
 
 ---
 
@@ -27,7 +28,7 @@
 4. Працювати
 
 ### For Admins:
-- Dashboard: https://server-hbf7li0u7-provis3ds-projects.vercel.app/dashboard
+- Dashboard: https://server-i74j0z2y9-provis3ds-projects.vercel.app/dashboard
 - Generate licenses → Copy key → Send to users
 - Manage licenses (status, expiration, manual changes)
 
@@ -44,6 +45,8 @@
 - ✅ Offline Support (1-day grace period)
 - ✅ Concurrent Detection (IP tracking + auto-suspension)
 - ✅ Multi-language (UK/PL/EN)
+- ✅ Professional Report Generation (server-side)
+- ✅ Obfuscated License System (hidden files)
 
 **Tech Stack:**
 - Plugin: Ruby + SketchUp API
@@ -90,7 +93,7 @@ npm run dev        # http://localhost:3000
 vercel --prod --yes
 ```
 
-**Post-deploy:** Оновити URL в `plugin/proGran3/security/api_client.rb`
+**Post-deploy:** Оновити URL в `plugin/proGran3/system/network/network_client.rb`
 
 **Full Guide:** [`DEVELOPER_GUIDE.md`](./DEVELOPER_GUIDE.md#4-deployment)
 
@@ -128,7 +131,8 @@ Rating: 8/10 (9/10 with HMAC + Upstash)
 
 ```ruby
 # SketchUp Ruby Console:
-load 'C:/Users/.../plugin/proGran3/security/TEST_ACTIVITY_TRACKING.rb'
+# Тестування через UI або Ruby Console
+ProGran3::System::Core::SessionManager.validate_license
 ```
 
 **All tests:** [`DEVELOPER_GUIDE.md`](./DEVELOPER_GUIDE.md#5-testing)

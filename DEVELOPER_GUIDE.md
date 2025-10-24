@@ -1,8 +1,8 @@
 # 💻 ProGran3 - Developer Guide
 
-**Version:** 3.1.0 (Activity Tracking Edition)  
-**Updated:** 17 жовтня 2025  
-**Production:** https://server-qf9qtpsf0-provis3ds-projects.vercel.app
+**Version:** 3.2.1 (Obfuscated License System)  
+**Updated:** 24 жовтня 2025  
+**Production:** https://server-i74j0z2y9-provis3ds-projects.vercel.app
 
 > **Це єдине джерело правди для розробників.** Вся критична інформація тут.
 
@@ -39,10 +39,10 @@ Up/Down (Вгору/Вниз)         = Z axis
 
 ### Production URLs
 
-**Server:** `https://server-qf9qtpsf0-provis3ds-projects.vercel.app`
+**Server:** `https://server-i74j0z2y9-provis3ds-projects.vercel.app`
 
 **Де оновлювати при зміні:**
-- `plugin/proGran3/security/api_client.rb` (рядок 14)
+- `plugin/proGran3/system/network/network_client.rb` (рядок 14)
 - Vercel project: `server` (назва проекту)
 
 **⚠️ ВАЖЛИВО:** URL міняється при кожному deploy. Завжди оновлюйте в plugin!
