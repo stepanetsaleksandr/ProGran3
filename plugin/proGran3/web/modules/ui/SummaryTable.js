@@ -1198,72 +1198,17 @@
   // Генерація HTML звіту (формат A4)
   // v3.2: Професійна генерація звітів з сервера (захист IP)
   async function generateReportHTML(data) {
-    console.log('📄 Генерація звіту з сервера...');
+    console.log('📄 Генерація звіту локально (embedded версія)...');
     
     try {
-      // 1. Перевіряємо підключення до інтернету
-      await checkInternetConnection();
-      
-      // 2. Очищаємо можливі застарілі cache
-      clearModuleCache();
-      
-      // 3. Завантажуємо свіжий модуль з сервера
-      console.log('📦 Завантаження report-generator з сервера...');
-      
-      const module = await global.ProGran3.Core.ModuleLoader.loadModule('report-generator', {
-        forceReload: true,  // Завжди з сервера
-        noCache: true       // Не зберігати в cache
-      });
-      
-      if (!module || !module.generateReportHTML) {
-        throw new Error('Report generator module не завантажився з сервера');
-      }
-      
-      console.log('✅ Модуль завантажено з сервера, генерую звіт...');
-      
-      // 4. Генеруємо HTML звіт
-      const html = module.generateReportHTML(data);
-      
-      // 5. ВАЖЛИВО: Видаляємо модуль з пам'яті одразу після використання
-      delete global.ProGran3.Modules.ReportGenerator;
-      console.log('🗑️ Модуль видалено з пам\'яті для захисту IP');
-      
+      // Використовуємо embedded версію для локального форматування розмірів
+      const html = generateReportHTML_Embedded(data);
+      console.log('✅ Embedded версія звіту згенерована успішно');
       return html;
       
     } catch (error) {
-      console.error('❌ Помилка генерації звіту з сервера:', error);
-      
-      // Очищаємо cache при помилці
-      clearModuleCache();
-      
-      // FALLBACK: Використовуємо embedded версію якщо сервер недоступний
-      if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('timeout') || 
-          error.message.includes('404') || error.message.includes('not found')) {
-        
-        console.log('🔄 Fallback до embedded версії генерації звіту...');
-        
-        try {
-          // Тимчасово активуємо embedded версію
-          const originalError = generateReportHTML_Embedded.toString();
-          const modifiedFunction = originalError.replace(
-            'throw new Error(\'Embedded version disabled. Internet connection required for report generation.\');',
-            '// Embedded version temporarily enabled for fallback'
-          );
-          
-          // Створюємо тимчасову функцію
-          const tempFunction = new Function('return ' + modifiedFunction)();
-          const html = tempFunction(data);
-          
-          console.log('✅ Embedded версія звіту згенерована успішно');
-          return html;
-          
-        } catch (fallbackError) {
-          console.error('❌ Помилка embedded версії:', fallbackError);
-          throw new Error('Немає підключення до інтернету та embedded версія недоступна. Перевірте мережеві налаштування.');
-        }
-      } else {
-        throw new Error('Помилка генерації звіту: ' + error.message);
-      }
+      console.error('❌ Помилка embedded версії:', error);
+      throw new Error('Помилка генерації звіту: ' + error.message);
     }
   }
   
@@ -1333,8 +1278,8 @@
   
   // Embedded версія ВИДАЛЕНА для захисту інтелектуальної власності
   function generateReportHTML_Embedded(data) {
-    // DEPRECATED: Embedded версія видалена для захисту IP
-    throw new Error('Embedded version disabled. Internet connection required for report generation.');
+    // Embedded версія активована як fallback
+    console.log('📄 Використовуємо embedded версію як fallback');
     
     const currentDate = new Date().toLocaleDateString('uk-UA', {
       year: 'numeric',
