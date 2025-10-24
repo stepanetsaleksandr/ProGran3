@@ -52,7 +52,7 @@ module ProGran3
         # Тестуємо retry логіку з неіснуючим сервером
         puts "   Тестуємо retry з недоступним сервером..."
         
-        result = ProGran3::Security::ApiClient.validate(
+        result = ProGran3::System::Network::NetworkClient.validate(
           'TEST-KEY-12345', 
           'test_fingerprint', 
           2  # max_retries = 2

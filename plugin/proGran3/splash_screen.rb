@@ -291,7 +291,7 @@ module ProGran3
           begin
             # Ініціалізуємо License Manager
             require_relative 'system/core/session_manager'
-            manager = Security::LicenseManager.new
+            manager = ProGran3::System::Core::SessionManager.new
             
             # Валідуємо ліцензію
             result = manager.validate_license

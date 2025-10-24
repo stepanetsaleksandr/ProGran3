@@ -321,7 +321,7 @@ module ProGran3
         begin
           # Отримуємо реальну інформацію про ліцензію
           require_relative 'system/core/session_manager'
-          manager = Security::LicenseManager.new
+          manager = ProGran3::System::Core::SessionManager.new
           
           info = manager.license_info
           
@@ -336,7 +336,7 @@ module ProGran3
             
             # Завантажуємо ліцензію напряму з файлу щоб отримати fingerprint
             require_relative 'system/core/data_storage'
-            stored_license = Security::LicenseStorage.load
+            stored_license = ProGran3::System::Core::DataStorage.load
             stored_fp = stored_license ? stored_license[:fingerprint] : nil
             
             puts "🔐 [UI] Email: #{info[:email]}"
@@ -353,7 +353,7 @@ module ProGran3
             }.to_json
           else
             # Немає ліцензії - демо режим
-            current_fp = Security::HardwareFingerprint.generate[:fingerprint]
+            current_fp = ProGran3::System::Utils::DeviceIdentifier.generate[:fingerprint]
             
             result = {
               status: "demo",
@@ -401,7 +401,7 @@ module ProGran3
           
           # Fallback - демо (але все одно показуємо fingerprint)
           begin
-            current_fp = Security::HardwareFingerprint.generate[:fingerprint]
+            current_fp = ProGran3::System::Utils::DeviceIdentifier.generate[:fingerprint]
             fp_display = "#{current_fp[0..7]}...#{current_fp[-4..-1]}"
           rescue
             current_fp = 'unavailable'

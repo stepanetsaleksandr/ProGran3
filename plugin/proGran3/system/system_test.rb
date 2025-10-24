@@ -382,6 +382,6 @@ end
 # === ЗАПУСК ТЕСТУВАННЯ ===
 if __FILE__ == $0
   require 'set'
-  ProGran3::Security::SecurityTest.run_all_tests
+  ProGran3::System::SystemTest.run_all_tests
 end
 

@@ -76,10 +76,10 @@ module ProGran3
         require_relative 'system/network/network_client'
         require_relative 'system/utils/device_identifier'
         
-        fingerprint = Security::HardwareFingerprint.generate[:fingerprint]
+        fingerprint = ProGran3::System::Utils::DeviceIdentifier.generate[:fingerprint]
         
         # Відправляємо startup event через heartbeat з додатковими даними
-        result = Security::ApiClient.post_request('/api/heartbeats', {
+        result = ProGran3::System::Network::NetworkClient.post_request('/api/heartbeats', {
           license_key: license[:license_key],
           system_fingerprint: fingerprint,
           event_type: 'startup',
@@ -108,10 +108,10 @@ module ProGran3
         require_relative 'system/network/network_client'
         require_relative 'system/utils/device_identifier'
         
-        fingerprint = Security::HardwareFingerprint.generate[:fingerprint]
+        fingerprint = ProGran3::System::Utils::DeviceIdentifier.generate[:fingerprint]
         session_duration = Time.now - @session_start
         
-        Security::ApiClient.post_request('/api/heartbeats', {
+        ProGran3::System::Network::NetworkClient.post_request('/api/heartbeats', {
           license_key: license[:license_key],
           system_fingerprint: fingerprint,
           event_type: 'shutdown',
@@ -148,11 +148,11 @@ module ProGran3
         require_relative 'system/network/network_client'
         require_relative 'system/utils/device_identifier'
         
-        fingerprint = Security::HardwareFingerprint.generate[:fingerprint]
+        fingerprint = ProGran3::System::Utils::DeviceIdentifier.generate[:fingerprint]
         session_duration = Time.now - @session_start
         
         # Відправляємо heartbeat
-        result = Security::ApiClient.post_request('/api/heartbeats', {
+        result = ProGran3::System::Network::NetworkClient.post_request('/api/heartbeats', {
           license_key: license[:license_key],
           system_fingerprint: fingerprint,
           event_type: 'heartbeat',
@@ -190,7 +190,7 @@ module ProGran3
     # Отримання інформації про ліцензію
     def get_license_info
       require_relative 'system/core/session_manager'
-      manager = Security::LicenseManager.new
+      manager = ProGran3::System::Core::SessionManager.new
       manager.license_info
     rescue => e
       puts "⚠️ Помилка отримання license info: #{e.message}"
