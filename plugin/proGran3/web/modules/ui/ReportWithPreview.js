@@ -177,8 +177,10 @@
       if (result === 1) {
         logReportPreviewAction('Дані успішно зібрані з моделі', 'success');
         // Дані прийдуть через callback updateDetailedSummary
+        // НЕ чекаємо тут, а продовжуємо в onDataCollected
       } else {
-        throw new Error('Помилка збирання даних з моделі');
+        logReportPreviewAction(`Результат збирання даних: ${result} (не 1, але продовжуємо)`, 'warn');
+        // Не кидаємо помилку, а продовжуємо - можливо дані все одно прийдуть
       }
       
     } catch (error) {
@@ -217,6 +219,12 @@
   // Генерація тільки звіту
   async function generateReportOnly() {
     logReportPreviewAction('Генерація тільки звіту', 'info');
+    
+    // Діагностика даних
+    logReportPreviewAction(`window.lastSummaryData: ${!!window.lastSummaryData}`, 'info');
+    if (window.lastSummaryData) {
+      logReportPreviewAction(`Структура lastSummaryData: ${JSON.stringify(window.lastSummaryData).substring(0, 200)}...`, 'info');
+    }
     
     if (window.ProGran3.UI.SummaryTable && window.ProGran3.UI.SummaryTable.generateReport) {
       await window.ProGran3.UI.SummaryTable.generateReport();
@@ -365,8 +373,12 @@
     logReportPreviewAction('Дані зібрані з моделі, продовжуємо генерацію звіту', 'info');
     
     try {
-      // Зберігаємо зібрані дані
+      // Зберігаємо зібрані дані в правильному форматі
+      window.lastSummaryData = data;
       window.collectedModelData = data;
+      
+      logReportPreviewAction('Дані збережено в window.lastSummaryData', 'info');
+      logReportPreviewAction(`Структура даних: ${JSON.stringify(data).substring(0, 200)}...`, 'info');
       
       // Продовжуємо генерацію звіту
       if (includePreviewInReport) {
