@@ -70,7 +70,7 @@ module ProGran3
         cleanup_old_backups
         
         unless File.exist?(LICENSE_FILE)
-          puts "⚠️ Файл ліцензії не знайдено: #{LICENSE_FILE}"
+          # Файл ліцензії не знайдено - без логування
           return nil
         end
         
@@ -95,7 +95,7 @@ module ProGran3
           return nil
         end
         
-        puts "✅ Ліцензію завантажено з #{LICENSE_FILE}"
+        # Ліцензію завантажено - без логування
         decrypted
         
       rescue OpenSSL::Cipher::CipherError => e
@@ -134,7 +134,7 @@ module ProGran3
           puts "✅ Ліцензію видалено"
           true
         else
-          puts "⚠️ Файл ліцензії не знайдено"
+          # Файл ліцензії не знайдено - без логування
           false
         end
       rescue => e
