@@ -4943,13 +4943,10 @@ function updateDetailedSummary(data) {
   console.log('📊 [GLOBAL] Тип даних:', typeof data);
   console.log('📊 [GLOBAL] Структура даних:', JSON.stringify(data, null, 2));
   
-  // Діагностика через alert (для SketchUp WebDialog)
-  try {
-    alert('🔍 updateDetailedSummary викликано!\nТип: ' + typeof data + '\nДані: ' + JSON.stringify(data).substring(0, 200) + '...');
-  } catch (e) {
-    // Якщо alert не працює, виводимо в консоль
-    console.log('🔍 [ALERT FALLBACK] updateDetailedSummary викликано!');
-  }
+  // Діагностика через консоль (для SketchUp WebDialog)
+  console.log('🔍 [GLOBAL] updateDetailedSummary викликано з Ruby!');
+  console.log('🔍 [GLOBAL] Тип даних:', typeof data);
+  console.log('🔍 [GLOBAL] Дані:', JSON.stringify(data).substring(0, 200) + '...');
   
   // Сповіщаємо ReportWithPreview про завершення збирання даних
   if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.ReportWithPreview) {
