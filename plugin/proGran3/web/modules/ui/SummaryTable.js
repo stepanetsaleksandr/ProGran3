@@ -21,16 +21,10 @@
     const dimensions = [depth, width, height].map(Number).sort((a, b) => b - a); // Від найбільшого до найменшого
     console.log(`📐 [formatDimensions] Відсортовані: [${dimensions.join(', ')}]`);
     
-    // Використовуємо компактну таблицю без розділювачів
-    const result = `<table class="dimensions-table">
-      <tr>
-        <td class="dimension-cell">${dimensions[0]}</td>
-        <td class="dimension-cell">${dimensions[1]}</td>
-        <td class="dimension-cell">${dimensions[2]}</td>
-      </tr>
-    </table>`;
+    // Простий текст без HTML таблиці
+    const result = `${dimensions[0]}  ${dimensions[1]}  ${dimensions[2]}`;
     
-    console.log(`📐 [formatDimensions] Згенерований HTML з окремими колонками, довжина: ${result.length}`);
+    console.log(`📐 [formatDimensions] Згенерований простий текст: ${result}`);
     return result;
   }
   
