@@ -18,19 +18,19 @@
   // Функція для форматування розмірів з вирівнюванням (найбільше число першим)
   function formatDimensions(depth, width, height) {
     console.log(`📐 [formatDimensions] Вхідні дані: depth=${depth}, width=${width}, height=${height}`);
-    const dimensions = [depth, width, height].map(Number).sort((a, b) => b - a);
+    const dimensions = [depth, width, height].map(Number).sort((a, b) => a - b); // Від меншого до більшого
     console.log(`📐 [formatDimensions] Відсортовані: [${dimensions.join(', ')}]`);
     
-    // Використовуємо span замість вкладеної таблиці
-    const result = `<span class="dimensions-inline">
-      <span class="number">${dimensions[0]}</span>
-      <span class="separator">×</span>
-      <span class="number">${dimensions[1]}</span>
-      <span class="separator">×</span>
-      <span class="number">${dimensions[2]}</span>
-    </span>`;
+    // Використовуємо таблицю з окремими колонками для кожного розміру
+    const result = `<table class="dimensions-table">
+      <tr>
+        <td class="dimension-cell">${dimensions[0]}</td>
+        <td class="dimension-cell">${dimensions[1]}</td>
+        <td class="dimension-cell">${dimensions[2]}</td>
+      </tr>
+    </table>`;
     
-    console.log(`📐 [formatDimensions] Згенерований inline HTML, довжина: ${result.length}`);
+    console.log(`📐 [formatDimensions] Згенерований HTML з окремими колонками, довжина: ${result.length}`);
     return result;
   }
   

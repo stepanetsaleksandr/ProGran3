@@ -1299,4 +1299,39 @@ header {
 
 /* ========== BLOCKING CARD STYLES ВИДАЛЕНО ========== */
 
+/* ========== DIMENSIONS TABLE STYLES ========== */
+.dimensions-table {
+  border-collapse: collapse;
+  margin: 0;
+  padding: 0;
+  display: inline-table;
+}
+
+.dimensions-table td {
+  border: 1px solid #d1d5db;
+  padding: 4px 8px;
+  text-align: center;
+  font-weight: 500;
+  background-color: #f9fafb;
+  min-width: 40px;
+}
+
+.dimensions-table td:first-child {
+  border-left: none;
+}
+
+.dimensions-table td:last-child {
+  border-right: none;
+}
+
+/* Стилі для звіту */
+.report-table .dimensions-table td {
+  border: 1px solid #e5e7eb;
+  padding: 6px 10px;
+  text-align: center;
+  font-weight: 500;
+  background-color: #ffffff;
+  min-width: 50px;
+  font-size: 0.9rem;
+}
 
