@@ -199,15 +199,25 @@
       
       // СНАЧАЛА автоматично збираємо дані з моделі
       logReportPreviewAction('Автоматичне збирання даних з моделі...', 'info');
-      await collectModelData();
       
-      if (includePreviewInReport) {
-        // Генеруємо превью та звіт
-        await generatePreviewAndReport();
-      } else {
-        // Генеруємо тільки звіт
-        await generateReportOnly();
-      }
+      // Встановлюємо флаг очікування даних
+      window.waitingForData = true;
+      
+      // Викликаємо збирання даних
+      collectModelData();
+      
+      // Встановлюємо таймаут на випадок, якщо дані не прийдуть
+      window.dataTimeout = setTimeout(() => {
+        if (window.waitingForData) {
+          logReportPreviewAction('Таймаут очікування даних - генеруємо звіт з наявними даними', 'warn');
+          window.waitingForData = false;
+          showLoadingIndicator(false);
+          alert('Таймаут збирання даних. Спробуйте натиснути "Оновити" в підсумку проекту, а потім згенерувати звіт знову.');
+        }
+      }, 10000); // 10 секунд
+      
+      // НЕ продовжуємо тут - чекаємо на callback onDataCollected
+      logReportPreviewAction('Очікуємо дані через callback...', 'info');
       
     } catch (error) {
       logReportPreviewAction(`Помилка в generateReportWithPreview(): ${error.message}`, 'error');
@@ -373,12 +383,38 @@
     logReportPreviewAction('Дані зібрані з моделі, продовжуємо генерацію звіту', 'info');
     
     try {
+      // Перевіряємо чи очікуються дані
+      if (!window.waitingForData) {
+        logReportPreviewAction('Дані отримано, але не очікувалися - ігноруємо', 'warn');
+        return;
+      }
+      
+      // Очищаємо таймаут
+      if (window.dataTimeout) {
+        clearTimeout(window.dataTimeout);
+        window.dataTimeout = null;
+        logReportPreviewAction('Таймаут очищено', 'info');
+      }
+      
       // Зберігаємо зібрані дані в правильному форматі
       window.lastSummaryData = data;
       window.collectedModelData = data;
+      window.waitingForData = false; // Скидаємо флаг
       
       logReportPreviewAction('Дані збережено в window.lastSummaryData', 'info');
       logReportPreviewAction(`Структура даних: ${JSON.stringify(data).substring(0, 200)}...`, 'info');
+      
+      // Перевіряємо повноту даних
+      if (data && data.summary) {
+        const categories = Object.keys(data.summary);
+        logReportPreviewAction(`Знайдено категорій: ${categories.length} (${categories.join(', ')})`, 'info');
+        
+        if (categories.length === 0) {
+          throw new Error('Немає даних для звіту - додайте елементи до моделі');
+        }
+      } else {
+        throw new Error('Дані не містять summary - помилка збирання даних');
+      }
       
       // Продовжуємо генерацію звіту
       if (includePreviewInReport) {
