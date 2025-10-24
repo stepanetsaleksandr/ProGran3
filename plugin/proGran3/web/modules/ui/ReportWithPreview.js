@@ -157,6 +157,36 @@
     }
   }
   
+  // Автоматичне збирання даних з моделі
+  async function collectModelData() {
+    logReportPreviewAction('Початок збирання даних з моделі', 'info');
+    
+    try {
+      // Перевіряємо доступність SketchUp API
+      if (!window.sketchup || !window.sketchup.get_detailed_summary) {
+        throw new Error('SketchUp API для збирання даних не доступний');
+      }
+      
+      logReportPreviewAction('Викликаємо window.sketchup.get_detailed_summary()', 'info');
+      
+      // Викликаємо Ruby функцію для збирання даних
+      const result = window.sketchup.get_detailed_summary();
+      
+      logReportPreviewAction(`Результат збирання даних: ${result}`, 'info');
+      
+      if (result === 1) {
+        logReportPreviewAction('Дані успішно зібрані з моделі', 'success');
+        // Дані прийдуть через callback updateDetailedSummary
+      } else {
+        throw new Error('Помилка збирання даних з моделі');
+      }
+      
+    } catch (error) {
+      logReportPreviewAction(`Помилка збирання даних: ${error.message}`, 'error');
+      throw error;
+    }
+  }
+  
   // Головна функція генерації звіту з превью
   async function generateReportWithPreview() {
     logReportPreviewAction('Початок генерації звіту з превью', 'info');
@@ -164,6 +194,10 @@
     try {
       // Показуємо індикатор завантаження
       showLoadingIndicator(true);
+      
+      // СНАЧАЛА автоматично збираємо дані з моделі
+      logReportPreviewAction('Автоматичне збирання даних з моделі...', 'info');
+      await collectModelData();
       
       if (includePreviewInReport) {
         // Генеруємо превью та звіт
@@ -253,7 +287,7 @@
             <line x1="16" y1="17" x2="8" y2="17"></line>
             <polyline points="10 9 9 9 8 9"></polyline>
           </svg>
-          <span>${includePreviewInReport ? 'Генерувати звіт з превью' : 'Генерувати звіт'}</span>
+          <span>Генерувати звіт</span>
         `;
       }
     }
@@ -326,12 +360,35 @@
     }
   }
   
+  // Обробка завершення збирання даних
+  async function onDataCollected(data) {
+    logReportPreviewAction('Дані зібрані з моделі, продовжуємо генерацію звіту', 'info');
+    
+    try {
+      // Зберігаємо зібрані дані
+      window.collectedModelData = data;
+      
+      // Продовжуємо генерацію звіту
+      if (includePreviewInReport) {
+        await generatePreviewAndReport();
+      } else {
+        await generateReportOnly();
+      }
+      
+    } catch (error) {
+      logReportPreviewAction(`Помилка після збирання даних: ${error.message}`, 'error');
+      showLoadingIndicator(false);
+      alert('Помилка при генерації звіту: ' + error.message);
+    }
+  }
+  
   // Експорт публічного API
   global.ProGran3.UI.ReportWithPreview = {
     initializeReportWithPreview: initializeReportWithPreview,
     generateReportWithPreview: generateReportWithPreview,
     handlePreviewData: handlePreviewData,
-    updateButtonText: updateButtonText
+    updateButtonText: updateButtonText,
+    onDataCollected: onDataCollected
   };
   
   // Зворотна сумісність - функції доступні глобально

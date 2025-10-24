@@ -4951,6 +4951,12 @@ function updateDetailedSummary(data) {
     console.log('🔍 [ALERT FALLBACK] updateDetailedSummary викликано!');
   }
   
+  // Сповіщаємо ReportWithPreview про завершення збирання даних
+  if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.ReportWithPreview) {
+    console.log('📊 [GLOBAL] Сповіщаємо ReportWithPreview про завершення збирання даних');
+    window.ProGran3.UI.ReportWithPreview.onDataCollected(data);
+  }
+  
   try {
     // Перевіряємо чи доступний модуль SummaryTable
     console.log('🔍 [GLOBAL] Перевірка доступності модулів:');
