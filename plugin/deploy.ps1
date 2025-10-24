@@ -74,13 +74,8 @@ try {
         Write-Host "File proGran3_loader.rb not found!" -ForegroundColor Yellow
     }
     
-    # Копіюємо скрипт перезавантаження (опціонально - тільки для розробки)
-    if (Test-Path $sourceReloadFile) {
-        Copy-Item $sourceReloadFile $targetReloadFile -Force
-        Write-Host "Copied: force_reload_plugin.rb (development tool)" -ForegroundColor Green
-    } else {
-        Write-Host "File force_reload_plugin.rb not found!" -ForegroundColor Yellow
-    }
+    # force_reload_plugin.rb видалено - не потрібен користувачам
+    # Це інструмент тільки для розробки
     
     # Копіюємо папку proGran3
     if (Test-Path $sourceFolder) {
