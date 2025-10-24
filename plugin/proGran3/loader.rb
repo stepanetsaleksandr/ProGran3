@@ -86,8 +86,7 @@ module ProGran3
     else
       stand = last_base_stand_instance
       if stand
-        ProGran3::Logger.info("✅ Знайдено підставку для розміщення стел", "Loader")
-        ProGran3::Logger.info("📐 Підставка bounds: #{stand.bounds}", "Loader")
+        # Знайдено підставку - без логування
         stand
       else
         ProGran3::Logger.error("❌ Не знайдено поверхню для розміщення стел!", "Loader")
@@ -98,7 +97,7 @@ module ProGran3
 
   # Спеціальна функція для додавання декору на всі стовпчики огорожі
   def add_fence_decor_to_all_posts(filename)
-    ProGran3::Logger.info("Додавання декору на всі стовпчики огорожі: #{filename}", "Loader")
+    # Додавання декору на всі стовпчики огорожі - без логування
     
     model = Sketchup.active_model
     entities = model.active_entities
@@ -117,7 +116,7 @@ module ProGran3
       return false
     end
     
-    ProGran3::Logger.info("Знайдено #{fence_posts.length} стовпчиків огорожі", "Loader")
+    # Знайдено стовпчиків огорожі - без логування
     
     # Додаємо декор на кожен стовпчик
     fence_posts.each_with_index do |post, index|
@@ -129,10 +128,10 @@ module ProGran3
       decor_trans = Geom::Transformation.new([decor_x, decor_y, decor_z])
       decor_instance = entities.add_instance(comp_def, decor_trans)
       
-      ProGran3::Logger.info("Декор додано на стовпчик #{index + 1}: x=#{decor_x}, y=#{decor_y}, z=#{decor_z}", "Loader")
+      # Декор додано на стовпчик - без логування
     end
     
-    ProGran3::Logger.info("Декор успішно додано на #{fence_posts.length} стовпчиків", "Loader")
+    # Декор успішно додано - без логування
     true
   end
 

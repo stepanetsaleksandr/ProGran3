@@ -22,7 +22,7 @@ module ProGran3
         return
       end
       
-      Logger.info("Знайдено #{skp_files.length} .skp файлів", "GravestonesPreviewCreator")
+      # Знайдено .skp файлів - без логування
       
       # Створюємо превью для кожного файла
       skp_files.each do |skp_file|
@@ -34,12 +34,12 @@ module ProGran3
     
     def create_preview_for_file(skp_file)
       filename = File.basename(skp_file)
-      Logger.info("Обробка файла: #{filename}", "GravestonesPreviewCreator")
+      # Обробка файла - без логування
       
       # Перевіряємо, чи вже є .png файл
       png_file = skp_file.sub('.skp', '.png')
       if File.exist?(png_file)
-        Logger.info("Превью вже існує: #{File.basename(png_file)}", "GravestonesPreviewCreator")
+        # Превью вже існує - без логування
         return
       end
       
@@ -47,18 +47,18 @@ module ProGran3
       component_path = "gravestones/#{filename}"
       
       # Створюємо превью
-      Logger.info("Створення превью для: #{component_path}", "GravestonesPreviewCreator")
+      # Створення превью - без логування
       
       begin
         preview_path = SkpPreviewExtractor.extract_preview(component_path, 256)
         
         if preview_path && File.exist?(preview_path)
-          Logger.success("Превью створено: #{File.basename(preview_path)}", "GravestonesPreviewCreator")
+          # Превью створено - без логування
           
           # Тестуємо base64 конвертацію
           base64_data = SkpPreviewExtractor.get_preview_base64(component_path, 256)
           if base64_data
-            Logger.success("Base64 конвертація успішна (#{base64_data.length} символів)", "GravestonesPreviewCreator")
+            # Base64 конвертація успішна - без логування
           else
             Logger.warn("Помилка base64 конвертації", "GravestonesPreviewCreator")
           end
@@ -79,7 +79,7 @@ module ProGran3
       skp_files = Dir.glob(File.join(gravestones_path, '*.skp'))
       png_files = Dir.glob(File.join(gravestones_path, '*.png'))
       
-      Logger.info("Знайдено #{skp_files.length} .skp файлів", "GravestonesPreviewCreator")
+      # Знайдено .skp файлів - без логування
       Logger.info("Знайдено #{png_files.length} .png файлів", "GravestonesPreviewCreator")
       
       # Перевіряємо кожен .skp файл

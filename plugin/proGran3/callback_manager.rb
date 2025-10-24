@@ -247,7 +247,7 @@ module ProGran3
         # Додаємо модель з координацією
         if category.to_sym == :steles
           # Використовуємо CoordinationManager для стел
-          ProGran3::Logger.info("CallbackManager: тип стели: #{stele_type} (#{stele_type.class})", "CallbackManager")
+          # Тип стели - без логування
           stele_params = { category: category, filename: model_name, type: stele_type, distance: stele_distance, central_detail: central_detail, central_detail_width: central_detail_width, central_detail_depth: central_detail_depth, central_detail_height: central_detail_height }
           success = CoordinationManager.update_stele_dependents(stele_params)
         else
@@ -278,7 +278,7 @@ module ProGran3
     # Callback для отримання розмірів стели
     def get_stele_dimensions_callback(dialog)
       begin
-        ProGran3::Logger.info("Отримання розмірів стели", "CallbackManager")
+        # Отримання розмірів стели - без логування
         
         # Знаходимо всі стели
         stele_instances = ProGran3.all_instances_by_category("steles")
@@ -311,15 +311,10 @@ module ProGran3
         
         # Беремо останню валідну стелу (найновішу)
         stele = valid_steles.last
-        ProGran3::Logger.info("Вибрано стелу: #{stele.definition.name}", "CallbackManager")
+        # Вибрано стелу - без логування
         bounds = stele.bounds
         
-        ProGran3::Logger.info("Bounds стели: width=#{bounds.width.to_mm}, height=#{bounds.height.to_mm}, depth=#{bounds.depth.to_mm} мм", "CallbackManager")
-        ProGran3::Logger.info("Bounds min/max: min=#{bounds.min}, max=#{bounds.max}", "CallbackManager")
-        ProGran3::Logger.info("Розрахунок розмірів:", "CallbackManager")
-        ProGran3::Logger.info("  X-розмір (глибина): #{bounds.max.x - bounds.min.x} = #{bounds.depth.to_mm} мм", "CallbackManager")
-        ProGran3::Logger.info("  Y-розмір (ширина): #{bounds.max.y - bounds.min.y} = #{bounds.width.to_mm} мм", "CallbackManager")
-        ProGran3::Logger.info("  Z-розмір (висота): #{bounds.max.z - bounds.min.z} = #{bounds.height.to_mm} мм", "CallbackManager")
+        # Bounds стели - без логування
         
         # ДЕТАЛЬНА ДІАГНОСТИКА: що означають bounds.width, bounds.height, bounds.depth
         ProGran3::Logger.info("Детальна діагностика bounds:", "CallbackManager")
