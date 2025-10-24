@@ -4932,3 +4932,44 @@ async function loadDynamicModules() {
     console.error('❌ Помилка завантаження динамічних модулів:', error);
   }
 }
+
+// ============================================================================
+// 🔄 CALLBACK ФУНКЦІЇ ДЛЯ RUBY
+// ============================================================================
+
+// Глобальна функція для оновлення детальної специфікації (викликається з Ruby)
+function updateDetailedSummary(data) {
+  console.log('📊 [GLOBAL] updateDetailedSummary викликано з Ruby:', data);
+  
+  try {
+    // Перевіряємо чи доступний модуль SummaryTable
+    if (window.ProGran3 && window.ProGran3.UI && window.ProGran3.UI.SummaryTable) {
+      console.log('✅ Використовуємо модуль SummaryTable');
+      window.ProGran3.UI.SummaryTable.updateDetailedSummary(data);
+    } else {
+      console.warn('⚠️ Модуль SummaryTable не доступний, використовуємо fallback');
+      
+      // Fallback - базове оновлення
+      if (data && data.summary) {
+        const summary = data.summary;
+        
+        // Оновлюємо Foundation
+        if (summary.foundation && summary.foundation.length > 0) {
+          const foundation = summary.foundation[0];
+          const foundationEl = document.getElementById('summary-foundation');
+          if (foundationEl) {
+            const text = `${foundation.depth} × ${foundation.width} × ${foundation.height} см`;
+            foundationEl.textContent = text;
+            console.log('✅ Foundation оновлено (fallback):', text);
+          }
+        }
+        
+        // Оновлюємо інші елементи...
+        console.log('📊 Fallback оновлення завершено');
+      }
+    }
+    
+  } catch (error) {
+    console.error('❌ Помилка в updateDetailedSummary:', error);
+  }
+}
