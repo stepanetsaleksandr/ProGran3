@@ -9,25 +9,17 @@ module ProGran3
     module Core
       class ConfigManager
       
-      # Отримати HMAC secret (обфусковано)
+      # Отримати HMAC secret (v3.2: динамічне завантаження з fallback)
       # @return [String] HMAC secret key
       def self.get_hmac_secret
-        # Layer 1: Базові частини (розкидані по коду)
-        part_a = compute_segment_alpha
-        part_b = compute_segment_beta  
-        part_c = compute_segment_gamma
-        part_d = compute_segment_delta
+        # v3.2: Спроба завантажити з сервера
+        server_secret = fetch_secret_from_server
+        if server_secret && !server_secret.empty?
+          return server_secret
+        end
         
-        # Layer 2: XOR з hardware fingerprint
-        fp = ProGran3::System::Utils::DeviceIdentifier.generate[:fingerprint]
-        seed = fp[0..31]
-        
-        # Layer 3: Combine та hash
-        raw_secret = "#{part_a}-#{part_b}-#{part_c}-#{part_d}"
-        obfuscated = xor_encode(raw_secret, seed)
-        
-        # Layer 4: Final derivation
-        derive_final_secret(obfuscated, fp)
+        # Fallback на існуючу обфускацію (зворотна сумісність)
+        get_obfuscated_secret
       end
       
       private
@@ -102,11 +94,39 @@ module ProGran3
         'ProGran3-HMAC-Global-Secret-2025-v3.1-DO-NOT-SHARE-9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d'
       end
       
-      # Альтернативний метод: динамічне завантаження з сервера
-      # (можна використати замість обфускації)
+      # v3.2: Динамічне завантаження secret з сервера
       def self.fetch_secret_from_server
-        # TODO: Реалізувати якщо потрібно
-        # GET /api/client/get-hmac-secret з fingerprint verification
+        require_relative '../network/network_client'
+        
+        begin
+          response = ProGran3::System::Network::NetworkClient.get_secret
+          return response[:secret] if response[:success]
+        rescue => e
+          # Логуємо помилку, але не падаємо
+          puts "⚠️ Failed to fetch server secret: #{e.message}" if $DEBUG
+        end
+        
+        nil
+      end
+      
+      # v3.2: Fallback на існуючу обфускацію (зворотна сумісність)
+      def self.get_obfuscated_secret
+        # Layer 1: Базові частини (розкидані по коду)
+        part_a = compute_segment_alpha
+        part_b = compute_segment_beta  
+        part_c = compute_segment_gamma
+        part_d = compute_segment_delta
+        
+        # Layer 2: XOR з hardware fingerprint
+        fp = ProGran3::System::Utils::DeviceIdentifier.generate[:fingerprint]
+        seed = fp[0..31]
+        
+        # Layer 3: Combine та hash
+        raw_secret = "#{part_a}-#{part_b}-#{part_c}-#{part_d}"
+        obfuscated = xor_encode(raw_secret, seed)
+        
+        # Layer 4: Final derivation
+        derive_final_secret(obfuscated, fp)
       end
     end
   end

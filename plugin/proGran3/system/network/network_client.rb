@@ -123,6 +123,51 @@ module ProGran3
         handle_exception('validate', e)
       end
       
+      # v3.2: Отримати HMAC secret з сервера
+      # @return [Hash] { success: Boolean, secret: String, error: String }
+      def self.get_secret
+        endpoint = '/api/client/secret'
+        
+        # Створюємо запит з HMAC підписом
+        timestamp = Time.now.to_i
+        body = '{}' # Порожній body для GET запиту
+        
+        # Створюємо підпис з fallback secret
+        fallback_secret = ProGran3::System::Core::ConfigManager.original_secret
+        signature = create_hmac_signature_with_secret(body, timestamp, fallback_secret)
+        
+        uri = URI.parse("#{API_BASE_URL}#{endpoint}")
+        
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = (uri.scheme == 'https')
+        http.open_timeout = REQUEST_TIMEOUT
+        http.read_timeout = REQUEST_TIMEOUT
+        
+        request = Net::HTTP::Get.new(uri.request_uri)
+        request['Content-Type'] = 'application/json'
+        request['User-Agent'] = 'ProGran3-Plugin/1.0'
+        request['X-Signature'] = signature
+        request['X-Timestamp'] = timestamp.to_s
+        request['X-Fingerprint'] = ProGran3::System::Utils::DeviceIdentifier.generate[:fingerprint]
+        
+        response = http.request(request)
+        
+        case response.code.to_i
+        when 200
+          data = JSON.parse(response.body, symbolize_names: true)
+          if data[:success]
+            { success: true, secret: data[:data][:secret] }
+          else
+            { success: false, error: data[:error] }
+          end
+        else
+          { success: false, error: "HTTP #{response.code}" }
+        end
+        
+      rescue => e
+        { success: false, error: e.message }
+      end
+      
       # Відправляє heartbeat на сервер
       # @param license_key [String] Ключ ліцензії
       # @param fingerprint [String] Hardware fingerprint
@@ -414,6 +459,19 @@ module ProGran3
           error: "Network error after #{max_retries} attempts: #{last_exception&.message}",
           offline: true
         }
+      end
+      
+      # v3.2: Створює HMAC підпис з конкретним secret
+      # @param body [String] JSON тіло запиту
+      # @param timestamp [Integer] Unix timestamp
+      # @param secret [String] HMAC secret
+      # @return [String] HMAC підпис (hex)
+      def self.create_hmac_signature_with_secret(body, timestamp, secret)
+        message = "#{body}#{timestamp}"
+        OpenSSL::HMAC.hexdigest('SHA256', secret, message)
+      rescue => e
+        puts "⚠️ Помилка створення HMAC підпису: #{e.message}"
+        nil
       end
       
       # Обробка винятків
