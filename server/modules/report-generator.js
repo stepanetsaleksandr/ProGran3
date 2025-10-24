@@ -165,21 +165,15 @@
       // Сортуємо розміри від найбільшого до найменшого
       const dimensions = [item.depth, item.width, item.height].map(Number).sort((a, b) => b - a);
       
-      // Форматуємо як таблицю з окремими колонками
-      const dimensionsHTML = `<table class="dimensions-table">
-        <tr>
-          <td class="dimension-cell">${dimensions[0]}</td>
-          <td class="dimension-cell">${dimensions[1]}</td>
-          <td class="dimension-cell">${dimensions[2]}</td>
-        </tr>
-      </table>`;
+      // Форматуємо з розділювачами та вирівнюванням
+      const dimensionsHTML = `${dimensions[0].toString().padStart(6)} × ${dimensions[1].toString().padStart(6)} × ${dimensions[2].toString().padStart(6)}`;
       
       const area = item.area_m2 ? (item.area_m2 * item.count).toFixed(2) : '—';
       const volume = item.volume_m3 ? (item.volume_m3 * item.count).toFixed(3) : '—';
       
       html += `
         <tr>
-          <td>${label}${index > 0 ? ' ' + (index + 1) : ''}</td>
+          <td>${label}</td>
           <td>${dimensionsHTML}</td>
           <td class="text-center">${item.count}</td>
           <td class="text-right">${area}</td>

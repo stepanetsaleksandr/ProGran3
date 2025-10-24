@@ -21,10 +21,10 @@
     const dimensions = [depth, width, height].map(Number).sort((a, b) => b - a); // Від найбільшого до найменшого
     console.log(`📐 [formatDimensions] Відсортовані: [${dimensions.join(', ')}]`);
     
-    // Простий текст без HTML таблиці
-    const result = `${dimensions[0]}  ${dimensions[1]}  ${dimensions[2]}`;
+    // Форматуємо з розділювачами та вирівнюванням
+    const result = `${dimensions[0].toString().padStart(6)} × ${dimensions[1].toString().padStart(6)} × ${dimensions[2].toString().padStart(6)}`;
     
-    console.log(`📐 [formatDimensions] Згенерований простий текст: ${result}`);
+    console.log(`📐 [formatDimensions] Згенерований текст з розділювачами: ${result}`);
     return result;
   }
   
@@ -1520,7 +1520,7 @@
       
       html += `
         <tr>
-          <td>${group.name}</td>
+          <td>${label}</td>
           <td>${formattedDims}</td>
           <td class="text-center">${group.count}</td>
           <td class="text-center">${group.totalArea.toFixed(2)}</td>
