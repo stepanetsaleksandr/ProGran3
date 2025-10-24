@@ -898,7 +898,7 @@ module ProGran3
         
         if data_url
           ProGran3::Logger.success("✅ Превью успішно згенеровано", "UI")
-          ProGran3::Logger.info("📏 Довжина base64 даних: #{data_url.length}", "UI")
+          ProGran3::Logger.info("📏 Розмір превью: #{data_url.length} символів", "UI")
           
           result = {
             success: true,
