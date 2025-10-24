@@ -1682,7 +1682,7 @@ module ProGran3
         end
         
         # Викликаємо відповідний JS callback
-        if dialog && dialog.respond_to?(:execute_script)
+        if dialog
           if for_report
             # v3.2: showReportModal тепер async
             dialog.execute_script("(async () => { await window.ProGran3.UI.SummaryTable.showReportModal(#{json_data}); })();")
