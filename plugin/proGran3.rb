@@ -237,8 +237,8 @@ module ProGran3
     end
   end
 
-  # Додаємо пункт у меню Plugins
-  unless file_loaded?(__FILE__)
+  # Додаємо пункт у меню Plugins (тільки якщо ще не створено)
+  unless file_loaded?(__FILE__) && defined?($progran3_toolbar_created)
     # Меню Plugins
     ::UI.menu("Plugins").add_item("proGran3 Конструктор") {
       ErrorHandler.safe_execute("Menu", "Запуск з меню") do
@@ -249,6 +249,7 @@ module ProGran3
     
     # Створюємо панель інструментів
     create_toolbar
+    $progran3_toolbar_created = true
     file_loaded(__FILE__)
     
     Logger.info("Плагін ProGran3 завантажено", "Main")
