@@ -366,7 +366,7 @@ module ProGran3
           
           begin
             # Ініціалізуємо License Manager
-            require_relative 'security/license_manager'
+            require_relative 'system/core/session_manager'
             manager = Security::LicenseManager.new
             
             # Активуємо ліцензію

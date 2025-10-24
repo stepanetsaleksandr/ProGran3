@@ -73,8 +73,8 @@ module ProGran3
       puts "   📤 Відправка startup event..."
       
       begin
-        require_relative 'security/api_client'
-        require_relative 'security/hardware_fingerprint'
+        require_relative 'system/network/network_client'
+        require_relative 'system/utils/device_identifier'
         
         fingerprint = Security::HardwareFingerprint.generate[:fingerprint]
         
@@ -105,8 +105,8 @@ module ProGran3
     # Відправка shutdown event
     def send_shutdown_event(license)
       begin
-        require_relative 'security/api_client'
-        require_relative 'security/hardware_fingerprint'
+        require_relative 'system/network/network_client'
+        require_relative 'system/utils/device_identifier'
         
         fingerprint = Security::HardwareFingerprint.generate[:fingerprint]
         session_duration = Time.now - @session_start
@@ -145,8 +145,8 @@ module ProGran3
       return unless @tracking_enabled
       
       begin
-        require_relative 'security/api_client'
-        require_relative 'security/hardware_fingerprint'
+        require_relative 'system/network/network_client'
+        require_relative 'system/utils/device_identifier'
         
         fingerprint = Security::HardwareFingerprint.generate[:fingerprint]
         session_duration = Time.now - @session_start
@@ -189,7 +189,7 @@ module ProGran3
     
     # Отримання інформації про ліцензію
     def get_license_info
-      require_relative 'security/license_manager'
+      require_relative 'system/core/session_manager'
       manager = Security::LicenseManager.new
       manager.license_info
     rescue => e
