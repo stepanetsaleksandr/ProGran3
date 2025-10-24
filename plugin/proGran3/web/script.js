@@ -4943,6 +4943,14 @@ function updateDetailedSummary(data) {
   console.log('📊 [GLOBAL] Тип даних:', typeof data);
   console.log('📊 [GLOBAL] Структура даних:', JSON.stringify(data, null, 2));
   
+  // Діагностика через alert (для SketchUp WebDialog)
+  try {
+    alert('🔍 updateDetailedSummary викликано!\nТип: ' + typeof data + '\nДані: ' + JSON.stringify(data).substring(0, 200) + '...');
+  } catch (e) {
+    // Якщо alert не працює, виводимо в консоль
+    console.log('🔍 [ALERT FALLBACK] updateDetailedSummary викликано!');
+  }
+  
   try {
     // Перевіряємо чи доступний модуль SummaryTable
     console.log('🔍 [GLOBAL] Перевірка доступності модулів:');

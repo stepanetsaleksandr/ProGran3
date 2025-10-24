@@ -1694,9 +1694,13 @@ module ProGran3
         if dialog
           if for_report
             # v3.2: showReportModal тепер async
+            ProGran3::Logger.info("📤 [DIALOG] Викликаємо showReportModal (async)", "Summary")
             dialog.execute_script("(async () => { await window.ProGran3.UI.SummaryTable.showReportModal(#{json_data}); })();")
           else
+            ProGran3::Logger.info("📤 [DIALOG] Викликаємо updateDetailedSummary", "Summary")
+            ProGran3::Logger.info("📤 [DIALOG] JSON довжина: #{json_data.length} символів", "Summary")
             dialog.execute_script("updateDetailedSummary(#{json_data});")
+            ProGran3::Logger.info("📤 [DIALOG] execute_script виконано", "Summary")
           end
         else
           # Fallback - виводимо дані в консоль для діагностики
