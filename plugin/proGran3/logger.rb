@@ -17,13 +17,13 @@ module ProGran3
     # Поточний рівень логування
     @current_level = LEVELS[Constants::DEFAULT_LOG_LEVEL]
     
-    # Кольори для різних рівнів
+    # Кольори для різних рівнів (відключено для чистоти логів)
     COLORS = {
-      debug: "\033[36m", # Cyan
-      info: "\033[32m",  # Green
-      warn: "\033[33m",  # Yellow
-      error: "\033[31m", # Red
-      fatal: "\033[35m"  # Magenta
+      debug: "", # Без кольору
+      info: "",  # Без кольору
+      warn: "",  # Без кольору
+      error: "", # Без кольору
+      fatal: ""  # Без кольору
     }
     
     # Іконки для різних рівнів
@@ -56,8 +56,8 @@ module ProGran3
       
       formatted_message = format_message(timestamp, icon, message, context)
       
-      # Виводимо в консоль SketchUp
-      puts "#{color}#{formatted_message}\033[0m"
+      # Виводимо в консоль SketchUp (без кольорів)
+      puts formatted_message
       
       # Додатково для помилок показуємо в UI
       if [:error, :fatal].include?(level_sym)
