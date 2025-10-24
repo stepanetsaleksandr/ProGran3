@@ -1281,6 +1281,9 @@
     // Embedded версія активована як fallback
     console.log('📄 Використовуємо embedded версію як fallback');
     
+    const summaryData = data.summary || data;
+    const metadata = data.metadata || {};
+    
     const currentDate = new Date().toLocaleDateString('uk-UA', {
       year: 'numeric',
       month: 'long',
