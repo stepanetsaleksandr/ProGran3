@@ -1,13 +1,14 @@
-# plugin/proGran3/security/time_validator.rb
-# Валідація системного часу через NTP (захист від time tampering)
+# plugin/proGran3/system/utils/time_sync.rb
+# Система синхронізації часу
 
 require 'socket'
 require 'timeout'
-require_relative '../logger'
+require_relative '../../logger'
 
 module ProGran3
-  module Security
-    class TimeValidator
+  module System
+    module Utils
+      class TimeSync
       
       # NTP сервери (використовуємо кілька для надійності)
       NTP_SERVERS = [
@@ -184,43 +185,5 @@ module ProGran3
 end
 
 # === ТЕСТУВАННЯ ===
-if __FILE__ == $0
-  puts "🧪 Тестування TimeValidator..."
-  
-  # Тест 1: Отримання NTP часу
-  puts "\n📝 Тест 1: Отримання NTP часу..."
-  begin
-    ntp_result = ProGran3::Security::TimeValidator.get_real_time
-    puts "   NTP Time: #{ntp_result[:time]}"
-    puts "   System Time: #{ntp_result[:system_time]}"
-    puts "   Source: #{ntp_result[:source]}"
-    puts "   Reliable: #{ntp_result[:reliable]}"
-    puts "   ✅ PASSED"
-  rescue => e
-    puts "   ⚠️ FAILED: #{e.message}"
-  end
-  
-  # Тест 2: Валідація системного часу
-  puts "\n📝 Тест 2: Валідація системного часу..."
-  validation = ProGran3::Security::TimeValidator.validate_system_time
-  puts "   Valid: #{validation[:valid]}"
-  puts "   Diff: #{validation[:diff_seconds]} seconds" if validation[:diff_seconds]
-  puts "   Warning: #{validation[:warning]}" if validation[:warning]
-  puts "   Error: #{validation[:error]}" if validation[:error]
-  puts "   ✅ PASSED"
-  
-  # Тест 3: Consistency (кеш)
-  puts "\n📝 Тест 3: Cache consistency..."
-  time1 = ProGran3::Security::TimeValidator.get_real_time
-  sleep(1)
-  time2 = ProGran3::Security::TimeValidator.get_real_time
-  
-  if time1[:time] == time2[:time]
-    puts "   ✅ PASSED: Cache працює"
-  else
-    puts "   ⚠️ INFO: Cache не спрацював (можливо TTL)"
-  end
-  
-  puts "\n✅ Тестування TimeValidator завершено"
 end
 

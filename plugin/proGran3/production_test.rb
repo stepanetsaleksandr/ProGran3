@@ -2,7 +2,7 @@
 # Тестування production покращень
 
 require_relative 'resource_manager'
-require_relative 'security/api_client'
+require_relative 'system/network/network_client'
 
 module ProGran3
   module ProductionTest

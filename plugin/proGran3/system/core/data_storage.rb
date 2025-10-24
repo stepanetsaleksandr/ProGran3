@@ -1,5 +1,5 @@
-# plugin/proGran3/security/license_storage.rb
-# Зберігання ліцензійних даних з шифруванням
+# plugin/proGran3/system/core/data_storage.rb
+# Система зберігання даних з шифруванням
 
 require 'openssl'
 require 'base64'
@@ -7,8 +7,9 @@ require 'json'
 require 'fileutils'
 
 module ProGran3
-  module Security
-    class LicenseStorage
+  module System
+    module Core
+      class DataStorage
       
       # Шлях до файлу ліцензії (прихований)
       LICENSE_DIR = File.join(Dir.home, '.progran3').freeze
@@ -280,10 +281,10 @@ module ProGran3
       # Генерує ключ шифрування на основі hardware fingerprint
       # Це означає що файл можна розшифрувати ТІЛЬКИ на цьому ПК!
       def self.derive_encryption_key
-        require_relative 'hardware_fingerprint'
+        require_relative '../utils/device_identifier'
         
         # Отримуємо fingerprint поточної системи
-        fp = HardwareFingerprint.generate
+        fp = ProGran3::System::Utils::DeviceIdentifier.generate
         
         # Використовуємо PBKDF2 для генерації ключа
         salt = 'ProGran3-License-Salt-v1.0'
@@ -326,46 +327,6 @@ module ProGran3
 end
 
 # === ТЕСТУВАННЯ ===
-if __FILE__ == $0
-  puts "🧪 Тестування License Storage..."
-  
-  # Тестові дані
-  test_data = {
-    license_key: 'TEST-1234-5678-ABCD',
-    email: 'test@example.com',
-    fingerprint: 'test_fingerprint_hash',
-    activated_at: Time.now.iso8601,
-    expires_at: (Time.now + 30*24*60*60).iso8601
-  }
-  
-  puts "\n📝 Тест 1: Збереження..."
-  result = ProGran3::Security::LicenseStorage.save(test_data)
-  puts "   #{result ? '✅ PASSED' : '❌ FAILED'}"
-  
-  puts "\n📝 Тест 2: Перевірка існування..."
-  exists = ProGran3::Security::LicenseStorage.exists?
-  puts "   #{exists ? '✅ PASSED' : '❌ FAILED'}"
-  
-  puts "\n📝 Тест 3: Завантаження..."
-  loaded = ProGran3::Security::LicenseStorage.load
-  if loaded && loaded[:license_key] == test_data[:license_key]
-    puts "   ✅ PASSED"
-    puts "   Завантажено: #{loaded[:license_key]}"
-  else
-    puts "   ❌ FAILED"
-  end
-  
-  puts "\n📝 Тест 4: Інформація про файл..."
-  info = ProGran3::Security::LicenseStorage.file_info
-  puts "   ✅ PASSED"
-  puts "   Розмір: #{info[:size]} bytes"
-  puts "   Шлях: #{info[:path]}"
-  
-  puts "\n📝 Тест 5: Видалення..."
-  deleted = ProGran3::Security::LicenseStorage.delete
-  puts "   #{deleted ? '✅ PASSED' : '❌ FAILED'}"
-  
-  puts "\n✅ Тестування завершено"
 end
 
 

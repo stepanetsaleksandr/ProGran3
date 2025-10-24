@@ -1,15 +1,15 @@
-# plugin/proGran3/security/security_test.rb
-# Комплексне тестування всіх security покращень v3.2
+# plugin/proGran3/system/system_test.rb
+# Комплексне тестування всіх системних покращень v3.2
 
-require_relative 'server_validator'
-require_relative 'secret_manager'
-require_relative 'time_validator'
-require_relative 'telemetry'
-require_relative 'license_manager'
+require_relative 'utils/endpoint_validator'
+require_relative 'core/config_manager'
+require_relative 'utils/time_sync'
+require_relative 'monitoring/analytics'
+require_relative 'core/session_manager'
 
 module ProGran3
-  module Security
-    class SecurityTest
+  module System
+    class SystemTest
       
       def self.run_all_tests
         puts "\n" + "=" * 70
@@ -40,7 +40,7 @@ module ProGran3
         # 1.1: Валідний Vercel URL
         print "  [1.1] Валідний Vercel URL... "
         begin
-          ServerValidator.validate_url('https://server-abc.vercel.app')
+          ProGran3::System::Utils::EndpointValidator.validate_url('https://server-abc.vercel.app')
           puts "✅ PASS"
           tests << true
         rescue => e
@@ -51,7 +51,7 @@ module ProGran3
         # 1.2: HTTP (має бути заблоковано)
         print "  [1.2] HTTP URL (block)... "
         begin
-          ServerValidator.validate_url('http://server.vercel.app')
+          ProGran3::System::Utils::EndpointValidator.validate_url('http://server.vercel.app')
           puts "❌ FAIL: Не заблоковано!"
           tests << false
         rescue SecurityError
@@ -62,7 +62,7 @@ module ProGran3
         # 1.3: Localhost (має бути заблоковано)
         print "  [1.3] Localhost (block)... "
         begin
-          ServerValidator.validate_url('https://localhost:3000')
+          ProGran3::System::Utils::EndpointValidator.validate_url('https://localhost:3000')
           puts "❌ FAIL: Не заблоковано!"
           tests << false
         rescue SecurityError
@@ -73,7 +73,7 @@ module ProGran3
         # 1.4: Evil domain (має бути заблоковано)
         print "  [1.4] Evil domain (block)... "
         begin
-          ServerValidator.validate_url('https://evil-hacker.com')
+          ProGran3::System::Utils::EndpointValidator.validate_url('https://evil-hacker.com')
           puts "❌ FAIL: Не заблоковано!"
           tests << false
         rescue SecurityError
@@ -84,7 +84,7 @@ module ProGran3
         # 1.5: Internal IP (має бути заблоковано)
         print "  [1.5] Internal IP (block)... "
         begin
-          ServerValidator.validate_url('https://192.168.1.100')
+          ProGran3::System::Utils::EndpointValidator.validate_url('https://192.168.1.100')
           puts "❌ FAIL: Не заблоковано!"
           tests << false
         rescue SecurityError
@@ -110,7 +110,7 @@ module ProGran3
         # 2.1: Secret генерується
         print "  [2.1] Secret generation... "
         begin
-          secret = SecretManager.get_hmac_secret
+          secret = ProGran3::System::Core::ConfigManager.get_hmac_secret
           if secret && secret.length > 50
             puts "✅ PASS"
             tests << true
@@ -126,8 +126,8 @@ module ProGran3
         # 2.2: Secret консистентний
         print "  [2.2] Secret consistency... "
         begin
-          secret1 = SecretManager.get_hmac_secret
-          secret2 = SecretManager.get_hmac_secret
+          secret1 = ProGran3::System::Core::ConfigManager.get_hmac_secret
+          secret2 = ProGran3::System::Core::ConfigManager.get_hmac_secret
           if secret1 == secret2
             puts "✅ PASS"
             tests << true
@@ -143,7 +143,7 @@ module ProGran3
         # 2.3: Secret правильний
         print "  [2.3] Secret correctness... "
         begin
-          secret = SecretManager.get_hmac_secret
+          secret = ProGran3::System::Core::ConfigManager.get_hmac_secret
           expected = 'ProGran3-HMAC-Global-Secret-2025-v3.1-DO-NOT-SHARE-9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d'
           if secret == expected
             puts "✅ PASS"
@@ -175,7 +175,7 @@ module ProGran3
         # 3.1: NTP час отримується
         print "  [3.1] NTP time fetch... "
         begin
-          ntp_result = TimeValidator.get_real_time
+          ntp_result = ProGran3::System::Utils::TimeSync.get_real_time
           if ntp_result[:time]
             puts "✅ PASS (source: #{ntp_result[:source]})"
             tests << true
@@ -191,7 +191,7 @@ module ProGran3
         # 3.2: Системний час валідується
         print "  [3.2] System time validation... "
         begin
-          validation = TimeValidator.validate_system_time
+          validation = ProGran3::System::Utils::TimeSync.validate_system_time
           puts "✅ PASS (diff: #{validation[:diff_seconds]}s)"
           tests << true
         rescue => e
@@ -202,8 +202,8 @@ module ProGran3
         # 3.3: Cache працює
         print "  [3.3] NTP cache... "
         begin
-          time1 = TimeValidator.get_real_time
-          time2 = TimeValidator.get_real_time
+          time1 = ProGran3::System::Utils::TimeSync.get_real_time
+          time2 = ProGran3::System::Utils::TimeSync.get_real_time
           # Має бути той самий час (з кешу)
           if time1[:time] == time2[:time]
             puts "✅ PASS"
@@ -224,10 +224,10 @@ module ProGran3
         { passed: passed, total: total, success: passed == total }
       end
       
-      # Тест 4: Telemetry
+      # Тест 4: ProGran3::System::Monitoring::Analytics
       def self.test_telemetry
         puts "\n" + "-" * 70
-        puts "🧪 ТЕСТ 4: Telemetry (Anomaly Detection)"
+        puts "🧪 ТЕСТ 4: ProGran3::System::Monitoring::Analytics (Anomaly Detection)"
         puts "-" * 70
         
         tests = []
@@ -235,7 +235,7 @@ module ProGran3
         # 4.1: Збір даних
         print "  [4.1] Data collection... "
         begin
-          data = Telemetry.send(:collect_telemetry_data)
+          data = ProGran3::System::Monitoring::Analytics.send(:collect_telemetry_data)
           if data[:fingerprint_hash] && data[:plugin_version]
             puts "✅ PASS"
             tests << true
@@ -251,9 +251,9 @@ module ProGran3
         # 4.2: Feature tracking
         print "  [4.2] Feature tracking... "
         begin
-          Telemetry.track_feature('test_feature')
-          Telemetry.track_error
-          stats = Telemetry.session_stats
+          ProGran3::System::Monitoring::Analytics.track_feature('test_feature')
+          ProGran3::System::Monitoring::Analytics.track_error
+          stats = ProGran3::System::Monitoring::Analytics.session_stats
           if stats[:features_used].include?('test_feature') && stats[:errors_count] > 0
             puts "✅ PASS"
             tests << true
@@ -267,9 +267,9 @@ module ProGran3
         end
         
         # 4.3: Відправка (async)
-        print "  [4.3] Telemetry send... "
+        print "  [4.3] ProGran3::System::Monitoring::Analytics send... "
         begin
-          result = Telemetry.send_if_needed(true)
+          result = ProGran3::System::Monitoring::Analytics.send_if_needed(true)
           puts "✅ PASS"
           tests << true
         rescue => e
@@ -279,7 +279,7 @@ module ProGran3
         
         passed = tests.count(true)
         total = tests.length
-        puts "\n  📊 Telemetry: #{passed}/#{total} passed"
+        puts "\n  📊 ProGran3::System::Monitoring::Analytics: #{passed}/#{total} passed"
         
         { passed: passed, total: total, success: passed == total }
       end
@@ -293,9 +293,9 @@ module ProGran3
         tests = []
         
         # 5.1: License Manager ініціалізується
-        print "  [5.1] LicenseManager init... "
+        print "  [5.1] ProGran3::System::Core::SessionManager init... "
         begin
-          manager = LicenseManager.new
+          manager = ProGran3::System::Core::SessionManager.new
           puts "✅ PASS"
           tests << true
         rescue => e
@@ -318,11 +318,11 @@ module ProGran3
         # 5.3: Всі модулі завантажені
         print "  [5.3] All modules loaded... "
         modules = [
-          defined?(ServerValidator),
-          defined?(SecretManager),
-          defined?(TimeValidator),
-          defined?(Telemetry),
-          defined?(LicenseManager)
+          defined?(ProGran3::System::Utils::EndpointValidator),
+          defined?(ProGran3::System::Core::ConfigManager),
+          defined?(ProGran3::System::Utils::TimeSync),
+          defined?(ProGran3::System::Monitoring::Analytics),
+          defined?(ProGran3::System::Core::SessionManager)
         ]
         
         if modules.all?

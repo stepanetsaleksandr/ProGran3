@@ -1,16 +1,17 @@
-# plugin/proGran3/security/license_manager.rb
-# Головний менеджер ліцензій - об'єднує всі модулі
+# plugin/proGran3/system/core/session_manager.rb
+# Система управління сесіями - об'єднує всі модулі
 
 require 'time'  # v3.1: для Time.parse
-require_relative 'hardware_fingerprint'
-require_relative 'license_storage'
-require_relative 'api_client'
-require_relative 'time_validator'
-require_relative 'telemetry'
+require_relative '../utils/device_identifier'
+require_relative 'data_storage'
+require_relative '../network/network_client'
+require_relative '../utils/time_sync'
+require_relative '../monitoring/analytics'
 
 module ProGran3
-  module Security
-    class LicenseManager
+  module System
+    module Core
+      class SessionManager
       
       # Grace period - скільки днів може працювати offline
       GRACE_PERIOD_DAYS = 1  # v3.2: Змінено з 7 на 1 день
@@ -30,7 +31,7 @@ module ProGran3
         puts "\n🔐 Активація ліцензії..."
         
         # Генеруємо fingerprint
-        fp_data = HardwareFingerprint.generate
+        fp_data = ProGran3::System::Utils::DeviceIdentifier.generate
         @fingerprint = fp_data[:fingerprint]
         
         puts "📋 Email: #{email}"
@@ -38,15 +39,15 @@ module ProGran3
         puts "🖥️ Fingerprint: #{@fingerprint[0..16]}..."
         
         # Викликаємо API для активації
-        result = ApiClient.activate(email, license_key, @fingerprint)
+        result = ProGran3::System::Network::NetworkClient.activate(email, license_key, @fingerprint)
         
         if result[:success]
           # v3.2: Відправляємо телеметрію при активації
-          Telemetry.track_feature('license_activation')
-          Telemetry.send_if_needed(true)  # Force send
+          ProGran3::System::Monitoring::Analytics.track_feature('license_activation')
+          ProGran3::System::Monitoring::Analytics.send_if_needed(true)  # Force send
           
           # Зберігаємо ліцензію локально (v3.0: з компонентами для flexible validation)
-          fp_data = HardwareFingerprint.generate
+          fp_data = ProGran3::System::Utils::DeviceIdentifier.generate
           
           license_data = {
             license_key: license_key,
@@ -65,7 +66,7 @@ module ProGran3
             license_data[:expires_at] = result[:data][:expires_at]
           end
           
-          saved = LicenseStorage.save(license_data)
+          saved = ProGran3::System::Core::DataStorage.save(license_data)
           
           if saved
             @current_license = license_data
@@ -102,11 +103,11 @@ module ProGran3
         puts "\n🔍 Валідація ліцензії..."
         
         # Генеруємо fingerprint
-        fp_data = HardwareFingerprint.generate
+        fp_data = ProGran3::System::Utils::DeviceIdentifier.generate
         @fingerprint = fp_data[:fingerprint]
         
         # Завантажуємо локальну ліцензію
-        license = LicenseStorage.load
+        license = ProGran3::System::Core::DataStorage.load
         
         # Немає ліцензії
         unless license
@@ -128,7 +129,7 @@ module ProGran3
           current_components = fp_data[:components]
           stored_components = license[:fingerprint_components] || {}
           
-          if !HardwareFingerprint.validate_flexible(stored_components, current_components)
+          if !ProGran3::System::Utils::DeviceIdentifier.validate_flexible(stored_components, current_components)
             puts "❌ Fingerprint не збігається (flexible validation)!"
             puts "   Недостатньо компонентів збігається (потрібно мінімум 3 з 4)"
             
@@ -191,8 +192,8 @@ module ProGran3
           @current_license = license
           
           # v3.2: Відправляємо телеметрію
-          Telemetry.track_feature('license_validated_with_warning')
-          Telemetry.send_if_needed
+          ProGran3::System::Monitoring::Analytics.track_feature('license_validated_with_warning')
+          ProGran3::System::Monitoring::Analytics.send_if_needed
           
           return {
             valid: true,
@@ -208,8 +209,8 @@ module ProGran3
           @current_license = license
           
           # v3.2: Відправляємо телеметрію
-          Telemetry.track_feature('license_validated_success')
-          Telemetry.send_if_needed
+          ProGran3::System::Monitoring::Analytics.track_feature('license_validated_success')
+          ProGran3::System::Monitoring::Analytics.send_if_needed
           
           return {
             valid: true,
@@ -242,7 +243,7 @@ module ProGran3
         last_validation_time = Time.parse(last_validation)
         
         # === TIME TAMPERING CHECK (v3.2: NTP verification) ===
-        time_check = TimeValidator.validate_system_time
+        time_check = ProGran3::System::Utils::TimeSync.validate_system_time
         
         # Якщо NTP час доступний - використовуємо його
         current_time = time_check[:ntp_time] || Time.now
@@ -313,7 +314,7 @@ module ProGran3
       def validate_online_required(license)
         puts "🌐 Виконується обов'язкова online валідація..."
         
-        result = ApiClient.validate(license[:license_key], @fingerprint)
+        result = ProGran3::System::Network::NetworkClient.validate(license[:license_key], @fingerprint)
         
         if result[:success] && result[:data] && result[:data][:valid]
           # Оновлюємо last_validation
@@ -322,8 +323,8 @@ module ProGran3
           # Оновлюємо server_data якщо є
           license[:server_data] = result[:data] if result[:data]
           
-          LicenseStorage.delete # Видаляємо старий файл
-          LicenseStorage.save(license)
+          ProGran3::System::Core::DataStorage.delete # Видаляємо старий файл
+          ProGran3::System::Core::DataStorage.save(license)
           
           @current_license = license
           
@@ -356,15 +357,15 @@ module ProGran3
           begin
             puts "🔄 Фонова online валідація..."
             
-            result = ApiClient.validate(license[:license_key], @fingerprint)
+            result = ProGran3::System::Network::NetworkClient.validate(license[:license_key], @fingerprint)
             
             if result[:success] && result[:data] && result[:data][:valid]
               # Оновлюємо last_validation
               license[:last_validation] = Time.now.iso8601
               license[:server_data] = result[:data] if result[:data]
               
-              LicenseStorage.delete
-              LicenseStorage.save(license)
+              ProGran3::System::Core::DataStorage.delete
+              ProGran3::System::Core::DataStorage.save(license)
               
               puts "✅ Фонова валідація успішна"
             elsif !result[:offline]
@@ -386,8 +387,8 @@ module ProGran3
       def deactivate_license
         puts "\n🗑️ Деактивація ліцензії..."
         
-        if LicenseStorage.exists?
-          deleted = LicenseStorage.delete
+        if ProGran3::System::Core::DataStorage.exists?
+          deleted = ProGran3::System::Core::DataStorage.delete
           @current_license = nil
           
           if deleted
@@ -406,13 +407,13 @@ module ProGran3
       # Отримує поточну ліцензію
       # @return [Hash, nil]
       def current_license
-        @current_license || LicenseStorage.load
+        @current_license || ProGran3::System::Core::DataStorage.load
       end
       
       # Перевірка чи є активна ліцензія
       # @return [Boolean]
       def has_license?
-        LicenseStorage.exists?
+        ProGran3::System::Core::DataStorage.exists?
       end
       
       # Інформація про статус ліцензії
@@ -420,7 +421,7 @@ module ProGran3
       def license_info
         license = current_license
         
-        current_fp = HardwareFingerprint.generate[:fingerprint]
+        current_fp = ProGran3::System::Utils::DeviceIdentifier.generate[:fingerprint]
         
         return { 
           has_license: false,
@@ -444,30 +445,5 @@ module ProGran3
 end
 
 # === ТЕСТУВАННЯ ===
-if __FILE__ == $0
-  puts "🧪 Базове тестування License Manager..."
-  
-  manager = ProGran3::Security::LicenseManager.new
-  
-  # Тест 1: Перевірка наявності ліцензії
-  puts "\n📝 Тест 1: Перевірка наявності ліцензії..."
-  has_license = manager.has_license?
-  puts "   Has license: #{has_license}"
-  
-  # Тест 2: Валідація (якщо є ліцензія)
-  if has_license
-    puts "\n📝 Тест 2: Валідація існуючої ліцензії..."
-    result = manager.validate_license
-    puts "   Valid: #{result[:valid]}"
-    puts "   Error: #{result[:error]}" if result[:error]
-  end
-  
-  # Тест 3: Інформація про ліцензію
-  puts "\n📝 Тест 3: Інформація про ліцензію..."
-  info = manager.license_info
-  puts "   #{info.inspect}"
-  
-  puts "\n✅ Базове тестування завершено"
-  puts "   Детальні тести в TEST_STEP_4.rb"
 end
 

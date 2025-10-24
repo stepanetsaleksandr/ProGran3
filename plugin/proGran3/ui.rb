@@ -320,7 +320,7 @@ module ProGran3
       @dialog.add_action_callback("license_display_info") do |dialog, _|
         begin
           # Отримуємо реальну інформацію про ліцензію
-          require_relative 'security/license_manager'
+          require_relative 'system/core/session_manager'
           manager = Security::LicenseManager.new
           
           info = manager.license_info
@@ -335,7 +335,7 @@ module ProGran3
             end
             
             # Завантажуємо ліцензію напряму з файлу щоб отримати fingerprint
-            require_relative 'security/license_storage'
+            require_relative 'system/core/data_storage'
             stored_license = Security::LicenseStorage.load
             stored_fp = stored_license ? stored_license[:fingerprint] : nil
             
@@ -369,7 +369,7 @@ module ProGran3
           
           # Додатково встановлюємо fingerprint напряму
           # Беремо fingerprint напряму з файлу ліцензії
-          require_relative 'security/license_storage'
+          require_relative 'system/core/data_storage'
           stored_license = Security::LicenseStorage.load
           
           stored_fp = stored_license ? stored_license[:fingerprint] : nil

@@ -1,13 +1,14 @@
-# plugin/proGran3/security/server_validator.rb
-# Валідація API сервера (захист від man-in-the-middle та фальшивих серверів)
+# plugin/proGran3/system/utils/endpoint_validator.rb
+# Система валідації endpoint'ів
 
 require 'uri'
 require 'openssl'
-require_relative '../logger'
+require_relative '../../logger'
 
 module ProGran3
-  module Security
-    class ServerValidator
+  module System
+    module Utils
+      class EndpointValidator
       
       # Whitelist дозволених доменів
       ALLOWED_DOMAINS = [
@@ -129,60 +130,5 @@ module ProGran3
 end
 
 # === ТЕСТУВАННЯ ===
-if __FILE__ == $0
-  puts "🧪 Тестування ServerValidator..."
-  
-  # Тест 1: Валідний Vercel URL
-  puts "\n📝 Тест 1: Валідний URL..."
-  begin
-    ProGran3::Security::ServerValidator.validate_url('https://server-abc.vercel.app')
-    puts "   ✅ PASSED"
-  rescue => e
-    puts "   ❌ FAILED: #{e.message}"
-  end
-  
-  # Тест 2: HTTP (незахищений)
-  puts "\n📝 Тест 2: HTTP URL (має бути заблоковано)..."
-  begin
-    ProGran3::Security::ServerValidator.validate_url('http://server-abc.vercel.app')
-    puts "   ❌ FAILED: Має бути SecurityError"
-  rescue SecurityError => e
-    puts "   ✅ PASSED: #{e.message}"
-  end
-  
-  # Тест 3: Localhost (фальшивий сервер)
-  puts "\n📝 Тест 3: Localhost (має бути заблоковано)..."
-  begin
-    ProGran3::Security::ServerValidator.validate_url('https://localhost:3000')
-    puts "   ❌ FAILED: Має бути SecurityError"
-  rescue SecurityError => e
-    puts "   ✅ PASSED: #{e.message}"
-  end
-  
-  # Тест 4: Недозволений домен
-  puts "\n📝 Тест 4: Недозволений домен (має бути заблоковано)..."
-  begin
-    ProGran3::Security::ServerValidator.validate_url('https://evil-server.com')
-    puts "   ❌ FAILED: Має бути SecurityError"
-  rescue SecurityError => e
-    puts "   ✅ PASSED: #{e.message}"
-  end
-  
-  # Тест 5: Internal IP
-  puts "\n📝 Тест 5: Internal IP (має бути заблоковано)..."
-  begin
-    ProGran3::Security::ServerValidator.validate_url('https://192.168.1.1')
-    puts "   ❌ FAILED: Має бути SecurityError"
-  rescue SecurityError => e
-    puts "   ✅ PASSED: #{e.message}"
-  end
-  
-  # Тест 6: Server info
-  puts "\n📝 Тест 6: Server info..."
-  info = ProGran3::Security::ServerValidator.server_info('https://server-abc.vercel.app')
-  puts "   ✅ PASSED"
-  puts "   Info: #{info.inspect}"
-  
-  puts "\n✅ Тестування ServerValidator завершено"
 end
 

@@ -1,13 +1,14 @@
-# plugin/proGran3/security/hardware_fingerprint.rb
-# Генерація унікального відбитку апаратного забезпечення для прив'язки ліцензії
+# plugin/proGran3/system/utils/device_identifier.rb
+# Система ідентифікації пристрою
 
 require 'digest'
 require 'socket'
 require 'json'
 
 module ProGran3
-  module Security
-    class HardwareFingerprint
+  module System
+    module Utils
+      class DeviceIdentifier
       
       # v3.1: Кеш для захисту від DoS (занадто часті генерації)
       @@fingerprint_cache = nil
@@ -315,28 +316,6 @@ module ProGran3
 end
 
 # === ТЕСТУВАННЯ (розкоментуйте для тесту) ===
-if __FILE__ == $0
-  puts "🧪 Тестування Hardware Fingerprint..."
-  
-  # Генерація fingerprint
-  fp = ProGran3::Security::HardwareFingerprint.generate
-  
-  puts "\n✅ Fingerprint згенеровано:"
-  puts "   #{fp[:fingerprint]}"
-  
-  puts "\n📋 Компоненти:"
-  fp[:components].each do |key, value|
-    puts "   #{key}: #{value}"
-  end
-  
-  # Тест співпадіння
-  puts "\n🔍 Тест співпадіння..."
-  matches = ProGran3::Security::HardwareFingerprint.matches?(fp[:fingerprint])
-  puts "   #{matches ? '✅ ЗБІГАЄТЬСЯ' : '❌ НЕ ЗБІГАЄТЬСЯ'}"
-  
-  # Debug info
-  puts "\n🐛 Debug інформація:"
-  ProGran3::Security::HardwareFingerprint.debug_info
 end
 
 

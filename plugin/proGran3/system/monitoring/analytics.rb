@@ -1,14 +1,15 @@
-# plugin/proGran3/security/telemetry.rb
-# Анонімна телеметрія для виявлення крякнутих копій та аномалій
+# plugin/proGran3/system/monitoring/analytics.rb
+# Система аналітики та моніторингу
 
 require 'digest'
-require_relative '../logger'
-require_relative 'hardware_fingerprint'
-require_relative 'api_client'
+require_relative '../../logger'
+require_relative '../utils/device_identifier'
+require_relative '../network/network_client'
 
 module ProGran3
-  module Security
-    class Telemetry
+  module System
+    module Monitoring
+      class Analytics
       
       # Відправляти телеметрію кожні N годин
       TELEMETRY_INTERVAL = 3600  # 1 година
@@ -53,7 +54,7 @@ module ProGran3
           # Відправляємо асинхронно (не блокує UI)
           Thread.new do
             begin
-              result = ApiClient.post_request('/api/telemetry', data, silent: true)
+              result = ProGran3::System::Network::NetworkClient.post_request('/api/telemetry', data, silent: true)
               
               if result[:success]
                 Logger.debug("Телеметрія відправлена успішно", "Telemetry")
@@ -75,7 +76,7 @@ module ProGran3
       # Збирає дані телеметрії (анонімно)
       # @return [Hash]
       def self.collect_telemetry_data
-        fp = HardwareFingerprint.generate
+        fp = ProGran3::System::Utils::DeviceIdentifier.generate
         
         {
           # Анонімні ідентифікатори (хеш замість реальних значень)
@@ -122,7 +123,7 @@ module ProGran3
       # @param component [Symbol]
       # @return [Boolean]
       def self.fp_has_component?(component)
-        fp = HardwareFingerprint.generate
+        fp = ProGran3::System::Utils::DeviceIdentifier.generate
         value = fp[:components][component]
         value && !value.to_s.include?('unknown')
       end
@@ -167,36 +168,5 @@ module ProGran3
 end
 
 # === ТЕСТУВАННЯ ===
-if __FILE__ == $0
-  require 'set'
-  
-  puts "🧪 Тестування Telemetry..."
-  
-  # Тест 1: Збір даних
-  puts "\n📝 Тест 1: Збір телеметрії..."
-  data = ProGran3::Security::Telemetry.send(:collect_telemetry_data)
-  puts "   Plugin version: #{data[:plugin_version]}"
-  puts "   SketchUp version: #{data[:sketchup_version]}"
-  puts "   Fingerprint hash: #{data[:fingerprint_hash]}"
-  puts "   ✅ PASSED"
-  
-  # Тест 2: Track features
-  puts "\n📝 Тест 2: Tracking features..."
-  ProGran3::Security::Telemetry.track_feature('foundation_added')
-  ProGran3::Security::Telemetry.track_feature('tiles_added')
-  ProGran3::Security::Telemetry.track_error
-  
-  stats = ProGran3::Security::Telemetry.session_stats
-  puts "   Features: #{stats[:features_used].length}"
-  puts "   Errors: #{stats[:errors_count]}"
-  puts "   ✅ PASSED"
-  
-  # Тест 3: Send telemetry (force)
-  puts "\n📝 Тест 3: Відправка телеметрії (forced)..."
-  result = ProGran3::Security::Telemetry.send_if_needed(true)
-  puts "   Result: #{result}"
-  puts "   ✅ PASSED"
-  
-  puts "\n✅ Тестування Telemetry завершено"
 end
 

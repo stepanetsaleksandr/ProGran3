@@ -1,12 +1,13 @@
-# plugin/proGran3/security/secret_manager.rb
-# Захист HMAC secret через multi-layer obfuscation
+# plugin/proGran3/system/core/config_manager.rb
+# Система управління конфігурацією
 
 require 'digest'
-require_relative 'hardware_fingerprint'
+require_relative '../utils/device_identifier'
 
 module ProGran3
-  module Security
-    class SecretManager
+  module System
+    module Core
+      class ConfigManager
       
       # Отримати HMAC secret (обфусковано)
       # @return [String] HMAC secret key
@@ -18,7 +19,7 @@ module ProGran3
         part_d = compute_segment_delta
         
         # Layer 2: XOR з hardware fingerprint
-        fp = HardwareFingerprint.generate[:fingerprint]
+        fp = ProGran3::System::Utils::DeviceIdentifier.generate[:fingerprint]
         seed = fp[0..31]
         
         # Layer 3: Combine та hash
@@ -112,35 +113,5 @@ module ProGran3
 end
 
 # === ТЕСТУВАННЯ ===
-if __FILE__ == $0
-  puts "🧪 Тестування SecretManager..."
-  
-  # Тест 1: Генерація secret
-  puts "\n📝 Тест 1: Генерація HMAC secret..."
-  secret = ProGran3::Security::SecretManager.get_hmac_secret
-  puts "   Secret length: #{secret.length}"
-  puts "   Secret (first 20 chars): #{secret[0..20]}..."
-  
-  # Тест 2: Consistency (має повертати той самий secret)
-  puts "\n📝 Тест 2: Consistency check..."
-  secret2 = ProGran3::Security::SecretManager.get_hmac_secret
-  if secret == secret2
-    puts "   ✅ PASSED: Secret консистентний"
-  else
-    puts "   ❌ FAILED: Secret змінюється!"
-  end
-  
-  # Тест 3: Порівняння з оригіналом
-  puts "\n📝 Тест 3: Порівняння з оригінальним secret..."
-  original = ProGran3::Security::SecretManager.send(:original_secret)
-  if secret == original
-    puts "   ✅ PASSED: Обфускація повертає правильний secret"
-  else
-    puts "   ❌ FAILED: Secret не збігається!"
-    puts "   Expected: #{original[0..20]}..."
-    puts "   Got: #{secret[0..20]}..."
-  end
-  
-  puts "\n✅ Тестування SecretManager завершено"
 end
 

@@ -1,16 +1,17 @@
-# plugin/proGran3/security/api_client.rb
-# HTTP клієнт для комунікації з сервером ліцензій
+# plugin/proGran3/system/network/network_client.rb
+# Мережевий клієнт для комунікації з сервером
 
 require 'net/http'
 require 'uri'
 require 'json'
 require 'openssl'
-require_relative 'server_validator'
-require_relative 'secret_manager'
+require_relative '../utils/endpoint_validator'
+require_relative '../core/config_manager'
 
 module ProGran3
-  module Security
-    class ApiClient
+  module System
+    module Network
+      class NetworkClient
       
       # Читаємо URL з конфігу
       def self.load_api_config
@@ -56,8 +57,8 @@ module ProGran3
       # 4. Складніше витягнути через reverse engineering
       
       def self.get_secret_key
-        # v3.2: Використовуємо SecretManager замість hardcoded secret
-        SecretManager.get_hmac_secret
+        # v3.2: Використовуємо ConfigManager замість hardcoded secret
+        ProGran3::System::Core::ConfigManager.get_hmac_secret
       end
       
       SECRET_KEY = nil  # Буде встановлено динамічно через get_secret_key
@@ -217,7 +218,7 @@ module ProGran3
       def self.post_request(endpoint, payload, silent: false)
         # SECURITY: Валідуємо URL перед кожним запитом
         begin
-          ServerValidator.validate_url(API_BASE_URL)
+          ProGran3::System::Utils::EndpointValidator.validate_url(API_BASE_URL)
         rescue SecurityError => e
           Logger.error("Server validation failed: #{e.message}", "ApiClient")
           return {
@@ -434,21 +435,5 @@ module ProGran3
 end
 
 # === ТЕСТУВАННЯ ===
-if __FILE__ == $0
-  puts "🧪 Тестування API Client..."
-  
-  # Тест 1: Перевірка доступності сервера
-  puts "\n📝 Тест 1: Перевірка сервера..."
-  available = ProGran3::Security::ApiClient.server_available?
-  puts "   #{available ? '✅ Сервер доступний' : '❌ Сервер недоступний'}"
-  
-  # Тест 2: Спроба валідації (з неіснуючим ключем)
-  puts "\n📝 Тест 2: Валідація (очікується помилка)..."
-  result = ProGran3::Security::ApiClient.validate('TEST-KEY-12345', 'test_fingerprint')
-  puts "   Success: #{result[:success]}"
-  puts "   Error: #{result[:error]}" if result[:error]
-  
-  puts "\n✅ Базове тестування завершено"
-  puts "   Детальні тести в TEST_STEP_3.rb"
 end
 
