@@ -21,7 +21,7 @@
     const dimensions = [depth, width, height].map(Number).sort((a, b) => b - a); // Від найбільшого до найменшого
     console.log(`📐 [formatDimensions] Відсортовані: [${dimensions.join(', ')}]`);
     
-    // Використовуємо таблицю з окремими колонками для кожного розміру
+    // Використовуємо компактну таблицю без розділювачів
     const result = `<table class="dimensions-table">
       <tr>
         <td class="dimension-cell">${dimensions[0]}</td>
