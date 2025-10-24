@@ -15,20 +15,33 @@ $tracker = nil
 # Видаляємо модуль
 Object.send(:remove_const, :ProGran3) if defined?(ProGran3)
 
-# Перезавантажуємо основний файл
-load 'progran3.rb'
+# Перезавантажуємо основний файл (спочатку пробуємо core, потім основний)
+begin
+  load 'proGran3_core.rb'
+rescue LoadError
+  load 'proGran3.rb'
+end
 
 puts "✅ Плагін примусово перезавантажено"
-puts "🔐 LicenseManager: #{$license_manager ? 'завантажено' : 'НЕ завантажено'}"
-puts "📊 Tracker: #{$progran3_tracker ? 'завантажено' : 'НЕ завантажено'}"
-puts "🚫 Plugin blocked: #{$plugin_blocked}"
 
-# Перевіряємо чи є LicenseManager
-if $license_manager
-  puts "✅ LicenseManager доступний"
-  puts "🔐 Has license: #{$license_manager.has_license?}"
-  puts "📧 Email: #{$license_manager.email || 'немає'}"
-  puts "🔑 License key: #{$license_manager.license_key ? $license_manager.license_key[0..8] + '...' : 'немає'}"
+# Перевіряємо чи є ProGran3 модуль
+if defined?(ProGran3)
+  puts "✅ ProGran3 модуль завантажено"
+  
+  # Перевіряємо SessionManager (новий LicenseManager)
+  if defined?(ProGran3::System::Core::SessionManager)
+    puts "✅ SessionManager доступний"
+    begin
+      manager = ProGran3::System::Core::SessionManager.new
+      puts "🔐 Has license: #{manager.has_license?}"
+      puts "📧 Email: #{manager.email || 'немає'}"
+      puts "🔑 License key: #{manager.license_key ? manager.license_key[0..8] + '...' : 'немає'}"
+    rescue => e
+      puts "❌ Помилка доступу до SessionManager: #{e.message}"
+    end
+  else
+    puts "❌ SessionManager НЕ завантажено!"
+  end
 else
-  puts "❌ LicenseManager НЕ завантажено!"
+  puts "❌ ProGran3 модуль НЕ завантажено!"
 end
