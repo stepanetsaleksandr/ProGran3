@@ -38,10 +38,12 @@ if (-not (Test-Path $SKETCHUP_PLUGINS_PATH)) {
 
 # Шляхи до файлів
 $sourceMainFile = Join-Path $CURRENT_PROJECT_PATH "proGran3.rb"
+$sourceCoreFile = Join-Path $CURRENT_PROJECT_PATH "proGran3_core.rb"
 $sourceLoaderFile = Join-Path $CURRENT_PROJECT_PATH "proGran3_loader.rb"
 $sourceReloadFile = Join-Path $CURRENT_PROJECT_PATH "force_reload_plugin.rb"
 $sourceFolder = Join-Path $CURRENT_PROJECT_PATH "proGran3"
 $targetMainFile = Join-Path $SKETCHUP_PLUGINS_PATH "proGran3.rb"
+$targetCoreFile = Join-Path $SKETCHUP_PLUGINS_PATH "proGran3_core.rb"
 $targetLoaderFile = Join-Path $SKETCHUP_PLUGINS_PATH "proGran3_loader.rb"
 $targetReloadFile = Join-Path $SKETCHUP_PLUGINS_PATH "force_reload_plugin.rb"
 $targetFolder = Join-Path $SKETCHUP_PLUGINS_PATH "proGran3"
@@ -54,6 +56,14 @@ try {
     } else {
         Write-Host "File proGran3.rb not found!" -ForegroundColor Red
         exit 1
+    }
+    
+    # Копіюємо core файл (якщо існує)
+    if (Test-Path $sourceCoreFile) {
+        Copy-Item $sourceCoreFile $targetCoreFile -Force
+        Write-Host "Copied: proGran3_core.rb" -ForegroundColor Green
+    } else {
+        Write-Host "File proGran3_core.rb not found!" -ForegroundColor Yellow
     }
     
     # Копіюємо завантажувач
@@ -89,6 +99,7 @@ try {
     Write-Host "Location: $SKETCHUP_PLUGINS_PATH" -ForegroundColor Cyan
     Write-Host "Files deployed:" -ForegroundColor Cyan
     Write-Host "  - proGran3.rb (main plugin file)" -ForegroundColor White
+    Write-Host "  - proGran3_core.rb (core plugin file, if exists)" -ForegroundColor White
     Write-Host "  - proGran3_loader.rb (plugin loader)" -ForegroundColor White
     Write-Host "  - force_reload_plugin.rb (reload script)" -ForegroundColor White
     Write-Host "  - proGran3/ (plugin folder with all modules)" -ForegroundColor White
