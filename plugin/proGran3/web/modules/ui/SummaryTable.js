@@ -1770,57 +1770,24 @@
       text-align: center;
     }
     
-    /* Розміри - inline варіант */
-    .dimensions-inline {
-      display: inline-block;
-      font-family: 'Comfortaa', sans-serif;
-      font-weight: 600;
-      font-size: 0.9em;
-    }
-    
-    .dimensions-inline .number {
-      font-weight: 600;
-      color: #333;
-    }
-    
-    .dimensions-inline .separator {
-      margin: 0 2px;
-      color: #666;
-    }
-    
-    /* Розміри - табличний варіант */
+    /* Розміри - компактний табличний варіант */
     .dimensions-table {
-      width: 100%;
       border-collapse: collapse;
-      font-family: 'Comfortaa', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: inline-table;
+      border: none;
     }
     
     .dimensions-table td {
       border: none;
-      padding: 1px 2px;
+      padding: 2px 6px;
       text-align: center;
-      font-weight: 600;
-      font-size: 0.9em;
-    }
-    
-    .dimensions-table td.number:first-child {
-      text-align: right;
-      min-width: 28px;
-    }
-    
-    .dimensions-table td.number:nth-child(3) {
-      text-align: center;
-      min-width: 28px;
-    }
-    
-    .dimensions-table td.number:last-child {
-      text-align: left;
-      min-width: 28px;
-    }
-    
-    .dimensions-table td.separator {
-      text-align: center;
-      width: 10px;
+      font-weight: 500;
+      background-color: transparent;
+      min-width: 35px;
+      font-size: 0.9rem;
+      white-space: nowrap;
     }
     
     /* Превю зображення */
