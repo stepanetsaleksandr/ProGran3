@@ -485,27 +485,26 @@ module ProGran3
         
         # Використовуємо універсальний екстрактор для .skp файлів
         result = ProGran3.extract_skp_preview(component_path)
-        puts "✅ Превью витягнуто: #{result}" if result
+        # Превью витягнуто - без логування
       end
 
       @dialog.add_action_callback("generate_web_preview") do |dialog, component_path|
-        puts "🔍 generate_web_preview callback викликано для: #{component_path}"
+        # generate_web_preview callback - без логування
         
         # Використовуємо універсальний метод для отримання base64
         base64_data = ProGran3.get_preview_base64(component_path, 256)
         
         if base64_data
-          puts "✅ Отримано base64 дані, довжина: #{base64_data.length}"
-          puts "🔄 Відправляємо дані в JavaScript..."
+          # Отримано base64 дані - без логування
           
           # Екрануємо одинарні лапки в base64_data
           escaped_base64 = base64_data.gsub("'", "\\'")
           
           script = "receiveWebPreview('#{component_path}', '#{escaped_base64}');"
-          puts "📝 JavaScript скрипт: #{script[0..100]}..." if script.length > 100
+          # JavaScript скрипт - без логування
           
           @dialog.execute_script(script)
-          puts "✅ Скрипт виконано"
+          # Скрипт виконано - без логування
         else
           puts "❌ Помилка генерації превью для: #{component_path}"
           @dialog.execute_script("handlePreviewError('#{component_path}', 'Помилка генерації превью');")
