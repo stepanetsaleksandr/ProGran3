@@ -1054,6 +1054,7 @@ module ProGran3
         entities.grep(Sketchup::ComponentInstance).each do |component|
           name = component.definition.name
           ProGran3::Logger.info("🔎 Знайдено компонент: [#{name}] (клас: #{name.class})", "Summary")
+          ProGran3::Logger.info("🔍 Component bounds: #{component.bounds.width.to_mm}×#{component.bounds.depth.to_mm}×#{component.bounds.height.to_mm} мм", "Summary")
           
           # Класифікуємо за типом
           case name
@@ -1116,6 +1117,7 @@ module ProGran3
           when /Perimeter_Tile|Modular_Tile/
             # Кожна плитка - окремий компонент (НЕ група)
             ProGran3::Logger.info("🔹 Плитка знайдена: #{name}", "Summary")
+            ProGran3::Logger.info("🔍 Tile bounds: #{component.bounds.width.to_mm}×#{component.bounds.depth.to_mm}×#{component.bounds.height.to_mm} мм", "Summary")
             
             bounds = component.bounds
             trans = component.transformation
@@ -1163,6 +1165,7 @@ module ProGran3
           when /Cladding/
             # Облицювання - вертикальна плитка
             ProGran3::Logger.info("🔹 Облицювання (вертикальна плитка) знайдена: #{name}", "Summary")
+            ProGran3::Logger.info("🔍 Cladding bounds: #{component.bounds.width.to_mm}×#{component.bounds.depth.to_mm}×#{component.bounds.height.to_mm} мм", "Summary")
             
             bounds = component.bounds
             trans = component.transformation
@@ -1231,6 +1234,7 @@ module ProGran3
             
           when /BlindArea/
             ProGran3::Logger.info("💡 CASE: BlindArea matched!", "Summary")
+            ProGran3::Logger.info("🔍 BlindArea bounds: #{component.bounds.width.to_mm}×#{component.bounds.depth.to_mm}×#{component.bounds.height.to_mm} мм", "Summary")
             bounds = component.bounds
             trans = component.transformation
             
@@ -1304,6 +1308,8 @@ module ProGran3
             summary[:blind_area] << item
             
           when /stand/i
+            ProGran3::Logger.info("🔹 Підставка знайдена: #{name}", "Summary")
+            ProGran3::Logger.info("🔍 Stand bounds: #{component.bounds.width.to_mm}×#{component.bounds.depth.to_mm}×#{component.bounds.height.to_mm} мм", "Summary")
             bounds = component.bounds
             trans = component.transformation
             
@@ -1348,6 +1354,7 @@ module ProGran3
             
           when /stele/i
             ProGran3::Logger.info("🔹 Стела знайдена: #{name}", "Summary")
+            ProGran3::Logger.info("🔍 Stele bounds: #{component.bounds.width.to_mm}×#{component.bounds.depth.to_mm}×#{component.bounds.height.to_mm} мм", "Summary")
             
             bounds = component.bounds
             trans = component.transformation
@@ -1389,6 +1396,7 @@ module ProGran3
           when /flowerbed/i
             # Квітник містить внутрішні компоненти - показуємо ТІЛЬКИ їх
             ProGran3::Logger.info("🔹 Квітник знайдено: #{name}", "Summary")
+            ProGran3::Logger.info("🔍 Flowerbed bounds: #{component.bounds.width.to_mm}×#{component.bounds.depth.to_mm}×#{component.bounds.height.to_mm} мм", "Summary")
             
             internal_components = component.definition.entities.grep(Sketchup::ComponentInstance)
             ProGran3::Logger.info("  📦 Внутрішніх компонентів: #{internal_components.count}", "Summary")
@@ -1434,6 +1442,8 @@ module ProGran3
             end
             
           when /gravestone|plate/i
+            ProGran3::Logger.info("🔹 Надгробок знайдено: #{name}", "Summary")
+            ProGran3::Logger.info("🔍 Gravestone bounds: #{component.bounds.width.to_mm}×#{component.bounds.depth.to_mm}×#{component.bounds.height.to_mm} мм", "Summary")
             bounds = component.bounds
             item = {
               name: name,
@@ -1458,6 +1468,7 @@ module ProGran3
           when /^CornerFence$/
             # CornerFence - контейнер з 3 внутрішніми компонентами (Post, Panel_X, Panel_Y)
             ProGran3::Logger.info("🔹 CornerFence контейнер знайдено: #{name}", "Summary")
+            ProGran3::Logger.info("🔍 CornerFence bounds: #{component.bounds.width.to_mm}×#{component.bounds.depth.to_mm}×#{component.bounds.height.to_mm} мм", "Summary")
             
             # Збираємо внутрішні компоненти
             internal_components = component.definition.entities.grep(Sketchup::ComponentInstance)
@@ -1516,6 +1527,8 @@ module ProGran3
             end
             
           when /PerimeterFence/
+            ProGran3::Logger.info("🔹 Периметр огорожі знайдено: #{name}", "Summary")
+            ProGran3::Logger.info("🔍 PerimeterFence bounds: #{component.bounds.width.to_mm}×#{component.bounds.depth.to_mm}×#{component.bounds.height.to_mm} мм", "Summary")
             bounds = component.bounds
             item = {
               name: name,
@@ -1529,6 +1542,7 @@ module ProGran3
           when /fence_decor|ball\.skp|pancake\.skp|ball2\.skp/i
             # Декоративні елементи огорожі
             ProGran3::Logger.info("🔹 Декор огорожі: #{name}", "Summary")
+            ProGran3::Logger.info("🔍 FenceDecor bounds: #{component.bounds.width.to_mm}×#{component.bounds.depth.to_mm}×#{component.bounds.height.to_mm} мм", "Summary")
             
             bounds = component.bounds
             trans = component.transformation
