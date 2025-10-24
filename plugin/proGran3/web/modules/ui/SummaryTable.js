@@ -668,9 +668,9 @@
           return;
         }
         
-        // Формуємо текст специфікації
+        // Формуємо текст специфікації (виправляємо порядок розмірів)
         const lines = items.map(item => {
-          return `${item.width}×${item.depth}×${item.height} см (${item.material}) - ${item.count} шт`;
+          return `${item.depth}×${item.width}×${item.height} см (${item.material}) - ${item.count} шт`;
         });
         
         const text = lines.join('\n');
@@ -1571,8 +1571,9 @@
     
     // Відображаємо згруповані елементи
     Object.values(grouped).forEach((group, index) => {
-      const formattedDims = formatDimensions(group.depth, group.width, group.height);
       console.log(`  ✅ Генеруємо рядок ${index} для групи:`, group);
+      console.log(`  📐 Вхідні розміри: depth=${group.depth}, width=${group.width}, height=${group.height}`);
+      const formattedDims = formatDimensions(group.depth, group.width, group.height);
       console.log(`  📐 Форматовані розміри:`, formattedDims);
       
       html += `
