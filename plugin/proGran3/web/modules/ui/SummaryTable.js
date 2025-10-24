@@ -784,22 +784,151 @@
     console.log('📄 Генерація звіту...');
     
     try {
-      // Перевіряємо чи є збережені дані
+      let reportData = null;
+      
+      // 1. Перевіряємо збережені дані
       if (window.lastSummaryData && Object.keys(window.lastSummaryData).length > 0) {
         console.log('✅ Використовую збережені дані для звіту');
-        await showReportModal(window.lastSummaryData);
-      } else if (window.sketchup) {
-        // Запитуємо дані з Ruby
+        reportData = window.lastSummaryData;
+      } 
+      // 2. Fallback до StateManager
+      else if (global.ProGran3.Core.StateManager) {
+        console.log('🔄 Отримую дані з StateManager...');
+        const addedElements = global.ProGran3.Core.StateManager.getAddedElements();
+        const currentUnit = global.ProGran3.Utils.Units ? 
+          global.ProGran3.Utils.Units.getCurrentUnit() : 'mm';
+        
+        // Генеруємо базові дані для звіту
+        reportData = {
+          summary: generateSummaryData(addedElements, currentUnit),
+          metadata: {
+            plugin_version: '3.2.1',
+            generated_at: new Date().toISOString(),
+            unit: currentUnit
+          }
+        };
+        console.log('✅ Дані згенеровано з StateManager:', reportData);
+      }
+      // 3. Fallback до глобальних змінних
+      else if (global.addedElements) {
+        console.log('🔄 Отримую дані з глобальних змінних...');
+        const addedElements = global.addedElements;
+        const currentUnit = global.currentUnit || 'mm';
+        
+        reportData = {
+          summary: generateSummaryData(addedElements, currentUnit),
+          metadata: {
+            plugin_version: '3.2.1',
+            generated_at: new Date().toISOString(),
+            unit: currentUnit
+          }
+        };
+        console.log('✅ Дані згенеровано з глобальних змінних:', reportData);
+      }
+      // 4. Запит з Ruby
+      else if (window.sketchup) {
         console.log('🔄 Запит даних з Ruby...');
         window.sketchup.generate_report();
-        // Після запиту даних з Ruby, callback автоматично викличе showReportModal
+        return; // Після запиту даних з Ruby, callback автоматично викличе showReportModal
+      }
+      
+      if (reportData) {
+        await showReportModal(reportData);
       } else {
         console.error('❌ Немає даних для звіту');
-        alert('Спочатку натисніть "Оновити" у підсумку проекту');
+        alert('Спочатку натисніть "Оновити" у підсумку проекту або додайте елементи до моделі');
       }
     } catch (error) {
       console.error('❌ Помилка генерації звіту:', error);
-      alert('Помилка при генерації звіту: ' + error.message);
+      
+      // Показуємо зрозуміле повідомлення користувачу
+      let userMessage = 'Помилка при генерації звіту';
+      
+      if (error.message.includes('підключення до інтернету') || error.message.includes('Немає підключення')) {
+        userMessage = 'Немає підключення до інтернету.\n\nДля генерації звіту потрібне підключення до сервера.\nПеревірте мережеві налаштування та спробуйте знову.';
+      } else if (error.message.includes('Сервер недоступний')) {
+        userMessage = 'Сервер тимчасово недоступний.\n\nСпробуйте пізніше або зверніться до підтримки.';
+      } else if (error.message.includes('Таймаут')) {
+        userMessage = 'Таймаут підключення до сервера.\n\nПеревірте швидкість інтернету та спробуйте знову.';
+      } else {
+        userMessage = `Помилка генерації звіту:\n${error.message}`;
+      }
+      
+      alert(userMessage);
+    }
+  }
+  
+  // Генерація даних для звіту з поточного стану
+  function generateSummaryData(addedElements, currentUnit) {
+    console.log('📊 Генерація даних для звіту з поточного стану');
+    console.log('📊 addedElements:', addedElements);
+    console.log('📊 currentUnit:', currentUnit);
+    
+    const summaryData = {};
+    
+    // Генеруємо дані для кожної категорії
+    Object.keys(addedElements).forEach(category => {
+      if (addedElements[category]) {
+        const elementData = addedElements[category];
+        
+        if (typeof elementData === 'object' && elementData !== null) {
+          // Якщо це об'єкт з розмірами
+          if (elementData.height && elementData.width && elementData.depth) {
+            summaryData[category] = [{
+              height: elementData.height,
+              width: elementData.width,
+              depth: elementData.depth,
+              count: 1,
+              area_m2: calculateArea(elementData.height, elementData.width, currentUnit),
+              volume_m3: calculateVolume(elementData.height, elementData.width, elementData.depth, currentUnit)
+            }];
+          }
+          // Якщо це простий об'єкт
+          else {
+            summaryData[category] = [{
+              count: 1,
+              area_m2: 0,
+              volume_m3: 0
+            }];
+          }
+        }
+        // Якщо це просто true/false
+        else if (elementData === true) {
+          summaryData[category] = [{
+            count: 1,
+            area_m2: 0,
+            volume_m3: 0
+          }];
+        }
+      }
+    });
+    
+    console.log('📊 Згенеровані дані для звіту:', summaryData);
+    return summaryData;
+  }
+  
+  // Розрахунок площі
+  function calculateArea(height, width, unit) {
+    const h = parseFloat(height) || 0;
+    const w = parseFloat(width) || 0;
+    
+    if (unit === 'cm') {
+      return (h * w) / 10000; // см² в м²
+    } else {
+      return (h * w) / 1000000; // мм² в м²
+    }
+  }
+  
+  // Розрахунок об'єму
+  function calculateVolume(height, width, depth, unit) {
+    const h = parseFloat(height) || 0;
+    const w = parseFloat(width) || 0;
+    const d = parseFloat(depth) || 0;
+    
+    if (unit === 'cm') {
+      return (h * w * d) / 1000000; // см³ в м³
+    } else {
+      return (h * w * d) / 1000000000; // мм³ в м³
     }
   }
   
@@ -1067,10 +1196,18 @@
   }
   
   // Генерація HTML звіту (формат A4)
-  // v3.2: ТІЛЬКИ з динамічного модуля (захист коду)
+  // v3.2: Професійна генерація звітів з сервера (захист IP)
   async function generateReportHTML(data) {
+    console.log('📄 Генерація звіту з сервера...');
+    
     try {
-      // Завантажити модуль з сервера (temporary, не cache!)
+      // 1. Перевіряємо підключення до інтернету
+      await checkInternetConnection();
+      
+      // 2. Очищаємо можливі застарілі cache
+      clearModuleCache();
+      
+      // 3. Завантажуємо свіжий модуль з сервера
       console.log('📦 Завантаження report-generator з сервера...');
       
       const module = await global.ProGran3.Core.ModuleLoader.loadModule('report-generator', {
@@ -1079,32 +1216,105 @@
       });
       
       if (!module || !module.generateReportHTML) {
-        throw new Error('Report generator module не завантажився');
+        throw new Error('Report generator module не завантажився з сервера');
       }
       
-      console.log('✅ Модуль завантажено, генерую звіт...');
+      console.log('✅ Модуль завантажено з сервера, генерую звіт...');
       
-      // Генеруємо HTML
+      // 4. Генеруємо HTML звіт
       const html = module.generateReportHTML(data);
       
-      // ВАЖЛИВО: Видаляємо модуль з пам'яті одразу після використання
+      // 5. ВАЖЛИВО: Видаляємо модуль з пам'яті одразу після використання
       delete global.ProGran3.Modules.ReportGenerator;
-      console.log('🗑️ Модуль видалено з пам\'яті');
+      console.log('🗑️ Модуль видалено з пам\'яті для захисту IP');
       
       return html;
       
     } catch (error) {
-      console.error('❌ Помилка завантаження модуля:', error);
-      alert('Для генерації звіту потрібне підключення до інтернету.\n\nПомилка: ' + error.message);
-      throw error;
+      console.error('❌ Помилка генерації звіту:', error);
+      
+      // Очищаємо cache при помилці
+      clearModuleCache();
+      
+      // Показуємо зрозуміле повідомлення користувачу
+      if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('timeout')) {
+        throw new Error('Немає підключення до інтернету. Для генерації звіту потрібне підключення до сервера.');
+      } else if (error.message.includes('404') || error.message.includes('not found')) {
+        throw new Error('Сервер недоступний. Спробуйте пізніше або зверніться до підтримки.');
+      } else {
+        throw new Error('Помилка генерації звіту: ' + error.message);
+      }
     }
   }
   
-  // Видалено embedded версію - звіт ТІЛЬКИ через сервер!
-  function generateReportHTML_Embedded(data) {
-    // DEPRECATED: Більше не використовується
-    throw new Error('Embedded version disabled. Internet connection required.');
+  // Перевірка підключення до інтернету
+  async function checkInternetConnection() {
+    try {
+      console.log('🌐 Перевірка підключення до інтернету...');
+      
+      // Швидка перевірка через fetch до сервера
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 секунд timeout
+      
+      const response = await fetch('https://server-8hx1hwz27-provis3ds-projects.vercel.app/api/systems', {
+        method: 'GET',
+        signal: controller.signal,
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        console.log('✅ Підключення до сервера встановлено');
+        return true;
+      } else {
+        throw new Error(`Server responded with status: ${response.status}`);
+      }
+      
+    } catch (error) {
+      console.error('❌ Помилка підключення до сервера:', error);
+      
+      if (error.name === 'AbortError') {
+        throw new Error('Таймаут підключення до сервера. Перевірте інтернет з\'єднання.');
+      } else if (error.message.includes('Failed to fetch')) {
+        throw new Error('Немає підключення до інтернету. Перевірте мережеві налаштування.');
+      } else {
+        throw new Error('Сервер недоступний: ' + error.message);
+      }
+    }
   }
+  
+  // Очищення cache модулів
+  function clearModuleCache() {
+    try {
+      console.log('🗑️ Очищення cache модулів...');
+      
+      // Очищаємо ModuleLoader cache
+      if (global.ProGran3.Core.ModuleLoader) {
+        global.ProGran3.Core.ModuleLoader.clearAllModulesCache();
+      }
+      
+      // Очищаємо localStorage cache
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith('ProGran3_Module_')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      console.log('✅ Cache модулів очищено');
+      
+    } catch (error) {
+      console.warn('⚠️ Помилка очищення cache:', error);
+    }
+  }
+  
+  // Embedded версія ВИДАЛЕНА для захисту інтелектуальної власності
+  function generateReportHTML_Embedded(data) {
+    // DEPRECATED: Embedded версія видалена для захисту IP
+    throw new Error('Embedded version disabled. Internet connection required for report generation.');
     
     const currentDate = new Date().toLocaleDateString('uk-UA', {
       year: 'numeric',

@@ -190,7 +190,7 @@
     }
     
     // Fallback до hardcoded
-    return 'https://server-hbf7li0u7-provis3ds-projects.vercel.app';
+    return 'https://server-8hx1hwz27-provis3ds-projects.vercel.app';
   }
   
   /**
