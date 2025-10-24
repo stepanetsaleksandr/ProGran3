@@ -38,8 +38,12 @@ if (-not (Test-Path $SKETCHUP_PLUGINS_PATH)) {
 
 # Шляхи до файлів
 $sourceMainFile = Join-Path $CURRENT_PROJECT_PATH "proGran3.rb"
+$sourceLoaderFile = Join-Path $CURRENT_PROJECT_PATH "proGran3_loader.rb"
+$sourceReloadFile = Join-Path $CURRENT_PROJECT_PATH "force_reload_plugin.rb"
 $sourceFolder = Join-Path $CURRENT_PROJECT_PATH "proGran3"
 $targetMainFile = Join-Path $SKETCHUP_PLUGINS_PATH "proGran3.rb"
+$targetLoaderFile = Join-Path $SKETCHUP_PLUGINS_PATH "proGran3_loader.rb"
+$targetReloadFile = Join-Path $SKETCHUP_PLUGINS_PATH "force_reload_plugin.rb"
 $targetFolder = Join-Path $SKETCHUP_PLUGINS_PATH "proGran3"
 
 try {
@@ -50,6 +54,22 @@ try {
     } else {
         Write-Host "File proGran3.rb not found!" -ForegroundColor Red
         exit 1
+    }
+    
+    # Копіюємо завантажувач
+    if (Test-Path $sourceLoaderFile) {
+        Copy-Item $sourceLoaderFile $targetLoaderFile -Force
+        Write-Host "Copied: proGran3_loader.rb" -ForegroundColor Green
+    } else {
+        Write-Host "File proGran3_loader.rb not found!" -ForegroundColor Yellow
+    }
+    
+    # Копіюємо скрипт перезавантаження
+    if (Test-Path $sourceReloadFile) {
+        Copy-Item $sourceReloadFile $targetReloadFile -Force
+        Write-Host "Copied: force_reload_plugin.rb" -ForegroundColor Green
+    } else {
+        Write-Host "File force_reload_plugin.rb not found!" -ForegroundColor Yellow
     }
     
     # Копіюємо папку proGran3
@@ -67,6 +87,11 @@ try {
     
     Write-Host "Plugin deployed successfully!" -ForegroundColor Green
     Write-Host "Location: $SKETCHUP_PLUGINS_PATH" -ForegroundColor Cyan
+    Write-Host "Files deployed:" -ForegroundColor Cyan
+    Write-Host "  - proGran3.rb (main plugin file)" -ForegroundColor White
+    Write-Host "  - proGran3_loader.rb (plugin loader)" -ForegroundColor White
+    Write-Host "  - force_reload_plugin.rb (reload script)" -ForegroundColor White
+    Write-Host "  - proGran3/ (plugin folder with all modules)" -ForegroundColor White
     Write-Host "Restart SketchUp or use ProGran3.reload in Ruby console" -ForegroundColor Yellow
     
 } catch {
