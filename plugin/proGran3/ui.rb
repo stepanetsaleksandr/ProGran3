@@ -685,7 +685,7 @@ module ProGran3
         success = DimensionsManager.set_current_unit(unit)
         
         if success
-          ProGran3::Logger.info("Одиниця вимірювання змінена на: #{unit}", "UI")
+          # Одиниця вимірювання змінена - без логування
           true
         else
           ErrorHandler.handle_error(
@@ -714,7 +714,7 @@ module ProGran3
       # Callback для отримання списку підставок
       @dialog.add_action_callback("get_stands_list") do |dialog, _|
         stands_list = Dir.glob(File.join(ProGran3::ASSETS_PATH, "stands", "*.skp")).map { |f| File.basename(f) }
-        ProGran3::Logger.info("Повертаємо список підставок: #{stands_list.length} елементів", "UI")
+        # Список підставок - без логування
         stands_list
       end
 
@@ -805,22 +805,20 @@ module ProGran3
       # Callback для генерації превью моделі
       @dialog.add_action_callback("generate_model_preview") do |action_context, size, quality|
         begin
-          ProGran3::Logger.info("🔄 Callback generate_model_preview викликано", "UI")
-          ProGran3::Logger.info("📥 Параметри: size=#{size}, quality=#{quality}", "UI")
+          # Callback generate_model_preview - без логування
           
           result = generate_model_preview_callback(@dialog, size, quality)
           
-          ProGran3::Logger.info("📤 Результат callback: #{result.inspect}", "UI")
+          # Результат callback - без логування
           
           # Відправляємо результат в JavaScript
           if result && result[:success]
-            ProGran3::Logger.info("✅ Відправляємо успішний результат в JavaScript", "UI")
+            # Відправляємо успішний результат - без логування
             # Екрануємо одинарні лапки в base64 даних
             escaped_data = result[:data].gsub("'", "\\'")
             script = "receiveModelPreview(#{result.to_json});"
             @dialog.execute_script(script)
-            ProGran3::Logger.info("✅ Результат превью відправлено в JavaScript", "UI")
-            ProGran3::Logger.info("🔄 Повертаємо 1 (успіх)", "UI")
+            # Результат превью відправлено - без логування
             1
           else
             error_msg = result ? result[:error] : "Невідома помилка"
@@ -828,7 +826,7 @@ module ProGran3
             script = "handleModelPreviewError('#{error_msg}');"
             @dialog.execute_script(script)
             ProGran3::Logger.error("❌ Помилка превью відправлена в JavaScript: #{error_msg}", "UI")
-            ProGran3::Logger.info("🔄 Повертаємо 0 (помилка)", "UI")
+            # Повертаємо 0 (помилка) - без логування
             0
           end
           
@@ -840,7 +838,7 @@ module ProGran3
           script = "handleModelPreviewError('Критична помилка: #{e.message}');"
           @dialog.execute_script(script)
           
-          ProGran3::Logger.info("🔄 Повертаємо 0 (критична помилка)", "UI")
+          # Повертаємо 0 (критична помилка) - без логування
           0
         end
       end
