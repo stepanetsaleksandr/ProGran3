@@ -4958,13 +4958,192 @@ function updateDetailedSummary(data) {
           const foundation = summary.foundation[0];
           const foundationEl = document.getElementById('summary-foundation');
           if (foundationEl) {
-            const text = `${foundation.depth} × ${foundation.width} × ${foundation.height} см`;
+            const area = foundation.area_m2 !== undefined ? foundation.area_m2 : 'N/A';
+            const volume = foundation.volume_m3 !== undefined ? foundation.volume_m3 : 'N/A';
+            const text = `${foundation.depth} × ${foundation.width} × ${foundation.height} см\nПлоща: ${area} м²\nОб'єм: ${volume} м³`;
             foundationEl.textContent = text;
             console.log('✅ Foundation оновлено (fallback):', text);
           }
         }
         
-        // Оновлюємо інші елементи...
+        // Оновлюємо BlindArea
+        if (summary.blind_area && summary.blind_area.length > 0) {
+          const blindArea = summary.blind_area[0];
+          const blindAreaEl = document.getElementById('summary-blind-area');
+          if (blindAreaEl) {
+            const area = blindArea.area_m2 !== undefined ? blindArea.area_m2 : 'N/A';
+            const volume = blindArea.volume_m3 !== undefined ? blindArea.volume_m3 : 'N/A';
+            const text = `${blindArea.depth} × ${blindArea.width} × ${blindArea.height} см\nПлоща: ${area} м²\nОб'єм: ${volume} м³`;
+            blindAreaEl.textContent = text;
+            console.log('✅ BlindArea оновлено (fallback):', text);
+          }
+        }
+        
+        // Оновлюємо Stands
+        if (summary.stands && summary.stands.length > 0) {
+          const standEl = document.getElementById('summary-stand');
+          if (standEl) {
+            const lines = summary.stands.map(stand => {
+              const area = stand.area_m2 !== undefined ? stand.area_m2 : 'N/A';
+              const volume = stand.volume_m3 !== undefined ? stand.volume_m3 : 'N/A';
+              const standType = stand.stand_type === 'проміжна' ? 'Проміжна деталь' : 'Підставка';
+              return `${standType}: ${stand.depth} × ${stand.width} × ${stand.height} см\nПлоща: ${area} м²\nОб'єм: ${volume} м³`;
+            });
+            const text = lines.join('\n\n');
+            standEl.textContent = text;
+            console.log('✅ Stands оновлено (fallback):', text);
+          }
+        }
+        
+        // Оновлюємо Tiles
+        if (summary.tiles && summary.tiles.length > 0) {
+          const tilesEl = document.getElementById('summary-tiling');
+          if (tilesEl) {
+            const grouped = {};
+            summary.tiles.forEach(tile => {
+              const key = `${tile.depth}×${tile.width}×${tile.height}×${tile.tile_type || 'horizontal'}`;
+              if (!grouped[key]) {
+                grouped[key] = { depth: tile.depth, width: tile.width, height: tile.height, tile_type: tile.tile_type || 'horizontal', count: 0, totalArea: 0, totalVolume: 0 };
+              }
+              grouped[key].count++;
+              grouped[key].totalArea += (tile.area_m2 || 0);
+              grouped[key].totalVolume += (tile.volume_m3 || 0);
+            });
+            
+            const tileLines = [];
+            let grandTotalArea = 0;
+            let grandTotalVolume = 0;
+            
+            Object.values(grouped).forEach(group => {
+              const tileType = group.tile_type === 'вертикальна' ? ' (вертикальна)' : '';
+              tileLines.push(`${group.depth} × ${group.width} × ${group.height} см${tileType} - ${group.count} шт\nПлоща: ${group.totalArea.toFixed(2)} м²\nОб'єм: ${group.totalVolume.toFixed(3)} м³`);
+              grandTotalArea += group.totalArea;
+              grandTotalVolume += group.totalVolume;
+            });
+            
+            if (tileLines.length > 0) {
+              tileLines.push(`\nЗАГАЛОМ: Площа ${grandTotalArea.toFixed(2)} м², Об'єм ${grandTotalVolume.toFixed(3)} м³`);
+            }
+            
+            const text = tileLines.join('\n\n');
+            tilesEl.textContent = text;
+            console.log('✅ Tiles оновлено (fallback):', text);
+          }
+        }
+        
+        // Оновлюємо Steles
+        if (summary.steles && summary.steles.length > 0) {
+          const stelesEl = document.getElementById('summary-stele');
+          if (stelesEl) {
+            const lines = summary.steles.map(stele => {
+              const area = stele.area_m2 !== undefined ? stele.area_m2 : 'N/A';
+              const volume = stele.volume_m3 !== undefined ? stele.volume_m3 : 'N/A';
+              return `${stele.depth} × ${stele.width} × ${stele.height} см\nПлоща: ${area} м²\nОб'єм: ${volume} м³`;
+            });
+            const text = lines.join('\n\n');
+            stelesEl.textContent = text;
+            console.log('✅ Steles оновлено (fallback):', text);
+          }
+        }
+        
+        // Оновлюємо Flowerbeds
+        if (summary.flowerbeds && summary.flowerbeds.length > 0) {
+          const flowerbedsEl = document.getElementById('summary-flowerbed');
+          if (flowerbedsEl) {
+            const lines = summary.flowerbeds.map(flowerbed => {
+              const area = flowerbed.area_m2 !== undefined ? flowerbed.area_m2 : 'N/A';
+              const volume = flowerbed.volume_m3 !== undefined ? flowerbed.volume_m3 : 'N/A';
+              return `${flowerbed.depth} × ${flowerbed.width} × ${flowerbed.height} см\nПлоща: ${area} м²\nОб'єм: ${volume} м³`;
+            });
+            const text = lines.join('\n\n');
+            flowerbedsEl.textContent = text;
+            console.log('✅ Flowerbeds оновлено (fallback):', text);
+          }
+        }
+        
+        // Оновлюємо Gravestones
+        if (summary.gravestones && summary.gravestones.length > 0) {
+          const gravestonesEl = document.getElementById('summary-gravestone');
+          if (gravestonesEl) {
+            const lines = summary.gravestones.map(gravestone => {
+              return `${gravestone.depth} × ${gravestone.width} × ${gravestone.height} см (${gravestone.material || 'Без матеріалу'})`;
+            });
+            const text = lines.join('\n');
+            gravestonesEl.textContent = text;
+            console.log('✅ Gravestones оновлено (fallback):', text);
+          }
+        }
+        
+        // Оновлюємо FenceCorner
+        if (summary.fence_corner && summary.fence_corner.length > 0) {
+          const fenceCornerEl = document.getElementById('summary-fence-corner');
+          if (fenceCornerEl) {
+            const grouped = {};
+            summary.fence_corner.forEach(item => {
+              const key = `${item.depth}×${item.width}×${item.height}`;
+              if (!grouped[key]) {
+                grouped[key] = { depth: item.depth, width: item.width, height: item.height, count: 0, totalArea: 0, totalVolume: 0 };
+              }
+              grouped[key].count++;
+              grouped[key].totalArea += (item.area_m2 || 0);
+              grouped[key].totalVolume += (item.volume_m3 || 0);
+            });
+            
+            const lines = [];
+            let grandTotalArea = 0;
+            let grandTotalVolume = 0;
+            
+            Object.values(grouped).forEach(group => {
+              lines.push(`${group.depth} × ${group.width} × ${group.height} см - ${group.count} шт\nПлоща: ${group.totalArea.toFixed(2)} м²\nОб'єм: ${group.totalVolume.toFixed(3)} м³`);
+              grandTotalArea += group.totalArea;
+              grandTotalVolume += group.totalVolume;
+            });
+            
+            if (lines.length > 0) {
+              lines.push(`\nЗАГАЛОМ: Площа ${grandTotalArea.toFixed(2)} м², Об'єм ${grandTotalVolume.toFixed(3)} м³`);
+            }
+            
+            const text = lines.join('\n\n');
+            fenceCornerEl.textContent = text;
+            console.log('✅ FenceCorner оновлено (fallback):', text);
+          }
+        }
+        
+        // Оновлюємо FenceDecor
+        if (summary.fence_decor && summary.fence_decor.length > 0) {
+          const fenceDecorEl = document.getElementById('summary-fence-decor');
+          if (fenceDecorEl) {
+            const grouped = {};
+            summary.fence_decor.forEach(item => {
+              const key = `${item.depth}×${item.width}×${item.height}`;
+              if (!grouped[key]) {
+                grouped[key] = { depth: item.depth, width: item.width, height: item.height, count: 0, totalArea: 0, totalVolume: 0 };
+              }
+              grouped[key].count++;
+              grouped[key].totalArea += (item.area_m2 || 0);
+              grouped[key].totalVolume += (item.volume_m3 || 0);
+            });
+            
+            const lines = [];
+            let grandTotalArea = 0;
+            let grandTotalVolume = 0;
+            
+            Object.values(grouped).forEach(group => {
+              lines.push(`${group.depth} × ${group.width} × ${group.height} см - ${group.count} шт\nПлоща: ${group.totalArea.toFixed(2)} м²\nОб'єм: ${group.totalVolume.toFixed(3)} м³`);
+              grandTotalArea += group.totalArea;
+              grandTotalVolume += group.totalVolume;
+            });
+            
+            if (lines.length > 0) {
+              lines.push(`\nЗАГАЛОМ: Площа ${grandTotalArea.toFixed(2)} м², Об'єм ${grandTotalVolume.toFixed(3)} м³`);
+            }
+            
+            const text = lines.join('\n\n');
+            fenceDecorEl.textContent = text;
+            console.log('✅ FenceDecor оновлено (fallback):', text);
+          }
+        }
+        
         console.log('📊 Fallback оновлення завершено');
       }
     }
