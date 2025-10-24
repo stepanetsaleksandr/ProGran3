@@ -43,6 +43,38 @@
     });
     
     let html = `
+      <style>
+        .dimensions-table {
+          border-collapse: collapse;
+          margin: 0;
+          padding: 0;
+          display: inline-table;
+        }
+        .dimensions-table td {
+          border: 1px solid #d1d5db;
+          padding: 4px 8px;
+          text-align: center;
+          font-weight: 500;
+          background-color: #f9fafb;
+          min-width: 40px;
+        }
+        .dimensions-table td:first-child {
+          border-left: none;
+        }
+        .dimensions-table td:last-child {
+          border-right: none;
+        }
+        .report-table .dimensions-table td {
+          border: 1px solid #e5e7eb;
+          padding: 6px 10px;
+          text-align: center;
+          font-weight: 500;
+          background-color: #ffffff;
+          min-width: 50px;
+          font-size: 0.9rem;
+        }
+      </style>
+      
       <div class="report-header">
         <div class="report-title-row">
           <h1>Технічний звіт проекту</h1>
@@ -132,14 +164,25 @@
     
     // Генеруємо рядки
     Object.values(grouped).forEach((item, index) => {
-      const dimensions = `${item.depth || '—'} × ${item.width || '—'} × ${item.height || '—'}`;
+      // Сортуємо розміри від найбільшого до найменшого
+      const dimensions = [item.depth, item.width, item.height].map(Number).sort((a, b) => b - a);
+      
+      // Форматуємо як таблицю з окремими колонками
+      const dimensionsHTML = `<table class="dimensions-table">
+        <tr>
+          <td class="dimension-cell">${dimensions[0]}</td>
+          <td class="dimension-cell">${dimensions[1]}</td>
+          <td class="dimension-cell">${dimensions[2]}</td>
+        </tr>
+      </table>`;
+      
       const area = item.area_m2 ? (item.area_m2 * item.count).toFixed(2) : '—';
       const volume = item.volume_m3 ? (item.volume_m3 * item.count).toFixed(3) : '—';
       
       html += `
         <tr>
           <td>${label}${index > 0 ? ' ' + (index + 1) : ''}</td>
-          <td>${dimensions}</td>
+          <td>${dimensionsHTML}</td>
           <td class="text-center">${item.count}</td>
           <td class="text-right">${area}</td>
           <td class="text-right">${volume}</td>
