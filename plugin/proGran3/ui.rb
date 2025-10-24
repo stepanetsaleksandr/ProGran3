@@ -370,7 +370,7 @@ module ProGran3
           # Додатково встановлюємо fingerprint напряму
           # Беремо fingerprint напряму з файлу ліцензії
           require_relative 'system/core/data_storage'
-          stored_license = Security::LicenseStorage.load
+          stored_license = ProGran3::System::Core::DataStorage.load
           
           stored_fp = stored_license ? stored_license[:fingerprint] : nil
           
