@@ -74,10 +74,10 @@ try {
         Write-Host "File proGran3_loader.rb not found!" -ForegroundColor Yellow
     }
     
-    # Копіюємо скрипт перезавантаження
+    # Копіюємо скрипт перезавантаження (опціонально - тільки для розробки)
     if (Test-Path $sourceReloadFile) {
         Copy-Item $sourceReloadFile $targetReloadFile -Force
-        Write-Host "Copied: force_reload_plugin.rb" -ForegroundColor Green
+        Write-Host "Copied: force_reload_plugin.rb (development tool)" -ForegroundColor Green
     } else {
         Write-Host "File force_reload_plugin.rb not found!" -ForegroundColor Yellow
     }
@@ -101,8 +101,10 @@ try {
     Write-Host "  - proGran3.rb (main plugin file)" -ForegroundColor White
     Write-Host "  - proGran3_core.rb (core plugin file, if exists)" -ForegroundColor White
     Write-Host "  - proGran3_loader.rb (plugin loader)" -ForegroundColor White
-    Write-Host "  - force_reload_plugin.rb (reload script)" -ForegroundColor White
+    Write-Host "  - force_reload_plugin.rb (development tool)" -ForegroundColor White
     Write-Host "  - proGran3/ (plugin folder with all modules)" -ForegroundColor White
+    Write-Host "" -ForegroundColor White
+    Write-Host "Note: force_reload_plugin.rb is only needed for development" -ForegroundColor Yellow
     Write-Host "Restart SketchUp or use ProGran3.reload in Ruby console" -ForegroundColor Yellow
     
 } catch {
