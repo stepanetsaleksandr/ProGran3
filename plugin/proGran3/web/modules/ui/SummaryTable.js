@@ -1231,16 +1231,36 @@
       return html;
       
     } catch (error) {
-      console.error('❌ Помилка генерації звіту:', error);
+      console.error('❌ Помилка генерації звіту з сервера:', error);
       
       // Очищаємо cache при помилці
       clearModuleCache();
       
-      // Показуємо зрозуміле повідомлення користувачу
-      if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('timeout')) {
-        throw new Error('Немає підключення до інтернету. Для генерації звіту потрібне підключення до сервера.');
-      } else if (error.message.includes('404') || error.message.includes('not found')) {
-        throw new Error('Сервер недоступний. Спробуйте пізніше або зверніться до підтримки.');
+      // FALLBACK: Використовуємо embedded версію якщо сервер недоступний
+      if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('timeout') || 
+          error.message.includes('404') || error.message.includes('not found')) {
+        
+        console.log('🔄 Fallback до embedded версії генерації звіту...');
+        
+        try {
+          // Тимчасово активуємо embedded версію
+          const originalError = generateReportHTML_Embedded.toString();
+          const modifiedFunction = originalError.replace(
+            'throw new Error(\'Embedded version disabled. Internet connection required for report generation.\');',
+            '// Embedded version temporarily enabled for fallback'
+          );
+          
+          // Створюємо тимчасову функцію
+          const tempFunction = new Function('return ' + modifiedFunction)();
+          const html = tempFunction(data);
+          
+          console.log('✅ Embedded версія звіту згенерована успішно');
+          return html;
+          
+        } catch (fallbackError) {
+          console.error('❌ Помилка embedded версії:', fallbackError);
+          throw new Error('Немає підключення до інтернету та embedded версія недоступна. Перевірте мережеві налаштування.');
+        }
       } else {
         throw new Error('Помилка генерації звіту: ' + error.message);
       }
