@@ -16,16 +16,28 @@ export function middleware(request: NextRequest) {
     'camera=(), microphone=(), geolocation=()'
   );
 
-  // CORS Headers for API routes (allow plugin access)
+  // CORS Headers for API routes (restricted to plugin domains)
   if (request.nextUrl.pathname.startsWith('/api/')) {
-    response.headers.set('Access-Control-Allow-Origin', '*');
+    // ✅ БЕЗПЕЧНО: Обмежуємо CORS до конкретних доменів
+    const allowedOrigins = [
+      'https://app.sketchup.com',
+      'https://www.sketchup.com',
+      'https://localhost:3000',
+      'https://127.0.0.1:3000'
+    ];
+    
+    const origin = request.headers.get('origin');
+    if (allowedOrigins.includes(origin || '')) {
+      response.headers.set('Access-Control-Allow-Origin', origin || '');
+    }
+    
     response.headers.set(
       'Access-Control-Allow-Methods',
       'GET, POST, PUT, DELETE, OPTIONS'
     );
     response.headers.set(
       'Access-Control-Allow-Headers',
-      'Content-Type, X-API-Key, X-Signature, Authorization'
+      'Content-Type, X-Fingerprint, X-Timestamp, X-Endpoint, X-Plugin-Version, X-API-Key'
     );
     response.headers.set('Access-Control-Max-Age', '86400');
 

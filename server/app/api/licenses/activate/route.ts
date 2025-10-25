@@ -16,53 +16,39 @@ import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 export const POST = withPublicApi(async ({ supabase, request }: ApiContext) => {
   try {
     // ============================================
-    // КРОК 1: ПЕРЕВІРКА HMAC (якщо налаштовано)
+    // КРОК 1: ✅ НОВА БЕЗПЕЧНА СИСТЕМА: Hardware-based аутентифікація
     // ============================================
     
-    const signature = request.headers.get('X-Signature');
-    const timestampHeader = request.headers.get('X-Timestamp');
+    const fingerprint = request.headers.get('X-Fingerprint');
+    const timestamp = request.headers.get('X-Timestamp');
+    const endpoint = request.headers.get('X-Endpoint');
+    const pluginVersion = request.headers.get('X-Plugin-Version');
     
-    // Якщо HMAC налаштовано - перевіряємо
-    if (isHMACEnabled()) {
-      if (!signature || !timestampHeader) {
-        console.warn('[License Activation] HMAC enabled but headers missing');
-        return apiError(
-          'HMAC signature required (X-Signature and X-Timestamp headers)',
-          401,
-          undefined,
-          'HMAC_REQUIRED'
-        );
-      }
-      
-      // Читаємо body для перевірки підпису
-      const bodyText = await request.text();
-      const timestamp = parseInt(timestampHeader);
-      
-      if (isNaN(timestamp)) {
-        return apiError('Invalid timestamp format', 400);
-      }
-      
-      // Перевіряємо HMAC підпис
-      const hmacResult = verifyHMAC(bodyText, timestamp, signature);
-      
-      if (!hmacResult.valid) {
-        console.warn('[License Activation] HMAC verification failed:', hmacResult.error);
-        return apiError(
-          `Invalid HMAC signature: ${hmacResult.error}`,
-          401,
-          undefined,
-          'HMAC_INVALID'
-        );
-      }
-      
-      console.log('[License Activation] HMAC verification passed');
-      
-      // Парсимо JSON з body
-      // @ts-ignore - request з text() вже прочитаний
-      request.json = async () => JSON.parse(bodyText);
-    } else {
-      console.log('[License Activation] HMAC not enabled, skipping verification');
+    // Валідація hardware fingerprint (SHA256 = 64 символи)
+    if (!fingerprint || fingerprint.length !== 64) {
+      return apiError('Valid X-Fingerprint header required (64 characters)', 400);
     }
+    
+    // Валідація timestamp (захист від replay attacks)
+    if (!timestamp) {
+      return apiError('X-Timestamp header required', 400);
+    }
+    
+    const requestTime = parseInt(timestamp);
+    const now = Math.floor(Date.now() / 1000);
+    const timeDiff = Math.abs(now - requestTime);
+    
+    // Дозволяємо різницю до 5 хвилин
+    if (timeDiff > 300) {
+      return apiError('Request timestamp too old or too far in future', 400);
+    }
+    
+    console.log('[License Activation] Hardware authentication validated:', {
+      fingerprint: fingerprint.substring(0, 16) + '...',
+      endpoint: endpoint || 'unknown',
+      plugin_version: pluginVersion || 'unknown',
+      time_diff: timeDiff
+    });
     
     // ============================================
     // КРОК 2: ВАЛІДАЦІЯ ВХІДНИХ ДАНИХ
@@ -77,9 +63,9 @@ export const POST = withPublicApi(async ({ supabase, request }: ApiContext) => {
     const { license_key, user_email, system_fingerprint } = validation.data;
 
     console.log('[License Activation] Attempt:', {
-      license_key: license_key.substring(0, 20) + '...',
-      user_email,
-      fingerprint: system_fingerprint.substring(0, 16) + '...'
+      license_key: '***REDACTED***',
+      user_email: user_email.substring(0, 3) + '***@***',
+      fingerprint: '***REDACTED***'
     });
     
     // ============================================

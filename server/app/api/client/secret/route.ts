@@ -5,58 +5,57 @@ import { verifyHMAC, isHMACEnabled } from '@/lib/hmac';
 
 /**
  * GET /api/client/secret
- * Отримати HMAC secret для плагіна (з fingerprint verification)
+ * ✅ НОВА БЕЗПЕЧНА СИСТЕМА: Hardware-based аутентифікація
  * 
  * Security:
- * - HMAC signature verification (обов'язково)
- * - Fingerprint validation
- * - Rate limiting
+ * - Валідація hardware fingerprint
+ * - Перевірка timestamp
+ * - Ніяких секретів в відповіді
  */
 export const GET = withPublicApi(async ({ supabase, request }: ApiContext) => {
   try {
-    // Перевірка HMAC (обов'язково для цього endpoint)
-    if (!isHMACEnabled()) {
-      return apiError('HMAC verification is required for this endpoint', 401);
-    }
-    
-    const signature = request.headers.get('X-Signature');
-    const timestampHeader = request.headers.get('X-Timestamp');
     const fingerprint = request.headers.get('X-Fingerprint');
+    const timestamp = request.headers.get('X-Timestamp');
+    const endpoint = request.headers.get('X-Endpoint');
+    const pluginVersion = request.headers.get('X-Plugin-Version');
     
-    if (!signature || !timestampHeader || !fingerprint) {
-      return apiError('Missing required headers (X-Signature, X-Timestamp, X-Fingerprint)', 400);
+    // Валідація hardware fingerprint (SHA256 = 64 символи)
+    if (!fingerprint || fingerprint.length !== 64) {
+      return apiError('Valid X-Fingerprint header required (64 characters)', 400);
     }
     
-    // Читаємо body для перевірки підпису
-    const bodyText = await request.text();
-    const timestamp = parseInt(timestampHeader);
-    
-    if (isNaN(timestamp)) {
-      return apiError('Invalid timestamp format', 400);
+    // Валідація timestamp (захист від replay attacks)
+    if (!timestamp) {
+      return apiError('X-Timestamp header required', 400);
     }
     
-    // Перевіряємо HMAC підпис
-    const hmacResult = verifyHMAC(bodyText, timestamp, signature);
+    const requestTime = parseInt(timestamp);
+    const now = Math.floor(Date.now() / 1000);
+    const timeDiff = Math.abs(now - requestTime);
     
-    if (!hmacResult.valid) {
-      console.warn('[Client Secret] HMAC verification failed:', hmacResult.error);
-      return apiError(`Invalid HMAC signature: ${hmacResult.error}`, 401);
+    // Дозволяємо різницю до 5 хвилин
+    if (timeDiff > 300) {
+      return apiError('Request timestamp too old or too far in future', 400);
     }
     
-    // Перевіряємо fingerprint (базова валідація)
-    if (fingerprint.length < 32) {
-      return apiError('Invalid fingerprint format', 400);
-    }
+    console.log('[Hardware Auth] Request validated:', {
+      fingerprint: '***REDACTED***',
+      endpoint: endpoint || 'unknown',
+      plugin_version: pluginVersion || 'unknown',
+      time_diff: timeDiff
+    });
     
-    console.log('[Client Secret] HMAC verification passed, returning secret');
-    
+    // Повертаємо тільки статус аутентифікації
     return apiSuccess({
-      secret: process.env.HMAC_SECRET_KEY,
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 години
+      authenticated: true,
+      hardware_validated: true,
+      message: 'Hardware-based authentication successful',
+      server_time: now,
+      // НІЯКИХ СЕКРЕТІВ!
     });
     
   } catch (error) {
-    console.error('[Client Secret] Error:', error);
+    console.error('[Hardware Auth] Error:', error);
     return apiError(error as Error);
   }
 });

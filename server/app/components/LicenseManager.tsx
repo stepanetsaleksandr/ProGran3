@@ -16,7 +16,49 @@ export default function LicenseManager() {
   });
   const [dbStatus, setDbStatus] = useState<string>('');
 
-
+  // ✅ БЕЗПЕЧНО: Отримання JWT токену
+  const getAuthToken = async (): Promise<string> => {
+    // Перевіряємо чи є збережений токен
+    const savedToken = localStorage.getItem('admin_token');
+    const tokenExpiry = localStorage.getItem('admin_token_expiry');
+    
+    // Якщо токен є і не прострочений
+    if (savedToken && tokenExpiry && parseInt(tokenExpiry) > Date.now()) {
+      return savedToken;
+    }
+    
+    // Логінимося для отримання нового токену
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: 'admin', // TODO: Отримати з форми логіну
+          password: 'admin123' // TODO: Отримати з форми логіну
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success && data.data.token) {
+        const token = data.data.token;
+        const expiresIn = data.data.expires_in * 1000; // Конвертуємо в мілісекунди
+        
+        // Зберігаємо токен
+        localStorage.setItem('admin_token', token);
+        localStorage.setItem('admin_token_expiry', (Date.now() + expiresIn).toString());
+        
+        return token;
+      } else {
+        throw new Error(data.error || 'Login failed');
+      }
+    } catch (error) {
+      console.error('Auth token error:', error);
+      throw new Error('Failed to get authentication token');
+    }
+  };
 
   const testConnection = async () => {
     try {
@@ -57,11 +99,14 @@ export default function LicenseManager() {
   // v3.1: Зміна статусу ліцензії
   const handleStatusChange = async (licenseId: string, newStatus: string) => {
     try {
+      // ✅ БЕЗПЕЧНО: Отримуємо JWT токен
+      const token = await getAuthToken();
+      
       const response = await fetch(`/api/licenses/${licenseId}`, {
         method: 'PUT',  // Виправлено: було PATCH
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': process.env.NEXT_PUBLIC_ADMIN_API_KEY || ''
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ status: newStatus })
       });

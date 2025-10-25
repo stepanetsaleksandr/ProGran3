@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseClient } from './supabase';
 import { apiError, apiUnauthorized } from './api-response';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { validateAuth } from './auth';
 
 /**
  * API Handler context
@@ -51,11 +52,10 @@ export function withApiHandler(
 
       // Optional authentication check
       if (options?.requireAuth) {
-        const apiKey = request.headers.get('X-API-Key');
-        const validKeys = (process.env.API_KEYS || '').split(',').filter(Boolean);
-
-        if (!apiKey || !validKeys.includes(apiKey)) {
-          return apiUnauthorized('Valid API key required');
+        const authResult = validateAuth(request);
+        
+        if (!authResult.valid) {
+          return apiUnauthorized(authResult.error || 'Authentication required');
         }
       }
 
