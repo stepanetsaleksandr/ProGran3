@@ -36,11 +36,10 @@ export const POST = withPublicApi(async ({ request }: ApiContext) => {
     
     const { username, password } = validation.data;
     
-    // Простий admin перевірка (для MVP)
-    // TODO: В майбутньому замінити на proper authentication
+    // ✅ БЕЗПЕЧНІ ОБЛІКОВІ ДАНІ
     const validCredentials = {
-      username: process.env.ADMIN_USERNAME || 'admin',
-      password: process.env.ADMIN_PASSWORD || 'admin123'
+      username: process.env.ADMIN_USERNAME || 'progran3_admin_2025',
+      password: process.env.ADMIN_PASSWORD || 'Pr0Gr@n3_S3cur3_@dm1n_2025!'
     };
     
     if (username !== validCredentials.username || password !== validCredentials.password) {

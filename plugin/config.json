@@ -1,6 +1,6 @@
 {
   "api": {
-    "base_url": "https://server-hbf7li0u7-provis3ds-projects.vercel.app",
+    "base_url": "https://server-elaelsiap-provis3ds-projects.vercel.app",
     "timeout": 10,
     "retry_attempts": 3
   },

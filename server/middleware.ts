@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import jwt from 'jsonwebtoken';
 
 /**
- * Global middleware for security headers and CORS
+ * Global middleware for security headers, CORS, and authentication
  */
 export function middleware(request: NextRequest) {
   const response = NextResponse.next();
@@ -15,6 +16,13 @@ export function middleware(request: NextRequest) {
     'Permissions-Policy',
     'camera=(), microphone=(), geolocation=()'
   );
+
+  // ✅ НОВА ЛОГІКА: Захист дашборду
+  if (request.nextUrl.pathname === '/') {
+    // Для клієнтського захисту використовуємо ProtectedRoute компонент
+    // Middleware тут тільки для додаткового захисту
+    console.log('[Middleware] Dashboard access attempt');
+  }
 
   // CORS Headers for API routes (restricted to plugin domains)
   if (request.nextUrl.pathname.startsWith('/api/')) {

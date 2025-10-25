@@ -6,9 +6,11 @@ import SystemMonitor from './SystemMonitor';
 import { useDashboardStats } from '../hooks/useDashboardStats';
 import { DashboardProvider } from '../context/DashboardContext';
 import { ToastProvider } from './Toast';
+import { useAuth } from '../context/AuthContext';
 
 function DashboardContent() {
   const { stats, loading, error, refreshStats } = useDashboardStats();
+  const { logout } = useAuth();
 
   if (loading) {
     return (
@@ -50,16 +52,38 @@ function DashboardContent() {
               <p className="mt-2 text-gray-600">Управління ліцензіями та моніторинг систем</p>
               <p className="mt-1 text-sm text-gray-500">Версія: 2.0.0 (Об'єднана структура БД)</p>
             </div>
-            <button
-              onClick={refreshStats}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"
-              title="Оновити статистику"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Оновити
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={refreshStats}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"
+                title="Оновити статистику"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Оновити
+              </button>
+              <button
+                onClick={() => window.location.href = '/admin/change-credentials'}
+                className="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 flex items-center gap-2"
+                title="Змінити облікові дані"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Змінити пароль
+              </button>
+              <button
+                onClick={logout}
+                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center gap-2"
+                title="Вийти з системи"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Вийти
+              </button>
+            </div>
           </div>
         </div>
 

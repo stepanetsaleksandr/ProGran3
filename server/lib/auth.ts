@@ -174,3 +174,27 @@ export function validateAuth(request: NextRequest): AuthResult {
   
   return { valid: false, error: 'Invalid authentication' };
 }
+
+/**
+ * Legacy requireApiKey function for backward compatibility
+ */
+export function requireApiKey(handler: any) {
+  return async (request: NextRequest, context?: any) => {
+    const authResult = validateAuth(request);
+    
+    if (!authResult.valid) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: authResult.error || 'Authentication required' 
+        }),
+        { 
+          status: 401, 
+          headers: { 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    
+    return handler(request, context);
+  };
+}

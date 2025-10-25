@@ -56,9 +56,10 @@ module ProGran3
       # 3. Розбитий на частини в різних методах
       # 4. Складніше витягнути через reverse engineering
       
+      # ❌ ВИДАЛЕНО: Секрети небезпечні!
+      # Замінено на hardware-based аутентифікацію
       def self.get_secret_key
-        # v3.2: Використовуємо ConfigManager замість hardcoded secret
-        ProGran3::System::Core::ConfigManager.get_hmac_secret
+        raise SecurityError, "Секрети видалені з міркувань безпеки. Використовуйте hardware-based аутентифікацію."
       end
       
       SECRET_KEY = nil  # Буде встановлено динамічно через get_secret_key
@@ -123,18 +124,10 @@ module ProGran3
         handle_exception('validate', e)
       end
       
-      # v3.2: Отримати HMAC secret з сервера
-      # @return [Hash] { success: Boolean, secret: String, error: String }
-      def self.get_secret
+      # v3.2: Перевірити налаштування HMAC на сервері (НЕ отримуємо секрет!)
+      # @return [Hash] { success: Boolean, hmac_enabled: Boolean, error: String }
+      def self.check_hmac_config
         endpoint = '/api/client/secret'
-        
-        # Створюємо запит з HMAC підписом
-        timestamp = Time.now.to_i
-        body = '{}' # Порожній body для GET запиту
-        
-        # Створюємо підпис з fallback secret
-        fallback_secret = ProGran3::System::Core::ConfigManager.original_secret
-        signature = create_hmac_signature_with_secret(body, timestamp, fallback_secret)
         
         uri = URI.parse("#{API_BASE_URL}#{endpoint}")
         
@@ -146,8 +139,6 @@ module ProGran3
         request = Net::HTTP::Get.new(uri.request_uri)
         request['Content-Type'] = 'application/json'
         request['User-Agent'] = 'ProGran3-Plugin/1.0'
-        request['X-Signature'] = signature
-        request['X-Timestamp'] = timestamp.to_s
         request['X-Fingerprint'] = ProGran3::System::Utils::DeviceIdentifier.generate[:fingerprint]
         
         response = http.request(request)
@@ -156,7 +147,7 @@ module ProGran3
         when 200
           data = JSON.parse(response.body, symbolize_names: true)
           if data[:success]
-            { success: true, secret: data[:data][:secret] }
+            { success: true, hmac_enabled: data[:data][:hmac_enabled] }
           else
             { success: false, error: data[:error] }
           end
@@ -240,19 +231,10 @@ module ProGran3
       
       private
       
-      # Створює HMAC підпис для запиту (v3.0: завжди ввімкнено)
-      # @param body [String] JSON тіло запиту
-      # @param timestamp [Integer] Unix timestamp
-      # @return [String] HMAC підпис (hex)
+      # ❌ ВИДАЛЕНО: HMAC підписи небезпечні!
+      # Замінено на hardware-based аутентифікацію
       def self.create_hmac_signature(body, timestamp)
-        # v3.0: Завжди використовуємо HMAC (не опціонально!)
-        secret = get_secret_key
-        
-        message = "#{body}#{timestamp}"
-        OpenSSL::HMAC.hexdigest('SHA256', secret, message)
-      rescue => e
-        puts "⚠️ Помилка створення HMAC підпису: #{e.message}"
-        nil
+        raise SecurityError, "HMAC підписи видалені з міркувань безпеки. Використовуйте hardware-based аутентифікацію."
       end
       
       # Виконує POST запит
@@ -294,17 +276,14 @@ module ProGran3
         body = payload.to_json
         request.body = body
         
-        # Додаємо HMAC headers (v3.0: завжди!)
-        timestamp = Time.now.to_i
-        signature = create_hmac_signature(body, timestamp)
+        # ✅ НОВА БЕЗПЕЧНА СИСТЕМА: Hardware-based аутентифікація
+        headers = ProGran3::System::Core::ConfigManager.create_authenticated_headers(endpoint, payload)
         
-        if signature
-          request['X-Signature'] = signature
-          request['X-Timestamp'] = timestamp.to_s
-          puts "🔐 HMAC підпис додано" unless silent
-        else
-          puts "⚠️ Не вдалося створити HMAC підпис - запит може бути відхилено сервером" unless silent
+        headers.each do |key, value|
+          request[key] = value
         end
+        
+        puts "🔐 Hardware-based аутентифікація додана" unless silent
         
         response = http.request(request)
         

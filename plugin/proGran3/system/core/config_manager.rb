@@ -9,17 +9,35 @@ module ProGran3
     module Core
       class ConfigManager
       
-      # Отримати HMAC secret (v3.2: динамічне завантаження з fallback)
-      # @return [String] HMAC secret key
+      # ❌ ВИДАЛЕНО: HMAC секрети небезпечні!
+      # Замінено на hardware-based аутентифікацію
       def self.get_hmac_secret
-        # v3.2: Спроба завантажити з сервера
-        server_secret = fetch_secret_from_server
-        if server_secret && !server_secret.empty?
-          return server_secret
-        end
+        raise SecurityError, "HMAC секрети видалені з міркувань безпеки. Використовуйте hardware-based аутентифікацію."
+      end
+      
+      # ✅ НОВА БЕЗПЕЧНА СИСТЕМА: Hardware-based аутентифікація
+      # @return [String] Hardware fingerprint для аутентифікації
+      def self.get_hardware_fingerprint
+        require_relative '../utils/device_identifier'
+        device_info = ProGran3::System::Utils::DeviceIdentifier.generate
+        device_info[:fingerprint]
+      end
+      
+      # ✅ НОВА БЕЗПЕЧНА СИСТЕМА: Створення аутентифікованого запиту
+      # @param endpoint [String] API endpoint
+      # @param payload [Hash] Дані запиту
+      # @return [Hash] Заголовки для аутентифікації
+      def self.create_authenticated_headers(endpoint, payload = {})
+        timestamp = Time.now.to_i
+        fingerprint = get_hardware_fingerprint
         
-        # Fallback на існуючу обфускацію (зворотна сумісність)
-        get_obfuscated_secret
+        {
+          'X-Fingerprint' => fingerprint,
+          'X-Timestamp' => timestamp.to_s,
+          'X-Endpoint' => endpoint,
+          'X-Plugin-Version' => '3.2.0',
+          'Content-Type' => 'application/json'
+        }
       end
       
       private
@@ -87,26 +105,25 @@ module ProGran3
         original_secret
       end
       
-      # Оригінальний secret (для зворотної сумісності)
-      # В production цей метод має бути максимально обфускований
+      # ❌ ВИДАЛЕНО: Локальні секрети НЕБЕЗПЕЧНІ!
+      # Замінено на hardware-based аутентифікацію
       def self.original_secret
-        # Збираємо з частин (так само як get_hmac_secret, але без obfuscation)
-        'ProGran3-HMAC-Global-Secret-2025-v3.1-DO-NOT-SHARE-9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d'
+        raise SecurityError, "Локальні секрети видалені з міркувань безпеки. Використовуйте hardware-based аутентифікацію."
       end
       
-      # v3.2: Динамічне завантаження secret з сервера
-      def self.fetch_secret_from_server
+      # v3.2: Перевірити налаштування HMAC на сервері (НЕ отримуємо секрет!)
+      def self.check_server_hmac_config
         require_relative '../network/network_client'
         
         begin
-          response = ProGran3::System::Network::NetworkClient.get_secret
-          return response[:secret] if response[:success]
+          response = ProGran3::System::Network::NetworkClient.check_hmac_config
+          return response[:hmac_enabled] if response[:success]
         rescue => e
           # Логуємо помилку, але не падаємо
-          puts "⚠️ Failed to fetch server secret: #{e.message}" if $DEBUG
+          puts "⚠️ Failed to check server HMAC config: #{e.message}" if $DEBUG
         end
         
-        nil
+        false # Fallback: вважаємо що HMAC не налаштовано
       end
       
       # v3.2: Fallback на існуючу обфускацію (зворотна сумісність)
