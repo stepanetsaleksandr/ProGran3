@@ -548,25 +548,40 @@
       
     </div>
 
-    <!-- Таб "Матеріали" -->
-    <div class="tab-content" id="materials-tab">
-      <section class="panel">
-        <div class="panel-header" onclick="toggleAccordionPanel(this)">
-          <h2 class="panel-title" data-i18n="panels.materials">Матеріали</h2>
-          <span class="chevron"></span>
-          <span class="header-placeholder"></span>
-        </div>
-        <div class="panel-content">
-          <p class="panel-description">Виберіть та призначте матеріали до компонентів проекту.</p>
-          
-          <!-- Тут буде контент для вибору матеріалів -->
-          <div class="empty-tab-message">
-            <p>Функція вибору матеріалів буде додана в наступних версіях</p>
-            <p>Тут буде можливість вибирати матеріали для фундаменту, плитки, облицювання та інших компонентів</p>
-          </div>
-        </div>
-      </section>
-    </div>
+       <!-- Таб "Матеріали" -->
+       <div class="tab-content" id="materials-tab">
+         <section class="panel">
+           <div class="panel-header" onclick="toggleAccordionPanel(this)">
+             <h2 class="panel-title" data-i18n="panels.materials">Матеріали</h2>
+             <span class="chevron"></span>
+             <span class="header-placeholder"></span>
+           </div>
+           <div class="panel-content">
+             <!-- Кнопка для оновлення списку компонентів -->
+             <div class="materials-controls">
+               <button class="btn btn-primary btn-small" onclick="loadAllComponents()" id="load-components-btn">
+                 <span class="btn-icon">🔄</span>
+                 Оновити
+               </button>
+             </div>
+             
+             <!-- Список компонентів -->
+             <div class="components-list" id="components-list">
+               <div class="empty-tab-message" id="empty-components-message">
+                 <p>Натисніть "Оновити" для завантаження компонентів з моделі</p>
+               </div>
+             </div>
+             
+             <!-- Матеріали з бібліотеки SketchUp -->
+             <div class="materials-library" id="materials-library" style="display: none;">
+               <h3 class="materials-library-title">Матеріали GRANIT</h3>
+               <div class="materials-grid" id="materials-grid">
+                 <!-- Матеріали будуть додані динамічно -->
+               </div>
+             </div>
+           </div>
+         </section>
+       </div>
 
     <!-- Таб "Інфо" -->
     <div class="tab-content" id="view-tab">
@@ -700,7 +715,10 @@
   <!-- 6. Builder модулі -->
   <script src="modules/builders/FoundationBuilder.js"></script>
   
-  <!-- 7. Головний файл в кінці -->
+  <!-- 7. Materials модулі -->
+  <script src="modules/materials/ComponentsManager.js"></script>
+  
+  <!-- 8. Головний файл в кінці -->
   <script src="script.js"></script>
   
   <!-- 8. Функції блокування -->

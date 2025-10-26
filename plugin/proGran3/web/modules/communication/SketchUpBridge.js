@@ -50,6 +50,7 @@
       'add_lamp',
       'generate_web_preview',
       'get_stands_list',
+      'get_all_components',
       'ready'
     ];
     
@@ -444,5 +445,48 @@
       logBridgeAction('Дані звіту порожні', 'warn');
     }
   };
+  
+  // Функція для отримання всіх компонентів з моделі
+  function getAllComponents() {
+    return callSketchUpMethod('get_all_components');
+  }
+  
+  // Функція для отримання матеріалів GRANIT з бібліотеки
+  function getGranitMaterials() {
+    return callSketchUpMethod('get_granit_materials');
+  }
+  
+  // Функція для застосування матеріалу до компонентів
+  function applyMaterial(materialName, componentNames) {
+    return callSketchUpMethod('apply_material', materialName, componentNames);
+  }
+  
+  // Експортуємо публічні функції
+  global.ProGran3.Communication.SketchUpBridge = {
+    initialize: initializeSketchUpBridge,
+    isConnected: isSketchUpConnected,
+    callMethod: callSketchUpMethod,
+    getModels: getModels,
+    createFoundation: createFoundation,
+    createUniformBlindArea: createUniformBlindArea,
+    createCustomBlindArea: createCustomBlindArea,
+    createUniformTiling: createUniformTiling,
+    createCustomTiling: createCustomTiling,
+    createUniformCladding: createUniformCladding,
+    createCustomCladding: createCustomCladding,
+    addStand: addStand,
+    addStele: addStele,
+    addFlowerbed: addFlowerbed,
+    addGravestone: addGravestone,
+    addFenceDecor: addFenceDecor,
+    addFenceCorner: addFenceCorner,
+    addFencePerimeter: addFencePerimeter,
+    addLamp: addLamp,
+    generateWebPreview: generateWebPreview,
+    getAllComponents: getAllComponents,
+    getGranitMaterials: getGranitMaterials,
+    applyMaterial: applyMaterial
+  };
+  
   
 })(window);

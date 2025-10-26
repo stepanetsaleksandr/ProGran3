@@ -685,6 +685,124 @@ module ProGran3
         puts "✅ Статус моделі відправлено в JavaScript"
       end
       
+      # Callback для отримання всіх компонентів з моделі
+      @dialog.add_action_callback("get_all_components") do |dialog, _|
+        puts "🔍 get_all_components callback викликано"
+        
+        # Отримуємо поточну модель SketchUp
+        model = Sketchup.active_model
+        components = []
+        
+        if model
+          # Отримуємо всі компоненти з моделі
+          all_instances = model.active_entities.grep(Sketchup::ComponentInstance)
+          
+          all_instances.each do |instance|
+            definition = instance.definition
+            name = definition.name
+            
+            # Отримуємо розміри компонента
+            bounds = instance.bounds
+            width = bounds.width.to_mm
+            height = bounds.height.to_mm
+            depth = bounds.depth.to_mm
+            
+            # Отримуємо позицію
+            position = instance.transformation.origin
+            x = position.x.to_mm
+            y = position.y.to_mm
+            z = position.z.to_mm
+            
+            # Отримуємо матеріали
+            materials = []
+            definition.entities.each do |entity|
+              if entity.material
+                materials << entity.material.display_name
+              end
+            end
+            
+            # Додаємо компонент до списку з детальною інформацією
+            components << {
+              name: name,
+              dimensions: {
+                width: width.round(1),
+                height: height.round(1),
+                depth: depth.round(1)
+              },
+              position: {
+                x: x.round(1),
+                y: y.round(1),
+                z: z.round(1)
+              },
+              materials: materials.uniq,
+              volume: (width * height * depth).round(1)
+            }
+            
+            puts "✅ Знайдено компонент: #{name} (#{width.round(1)}x#{height.round(1)}x#{depth.round(1)} мм)"
+          end
+        end
+        
+        puts "📊 Всього компонентів: #{components.length}"
+        
+        # Відправляємо список компонентів в JavaScript
+        begin
+          script = "receiveAllComponents(#{components.to_json});"
+          puts "📤 Відправляємо скрипт: #{script}"
+          @dialog.execute_script(script)
+          puts "✅ Список компонентів відправлено в JavaScript"
+        rescue => e
+          puts "❌ Помилка відправки скрипта: #{e.message}"
+        end
+      end
+      
+      # Callback для отримання матеріалів з бібліотеки GRANIT
+      @dialog.add_action_callback("get_granit_materials") do |dialog, _|
+        puts "🔍 get_granit_materials callback викликано"
+        
+        begin
+          materials = get_granit_materials_from_library()
+          
+          # Відправляємо список матеріалів в JavaScript
+          script = "receiveGranitMaterials(#{materials.to_json});"
+          @dialog.execute_script(script)
+          puts "✅ Список матеріалів GRANIT відправлено в JavaScript"
+        rescue => e
+          puts "❌ Помилка отримання матеріалів: #{e.message}"
+          # Відправляємо порожній список при помилці
+          script = "receiveGranitMaterials([]);"
+          @dialog.execute_script(script)
+        end
+      end
+      
+      # Callback для застосування матеріалу до компонентів
+      @dialog.add_action_callback("apply_material") do |dialog, material_name, component_names|
+        puts "🎨 apply_material callback викликано"
+        puts "Матеріал: #{material_name}"
+        puts "Компоненти: #{component_names.inspect}"
+        
+        begin
+          # Отримуємо поточну модель SketchUp
+          model = Sketchup.active_model
+          
+          if model
+            # Завантажуємо матеріал з бібліотеки
+            material = load_material_from_library(material_name)
+            
+            if material
+              # Застосовуємо матеріал до вибраних компонентів
+              apply_material_to_components(model, material, component_names)
+              puts "✅ Матеріал #{material_name} застосовано до компонентів"
+            else
+              puts "❌ Матеріал #{material_name} не знайдено в бібліотеці"
+            end
+          else
+            puts "❌ Модель SketchUp не активна"
+          end
+        rescue => e
+          puts "❌ Помилка застосування матеріалу: #{e.message}"
+        end
+      end
+      
       # Callback для зміни одиниці вимірювання
       @dialog.add_action_callback("change_unit") do |dialog, unit|
         # Встановлюємо нову одиницю в DimensionsManager
@@ -888,6 +1006,146 @@ module ProGran3
       rescue => e
         puts "⚠️ Помилка позиціонування вікна: #{e.message}"
         # Якщо не вдалося позиціонувати, використовуємо стандартну позицію
+      end
+    end
+
+    # Отримання матеріалів з бібліотеки GRANIT
+    def get_granit_materials_from_library
+      materials = []
+      
+      begin
+        # Шлях до папки матеріалів SketchUp
+        materials_path = File.join(Sketchup.find_support_file("Materials"), "GRANIT")
+        
+        if Dir.exist?(materials_path)
+          # Отримуємо всі .skm файли з папки GRANIT (обмежуємо до 2)
+          Dir.glob(File.join(materials_path, "*.skm")).first(2).each do |file_path|
+            material_name = File.basename(file_path, ".skm")
+            
+            # Створюємо превью матеріалу
+            preview = generate_material_preview(file_path)
+            
+            materials << {
+              name: material_name,
+              path: file_path,
+              preview: preview,
+              category: "GRANIT"
+            }
+            
+            puts "✅ Знайдено матеріал: #{material_name}"
+          end
+        else
+          puts "⚠️ Папка GRANIT не знайдена: #{materials_path}"
+          # Створюємо тестові матеріали якщо папка не існує
+          materials = create_test_materials()
+        end
+        
+        puts "📊 Всього матеріалів GRANIT: #{materials.length}"
+        
+      rescue => e
+        puts "❌ Помилка отримання матеріалів: #{e.message}"
+        # Повертаємо тестові матеріали при помилці
+        materials = create_test_materials()
+      end
+      
+      materials
+    end
+    
+    # Створення тестових матеріалів (тільки 2)
+    def create_test_materials
+      [
+        {
+          name: "Граніт чорний",
+          path: "Materials/GRANIT/Граніт чорний.skm",
+          preview: "🖤",
+          category: "GRANIT"
+        },
+        {
+          name: "Граніт сірий",
+          path: "Materials/GRANIT/Граніт сірий.skm", 
+          preview: "⚫",
+          category: "GRANIT"
+        }
+      ]
+    end
+    
+    # Генерація превью матеріалу
+    def generate_material_preview(file_path)
+      # Для початку повертаємо емодзі на основі назви файлу
+      material_name = File.basename(file_path, ".skm").downcase
+      
+      if material_name.include?("чорн") || material_name.include?("black")
+        "🖤"
+      elsif material_name.include?("сір") || material_name.include?("gray") || material_name.include?("grey")
+        "⚫"
+      elsif material_name.include?("біл") || material_name.include?("white")
+        "⚪"
+      elsif material_name.include?("червон") || material_name.include?("red")
+        "🔴"
+      else
+        "🟫" # За замовчуванням
+      end
+    end
+    
+    # Завантаження матеріалу з бібліотеки
+    def load_material_from_library(material_name)
+      begin
+        # Шукаємо матеріал в папці GRANIT
+        materials_path = File.join(Sketchup.find_support_file("Materials"), "GRANIT")
+        material_file = File.join(materials_path, "#{material_name}.skm")
+        
+        if File.exist?(material_file)
+          # Завантажуємо матеріал в модель
+          model = Sketchup.active_model
+          materials = model.materials
+          
+          # Перевіряємо, чи матеріал вже завантажений
+          existing_material = materials[material_name]
+          if existing_material
+            puts "✅ Матеріал #{material_name} вже завантажений"
+            return existing_material
+          end
+          
+          # Завантажуємо матеріал з файлу
+          material = materials.load(material_file)
+          if material
+            puts "✅ Матеріал #{material_name} завантажено з #{material_file}"
+            return material
+          else
+            puts "❌ Не вдалося завантажити матеріал #{material_name}"
+            return nil
+          end
+        else
+          puts "❌ Файл матеріалу не знайдено: #{material_file}"
+          return nil
+        end
+        
+      rescue => e
+        puts "❌ Помилка завантаження матеріалу #{material_name}: #{e.message}"
+        return nil
+      end
+    end
+    
+    # Застосування матеріалу до компонентів
+    def apply_material_to_components(model, material, component_names)
+      # Знаходимо компоненти в моделі
+      all_instances = model.active_entities.grep(Sketchup::ComponentInstance)
+      
+      component_names.each do |component_name|
+        # Знаходимо компонент за назвою
+        instance = all_instances.find { |inst| inst.definition.name == component_name }
+        
+        if instance
+          # Застосовуємо матеріал до всіх поверхонь компонента
+          instance.definition.entities.each do |entity|
+            if entity.is_a?(Sketchup::Face)
+              entity.material = material
+              puts "  - Застосовано матеріал #{material.name} до поверхні в #{component_name}"
+            end
+          end
+        else
+          puts "  - Компонент #{component_name} не знайдено"
+        end
       end
     end
 

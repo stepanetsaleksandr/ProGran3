@@ -5183,3 +5183,28 @@ function updateDetailedSummary(data) {
     console.error('❌ Помилка в updateDetailedSummary:', error);
   }
 }
+
+// ============================================================================
+// 🧱 КОМПОНЕНТИ - функції для роботи з компонентами в табі матеріалів
+// ============================================================================
+
+/**
+ * Глобальна функція для завантаження всіх компонентів з моделі SketchUp
+ * Викликається з HTML кнопки в табі матеріалів
+ * Делегує виклик до ComponentsManager
+ */
+function loadAllComponents() {
+  console.log('🔘 loadAllComponents викликано з HTML кнопки');
+  
+  if (window.ProGran3 && window.ProGran3.Materials && window.ProGran3.Materials.ComponentsManager) {
+    console.log('✅ ComponentsManager доступний, делегуємо виклик');
+    window.ProGran3.Materials.ComponentsManager.loadAllComponents();
+  } else {
+    console.error('❌ ComponentsManager не доступний');
+    console.log('ProGran3:', window.ProGran3);
+    console.log('Materials:', window.ProGran3?.Materials);
+    console.log('ComponentsManager:', window.ProGran3?.Materials?.ComponentsManager);
+  }
+}
+
+
