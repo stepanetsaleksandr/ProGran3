@@ -73,7 +73,8 @@ export const PUT = withPublicApi(async ({ supabase, params, request }: ApiContex
     };
 
     if (duration_days !== undefined) updateData.duration_days = duration_days;
-    if (status !== undefined) updateData.status = status;
+    // v3.2: Status updates are now automatic - manual status changes disabled
+    // if (status !== undefined) updateData.status = status;
     if (description !== undefined) updateData.description = description;
 
     // Update license

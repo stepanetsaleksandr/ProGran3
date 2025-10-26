@@ -96,44 +96,7 @@ export default function LicenseManager() {
     }
   };
 
-  // v3.1: Зміна статусу ліцензії
-  const handleStatusChange = async (licenseId: string, newStatus: string) => {
-    try {
-      // ✅ БЕЗПЕЧНО: Отримуємо JWT токен
-      const token = await getAuthToken();
-      
-      const response = await fetch(`/api/licenses/${licenseId}`, {
-        method: 'PUT',  // Виправлено: було PATCH
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ status: newStatus })
-      });
-      
-      const text = await response.text();
-      let data;
-      
-      try {
-        data = text ? JSON.parse(text) : { success: false, error: 'Empty response' };
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError);
-        showToast(`Помилка парсингу відповіді: ${text}`, 'error');
-        return;
-      }
-      
-      if (data.success) {
-        await refreshDashboard();
-        showToast(`Статус змінено на: ${newStatus}`, 'success');
-      } else {
-        showToast(`Помилка: ${data.error || 'Unknown error'}`, 'error');
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Status change error:', error);
-      showToast(`Помилка при зміні статусу: ${errorMessage}`, 'error');
-    }
-  };
+  // v3.2: Статуси тепер автоматичні - ручне управління видалено
   
   const handleDeleteLicense = async (id: string) => {
     if (!confirm('Ви впевнені, що хочете видалити цю ліцензію?')) return;
@@ -298,22 +261,17 @@ export default function LicenseManager() {
                     {license.description || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <select
-                      value={license.status}
-                      onChange={(e) => handleStatusChange(license.id, e.target.value)}
-                      className={`text-xs font-semibold rounded px-2 py-1 border-0 cursor-pointer ${
-                        license.status === 'active' ? 'bg-green-100 text-green-800' :
-                        license.status === 'generated' ? 'bg-yellow-100 text-yellow-800' :
-                        license.status === 'expired' ? 'bg-red-100 text-red-800' :
-                        license.status === 'suspended' ? 'bg-orange-100 text-orange-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      <option value="generated">Згенерована</option>
-                      <option value="active">Активна</option>
-                      <option value="expired">Прострочена (тест)</option>
-                      <option value="suspended">Заблокована (тест)</option>
-                    </select>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      license.status === 'active' ? 'bg-green-100 text-green-800' :
+                      license.status === 'generated' ? 'bg-yellow-100 text-yellow-800' :
+                      license.status === 'expired' ? 'bg-red-100 text-red-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {license.status === 'active' ? 'Активна' :
+                       license.status === 'generated' ? 'Згенерована' :
+                       license.status === 'expired' ? 'Прострочена' :
+                       license.status}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {license.expires_at ? 

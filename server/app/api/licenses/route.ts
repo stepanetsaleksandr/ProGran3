@@ -9,6 +9,29 @@ import { validateQuery, LicenseQuerySchema } from '@/lib/validation/schemas';
  */
 export const GET = withPublicApi(async ({ supabase, request }: ApiContext) => {
   try {
+    // Auto-update expired licenses before fetching
+    try {
+      const { data: expiredLicenses } = await supabase
+        .from('licenses')
+        .select('id')
+        .eq('status', 'active')
+        .lt('expires_at', new Date().toISOString());
+      
+      if (expiredLicenses && expiredLicenses.length > 0) {
+        console.log(`[License GET] Auto-updating ${expiredLicenses.length} expired licenses`);
+        await supabase
+          .from('licenses')
+          .update({
+            status: 'expired',
+            updated_at: new Date().toISOString()
+          })
+          .in('id', expiredLicenses.map(l => l.id));
+      }
+    } catch (autoUpdateError) {
+      console.warn('[License GET] Auto-update expired licenses failed:', autoUpdateError);
+      // Continue with normal flow even if auto-update fails
+    }
+    
     // Validate query parameters
     const validation = validateQuery(request.nextUrl.searchParams, LicenseQuerySchema);
     
