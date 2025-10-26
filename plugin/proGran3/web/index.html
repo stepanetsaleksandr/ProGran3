@@ -43,6 +43,7 @@
       <button class="tab-button" data-tab="monument" data-i18n="tabs.monument">Памятник</button>
       <button class="tab-button" data-tab="gravestone" data-i18n="tabs.gravestone">Надгробна частина</button>
       <button class="tab-button" data-tab="fence" data-i18n="tabs.fence">Огорожа</button>
+      <button class="tab-button" data-tab="materials" data-i18n="tabs.materials">Матеріали</button>
       <button class="tab-button" data-tab="view" data-i18n="tabs.view">Вигляд</button>
     </div>
 
@@ -547,6 +548,25 @@
       
     </div>
 
+    <!-- Таб "Матеріали" -->
+    <div class="tab-content" id="materials-tab">
+      <section class="panel">
+        <div class="panel-header" onclick="toggleAccordionPanel(this)">
+          <h2 class="panel-title" data-i18n="panels.materials">Матеріали</h2>
+          <span class="chevron"></span>
+          <span class="header-placeholder"></span>
+        </div>
+        <div class="panel-content">
+          <p class="panel-description">Виберіть та призначте матеріали до компонентів проекту.</p>
+          
+          <!-- Тут буде контент для вибору матеріалів -->
+          <div class="empty-tab-message">
+            <p>Функція вибору матеріалів буде додана в наступних версіях</p>
+            <p>Тут буде можливість вибирати матеріали для фундаменту, плитки, облицювання та інших компонентів</p>
+          </div>
+        </div>
+      </section>
+    </div>
 
     <!-- Таб "Інфо" -->
     <div class="tab-content" id="view-tab">

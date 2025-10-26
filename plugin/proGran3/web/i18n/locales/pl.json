@@ -69,6 +69,7 @@
     "monument": "Pomnik",
     "gravestone": "Nagrobek",
     "fence": "Ogrodzenie",
+    "materials": "Materiały",
     "view": "Info"
   },
   "panels": {
@@ -83,7 +84,8 @@
     "fence_corner": "Ogrodzenie narożne",
     "fence_perimeter": "Ogrodzenie obwodowe",
     "fence_decor": "Dekoracja ogrodzenia",
-    "lamps": "Lampy"
+    "lamps": "Lampy",
+    "materials": "Materiały"
   },
   "summary": {
     "title": "Podsumowanie projektu",

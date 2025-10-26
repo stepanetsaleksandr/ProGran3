@@ -77,6 +77,7 @@
     "monument": "Пам'ятник",
     "gravestone": "Надгробок",
     "fence": "Огорожа",
+    "materials": "Матеріали",
     "view": "Інфо"
   },
   "panels": {
@@ -92,6 +93,7 @@
     "fence_perimeter": "Периметральна огорожа",
     "fence_decor": "Декор огорожі",
     "lamps": "Лампи",
+    "materials": "Матеріали",
     "preview": "Превью моделі"
   },
   "summary": {
