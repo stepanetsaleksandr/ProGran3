@@ -1,21 +1,21 @@
 {
-  "api": {
-    "base_url": "https://server-one-amber.vercel.app",
-    "timeout": 10,
-    "retry_attempts": 3
-  },
-  "sketchup_versions": {
-    "2024": "C:\\Users\\ProVis3D\\AppData\\Roaming\\SketchUp\\SketchUp 2024\\SketchUp\\Plugins",
-    "2023": "%APPDATA%\\SketchUp\\SketchUp 2023\\SketchUp\\Plugins",
-    "2022": "%APPDATA%\\SketchUp\\SketchUp 2022\\SketchUp\\Plugins",
-    "2021": "%APPDATA%\\SketchUp\\SketchUp 2021\\SketchUp\\Plugins",
-    "2020": "%APPDATA%\\SketchUp\\SketchUp 2020\\SketchUp\\Plugins"
-  },
-  "default_version": "2024",
-  "plugin_name": "proGran3",
-  "auto_reload": true,
-  "backup_enabled": true,
-  "backup_folder": "backups",
-  "heartbeat_interval": 3600,
-  "debug_mode": false
+    "api":  {
+                "base_url":  "https://server-qgwuna80y-provis3ds-projects.vercel.appQueued ",
+                "timeout":  10,
+                "retry_attempts":  3
+            },
+    "sketchup_versions":  {
+                              "2024":  "C:\\Users\\ProVis3D\\AppData\\Roaming\\SketchUp\\SketchUp 2024\\SketchUp\\Plugins",
+                              "2023":  "%APPDATA%\\SketchUp\\SketchUp 2023\\SketchUp\\Plugins",
+                              "2022":  "%APPDATA%\\SketchUp\\SketchUp 2022\\SketchUp\\Plugins",
+                              "2021":  "%APPDATA%\\SketchUp\\SketchUp 2021\\SketchUp\\Plugins",
+                              "2020":  "%APPDATA%\\SketchUp\\SketchUp 2020\\SketchUp\\Plugins"
+                          },
+    "default_version":  "2024",
+    "plugin_name":  "proGran3",
+    "auto_reload":  true,
+    "backup_enabled":  true,
+    "backup_folder":  "backups",
+    "heartbeat_interval":  3600,
+    "debug_mode":  false
 }
