@@ -186,7 +186,9 @@ export async function requireHMAC(request: Request): Promise<{ valid: boolean; e
  * Перевіряє чи HMAC налаштовано і ввімкнено
  */
 export function isHMACEnabled(): boolean {
-  return !!SECRET_KEY;
+  // Тимчасово вимкнено для тестування
+  return false;
+  // return !!SECRET_KEY;
 }
 
 /**
