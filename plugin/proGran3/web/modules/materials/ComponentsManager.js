@@ -308,12 +308,18 @@
       // Показуємо секцію матеріалів
       this.showMaterialsLibrary();
       
+      // Показуємо діагностичну панель
+      this.showDiagnostics();
+      this.clearDiagnostics();
+      this.updateDiagnostics('🔄 Початок завантаження матеріалів...');
+      
       // Показуємо індикатор завантаження
       this.showMaterialsLoading();
       
       // Встановлюємо таймаут для завантаження матеріалів
       this.materialsTimeout = setTimeout(() => {
         console.warn('⏰ Таймаут завантаження матеріалів (5 секунд)');
+        this.updateDiagnostics('⏰ Таймаут завантаження матеріалів (5 секунд)');
         this.showMaterialsError('Таймаут завантаження матеріалів. Спробуйте ще раз.');
       }, 5000); // 5 секунд
       
@@ -322,13 +328,16 @@
         try {
           window.sketchup.get_granit_materials();
           console.log('📞 Викликаємо window.sketchup.get_granit_materials()');
+          this.updateDiagnostics('📞 Викликаємо window.sketchup.get_granit_materials()');
         } catch (error) {
           console.error('❌ Помилка виклику get_granit_materials:', error);
+          this.updateDiagnostics('❌ Помилка виклику get_granit_materials: ' + error.message);
           this.showMaterialsError('Помилка завантаження матеріалів');
           this.clearMaterialsTimeout();
         }
       } else {
         console.error('❌ Метод get_granit_materials недоступний');
+        this.updateDiagnostics('❌ Метод get_granit_materials недоступний');
         this.showMaterialsError('Метод get_granit_materials не доступний');
         this.clearMaterialsTimeout();
       }
@@ -342,6 +351,40 @@
       if (libraryElement) {
         libraryElement.style.display = 'block';
         console.log('✅ Секція матеріалів показана');
+      }
+    },
+    
+    /**
+     * Показ діагностичної панелі
+     */
+    showDiagnostics() {
+      const diagnosticsPanel = document.getElementById('diagnostics-panel');
+      if (diagnosticsPanel) {
+        diagnosticsPanel.style.display = 'block';
+      }
+    },
+    
+    /**
+     * Оновлення діагностичної інформації
+     * @param {string} message - Повідомлення
+     */
+    updateDiagnostics(message) {
+      const diagnosticsContent = document.getElementById('diagnostics-content');
+      if (diagnosticsContent) {
+        const timestamp = new Date().toLocaleTimeString();
+        diagnosticsContent.innerHTML += `<div class="diagnostic-item">[${timestamp}] ${message}</div>`;
+        // Прокручуємо до низу
+        diagnosticsContent.scrollTop = diagnosticsContent.scrollHeight;
+      }
+    },
+    
+    /**
+     * Очищення діагностичної інформації
+     */
+    clearDiagnostics() {
+      const diagnosticsContent = document.getElementById('diagnostics-content');
+      if (diagnosticsContent) {
+        diagnosticsContent.innerHTML = '';
       }
     },
     
@@ -382,18 +425,21 @@
      */
     receiveGranitMaterials(materials) {
       console.log('🎨 receiveGranitMaterials викликано з даними:', materials);
+      this.updateDiagnostics('🎨 Отримано дані матеріалів з Ruby');
       
       // Очищаємо таймаут
       this.clearMaterialsTimeout();
       
       if (!materials || !Array.isArray(materials)) {
         console.error('❌ Некоректні дані матеріалів:', materials);
+        this.updateDiagnostics('❌ Некоректні дані матеріалів');
         this.showMaterialsError('Некоректні дані матеріалів');
         return;
       }
       
       if (materials.length === 0) {
         console.log('📦 Матеріали не знайдено, показуємо порожній стан');
+        this.updateDiagnostics('📦 Матеріали не знайдено');
         this.showMaterialsEmpty();
         return;
       }
@@ -403,6 +449,23 @@
       
       console.log('✅ Збережено матеріалів:', this.materialsLibrary.length);
       console.log('🎨 Матеріали:', this.materialsLibrary);
+      this.updateDiagnostics(`✅ Збережено матеріалів: ${this.materialsLibrary.length}`);
+      
+      // Діагностика превью
+      this.materialsLibrary.forEach((material, index) => {
+        const isImage = material.preview && material.preview.startsWith('data:image');
+        const previewLength = material.preview ? material.preview.length : 0;
+        
+        console.log(`📋 Матеріал ${index + 1}:`, {
+          name: material.name,
+          preview: material.preview ? material.preview.substring(0, 50) + '...' : 'немає',
+          isImage: isImage,
+          previewLength: previewLength
+        });
+        
+        this.updateDiagnostics(`📋 Матеріал ${index + 1}: ${material.name}`);
+        this.updateDiagnostics(`   Превью: ${isImage ? 'Зображення' : 'Емодзі'} (${previewLength} символів)`);
+      });
       
       // Відображаємо матеріали
       this.displayMaterialsLibrary();
@@ -453,18 +516,50 @@
      * @returns {HTMLElement} - HTML елемент матеріалу
      */
     createMaterialElement(material, index) {
+      console.log(`🖼️ Створюємо елемент матеріалу ${index + 1}:`, material);
+      
       const div = document.createElement('div');
       div.className = 'material-item';
       div.setAttribute('data-index', index);
       div.setAttribute('data-material-name', material.name);
       
+      // Перевіряємо, чи є зображення текстури
+      const isImagePreview = material.preview && material.preview.startsWith('data:image');
+      
+      console.log(`🔍 Матеріал "${material.name}":`, {
+        hasPreview: !!material.preview,
+        isImage: isImagePreview,
+        previewType: material.preview ? material.preview.substring(0, 20) : 'немає'
+      });
+      
       // Створюємо HTML для матеріалу
       div.innerHTML = `
         <div class="material-preview">
-          ${material.preview}
+          ${isImagePreview ? 
+            `<img src="${material.preview}" alt="${this.escapeHtml(material.name)}" class="material-texture-image" onerror="console.log('❌ Помилка завантаження зображення для ${material.name}'); this.style.display='none'; this.nextElementSibling.style.display='flex';">` : 
+            material.preview
+          }
         </div>
         <div class="material-name">${this.escapeHtml(material.name)}</div>
       `;
+      
+      // Додаємо fallback для зображень
+      if (isImagePreview) {
+        const img = div.querySelector('.material-texture-image');
+        if (img) {
+          img.addEventListener('load', () => {
+            console.log(`✅ Зображення завантажено для ${material.name}`);
+          });
+          img.addEventListener('error', () => {
+            console.log(`❌ Помилка завантаження зображення для ${material.name}`);
+            // Якщо зображення не завантажилося, показуємо емодзі
+            const preview = div.querySelector('.material-preview');
+            if (preview) {
+              preview.innerHTML = this.getMaterialEmoji(material.name);
+            }
+          });
+        }
+      }
       
       // Додаємо обробник кліку
       div.addEventListener('click', () => this.selectMaterial(material));
@@ -533,6 +628,33 @@
           console.log(`✅ Матеріал "${material.name}" застосовано до ${this.selectedComponents.length} компонентів`);
         }
       }, 500);
+    },
+    
+    /**
+     * Отримання емодзі для матеріалу
+     * @param {string} materialName - Назва матеріалу
+     * @returns {string} - Емодзі
+     */
+    getMaterialEmoji(materialName) {
+      const name = materialName.toLowerCase();
+      
+      if (name.includes('чорн') || name.includes('black')) {
+        return '🖤';
+      } else if (name.includes('сір') || name.includes('gray') || name.includes('grey')) {
+        return '⚫';
+      } else if (name.includes('біл') || name.includes('white')) {
+        return '⚪';
+      } else if (name.includes('червон') || name.includes('red')) {
+        return '🔴';
+      } else if (name.includes('зелен') || name.includes('green')) {
+        return '🟢';
+      } else if (name.includes('синій') || name.includes('blue')) {
+        return '🔵';
+      } else if (name.includes('жовт') || name.includes('yellow')) {
+        return '🟡';
+      } else {
+        return '🟫'; // За замовчуванням
+      }
     },
     
     /**

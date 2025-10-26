@@ -1053,11 +1053,14 @@ module ProGran3
     
     # Створення тестових матеріалів (тільки 2)
     def create_test_materials
+      # Створюємо простий тестовий base64 зображення (1x1 піксель)
+      test_image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+      
       [
         {
           name: "Граніт чорний",
           path: "Materials/GRANIT/Граніт чорний.skm",
-          preview: "🖤",
+          preview: test_image,
           category: "GRANIT"
         },
         {
@@ -1071,9 +1074,85 @@ module ProGran3
     
     # Генерація превью матеріалу
     def generate_material_preview(file_path)
-      # Для початку повертаємо емодзі на основі назви файлу
-      material_name = File.basename(file_path, ".skm").downcase
-      
+      begin
+        puts "🔄 Генерація превью для: #{file_path}"
+        
+        # Завантажуємо матеріал для отримання текстури
+        model = Sketchup.active_model
+        materials = model.materials
+        
+        # Завантажуємо матеріал з файлу
+        material = materials.load(file_path)
+        puts "📦 Матеріал завантажено: #{material ? 'так' : 'ні'}"
+        
+        if material
+          puts "🎨 Матеріал має текстуру: #{material.texture ? 'так' : 'ні'}"
+          
+          if material.texture
+            # Отримуємо зображення текстури
+            texture_image = material.texture.image
+            puts "🖼️ Текстура має зображення: #{texture_image ? 'так' : 'ні'}"
+            
+            if texture_image
+              puts "📏 Розміри текстури: #{texture_image.width}x#{texture_image.height}"
+              # Конвертуємо в base64 для передачі в JavaScript
+              base64_image = generate_texture_thumbnail(texture_image)
+              if base64_image
+                puts "✅ Base64 зображення згенеровано (#{base64_image.length} символів)"
+                return base64_image
+              else
+                puts "❌ Не вдалося згенерувати base64"
+              end
+            end
+          end
+        end
+        
+        # Якщо не вдалося отримати текстуру, повертаємо емодзі
+        material_name = File.basename(file_path, ".skm").downcase
+        emoji = get_material_emoji(material_name)
+        puts "🔄 Використовуємо емодзі: #{emoji}"
+        return emoji
+        
+      rescue => e
+        puts "⚠️ Помилка генерації превью для #{file_path}: #{e.message}"
+        puts "📍 Backtrace: #{e.backtrace.first(3).join(', ')}"
+        # Повертаємо емодзі при помилці
+        material_name = File.basename(file_path, ".skm").downcase
+        return get_material_emoji(material_name)
+      end
+    end
+    
+    # Генерація мініатюри текстури
+    def generate_texture_thumbnail(texture_image)
+      begin
+        # Отримуємо розміри оригінального зображення
+        width = texture_image.width
+        height = texture_image.height
+        
+        # Розраховуємо розміри для мініатюри (32x32)
+        thumbnail_size = 32
+        scale = [thumbnail_size.to_f / width, thumbnail_size.to_f / height].min
+        
+        new_width = (width * scale).to_i
+        new_height = (height * scale).to_i
+        
+        # Створюємо мініатюру
+        thumbnail = texture_image.resize(new_width, new_height)
+        
+        # Конвертуємо в base64
+        base64_data = thumbnail.to_data_url("png")
+        
+        puts "✅ Згенеровано мініатюру текстури: #{new_width}x#{new_height}"
+        return base64_data
+        
+      rescue => e
+        puts "❌ Помилка створення мініатюри: #{e.message}"
+        return nil
+      end
+    end
+    
+    # Отримання емодзі на основі назви матеріалу
+    def get_material_emoji(material_name)
       if material_name.include?("чорн") || material_name.include?("black")
         "🖤"
       elsif material_name.include?("сір") || material_name.include?("gray") || material_name.include?("grey")
@@ -1082,6 +1161,12 @@ module ProGran3
         "⚪"
       elsif material_name.include?("червон") || material_name.include?("red")
         "🔴"
+      elsif material_name.include?("зелен") || material_name.include?("green")
+        "🟢"
+      elsif material_name.include?("синій") || material_name.include?("blue")
+        "🔵"
+      elsif material_name.include?("жовт") || material_name.include?("yellow")
+        "🟡"
       else
         "🟫" # За замовчуванням
       end
