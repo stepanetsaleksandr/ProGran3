@@ -80,7 +80,23 @@ export function useLicenses(): UseLicensesReturn {
       setError(null);
       
       const response = await fetch('/api/licenses');
-      const data = await response.json();
+      
+      // Check if response has content before parsing JSON
+      if (!response.ok) {
+        const text = await response.text();
+        let errorData;
+        try {
+          errorData = text ? JSON.parse(text) : { error: 'Failed to fetch licenses' };
+        } catch {
+          errorData = { error: text || 'Failed to fetch licenses' };
+        }
+        setError(errorData.error || 'Failed to fetch licenses');
+        return;
+      }
+
+      // Try to parse JSON, handle empty responses
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : { success: false, error: 'Empty response from server' };
       
       if (data.success) {
         // New API structure: data.data.licenses (with pagination)
@@ -100,23 +116,34 @@ export function useLicenses(): UseLicensesReturn {
 
   const createLicense = useCallback(async (licenseData: { duration_days: number; description: string }): Promise<boolean> => {
     try {
-      // ✅ БЕЗПЕЧНО: Використовуємо hardware-based аутентифікацію
-      // Ніяких API ключів в клієнтському коді!
+      // ✅ БЕЗПЕЧНО: Використовуємо JWT токен замість публічних API ключів
+      const token = await getAuthToken();
       
-      const response = await fetch('/api/admin/licenses/generate', {
+      const response = await fetch('/api/licenses/generate', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          // ✅ БЕЗПЕЧНО: Hardware-based заголовки замість API ключів
-          'X-Fingerprint': 'admin-hardware-fingerprint', // TODO: Отримати з admin панелі
-          'X-Timestamp': Math.floor(Date.now() / 1000).toString(),
-          'X-Endpoint': '/api/admin/licenses/generate',
-          'X-Plugin-Version': '3.2.0'
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(licenseData)
       });
       
-      const data = await response.json();
+      // Check if response has content before parsing JSON
+      if (!response.ok) {
+        const text = await response.text();
+        let errorData;
+        try {
+          errorData = text ? JSON.parse(text) : { error: 'Failed to create license' };
+        } catch {
+          errorData = { error: text || 'Failed to create license' };
+        }
+        setError(errorData.error || 'Failed to create license');
+        return false;
+      }
+
+      // Try to parse JSON, handle empty responses
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : { success: false, error: 'Empty response from server' };
       
       if (data.success) {
         // Refresh licenses after creation
@@ -132,7 +159,7 @@ export function useLicenses(): UseLicensesReturn {
       console.error('Error creating license:', err);
       return false;
     }
-  }, [fetchLicenses]);
+  }, [fetchLicenses, getAuthToken]);
 
   const deleteLicense = useCallback(async (id: string): Promise<boolean> => {
     try {
@@ -178,7 +205,7 @@ export function useLicenses(): UseLicensesReturn {
       console.error('Error deleting license:', err);
       return false;
     }
-  }, [fetchLicenses]);
+  }, [fetchLicenses, getAuthToken]);
 
   useEffect(() => {
     fetchLicenses();
