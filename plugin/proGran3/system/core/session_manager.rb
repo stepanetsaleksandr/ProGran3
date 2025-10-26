@@ -14,8 +14,10 @@ module ProGran3
       class SessionManager
       
       # Grace period - скільки днів може працювати offline
-      GRACE_PERIOD_DAYS = 1  # v3.2: Змінено з 7 на 1 день
-      WARNING_PERIOD_DAYS = 0  # Без попереджень (блокує відразу після 1 дня)
+      # v3.4: Динамічний grace period залежно від причини блокування
+      GRACE_PERIOD_LICENSE_DELETED = 0  # Негайне блокування при видаленій ліцензії
+      GRACE_PERIOD_DEFAULT = 2  # 2 дні для інших випадків (offline, помилки мережі)
+      WARNING_PERIOD_DAYS = 1  # Попередження за 1 день до блокування
       
       # Ініціалізація менеджера
       def initialize
@@ -175,8 +177,75 @@ module ProGran3
           puts "⏰ Ліцензія дійсна ще #{days_until_expiry} днів"
         end
         
-        # Перевірка grace period
-        grace_result = check_grace_period(license)
+        # === ONLINE VALIDATION FIRST ===
+        puts "🌐 Спроба online валідації перед перевіркою grace period..."
+        online_result = ProGran3::System::Network::NetworkClient.validate(license[:license_key], @fingerprint)
+        
+        if online_result[:success] && online_result[:data]
+          if online_result[:data][:valid]
+            # Ліцензія валідна на сервері - оновлюємо дані
+            puts "✅ Online валідація успішна - ліцензія валідна на сервері"
+            license[:last_validation] = Time.now.iso8601
+            license[:server_data] = online_result[:data]
+            ProGran3::System::Core::DataStorage.delete
+            ProGran3::System::Core::DataStorage.save(license)
+            
+            @current_license = license
+            return {
+              valid: true,
+              license: license
+            }
+          else
+            # Ліцензія НЕ валідна на сервері - негайне блокування
+            puts "🚨 КРИТИЧНО: Ліцензія не валідна на сервері!"
+            puts "   Причина: #{online_result[:data][:error] || 'License invalid on server'}"
+            
+            # Блокуємо плагін глобально
+            $plugin_blocked = true
+            
+            # Показуємо повідомлення користувачу
+            if defined?(UI) && UI.respond_to?(:messagebox)
+              UI.messagebox("Ліцензія була деактивована на сервері. Плагін заблокований.", MB_OK)
+            end
+            
+            return {
+              valid: false,
+              blocked: true,
+              error: 'license_invalid_server',
+              message: online_result[:data][:error] || 'License invalid on server'
+            }
+          end
+        elsif !online_result[:success] && online_result[:data] && online_result[:data][:valid] == false
+          # Спеціальний випадок: сервер повернув { valid: false } (наприклад, "License not found")
+          puts "🚨 КРИТИЧНО: Ліцензія не знайдена або не валідна на сервері!"
+          puts "   Причина: #{online_result[:data][:error] || online_result[:error] || 'License not found'}"
+          
+          # Блокуємо плагін глобально
+          $plugin_blocked = true
+          
+          # Показуємо повідомлення користувачу
+          if defined?(UI) && UI.respond_to?(:messagebox)
+            UI.messagebox("Ліцензія не знайдена на сервері. Плагін заблокований.", MB_OK)
+          end
+          
+          return {
+            valid: false,
+            blocked: true,
+            error: 'license_not_found',
+            message: online_result[:data][:error] || online_result[:error] || 'License not found'
+          }
+        elsif !online_result[:offline]
+          # Помилка валідації (не offline) - перевіряємо grace period з причиною license_deleted
+          puts "🚨 Помилка online валідації: #{online_result[:error]}"
+          grace_result = check_grace_period(license, 'license_deleted')
+        else
+          # Сервер недоступний - стандартна перевірка grace period
+          puts "ℹ️ Сервер недоступний - перевіряємо grace period"
+          grace_result = check_grace_period(license, 'network_error')
+        end
+        
+        # Перевірка grace period (тільки якщо online валідація не вдалася)
+        grace_result ||= check_grace_period(license, 'default')
         
         case grace_result[:action]
         when :block
@@ -229,10 +298,11 @@ module ProGran3
         }
       end
       
-      # Перевірка grace period
+      # Перевірка grace period з динамічним періодом
       # @param license [Hash]
-      # @return [Hash] { action: Symbol, message: String, days_offline: Integer }
-      def check_grace_period(license)
+      # @param reason [String] Причина перевірки (для визначення grace period)
+      # @return [Hash] { action: Symbol, message: String, days_offline: Integer, grace_period: Integer }
+      def check_grace_period(license, reason = 'default')
         last_validation = license[:last_validation] || license[:activated_at]
         
         unless last_validation
@@ -255,10 +325,12 @@ module ProGran3
           puts "   Last validation: #{last_validation_time}"
           puts "   Різниця: #{((last_validation_time - current_time) / 3600.0).round(1)} годин"
           
+          # Для маніпуляцій з часом - негайне блокування
           return {
             action: :block,
             message: 'Виявлено зміну системного часу. Підключіться до інтернету для валідації.',
-            time_tampering: true
+            time_tampering: true,
+            grace_period: GRACE_PERIOD_LICENSE_DELETED
           }
         end
         
@@ -266,11 +338,13 @@ module ProGran3
         if time_check[:valid] == false
           Logger.error("NTP validation failed: #{time_check[:error]}", "LicenseManager")
           
+          # Для NTP помилок - негайне блокування
           return {
             action: :block,
             message: time_check[:error],
             time_tampering: true,
-            time_diff: time_check[:diff_seconds]
+            time_diff: time_check[:diff_seconds],
+            grace_period: GRACE_PERIOD_LICENSE_DELETED
           }
         end
         
@@ -281,30 +355,64 @@ module ProGran3
         
         days_offline = ((current_time - last_validation_time) / 86400.0).round(1)
         
-        puts "📊 Днів без online валідації: #{days_offline}"
+        # Визначаємо grace period залежно від причини
+        grace_period = determine_grace_period(reason)
         
-        # v3.1: Блокуємо >= 7 днів (не > 7)
-        if days_offline >= GRACE_PERIOD_DAYS
+        puts "📊 Днів без online валідації: #{days_offline}"
+        puts "📊 Grace period для причини '#{reason}': #{grace_period} днів"
+        
+        # Перевіряємо чи перевищено grace period
+        if days_offline >= grace_period
           # Grace period вичерпано
           {
             action: :block,
-            message: "Grace period вичерпано (#{days_offline.to_i} днів offline). Підключіться до інтернету.",
-            days_offline: days_offline.to_i
+            message: "Grace period вичерпано (#{days_offline.to_i} днів offline, ліміт: #{grace_period} днів). Підключіться до інтернету.",
+            days_offline: days_offline.to_i,
+            grace_period: grace_period,
+            reason: reason
           }
         elsif days_offline >= WARNING_PERIOD_DAYS
           # Попередження
           {
             action: :warn,
-            message: "Рекомендуємо підключитись до інтернету (#{days_offline.to_i} днів offline)",
-            days_offline: days_offline.to_i
+            message: "Рекомендуємо підключитись до інтернету (#{days_offline.to_i} днів offline, ліміт: #{grace_period} днів)",
+            days_offline: days_offline.to_i,
+            grace_period: grace_period,
+            reason: reason
           }
         else
           # Все OK
           {
             action: :allow,
             message: 'OK',
-            days_offline: days_offline.to_i
+            days_offline: days_offline.to_i,
+            grace_period: grace_period,
+            reason: reason
           }
+        end
+      end
+      
+      # Визначає grace period залежно від причини блокування
+      # @param reason [String] Причина перевірки
+      # @return [Integer] Grace period в днях
+      def determine_grace_period(reason)
+        case reason.to_s.downcase
+        when 'license_deleted', 'license_invalid', 'server_invalid'
+          # Негайне блокування при видаленій/невалідній ліцензії
+          puts "🔴 Критична причина: #{reason} - grace period = 0 днів"
+          GRACE_PERIOD_LICENSE_DELETED
+        when 'network_error', 'server_offline', 'timeout', 'connection_failed'
+          # 2 дні для мережевих проблем
+          puts "🟡 Мережева проблема: #{reason} - grace period = 2 дні"
+          GRACE_PERIOD_DEFAULT
+        when 'time_tampering', 'ntp_failed'
+          # Негайне блокування при маніпуляціях з часом
+          puts "🔴 Маніпуляція з часом: #{reason} - grace period = 0 днів"
+          GRACE_PERIOD_LICENSE_DELETED
+        else
+          # За замовчуванням - 2 дні
+          puts "🟢 Стандартна причина: #{reason} - grace period = 2 дні"
+          GRACE_PERIOD_DEFAULT
         end
       end
       
@@ -350,7 +458,7 @@ module ProGran3
         end
       end
       
-      # Валідація online в фоні (не блокує)
+      # Валідація online в фоні (з автоматичним блокуванням)
       # @param license [Hash]
       def validate_online_background(license)
         Thread.new do
@@ -369,15 +477,56 @@ module ProGran3
               
               puts "✅ Фонова валідація успішна"
             elsif !result[:offline]
-              # Ліцензія більше не валідна на сервері
-              puts "⚠️ ВАЖЛИВО: Ліцензія деактивована на сервері!"
-              # Тут можна показати попередження користувачу
+              # Ліцензія більше не валідна на сервері - БЛОКУЄМО!
+              puts "🚨 КРИТИЧНО: Ліцензія деактивована на сервері!"
+              puts "   Причина: #{result[:error] || 'License invalid on server'}"
+              
+              # Перевіряємо grace period з причиною "license_deleted"
+              grace_result = check_grace_period(license, 'license_deleted')
+              
+              if grace_result[:action] == :block
+                # Блокуємо плагін глобально
+                $plugin_blocked = true
+                
+                # Логуємо блокування
+                puts "🔒 Плагін заблоковано через невалідну ліцензію на сервері"
+                
+                # Показуємо повідомлення користувачу
+                if defined?(UI) && UI.respond_to?(:messagebox)
+                  UI.messagebox("Ліцензія була деактивована на сервері. Плагін заблокований.", MB_OK)
+                end
+                
+                # Відправляємо телеметрію про блокування
+                begin
+                  ProGran3::System::Monitoring::Analytics.track_feature('license_blocked_server_invalid')
+                  ProGran3::System::Monitoring::Analytics.send_if_needed(true)  # Force send
+                rescue => e
+                  puts "⚠️ Помилка відправки телеметрії: #{e.message}"
+                end
+              else
+                puts "⚠️ Grace period ще дійсний для видаленої ліцензії: #{grace_result[:message]}"
+              end
+              
             else
               puts "ℹ️ Фонова валідація: сервер offline (нормально)"
             end
             
           rescue => e
             puts "⚠️ Помилка фонової валідації: #{e.message}"
+            # При мережевих помилках перевіряємо grace period
+            if e.message.include?('network') || e.message.include?('timeout')
+              puts "🟡 Мережева помилка - перевіряємо grace period"
+              
+              # Перевіряємо grace period з причиною "network_error"
+              grace_result = check_grace_period(license, 'network_error')
+              
+              if grace_result[:action] == :block
+                puts "🚨 Grace period вичерпано для мережевих помилок - блокуємо плагін"
+                $plugin_blocked = true
+              else
+                puts "⚠️ Grace period ще дійсний для мережевих помилок: #{grace_result[:message]}"
+              end
+            end
           end
         end
       end

@@ -362,6 +362,15 @@ module ProGran3
             if body && !body.empty?
               data = JSON.parse(body, symbolize_names: true)
               error_message = data[:error] || data[:message] || "HTTP #{response.code}"
+              
+              # Спеціальна обробка для "License not found"
+              if error_message.include?('License not found') || error_message.include?('not found')
+                return {
+                  success: false,
+                  error: 'License not found',
+                  data: { valid: false, error: 'License not found' }
+                }
+              end
             else
               error_message = "HTTP #{response.code}"
             end
