@@ -111,16 +111,27 @@ export default function LicenseManager() {
         body: JSON.stringify({ status: newStatus })
       });
       
-      const data = await response.json();
+      const text = await response.text();
+      let data;
+      
+      try {
+        data = text ? JSON.parse(text) : { success: false, error: 'Empty response' };
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        showToast(`Помилка парсингу відповіді: ${text}`, 'error');
+        return;
+      }
       
       if (data.success) {
         await refreshDashboard();
         showToast(`Статус змінено на: ${newStatus}`, 'success');
       } else {
-        showToast(`Помилка: ${data.error}`, 'error');
+        showToast(`Помилка: ${data.error || 'Unknown error'}`, 'error');
       }
     } catch (error) {
-      showToast('Помилка при зміні статусу', 'error');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Status change error:', error);
+      showToast(`Помилка при зміні статусу: ${errorMessage}`, 'error');
     }
   };
   
