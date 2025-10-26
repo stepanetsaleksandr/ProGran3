@@ -1,164 +1,94 @@
-# ProGran3 - Professional License Management System
+# ProGran3 - Professional 3D Cemetery Planning Plugin
 
-**Version:** 3.2.1  
-**Production:** https://server-i74j0z2y9-provis3ds-projects.vercel.app  
-**Status:** 🟢 Production Ready  
-**Security:** 🟢 9.0/10 (EXCELLENT)  
-**Last Updated:** 24 жовтня 2025
+## 🎯 Overview
 
----
-
-## 🚀 Quick Start
-
-### For Developers:
-**READ THIS FIRST:** [`DEVELOPER_GUIDE.md`](./DEVELOPER_GUIDE.md)
-
-Єдине джерело правди з усією критичною інформацією:
-- Architecture
-- Security
-- API Reference
-- Development workflow
-- Deployment process
-- Troubleshooting
-
-### For Users:
-1. Встановити plugin в SketchUp
-2. Запустити: Plugins → proGran3 Конструктор
-3. Активувати ліцензію (email + key)
-4. Працювати
-
-### For Admins:
-- Dashboard: https://server-i74j0z2y9-provis3ds-projects.vercel.app/dashboard
-- Generate licenses → Copy key → Send to users
-- Manage licenses (status, expiration, manual changes)
-
----
-
-## 📦 What is ProGran3?
-
-**SketchUp plugin** для конструювання пам'ятників з професійною системою ліцензування:
-
-**Features:**
-- ✅ License Management (hardware binding v3.0, 9/10 security)
-- ✅ Activity Tracking (real-time monitoring)
-- ✅ Professional Dashboard (Next.js + Supabase)
-- ✅ Offline Support (1-day grace period)
-- ✅ Concurrent Detection (IP tracking + auto-suspension)
-- ✅ Multi-language (UK/PL/EN)
-- ✅ Professional Report Generation (server-side)
-- ✅ Obfuscated License System (hidden files)
-
-**Tech Stack:**
-- Plugin: Ruby + SketchUp API
-- Server: Next.js 14 + TypeScript
-- Database: Supabase (PostgreSQL)
-- Hosting: Vercel
-
----
+ProGran3 is a professional SketchUp plugin for 3D cemetery planning and design. The system consists of a SketchUp plugin and a web-based admin dashboard for license management.
 
 ## 🏗️ Architecture
 
-```
-SketchUp Plugin (Ruby)
-    ↕ HTTPS REST API
-Vercel Server (Next.js)
-    ↕
-Supabase Database (PostgreSQL)
-```
+- **Plugin**: Ruby-based SketchUp extension
+- **Server**: Next.js admin dashboard with Supabase backend
+- **License System**: Secure hardware-based licensing with grace periods
 
-**Security:** 8/10 (можна 9/10 з налаштуванням HMAC + Upstash)
+## 🚀 Quick Start
 
----
+### Plugin Installation
+1. Download the latest `.rbz` file from `dist/` folder
+2. Install in SketchUp: Window → Preferences → Extensions → Install Extension
+3. Restart SketchUp
 
-## 💻 Development
-
+### Server Deployment
 ```bash
-# Server
 cd server
 npm install
-npm run dev        # http://localhost:3000
-
-# Plugin
-# Copy to SketchUp Plugins directory
-# Restart SketchUp
+npm run build
+npm run start
 ```
 
-**Full Guide:** [`DEVELOPER_GUIDE.md`](./DEVELOPER_GUIDE.md)
+## 📁 Project Structure
 
----
-
-## 🚀 Deployment
-
-```bash
-vercel --prod --yes
+```
+ProGran3/
+├── plugin/                 # SketchUp plugin (Ruby)
+├── server/                 # Admin dashboard (Next.js)
+├── dist/                   # Built plugin files
+├── docs/                   # Documentation
+└── README.md              # This file
 ```
 
-**Post-deploy:** Оновити URL в `plugin/proGran3/system/network/network_client.rb`
+## 🔧 Development
 
-**Full Guide:** [`DEVELOPER_GUIDE.md`](./DEVELOPER_GUIDE.md#4-deployment)
+### Plugin Development
+- Main file: `plugin/proGran3.rb`
+- Configuration: `plugin/config.json`
+- Force reload: `plugin/force_reload_plugin.rb`
 
----
+### Server Development
+- Main app: `server/app/`
+- API routes: `server/app/api/`
+- Database: Supabase (PostgreSQL)
 
 ## 📚 Documentation
 
-**For Developers (START HERE):**
-- [`DEVELOPER_GUIDE.md`](./DEVELOPER_GUIDE.md) - Єдине джерело правди
+- [Deployment Guide](DEPLOYMENT.md) - Server deployment instructions
+- [Security Guide](SECURITY.md) - Security implementation details
+- [API Documentation](docs/development/API_DOCUMENTATION.md) - API endpoints
+- [License System](LICENSE_SYSTEM_CHANGES.md) - License management details
 
-**Additional (optional):**
-- [`ROADMAP.md`](./ROADMAP.md) - Future plans
-- [`PROJECT_STATUS.md`](./PROJECT_STATUS.md) - Current status
-- [`docs/`](./docs/) - Archive & supplementary docs
+## 🔐 License Management
 
----
+The system uses hardware-based licensing with:
+- Device fingerprinting
+- Grace periods for offline usage
+- Automatic license validation
+- Admin dashboard for license management
 
-## 🔐 Security
+## 🛠️ Build & Deploy
 
-```
-✅ Hardware Fingerprinting (SHA256)
-✅ AES-256 Encryption
-✅ Server Validation
-✅ Grace Period (7 days)
-✅ API Key Protection
-✅ HMAC Signatures (optional)
-✅ Rate Limiting
+### Build Plugin
+```bash
+# Windows
+build_rbz.bat
 
-Rating: 8/10 (9/10 with HMAC + Upstash)
-```
-
----
-
-## 🧪 Testing
-
-```ruby
-# SketchUp Ruby Console:
-# Тестування через UI або Ruby Console
-ProGran3::System::Core::SessionManager.validate_license
+# Linux/Mac
+./build_rbz.sh
 ```
 
-**All tests:** [`DEVELOPER_GUIDE.md`](./DEVELOPER_GUIDE.md#5-testing)
+### Deploy Server
+```bash
+# Production deployment
+deploy.bat
 
----
+# Smart deployment with checks
+deploy_smart.bat
+```
 
 ## 📞 Support
 
-**Issues:** GitHub Issues  
-**Security:** Report immediately  
-**Documentation:** [`DEVELOPER_GUIDE.md`](./DEVELOPER_GUIDE.md)
+For technical support and license issues, contact the development team.
 
 ---
 
-## 📊 Stats
-
-```
-Code:          ~8,000 lines (Plugin) + ~5,000 lines (Server)
-Security:      8/10 (8 protection layers)
-Uptime:        99.9%
-Documentation: Professional
-Status:        Production Ready ✅
-```
-
----
-
-**Built with Next.js, Supabase, and SketchUp API**
-
-**© 2025 ProGran3 | Production Ready**
+**Version**: 3.2.1  
+**Last Updated**: 2025-01-26  
+**Status**: Production Ready

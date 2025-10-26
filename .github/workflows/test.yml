@@ -1,0 +1,319 @@
+name: Automated Testing
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  # Server Tests (Node.js/TypeScript)
+  server-tests:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+        
+    - name: Install dependencies
+      working-directory: ./server
+      run: npm ci
+      
+    - name: Run linting
+      working-directory: ./server
+      run: npm run lint
+      
+    - name: Run unit tests
+      working-directory: ./server
+      run: npm run test:coverage
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        API_KEYS: ${{ secrets.API_KEYS }}
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./server/coverage/lcov.info
+        flags: server
+        name: server-coverage
+        
+  # E2E Tests
+  e2e-tests:
+    runs-on: ubuntu-latest
+    needs: server-tests
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+        
+    - name: Install dependencies
+      working-directory: ./server
+      run: npm ci
+      
+    - name: Install Playwright browsers
+      working-directory: ./server
+      run: npx playwright install --with-deps
+      
+    - name: Build application
+      working-directory: ./server
+      run: npm run build
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        API_KEYS: ${{ secrets.API_KEYS }}
+        
+    - name: Run E2E tests
+      working-directory: ./server
+      run: npm run test:e2e
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        API_KEYS: ${{ secrets.API_KEYS }}
+        
+    - name: Upload E2E test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: playwright-report
+        path: server/playwright-report/
+        retention-days: 30
+        
+  # Plugin Tests (Ruby)
+  plugin-tests:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        ruby-version: ['3.0', '3.1', '3.2']
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Ruby ${{ matrix.ruby-version }}
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby-version }}
+        bundler-cache: true
+        
+    - name: Install dependencies
+      working-directory: ./plugin
+      run: |
+        gem install test-unit
+        gem install mocha
+        
+    - name: Run plugin tests
+      working-directory: ./plugin
+      run: ruby __tests__/test_runner.rb
+      
+    - name: Upload plugin test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: plugin-test-results-ruby-${{ matrix.ruby-version }}
+        path: plugin/__tests__/test-results/
+        retention-days: 30
+        
+  # Security Tests
+  security-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+        
+    - name: Run npm audit
+      working-directory: ./server
+      run: npm audit --audit-level=moderate
+      
+  # Performance Tests
+  performance-tests:
+    runs-on: ubuntu-latest
+    needs: server-tests
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+        
+    - name: Install dependencies
+      working-directory: ./server
+      run: npm ci
+      
+    - name: Build application
+      working-directory: ./server
+      run: npm run build
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        API_KEYS: ${{ secrets.API_KEYS }}
+        
+    - name: Start application
+      working-directory: ./server
+      run: npm start &
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        API_KEYS: ${{ secrets.API_KEYS }}
+        
+    - name: Wait for application to start
+      run: sleep 10
+      
+    - name: Run performance tests
+      run: |
+        # Install k6
+        sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+        echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+        sudo apt-get update
+        sudo apt-get install k6
+        
+        # Run performance tests
+        k6 run --out json=performance-results.json performance-tests/load-test.js
+        
+    - name: Upload performance results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: performance-results
+        path: performance-results.json
+        retention-days: 30
+        
+  # Integration Tests
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: [server-tests, plugin-tests]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+        
+    - name: Setup Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.2'
+        bundler-cache: true
+        
+    - name: Install server dependencies
+      working-directory: ./server
+      run: npm ci
+      
+    - name: Install plugin dependencies
+      working-directory: ./plugin
+      run: |
+        gem install test-unit
+        gem install mocha
+        
+    - name: Start server
+      working-directory: ./server
+      run: npm start &
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        API_KEYS: ${{ secrets.API_KEYS }}
+        
+    - name: Wait for server to start
+      run: sleep 15
+      
+    - name: Run integration tests
+      run: |
+        # Run server integration tests
+        cd server && npm run test:integration &
+        
+        # Run plugin integration tests
+        cd plugin && ruby __tests__/integration_test_runner.rb &
+        
+        # Wait for both to complete
+        wait
+        
+    - name: Upload integration test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: integration-test-results
+        path: |
+          server/integration-test-results/
+          plugin/integration-test-results/
+        retention-days: 30
+        
+  # Test Summary
+  test-summary:
+    runs-on: ubuntu-latest
+    needs: [server-tests, e2e-tests, plugin-tests, security-tests, performance-tests, integration-tests]
+    if: always()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Generate test summary
+      run: |
+        echo "# 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Test Suite | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Server Tests | ${{ needs.server-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| E2E Tests | ${{ needs.e2e-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Plugin Tests | ${{ needs.plugin-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Security Tests | ${{ needs.security-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Performance Tests | ${{ needs.performance-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Integration Tests | ${{ needs.integration-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## 📊 Overall Status" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [[ "${{ needs.server-tests.result }}" == "success" && "${{ needs.e2e-tests.result }}" == "success" && "${{ needs.plugin-tests.result }}" == "success" && "${{ needs.security-tests.result }}" == "success" && "${{ needs.performance-tests.result }}" == "success" && "${{ needs.integration-tests.result }}" == "success" ]]; then
+          echo "🎉 **All tests passed!** The code is ready for deployment." >> $GITHUB_STEP_SUMMARY
+        else
+          echo "⚠️ **Some tests failed.** Please review the results and fix any issues." >> $GITHUB_STEP_SUMMARY
+        fi

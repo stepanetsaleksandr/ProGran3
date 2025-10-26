@@ -40,11 +40,27 @@ module ProGran3
         }
       end
       
-      # URL сервера (з конфігу)
-      API_BASE_URL = load_api_config[:base_url].freeze
+      # URL сервера (динамічний з конфігу)
+      def self.get_api_base_url
+        url = load_api_config[:base_url]
+        puts "🌐 Використовуємо сервер: #{url}" if defined?(puts)
+        url
+      end
       
-      # Timeout для запитів (з конфігу)
-      REQUEST_TIMEOUT = load_api_config[:timeout]
+      # Примусове оновлення конфігурації
+      def self.reload_config!
+        puts "🔄 Примусове оновлення конфігурації NetworkClient..."
+        # Очищаємо будь-який кеш
+        @config_cache = nil if defined?(@config_cache)
+        url = load_api_config[:base_url]
+        puts "✅ Новий URL сервера: #{url}"
+        url
+      end
+      
+      # Timeout для запитів (динамічний з конфігу)
+      def self.get_request_timeout
+        load_api_config[:timeout]
+      end
       
       # HMAC Secret Key (v3.2: obfuscated через SecretManager)
       # Використовуємо глобальний secret для всіх клієнтів
@@ -129,12 +145,12 @@ module ProGran3
       def self.check_hmac_config
         endpoint = '/api/client/secret'
         
-        uri = URI.parse("#{API_BASE_URL}#{endpoint}")
+        uri = URI.parse("#{get_api_base_url}#{endpoint}")
         
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = (uri.scheme == 'https')
-        http.open_timeout = REQUEST_TIMEOUT
-        http.read_timeout = REQUEST_TIMEOUT
+        http.open_timeout = get_request_timeout
+        http.read_timeout = get_request_timeout
         
         request = Net::HTTP::Get.new(uri.request_uri)
         request['Content-Type'] = 'application/json'
@@ -217,7 +233,7 @@ module ProGran3
       # Перевірка доступності сервера
       # @return [Boolean]
       def self.server_available?
-        uri = URI.parse(API_BASE_URL)
+        uri = URI.parse(get_api_base_url)
         
         Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https', open_timeout: 3, read_timeout: 3) do |http|
           response = http.head('/')
@@ -245,7 +261,7 @@ module ProGran3
       def self.post_request(endpoint, payload, silent: false)
         # SECURITY: Валідуємо URL перед кожним запитом
         begin
-          ProGran3::System::Utils::EndpointValidator.validate_url(API_BASE_URL)
+          ProGran3::System::Utils::EndpointValidator.validate_url(get_api_base_url)
         rescue SecurityError => e
           Logger.error("Server validation failed: #{e.message}", "ApiClient")
           return {
@@ -255,14 +271,14 @@ module ProGran3
           }
         end
         
-        uri = URI.parse("#{API_BASE_URL}#{endpoint}")
+        uri = URI.parse("#{get_api_base_url}#{endpoint}")
         
         puts "🌐 POST #{uri}" unless silent
         
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = (uri.scheme == 'https')
-        http.open_timeout = REQUEST_TIMEOUT
-        http.read_timeout = REQUEST_TIMEOUT
+        http.open_timeout = get_request_timeout
+        http.read_timeout = get_request_timeout
         
         # Для production - перевіряємо SSL сертифікати
         # Для development можна вимкнути якщо є проблеми

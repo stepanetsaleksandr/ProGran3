@@ -24,6 +24,8 @@ module ProGran3
 
     # Callback для фундаменту
     def add_foundation_callback(dialog, depth, width, height)
+      # v3.2: Видалено зайве блокування - використовуємо природний механізм активації
+      
       return false unless validate_dimensions_callback(depth, width, height, "фундаменту")
       
       # Зберігаємо параметри фундаменту
@@ -46,6 +48,8 @@ module ProGran3
 
     # Callback для підставки
     def add_stand_callback(dialog, height, width, depth, gaps = false, gaps_height = 0, gaps_width = 0, gaps_depth = 0)
+      # v3.2: Видалено зайве блокування - використовуємо природний механізм активації
+      
       return false unless validate_dimensions_callback(depth, width, height, "підставки")
       
       # Зберігаємо параметри підставки
@@ -72,6 +76,14 @@ module ProGran3
 
     # Callback для плитки
     def add_tiles_callback(dialog, type, *params)
+      # Перевіряємо статус блокування
+      status = ProGran3.check_blocking_status
+      if status[:blocked]
+        puts "🚨 Callback заблоковано: #{status[:reason]}"
+        dialog.execute_script("showError('Плагін заблокований: #{status[:reason]}')")
+        return false
+      end
+      
       case type
       when "frame"
         add_tiles_frame_callback(dialog, *params)
@@ -139,6 +151,8 @@ module ProGran3
 
     # Callback для облицювання
     def add_cladding_callback(dialog, thickness)
+      # v3.2: Видалено зайве блокування - використовуємо природний механізм активації
+      
       thickness = thickness.to_i
       
       return false unless validate_dimensions_callback(100, 100, thickness, "облицювання")

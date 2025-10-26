@@ -1,47 +1,39 @@
-# Примусове перезавантаження плагіна ProGran3
-# Виконати в Ruby Console SketchUp
+# force_reload_plugin.rb
+# Скрипт для примусового перезавантаження плагіна ProGran3
 
 puts "🔄 Примусове перезавантаження плагіна ProGran3..."
 
-# Очищаємо всі завантажені файли
-$LOADED_FEATURES.delete_if { |file| file.include?('progran3') }
-
 # Видаляємо глобальні змінні
-$plugin_blocked = nil
-$license_manager = nil
 $progran3_tracker = nil
 $tracker = nil
+$plugin_blocked = false  # Скидаємо блокування
 
-# Видаляємо модуль
-Object.send(:remove_const, :ProGran3) if defined?(ProGran3)
-
-# Перезавантажуємо основний файл (спочатку пробуємо core, потім основний)
-begin
-  load 'proGran3_core.rb'
-rescue LoadError
-  load 'proGran3.rb'
-end
-
-puts "✅ Плагін примусово перезавантажено"
-
-# Перевіряємо чи є ProGran3 модуль
+# Видаляємо модуль ProGran3
 if defined?(ProGran3)
-  puts "✅ ProGran3 модуль завантажено"
-  
-  # Перевіряємо SessionManager (новий LicenseManager)
-  if defined?(ProGran3::System::Core::SessionManager)
-    puts "✅ SessionManager доступний"
-    begin
-      manager = ProGran3::System::Core::SessionManager.new
-      puts "🔐 Has license: #{manager.has_license?}"
-      puts "📧 Email: #{manager.email || 'немає'}"
-      puts "🔑 License key: #{manager.license_key ? manager.license_key[0..8] + '...' : 'немає'}"
-    rescue => e
-      puts "❌ Помилка доступу до SessionManager: #{e.message}"
-    end
-  else
-    puts "❌ SessionManager НЕ завантажено!"
-  end
-else
-  puts "❌ ProGran3 модуль НЕ завантажено!"
+  Object.send(:remove_const, :ProGran3)
+  puts "✅ Модуль ProGran3 видалено з пам'яті"
 end
+
+# Очищаємо ресурси
+if defined?(ProGran3::ResourceManager)
+  ProGran3::ResourceManager.cleanup_resources(true)
+  puts "✅ Ресурси очищено"
+end
+
+# Перезавантажуємо плагін
+begin
+  load File.join(File.dirname(__FILE__), 'proGran3.rb')
+  puts "✅ Плагін ProGran3 перезавантажено"
+  
+  # Примусово оновлюємо конфігурацію NetworkClient
+  if defined?(ProGran3::System::Network::NetworkClient)
+    ProGran3::System::Network::NetworkClient.reload_config!
+    puts "✅ Конфігурація NetworkClient оновлена"
+  end
+  
+rescue => e
+  puts "❌ Помилка перезавантаження: #{e.message}"
+  puts "   Деталі: #{e.backtrace.first(3).join("\n   ")}"
+end
+
+puts "🎯 Перезавантаження завершено. Спробуйте запустити плагін знову."

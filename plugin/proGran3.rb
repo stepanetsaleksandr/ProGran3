@@ -21,6 +21,11 @@ def self.reload_plugin
   # Перезавантажуємо
   load __FILE__
   
+  # Примусово оновлюємо конфігурацію NetworkClient
+  if defined?(ProGran3::System::Network::NetworkClient)
+    ProGran3::System::Network::NetworkClient.reload_config!
+  end
+  
   puts "✅ Плагін перезавантажено"
 end
 
@@ -346,16 +351,7 @@ if defined?(Sketchup)
     $progran3_tracker&.send_heartbeat
   end
   
-  # Метод для перевірки статусу блокування (локальна перевірка)
-  def self.check_blocking_status
-    # Плагін завжди активний (локальне логування)
-    return {
-      success: true,
-      blocked: false,
-      active: true,
-      has_license: false
-    }
-  end
+  # v3.2: Видалено зайве блокування - використовуємо природний механізм активації
   
   def self.tracking_status
     if $progran3_tracker

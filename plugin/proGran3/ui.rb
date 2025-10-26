@@ -9,6 +9,13 @@ module ProGran3
     def show_dialog
       puts "📱 Відкриття UI ProGran3..."
       
+      # Примусово оновлюємо конфігурацію NetworkClient
+      if defined?(ProGran3::System::Network::NetworkClient)
+        ProGran3::System::Network::NetworkClient.reload_config!
+      end
+      
+      # v3.2: Видалено зайве блокування - використовуємо природний механізм активації
+      
       # Відстеження буде запущено після завантаження UI
       
       html_path = File.join(File.dirname(__FILE__), "web", "index.html")
@@ -1075,6 +1082,8 @@ module ProGran3
         end
       end
     end
+    
+    # v3.2: Видалено - зайва функція блокування
     
   end
 end
