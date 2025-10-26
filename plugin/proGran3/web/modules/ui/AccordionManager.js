@@ -119,8 +119,8 @@
         window.debugLog(`updateAllDisplays() викликано`, 'info');
       }
       
-      const currentUnit = window.ProGran3 && window.ProGran3.Core && window.ProGran3.Core.GlobalState 
-        ? window.ProGran3.Core.GlobalState.getCurrentUnit() 
+      const currentUnit = window.ProGran3 && window.ProGran3.Core && window.ProGran3.Core.StateManager 
+        ? window.ProGran3.Core.StateManager.getCurrentUnit() 
         : (window.currentUnit || 'mm');
       
       const unitText = currentUnit === 'mm' ? 'мм' : 'см';
@@ -169,8 +169,8 @@
     
     // Оновлення відображень огорожі
     updateFenceDisplays: function() {
-      const currentUnit = window.ProGran3 && window.ProGran3.Core && window.ProGran3.Core.GlobalState 
-        ? window.ProGran3.Core.GlobalState.getCurrentUnit() 
+      const currentUnit = window.ProGran3 && window.ProGran3.Core && window.ProGran3.Core.StateManager 
+        ? window.ProGran3.Core.StateManager.getCurrentUnit() 
         : (window.currentUnit || 'mm');
       
       const unitText = currentUnit === 'mm' ? 'мм' : 'см';
@@ -200,8 +200,8 @@
     
     // Оновлення відображень стели
     updateSteleDisplays: function() {
-      const currentUnit = window.ProGran3 && window.ProGran3.Core && window.ProGran3.Core.GlobalState 
-        ? window.ProGran3.Core.GlobalState.getCurrentUnit() 
+      const currentUnit = window.ProGran3 && window.ProGran3.Core && window.ProGran3.Core.StateManager 
+        ? window.ProGran3.Core.StateManager.getCurrentUnit() 
         : (window.currentUnit || 'mm');
       
       const unitText = currentUnit === 'mm' ? 'мм' : 'см';
@@ -219,8 +219,8 @@
     
     // Оновлення всіх лейблів з одиницями вимірювання
     updateUnitLabels: function() {
-      const currentUnit = window.ProGran3 && window.ProGran3.Core && window.ProGran3.Core.GlobalState 
-        ? window.ProGran3.Core.GlobalState.getCurrentUnit() 
+      const currentUnit = window.ProGran3 && window.ProGran3.Core && window.ProGran3.Core.StateManager 
+        ? window.ProGran3.Core.StateManager.getCurrentUnit() 
         : (window.currentUnit || 'mm');
       
       const unitText = currentUnit === 'mm' ? 'мм' : 'см';

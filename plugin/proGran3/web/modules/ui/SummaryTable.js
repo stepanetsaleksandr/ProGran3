@@ -1419,16 +1419,16 @@
       }
     }
     
-    // Якщо все ще не знайшли, перевіряємо через GlobalState
-    if (!previewData && global.ProGran3 && global.ProGran3.Core && global.ProGran3.Core.GlobalState) {
-      const globalPreviewData = global.ProGran3.Core.GlobalState.getCurrentPreviewData();
+    // Якщо все ще не знайшли, перевіряємо через StateManager
+    if (!previewData && global.ProGran3 && global.ProGran3.Core && global.ProGran3.Core.StateManager) {
+      const globalPreviewData = global.ProGran3.Core.StateManager.getCurrentPreviewData();
       if (globalPreviewData) {
         if (typeof globalPreviewData === 'string') {
           previewData = globalPreviewData;
-          console.log('✅ Превью дані знайдені через GlobalState (string), довжина:', previewData.length);
+          console.log('✅ Превью дані знайдені через StateManager (string), довжина:', previewData.length);
         } else if (typeof globalPreviewData === 'object' && globalPreviewData.base64) {
           previewData = globalPreviewData.base64;
-          console.log('✅ Превью дані знайдені через GlobalState (object), довжина:', previewData.length);
+          console.log('✅ Превью дані знайдені через StateManager (object), довжина:', previewData.length);
         }
       }
     }

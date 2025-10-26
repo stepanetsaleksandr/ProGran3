@@ -1,6 +1,6 @@
 {
     "api":  {
-                "base_url":  "https://server-qgwuna80y-provis3ds-projects.vercel.appQueued ",
+                "base_url":  "https://server-2rcysn6b8-provis3ds-projects.vercel.appQueued ",
                 "timeout":  10,
                 "retry_attempts":  3
             },
