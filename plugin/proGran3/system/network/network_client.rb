@@ -19,14 +19,14 @@ module ProGran3
         if File.exist?(config_path)
           config = JSON.parse(File.read(config_path))
           {
-            base_url: config.dig('api', 'base_url') || 'https://server-hbf7li0u7-provis3ds-projects.vercel.app',
+            base_url: config.dig('api', 'base_url') || 'https://server-one-amber.vercel.app',
             timeout: config.dig('api', 'timeout') || 10,
             retry_attempts: config.dig('api', 'retry_attempts') || 3
           }
         else
           # Fallback якщо config не знайдено
           {
-            base_url: 'https://server-hbf7li0u7-provis3ds-projects.vercel.app',
+            base_url: 'https://server-one-amber.vercel.app',
             timeout: 10,
             retry_attempts: 3
           }
@@ -34,7 +34,7 @@ module ProGran3
       rescue => e
         puts "⚠️ Помилка читання конфігу: #{e.message}. Використовуємо default."
         {
-          base_url: 'https://server-hbf7li0u7-provis3ds-projects.vercel.app',
+          base_url: 'https://server-one-amber.vercel.app',
           timeout: 10,
           retry_attempts: 3
         }
